@@ -1,0 +1,62 @@
+{
+  "scoreboard": [
+    { "status": "FINAL", "away": "TB", "awayScore": 4, "home": "CLE", "homeScore": 3 },
+    { "status": "FINAL", "away": "HOU", "awayScore": 5, "home": "BAL", "homeScore": 9 },
+    { "status": "FINAL", "away": "COL", "awayScore": 3, "home": "CIN", "homeScore": 7 },
+    { "status": "FINAL", "away": "STL", "awayScore": 4, "home": "PHI", "homeScore": 6 },
+    { "status": "FINAL", "away": "OAK", "awayScore": 2, "home": "TEX", "homeScore": 8 },
+    { "status": "FINAL", "away": "TOR", "awayScore": 5, "home": "BOS", "homeScore": 2 },
+    { "status": "FINAL", "away": "CWS", "awayScore": 1, "home": "WSH", "homeScore": 4 },
+    { "status": "FINAL", "away": "DET", "awayScore": 6, "home": "ATL", "homeScore": 3 },
+    { "status": "FINAL", "away": "SEA", "awayScore": 4, "home": "MIN", "homeScore": 3 },
+    { "status": "FINAL", "away": "CHC", "awayScore": 2, "home": "LAD", "homeScore": 5 },
+    { "status": "FINAL", "away": "MIA", "awayScore": 1, "home": "AZ", "homeScore": 8 }
+  ],
+  "hero": {
+    "image": "/avatars/Sovereign_OS_Logo.jpg",
+    "headline": "Familiar faces atop our first Cy poll of '26",
+    "subheadline": "You'll never guess the leaders of MLB.com's opening Cy Young vote of the season... Actually, you probably will."
+  },
+  "news": [
+    {
+      "icon": "N",
+      "text": "Schiller, with 'ice in his veins,' outduels deGrom in epic mound battle"
+    },
+    {
+      "icon": "P",
+      "iconBg": "red",
+      "text": "Phillies get back to 'better baseball' with interim skip Mattingly at helm"
+    },
+    {
+      "icon": "A",
+      "text": "Fuentes steps up in crucial role amid Braves' pitching injuries"
+    },
+    {
+      "icon": "D",
+      "text": "1st Cy Young poll of '26 shows two clear, familiar favorites"
+    },
+    {
+      "icon": "D",
+      "text": "Ohtani strikes out 9 Marlins in first start on 5 days' rest this season"
+    },
+    {
+      "icon": "O",
+      "iconBg": "orange",
+      "text": "Yesavage shuts down Red Sox without best stuff in season debut"
+    },
+    {
+      "icon": "A",
+      "text": "Here's the latest on Strider, Schwellenbach, Waldrep"
+    },
+    {
+      "icon": "C",
+      "iconBg": "red",
+      "text": "Hoerner, Bregman, PCA lead Cubs in victory over Padres"
+    },
+    {
+      "icon": "C",
+      "iconBg": "red",
+      "text": "Bazzana driven by passion for baseball from Down Under to MLB"
+    }
+  ]
+}
