@@ -1,0 +1,26 @@
+# 12_UNIFIED_MLB_UI : DOM ARCHITECTURE
+
+## 1. LAYOUT TOPOLOGY
+- Structure: 3-Column Vesper Layout (Flex/Grid).
+- Theme Constraints: Deep Void (#0f1115), slate borders (#1e293b), Neon Cyan accents (#38bdf8).
+- Core State: React Context/Providers mapping MLB `game_pk`.
+
+## 2. COLUMN DEFINITIONS
+
+### LEFT COLUMN (The Engine)
+- God-Mode JSON Injector: Direct manual execution of API state updates. Raw `<textarea>` parsing bypassing standard fetch routines. 
+- Active Game Context: Display current game telemetry values (inning, outs, score).
+
+### CENTER COLUMN (Savant Metrics)
+- MLB Statcast Layer: Live pitch tracking, velocity, exit velocity, and launch angle widgets.
+- Component: `<StatcastRefinery />` or `<WardyDesk />`. Streams parsed variables from Python ingestor directly to DOM components.
+
+### RIGHT COLUMN (The Simulation)
+- Component: `<FanStackChat />`
+- Function: Infinite scrolling auto-updating feed from Persona discourse (Barf, Dot, Peggy, etc.). 
+- DOM Structure: `.chat-container` wrapping mapped `<Message />` components. Vesper glassmorphism (`.vm-panel-glass`).
+
+## 3. STRICT AVOIDANCE
+- No PGA/Masters data.
+- No Amen Corner references. 
+- Strict MLB schema.

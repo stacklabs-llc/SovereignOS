@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>THE TRIPLE TEMPORAL ETCH</title>
+    <style>
+        :root { --neon-cyan: #00ffff; --bg-dark: #0f1115; --neon-magenta: #ff00ff; --neon-yellow: #ffff00; }
+        body { background: var(--bg-dark); color: #fff; font-family: 'Courier New', monospace; padding: 10px; margin: 0; }
+        h1 { color: var(--neon-cyan); text-transform: uppercase; border-bottom: 1px solid var(--neon-cyan); padding-bottom: 5px; text-align: center; }
+        .grid-container { display: flex; flex-direction: row; width: 100%; gap: 10px; }
+        .column { flex: 1; border: 1px solid #444; padding: 10px; text-align: center; height: 85vh; overflow-y: auto; }
+        .column h2 { font-size: 1.1rem; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        #col-lindor h2 { color: var(--neon-cyan); }
+        #col-pickoff h2 { color: var(--neon-yellow); }
+        #col-gorman h2 { color: var(--neon-magenta); }
+        .frame-box { margin-bottom: 15px; background: #000; padding: 5px; border: 1px solid #333; }
+        img { width: 100%; height: auto; display: block; }
+    </style>
+</head>
+<body>
+    <h1>[ SOVEREIGN SINGLE-NODE CORE // SLOW ROLL VIEW ]</h1>
+    
+    <div class="grid-container">
+        <div class="column" id="col-lindor">
+            <h2>LINDOR (PIRATE BASELINE)</h2>
+            <div id="gallery-lindor"></div>
+        </div>
+        <div class="column" id="col-pickoff">
+            <h2>PICKOFF (PEACOCK A)</h2>
+            <div id="gallery-pickoff"></div>
+        </div>
+        <div class="column" id="col-gorman">
+            <h2>GORMAN (PEACOCK B)</h2>
+            <div id="gallery-gorman"></div>
+        </div>
+    </div>
+
+    <script>
+        let rLindor = 0, rPickoff = 0, rGorman = 0;
+        
+        function appendFrames(prefix, current, total, divId) {
+            if(total > current) {
+                for (let i = current + 1; i <= total; i++) {
+                    let num = i.toString().padStart(3, '0');
+                    let url = `/frames/EXHIBIT_${prefix}_${num}.png`;
+                    let wrap = document.createElement('div');
+                    wrap.className = 'frame-box';
+                    wrap.innerHTML = `<img src="${url}" onerror="this.parentElement.style.display='none'"><span>${prefix}_FL:${num}</span>`;
+                    document.getElementById(divId).prepend(wrap);
+                }
+            }
+            return total;
+        }
+
+        async function fetchTelemetry() {
+            try {
+                let res = await fetch('/api/status');
+                let data = await res.json();
+                
+                rLindor = appendFrames('LINDOR', rLindor, data.lindor, 'gallery-lindor');
+                rPickoff = appendFrames('PICKOFF', rPickoff, data.pickoff, 'gallery-pickoff');
+                rGorman = appendFrames('GORMAN', rGorman, data.gorman, 'gallery-gorman');
+            } catch (e) {
+                console.error("Telemetry Sync Failed", e);
+            }
+        }
+        setInterval(fetchTelemetry, 2000);
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+// api-host.ts — Portable host resolution
+export function getApiHost(port: number = 8096): string {
+  if (import.meta.env.VITE_API_BASE) {
+    return import.meta.env.VITE_API_BASE;
+  }
+  if (window.location.protocol === "https:") {
+    return window.location.origin;
+  }
+  return `http://${window.location.hostname}:${port}`;
+}
+
+export function getWsUrl(path: string = "/ws"): string {
+  const isHTTPS = window.location.protocol === "https:";
+  const proto = isHTTPS ? "wss:" : "ws:";
+  const host = window.location.host;
+  const route = path;
+  return `${proto}//${host}${route}`;
+}
+
+// Convenience alias: base URL for fetch() calls
+export const getApiBase = () => getApiHost(8096);

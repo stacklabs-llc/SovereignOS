@@ -1,0 +1,6 @@
+Legacy:  Browser → ws://:8080 → Firebase Functions → Firestore
+V2:      Browser → ws://192.168.1.73:8008/mard/telemetry 
+                   → M.A.R.D. Engine 
+                   → sovereign_now.db (CMDB) 
+                   → FRM Gate (Ω=1 feline protection)
+                   → Prosodic Codec → FanStack/Amen Corner

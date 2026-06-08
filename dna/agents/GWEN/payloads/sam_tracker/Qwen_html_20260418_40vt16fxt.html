@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="feline">
+<head>
+  <meta charset="UTF-8" />
+  <title>Sam Tracker V2 — Sovereign Mesh</title>
+  <!-- Core + dynamic theme -->
+  <link rel="stylesheet" href="/dna/media/css/theme-core.css" />
+  <link rel="stylesheet" href="/dna/media/css/theme-feline.css" data-theme-sheet />
+  <!-- Flow Asset Preloader -->
+  <script type="module">
+    import { preloadFlowAssets } from '/dna/media/js/flow-loader.js';
+    preloadFlowAssets(['feline', 'cortex', 'warroom']);
+  </script>
+</head>
+<body class="sovereign-mesh" data-frm-gate="active">
+  <div id="root"></div>
+  <script type="module">
+    import { createRoot } from 'react-dom/client';
+    import { SamTrackerV2 } from '/sam-v2/SamTrackerV2.jsx';
+    import { FRM } from '/sovereign/frm-engine.js';
+    
+    // Ω=1 Feline Protection handshake
+    window.__FRM_GATE__ = (allow) => {
+      document.getElementById('root').style.pointerEvents = allow ? 'auto' : 'none';
+      document.getElementById('root').setAttribute('aria-hidden', !allow);
+    };
+    
+    createRoot(document.getElementById('root')).render(
+      <SamTrackerV2 nodeId=".172" frmgate={true} />
+    );
+  </script>
+</body>
+</html>

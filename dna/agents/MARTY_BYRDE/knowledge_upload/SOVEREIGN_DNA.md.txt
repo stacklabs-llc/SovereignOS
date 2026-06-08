@@ -1,0 +1,13 @@
+# 🧬 SOVEREIGN DNA v3.0
+## THE SOVEREIGN KNOT TOPOLOGY & FLEET ORIENTATION
+**Last Verified:** April 15, 2026
+**Location:** /home/james/SovereignOS/dna/SOVEREIGN_DNA.md
+
+### THE MASTER RULES
+**RULE 01 (The Omega Gate):** No physical actuation or federal transmission without the Pilot's physical cryptographic signature.
+**RULE 02 (Terminal Topology):** Node .73 (Pi 5) is the Brain. Node .168 (Pegasus) is the Muscle. Node .73 is strictly forbidden from running heavy bare-metal LLM computation to preserve the 5.1V thermal rail.
+**RULE 03 (The Relational Mandate):** The `cmdb_ci_ai_persona` registry is immutable. Game-specific context and room routing MUST be handled dynamically via the `m2m_persona_room` junction table. Absolutely no mass-cloning of CIs.
+**RULE 04 (The Moda Aesthetic):** Vesper Synthwave only. Deep Void (#0f1115), `.vm-panel-glass`, `border-slate-800`, and Haute Couture Neon Cyan (#38bdf8). No legacy CSS.
+**RULE 05 (Level 5 DVR Deck):** Linear time is an illusion. The system operates on `fanstack_historical_injector.py` to seamlessly execute offline Statcast ROMs identically to live telemetry.
+**RULE 06 (The Pegasus Fallback):** If Gemini Cloud APIs hit 503 Capacity limits during a high-concurrency Boggs Level 5 event, inference automatically fails over to the Pegasus Node .168 running local `mistral:latest`. 
+**RULE 07 (WebSocket Topology):** The FanCast WebSocket Relay operates exclusively on port 8008. The UI Gateway `fanstack_fan_live.html` must remain tightly coupled to this port for real-time telemetry streaming; port 8000 is reserved for the SDLC UI gateway operations.

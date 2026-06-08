@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+@theme {
+  --color-clinical-bg: #0B0E14;
+  --color-clinical-surface: rgba(255, 255, 255, 0.03);
+  --color-clinical-primary: #10B981;
+  --color-clinical-accent: #06B6D4;
+  --color-clinical-text: #F8FAFC;
+  --color-clinical-muted: rgba(255, 255, 255, 0.4);
+  --color-clinical-border: rgba(255, 255, 255, 0.08);
+}
+
+body {
+  background-color: #0B0E14;
+  color: #F8FAFC;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Glassmorphism Design System */
+.clinical-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-radius: 24px;
+  padding: 24px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.clinical-card:hover {
+  border-color: rgba(16, 185, 129, 0.2);
+  box-shadow: 0 12px 40px 0 rgba(16, 185, 129, 0.08);
+}
+
+.clinical-input {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 8px 16px;
+  color: white;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.clinical-input:focus {
+  border-color: #10B981;
+  background: rgba(16, 185, 129, 0.05);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+}
+
+.clinical-button {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 8px 16px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+  border: none;
+  cursor: pointer;
+}
+
+.clinical-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4);
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Premium OS Theme Customizations */
+.theme-sovereign-home {
+  --color-clinical-primary: #10B981;
+}
+
+.theme-mac {
+  --color-clinical-primary: #38BDF8;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif !important;
+}
+
+.theme-windows {
+  --color-clinical-primary: #0078D4;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif !important;
+}
+
+.theme-windows .clinical-card, 
+.theme-windows .clinical-input, 
+.theme-windows .clinical-button {
+  border-radius: 0px !important;
+}
+
+.theme-linux {
+  --color-clinical-primary: #39FF14;
+  font-family: 'Courier New', Courier, monospace !important;
+}
+
+.theme-sovereign-rounded {
+  --color-clinical-primary: #A855F7;
+}
+
+.theme-sovereign-rounded .clinical-card {
+  border-radius: 32px !important;
+}

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gwen // Science Vessel // Metsy Counter-Recon</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --bg-void: #efebe9;
+            --panel: #fffdf9;
+            --cardboard-brown: #8d6e63;
+            --cardboard-dark: #5d4037;
+            --border: #8d6e63;
+            --accent-cyan: #81c784; /* backyard green */
+            --accent-indigo: #2d1b4e; /* twilight purple */
+            --accent-amber: #ffb74d; /* sunset amber */
+            --alert-red: #d32f2f; /* warm red marker */
+            --text: #2d1b4e; /* twilight purple for ultimate readability */
+            --text-dim: #5d4037;
+            --font-body: 'Outfit', sans-serif;
+            --font-header: 'Outfit', sans-serif;
+        }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: var(--font-body); background: var(--bg-void); color: var(--text); overflow: hidden; }
+        #container { display: flex; height: 100vh; flex-direction: column; }
+        #header { background: var(--panel); padding: 15px 30px; border-bottom: 4px solid var(--cardboard-brown); display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 0px var(--cardboard-dark); z-index: 1000; position: relative; }
+        h1 { margin: 0; font-family: var(--font-header); font-size: 1.6rem; color: var(--accent-indigo); letter-spacing: 1px; }
+        h1 span { color: var(--cardboard-brown); text-shadow: none; font-weight: 800; }
+        .header-meta { font-size: 0.9rem; color: var(--text-dim); display:flex; gap: 20px; font-weight: 600; }
+        .header-meta strong { color: var(--accent-indigo); }
+        #content { display: flex; flex: 1; position: relative; }
+        #map { flex: 3; height: 100%; z-index: 1; background: #fdfbf7; }
+        #sidebar { flex: 1; min-width: 350px; max-width: 450px; padding: 20px; overflow-y: auto; border-left: 4px solid var(--cardboard-brown); background: #f5f1ed; z-index: 10; box-shadow: -4px 0 0px var(--cardboard-dark); }
+        
+        .hud-card { 
+            position: relative;
+            background: var(--panel); 
+            border: 4px solid var(--cardboard-brown); 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            border-radius: 4px; 
+            box-shadow: 4px 4px 0px var(--cardboard-dark);
+            transition: 0.3s; 
+            color: var(--text);
+        }
+        .hud-card:hover { 
+            transform: translate(-1px, -1px);
+            box-shadow: 5px 5px 0px var(--cardboard-dark);
+        }
+        
+        /* Silver duct tape on the top-right corner */
+        .hud-card::before {
+            content: "";
+            position: absolute;
+            top: -6px;
+            right: -12px;
+            width: 42px;
+            height: 18px;
+            background: linear-gradient(45deg, #b0bec5, #cfd8dc);
+            border-left: 1px dashed rgba(255,255,255,0.5);
+            border-right: 1px dashed rgba(0,0,0,0.2);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+            transform: rotate(30deg);
+            z-index: 5;
+        }
+        /* Silver duct tape on the top-left corner */
+        .hud-card::after {
+            content: "";
+            position: absolute;
+            top: -6px;
+            left: -12px;
+            width: 42px;
+            height: 18px;
+            background: linear-gradient(-45deg, #b0bec5, #cfd8dc);
+            border-left: 1px dashed rgba(0,0,0,0.2);
+            border-right: 1px dashed rgba(255,255,255,0.5);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+            transform: rotate(-30deg);
+            z-index: 5;
+        }
+
+        h2 { margin-top: 0; font-family: var(--font-header); font-size: 1.2rem; letter-spacing: 0.5px; color: var(--accent-indigo); border-bottom: 3px dashed var(--cardboard-brown); padding-bottom: 8px; font-weight: 700; }
+        h2 span { color: var(--cardboard-brown); }
+        .metric-value { font-size: 1.8rem; font-weight: 800; color: var(--accent-indigo); text-shadow: none; }
+        
+        /* Temporal Scrubber Cozy Wood styling */
+        .scrubber-container { padding: 15px 0; }
+        input[type="range"] { width: 100%; margin: 10px 0; -webkit-appearance: none; appearance: none; background: transparent; }
+        input[type="range"]::-webkit-slider-runnable-track { 
+            width: 100%; 
+            height: 10px; 
+            background: #e0d8d0; 
+            border-radius: 4px; 
+            border: 2px solid var(--cardboard-brown); 
+        }
+        input[type="range"]::-webkit-slider-thumb { 
+            -webkit-appearance: none; 
+            height: 24px; 
+            width: 24px; 
+            border-radius: 4px; 
+            background: #a1887f; /* wood knob */
+            border: 3px solid #5d4037;
+            cursor: pointer; 
+            margin-top: -9px; 
+            box-shadow: 2px 2px 0px #5d4037; 
+        }
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(1.1);
+        }
+        .time-labels { display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-dim); font-weight: 600; }
+        
+        .alert { color: #b71c1c; font-weight: bold; background: #ffebee; padding: 10px; border-radius: 4px; border: 2px solid #ef9a9a; margin-top:10px; box-shadow: 2px 2px 0px #ef9a9a; }
+        .recon-log { font-family: monospace; font-size: 0.85rem; color: var(--text-dim); margin-top: 10px; max-height: 150px; overflow-y: auto; background: var(--panel); padding: 10px; border-radius: 4px; border: 2px solid var(--cardboard-brown); }
+        .recon-log div { margin-bottom: 4px; border-bottom: 1px dashed var(--cardboard-brown); padding-bottom:2px; }
+        
+        /* Poop target styles (Retro Flat Backyard bounce) */
+        .poop-pulse-icon {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 32px;
+            animation: poopPulse 2s infinite ease-in-out;
+            cursor: pointer;
+        }
+
+        @keyframes poopPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .poop-pulse-icon.primary-target {
+            font-size: 42px;
+            animation: poopPrimaryPulse 1.5s infinite ease-in-out;
+        }
+
+        @keyframes poopPrimaryPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.25); }
+            100% { transform: scale(1); }
+        }
+
+        /* Switch slider flat wooden style */
+        .switch input:checked + .slider {
+            background-color: var(--accent-cyan) !important;
+            border-color: var(--cardboard-brown);
+        }
+        .switch input:checked + .slider:before {
+            transform: translateX(20px);
+            background-color: #ffffff;
+            border: 2px solid var(--cardboard-brown);
+        }
+        .slider {
+            border: 2px solid var(--cardboard-brown);
+            box-shadow: 2px 2px 0px var(--cardboard-dark);
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px;
+            width: 14px;
+            left: 3px;
+            bottom: 2px;
+            background-color: #b0bec5;
+            transition: .4s;
+            border-radius: 2px;
+            border: 1px solid var(--cardboard-brown);
+        }
+        
+        .candidate-item {
+            padding: 8px;
+            border-radius: 4px;
+            background: var(--panel);
+            border: 2px solid var(--cardboard-brown);
+            margin-bottom: 8px;
+            cursor: pointer;
+            color: var(--text);
+            transition: 0.2s;
+        }
+        .candidate-item:hover {
+            background: #efebe9;
+            border-color: var(--accent-indigo);
+            box-shadow: 2px 2px 0px var(--cardboard-dark);
+        }
+        .candidate-item.active {
+            background: #ffebee;
+            border-color: var(--alert-red);
+            box-shadow: 2px 2px 0px var(--alert-red);
+        }
+        
+        /* Yellow Sticky Note Leaflet Popups */
+        .poop-popup .leaflet-popup-content-wrapper {
+            background: #fff9c4 !important; /* Yellow sticky */
+            border: 3px solid #fbc02d !important; /* Marker gold */
+            box-shadow: 4px 4px 0px #f57f17 !important; /* Brown shading shadow */
+            color: #3e2723 !important; /* Dark brown marker ink */
+            border-radius: 4px !important;
+            font-family: var(--font-header) !important;
+        }
+        .poop-popup .leaflet-popup-tip {
+            background: #fff9c4 !important;
+            border: 2px solid #fbc02d !important;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="header">
+            <h1>G.W.E.N. <span>VESPER VET</span></h1>
+            <div class="header-meta">
+                <span><strong>OP:</strong> COUNTER-RECON</span>
+                <span><strong>SUBJECT:</strong> METSY (NODE .171)</span>
+                <span><strong>TARGET:</strong> SAM (14LB UNIT)</span>
+            </div>
+        </div>
+        <div id="content">
+            <div id="map"></div>
+            <div id="sidebar">
+                <div class="hud-card">
+                    <h2>THE TEMPORAL <span>SCRUBBER</span></h2>
+                    <div class="scrubber-container">
+                        <div id="scrubber-date" style="font-weight: bold; color: var(--accent-cyan); text-align: center; margin-bottom: 10px;">Loading Timeline...</div>
+                        <input type="range" id="time-slider" min="0" max="100" value="100">
+                        <div class="time-labels">
+                            <span id="start-time">Start</span>
+                            <span id="end-time">End</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hud-card">
+                    <h2>METRIC <span>HUB</span></h2>
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <div style="color:var(--text-dim); font-size:0.8rem; text-transform:uppercase;">Distance Extracted</div>
+                            <div class="metric-value" id="distance-calc">0.00 mi</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="color:var(--text-dim); font-size:0.8rem; text-transform:uppercase;">Data Points</div>
+                            <div style="color:var(--accent-indigo); font-weight:bold; font-size:1.2rem;" id="point-count">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="hud-card" style="border-color: var(--accent-amber);">
+                    <h2>PAYLOAD RECOVERY <span>VECTOR (💩)</span></h2>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <span style="font-size:0.85rem; color:var(--text-dim);">Enable 💩 Target Lock overlays</span>
+                        <label class="switch" style="position:relative; display:inline-block; width:44px; height:22px;">
+                            <input type="checkbox" id="payload-toggle" checked style="opacity:0; width:0; height:0;">
+                            <span class="slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#374151; transition:.4s; border-radius:34px; border:1px solid var(--border);"></span>
+                        </label>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <span style="font-size:0.85rem; color:var(--text-dim);">Show Excursion Heat Map</span>
+                        <label class="switch" style="position:relative; display:inline-block; width:44px; height:22px;">
+                            <input type="checkbox" id="heat-toggle" checked style="opacity:0; width:0; height:0;">
+                            <span class="slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#374151; transition:.4s; border-radius:34px; border:1px solid var(--border);"></span>
+                        </label>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                        <span style="font-size:0.85rem; color:var(--text-dim);">Show Movement Trace Path</span>
+                        <label class="switch" style="position:relative; display:inline-block; width:44px; height:22px;">
+                            <input type="checkbox" id="trace-toggle" checked style="opacity:0; width:0; height:0;">
+                            <span class="slider" style="position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background-color:#374151; transition:.4s; border-radius:34px; border:1px solid var(--border);"></span>
+                        </label>
+                    </div>
+                    <div id="payload-candidates" style="max-height: 180px; overflow-y: auto; font-size: 0.85rem; border-top:1px solid var(--border); padding-top:10px;">
+                        <div style="color:var(--text-dim); font-style:italic;">Initializing recovery vectors...</div>
+                    </div>
+                </div>
+                
+                <div class="hud-card" style="border-color: var(--alert-red);">
+                    <h2 style="color: var(--alert-red); border-bottom-color: var(--alert-red);">PREDICTIVE <span>ANOMALY LOOP</span></h2>
+                    <p style="font-size:0.85rem; color:var(--text-dim);">Analyzing historical GNSS excursions against known Sam safehouses (Crestwood & Hillside).</p>
+                    <div class="alert">⚠️ TARGET LOCK: COUNTER-SURVEILLANCE DETECTED</div>
+                    <div class="recon-log" id="recon-log">
+                        <!-- Recon events populated here -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://leaflet.github.io/Leaflet.heat/dist/leaflet-heat.js"></script>
+    <script>
+        const rawGpxPoints = [{"lat": 33.884723, "lon": -84.531081, "time": "2026-05-24T00:02:09Z"}, {"lat": 33.884961, "lon": -84.530869, "time": "2026-05-24T00:04:36Z"}, {"lat": 33.88377, "lon": -84.532912, "time": "2026-05-24T00:07:20Z"}, {"lat": 33.884945, "lon": -84.530865, "time": "2026-05-24T00:09:38Z"}, {"lat": 33.884921, "lon": -84.531001, "time": "2026-05-24T00:12:05Z"}, {"lat": 33.884977, "lon": -84.530819, "time": "2026-05-24T00:14:35Z"}, {"lat": 33.884999, "lon": -84.53057, "time": "2026-05-24T00:17:06Z"}, {"lat": 33.884991, "lon": -84.531081, "time": "2026-05-24T00:19:32Z"}, {"lat": 33.885088, "lon": -84.53117, "time": "2026-05-24T00:22:06Z"}, {"lat": 33.884883, "lon": -84.530536, "time": "2026-05-24T00:24:32Z"}, {"lat": 33.884744, "lon": -84.5303, "time": "2026-05-24T00:27:05Z"}, {"lat": 33.884703, "lon": -84.530544, "time": "2026-05-24T00:29:33Z"}, {"lat": 33.88467, "lon": -84.530095, "time": "2026-05-24T00:32:03Z"}, {"lat": 33.885043, "lon": -84.530308, "time": "2026-05-24T00:34:34Z"}, {"lat": 33.885389, "lon": -84.530412, "time": "2026-05-24T00:37:02Z"}, {"lat": 33.885398, "lon": -84.530179, "time": "2026-05-24T00:39:37Z"}, {"lat": 33.885434, "lon": -84.530137, "time": "2026-05-24T00:42:04Z"}, {"lat": 33.885366, "lon": -84.530156, "time": "2026-05-24T00:44:32Z"}, {"lat": 33.88544, "lon": -84.52973, "time": "2026-05-24T00:47:04Z"}, {"lat": 33.885254, "lon": -84.529667, "time": "2026-05-24T00:49:35Z"}, {"lat": 33.885102, "lon": -84.529919, "time": "2026-05-24T00:52:02Z"}, {"lat": 33.884989, "lon": -84.529692, "time": "2026-05-24T00:54:33Z"}, {"lat": 33.88496, "lon": -84.529593, "time": "2026-05-24T00:57:08Z"}, {"lat": 33.885062, "lon": -84.529803, "time": "2026-05-24T00:59:33Z"}, {"lat": 33.885105, "lon": -84.530041, "time": "2026-05-24T01:02:05Z"}, {"lat": 33.884982, "lon": -84.530213, "time": "2026-05-24T01:04:32Z"}, {"lat": 33.884793, "lon": -84.530793, "time": "2026-05-24T01:07:04Z"}, {"lat": 33.884813, "lon": -84.530907, "time": "2026-05-24T01:09:35Z"}, {"lat": 33.88486, "lon": -84.530925, "time": "2026-05-24T01:12:06Z"}, {"lat": 33.885045, "lon": -84.530803, "time": "2026-05-24T01:14:34Z"}, {"lat": 33.884929, "lon": -84.530837, "time": "2026-05-24T01:17:05Z"}, {"lat": 33.884965, "lon": -84.530784, "time": "2026-05-24T01:19:34Z"}, {"lat": 33.884974, "lon": -84.530832, "time": "2026-05-24T01:22:05Z"}, {"lat": 33.88496, "lon": -84.530901, "time": "2026-05-24T01:24:34Z"}, {"lat": 33.884975, "lon": -84.530799, "time": "2026-05-24T01:27:10Z"}, {"lat": 33.884955, "lon": -84.530856, "time": "2026-05-24T01:29:41Z"}, {"lat": 33.885061, "lon": -84.530749, "time": "2026-05-24T01:32:09Z"}, {"lat": 33.884996, "lon": -84.530814, "time": "2026-05-24T01:34:40Z"}, {"lat": 33.88497, "lon": -84.530916, "time": "2026-05-24T01:37:06Z"}, {"lat": 33.885022, "lon": -84.531038, "time": "2026-05-24T01:39:36Z"}, {"lat": 33.885066, "lon": -84.530694, "time": "2026-05-24T01:42:05Z"}, {"lat": 33.884883, "lon": -84.53031, "time": "2026-05-24T01:44:35Z"}, {"lat": 33.885, "lon": -84.530906, "time": "2026-05-24T01:47:04Z"}, {"lat": 33.88498, "lon": -84.530744, "time": "2026-05-24T01:49:34Z"}, {"lat": 33.884974, "lon": -84.530865, "time": "2026-05-24T01:52:02Z"}, {"lat": 33.884912, "lon": -84.530846, "time": "2026-05-24T01:54:34Z"}, {"lat": 33.88491, "lon": -84.530895, "time": "2026-05-24T01:57:06Z"}, {"lat": 33.884983, "lon": -84.530968, "time": "2026-05-24T01:59:34Z"}, {"lat": 33.884993, "lon": -84.5309, "time": "2026-05-24T02:02:02Z"}, {"lat": 33.884985, "lon": -84.530943, "time": "2026-05-24T02:04:31Z"}, {"lat": 33.884975, "lon": -84.530976, "time": "2026-05-24T02:07:01Z"}, {"lat": 33.884937, "lon": -84.53096, "time": "2026-05-24T02:09:31Z"}, {"lat": 33.884962, "lon": -84.530915, "time": "2026-05-24T02:12:04Z"}, {"lat": 33.885009, "lon": -84.530871, "time": "2026-05-24T02:14:33Z"}, {"lat": 33.884877, "lon": -84.530983, "time": "2026-05-24T02:17:02Z"}, {"lat": 33.885, "lon": -84.530906, "time": "2026-05-24T02:19:34Z"}, {"lat": 33.884861, "lon": -84.530964, "time": "2026-05-24T02:22:03Z"}, {"lat": 33.88482, "lon": -84.530453, "time": "2026-05-24T02:24:36Z"}, {"lat": 33.885049, "lon": -84.530339, "time": "2026-05-24T02:25:02Z"}, {"lat": 33.884902, "lon": -84.530369, "time": "2026-05-24T02:25:06Z"}, {"lat": 33.884874, "lon": -84.530346, "time": "2026-05-24T02:25:10Z"}, {"lat": 33.884864, "lon": -84.530313, "time": "2026-05-24T02:25:14Z"}, {"lat": 33.884876, "lon": -84.530304, "time": "2026-05-24T02:25:18Z"}, {"lat": 33.884897, "lon": -84.530309, "time": "2026-05-24T02:25:22Z"}, {"lat": 33.884929, "lon": -84.530315, "time": "2026-05-24T02:25:26Z"}, {"lat": 33.884927, "lon": -84.530314, "time": "2026-05-24T02:25:30Z"}, {"lat": 33.884913, "lon": -84.530299, "time": "2026-05-24T02:25:34Z"}, {"lat": 33.884915, "lon": -84.530305, "time": "2026-05-24T02:25:38Z"}, {"lat": 33.884901, "lon": -84.530295, "time": "2026-05-24T02:25:42Z"}, {"lat": 33.884907, "lon": -84.530293, "time": "2026-05-24T02:25:46Z"}, {"lat": 33.884923, "lon": -84.530312, "time": "2026-05-24T02:25:50Z"}, {"lat": 33.884922, "lon": -84.53032, "time": "2026-05-24T02:25:54Z"}, {"lat": 33.88491, "lon": -84.530309, "time": "2026-05-24T02:25:58Z"}, {"lat": 33.884903, "lon": -84.530307, "time": "2026-05-24T02:26:02Z"}, {"lat": 33.884895, "lon": -84.530302, "time": "2026-05-24T02:26:06Z"}, {"lat": 33.88489, "lon": -84.530303, "time": "2026-05-24T02:26:10Z"}, {"lat": 33.884883, "lon": -84.530311, "time": "2026-05-24T02:26:14Z"}, {"lat": 33.88489, "lon": -84.530309, "time": "2026-05-24T02:26:18Z"}, {"lat": 33.88489, "lon": -84.530303, "time": "2026-05-24T02:26:22Z"}, {"lat": 33.884895, "lon": -84.53032, "time": "2026-05-24T02:26:26Z"}, {"lat": 33.884902, "lon": -84.530324, "time": "2026-05-24T02:26:30Z"}, {"lat": 33.884899, "lon": -84.530329, "time": "2026-05-24T02:26:34Z"}, {"lat": 33.884899, "lon": -84.530332, "time": "2026-05-24T02:26:38Z"}, {"lat": 33.884901, "lon": -84.530332, "time": "2026-05-24T02:26:42Z"}, {"lat": 33.884898, "lon": -84.530318, "time": "2026-05-24T02:26:46Z"}, {"lat": 33.884898, "lon": -84.530302, "time": "2026-05-24T02:26:50Z"}, {"lat": 33.88489, "lon": -84.530292, "time": "2026-05-24T02:26:54Z"}, {"lat": 33.884885, "lon": -84.530292, "time": "2026-05-24T02:26:58Z"}, {"lat": 33.884883, "lon": -84.5303, "time": "2026-05-24T02:27:02Z"}, {"lat": 33.884884, "lon": -84.530317, "time": "2026-05-24T02:27:06Z"}, {"lat": 33.884878, "lon": -84.530304, "time": "2026-05-24T02:27:10Z"}, {"lat": 33.884895, "lon": -84.530296, "time": "2026-05-24T02:27:14Z"}, {"lat": 33.88488, "lon": -84.530283, "time": "2026-05-24T02:27:18Z"}, {"lat": 33.884869, "lon": -84.530281, "time": "2026-05-24T02:27:22Z"}, {"lat": 33.884858, "lon": -84.530277, "time": "2026-05-24T02:27:26Z"}, {"lat": 33.884858, "lon": -84.530287, "time": "2026-05-24T02:27:30Z"}, {"lat": 33.884853, "lon": -84.530292, "time": "2026-05-24T02:27:34Z"}, {"lat": 33.884841, "lon": -84.530305, "time": "2026-05-24T02:27:38Z"}, {"lat": 33.884832, "lon": -84.530313, "time": "2026-05-24T02:27:42Z"}, {"lat": 33.884815, "lon": -84.530311, "time": "2026-05-24T02:27:46Z"}, {"lat": 33.884823, "lon": -84.530306, "time": "2026-05-24T02:27:50Z"}, {"lat": 33.884823, "lon": -84.530293, "time": "2026-05-24T02:27:54Z"}, {"lat": 33.884827, "lon": -84.53028, "time": "2026-05-24T02:27:58Z"}, {"lat": 33.884835, "lon": -84.530273, "time": "2026-05-24T02:28:02Z"}, {"lat": 33.884839, "lon": -84.530273, "time": "2026-05-24T02:28:06Z"}, {"lat": 33.884842, "lon": -84.530275, "time": "2026-05-24T02:28:10Z"}, {"lat": 33.884854, "lon": -84.530275, "time": "2026-05-24T02:28:14Z"}, {"lat": 33.884833, "lon": -84.530262, "time": "2026-05-24T02:28:18Z"}, {"lat": 33.884828, "lon": -84.530257, "time": "2026-05-24T02:28:22Z"}, {"lat": 33.884841, "lon": -84.530262, "time": "2026-05-24T02:28:26Z"}, {"lat": 33.884841, "lon": -84.530251, "time": "2026-05-24T02:28:30Z"}, {"lat": 33.88485, "lon": -84.530244, "time": "2026-05-24T02:28:34Z"}, {"lat": 33.884851, "lon": -84.530244, "time": "2026-05-24T02:28:38Z"}, {"lat": 33.884859, "lon": -84.530248, "time": "2026-05-24T02:28:42Z"}, {"lat": 33.884855, "lon": -84.530249, "time": "2026-05-24T02:28:46Z"}, {"lat": 33.884841, "lon": -84.530247, "time": "2026-05-24T02:28:50Z"}, {"lat": 33.884815, "lon": -84.530245, "time": "2026-05-24T02:28:54Z"}, {"lat": 33.884813, "lon": -84.530251, "time": "2026-05-24T02:28:58Z"}, {"lat": 33.884813, "lon": -84.53025, "time": "2026-05-24T02:29:02Z"}, {"lat": 33.884812, "lon": -84.530252, "time": "2026-05-24T02:29:06Z"}, {"lat": 33.884812, "lon": -84.530259, "time": "2026-05-24T02:29:10Z"}, {"lat": 33.884814, "lon": -84.530257, "time": "2026-05-24T02:29:14Z"}, {"lat": 33.884826, "lon": -84.530258, "time": "2026-05-24T02:29:18Z"}, {"lat": 33.884838, "lon": -84.530263, "time": "2026-05-24T02:29:22Z"}, {"lat": 33.884846, "lon": -84.530265, "time": "2026-05-24T02:29:26Z"}, {"lat": 33.884864, "lon": -84.530264, "time": "2026-05-24T02:29:30Z"}, {"lat": 33.884872, "lon": -84.530258, "time": "2026-05-24T02:29:34Z"}, {"lat": 33.884875, "lon": -84.530245, "time": "2026-05-24T02:29:38Z"}, {"lat": 33.884875, "lon": -84.530235, "time": "2026-05-24T02:29:42Z"}, {"lat": 33.884874, "lon": -84.530229, "time": "2026-05-24T02:29:46Z"}, {"lat": 33.884871, "lon": -84.530229, "time": "2026-05-24T02:29:50Z"}, {"lat": 33.884864, "lon": -84.530232, "time": "2026-05-24T02:29:54Z"}, {"lat": 33.884879, "lon": -84.530241, "time": "2026-05-24T02:29:58Z"}, {"lat": 33.884895, "lon": -84.530243, "time": "2026-05-24T02:30:02Z"}, {"lat": 33.884905, "lon": -84.530244, "time": "2026-05-24T02:30:06Z"}, {"lat": 33.884897, "lon": -84.530245, "time": "2026-05-24T02:30:10Z"}, {"lat": 33.884903, "lon": -84.530247, "time": "2026-05-24T02:30:14Z"}, {"lat": 33.884905, "lon": -84.530253, "time": "2026-05-24T02:30:18Z"}, {"lat": 33.884911, "lon": -84.530256, "time": "2026-05-24T02:30:22Z"}, {"lat": 33.884911, "lon": -84.530256, "time": "2026-05-24T02:30:26Z"}, {"lat": 33.884909, "lon": -84.530256, "time": "2026-05-24T02:30:30Z"}, {"lat": 33.884914, "lon": -84.530254, "time": "2026-05-24T02:30:34Z"}, {"lat": 33.88491, "lon": -84.530248, "time": "2026-05-24T02:30:38Z"}, {"lat": 33.884897, "lon": -84.530244, "time": "2026-05-24T02:30:42Z"}, {"lat": 33.884888, "lon": -84.530245, "time": "2026-05-24T02:30:46Z"}, {"lat": 33.884878, "lon": -84.530251, "time": "2026-05-24T02:30:50Z"}, {"lat": 33.884861, "lon": -84.530255, "time": "2026-05-24T02:30:54Z"}, {"lat": 33.884857, "lon": -84.530259, "time": "2026-05-24T02:30:58Z"}, {"lat": 33.884856, "lon": -84.530263, "time": "2026-05-24T02:31:02Z"}, {"lat": 33.884853, "lon": -84.530269, "time": "2026-05-24T02:31:06Z"}, {"lat": 33.884847, "lon": -84.53027, "time": "2026-05-24T02:31:10Z"}, {"lat": 33.884844, "lon": -84.530291, "time": "2026-05-24T02:31:14Z"}, {"lat": 33.884833, "lon": -84.530287, "time": "2026-05-24T02:31:18Z"}, {"lat": 33.884829, "lon": -84.530283, "time": "2026-05-24T02:31:22Z"}, {"lat": 33.884835, "lon": -84.53028, "time": "2026-05-24T02:31:26Z"}, {"lat": 33.884837, "lon": -84.530281, "time": "2026-05-24T02:31:30Z"}, {"lat": 33.884846, "lon": -84.530286, "time": "2026-05-24T02:31:34Z"}, {"lat": 33.884857, "lon": -84.530302, "time": "2026-05-24T02:32:27Z"}, {"lat": 33.884784, "lon": -84.530501, "time": "2026-05-24T02:34:56Z"}, {"lat": 33.88493, "lon": -84.530716, "time": "2026-05-24T02:37:36Z"}, {"lat": 33.885007, "lon": -84.530765, "time": "2026-05-24T02:39:57Z"}, {"lat": 33.885077, "lon": -84.530788, "time": "2026-05-24T02:42:38Z"}, {"lat": 33.885077, "lon": -84.530788, "time": "2026-05-24T02:44:12Z"}, {"lat": 33.884937, "lon": -84.530717, "time": "2026-05-24T02:49:14Z"}, {"lat": 33.884937, "lon": -84.530717, "time": "2026-05-24T03:11:59Z"}, {"lat": 33.884937, "lon": -84.530717, "time": "2026-05-24T04:08:44Z"}, {"lat": 33.884937, "lon": -84.530717, "time": "2026-05-24T05:08:44Z"}, {"lat": 33.884988, "lon": -84.530788, "time": "2026-05-24T05:10:08Z"}, {"lat": 33.884937, "lon": -84.530717, "time": "2026-05-24T05:11:26Z"}, {"lat": 33.884937, "lon": -84.530717, "time": "2026-05-24T05:11:50Z"}, {"lat": 33.884982, "lon": -84.530788, "time": "2026-05-24T05:13:27Z"}, {"lat": 33.884988, "lon": -84.530798, "time": "2026-05-24T05:14:18Z"}, {"lat": 33.884988, "lon": -84.530793, "time": "2026-05-24T05:15:06Z"}, {"lat": 33.884985, "lon": -84.530791, "time": "2026-05-24T05:15:57Z"}, {"lat": 33.884988, "lon": -84.530792, "time": "2026-05-24T05:16:48Z"}, {"lat": 33.884982, "lon": -84.530783, "time": "2026-05-24T05:18:03Z"}, {"lat": 33.884989, "lon": -84.530778, "time": "2026-05-24T05:18:51Z"}, {"lat": 33.884986, "lon": -84.53078, "time": "2026-05-24T05:19:42Z"}, {"lat": 33.884984, "lon": -84.530783, "time": "2026-05-24T05:20:33Z"}, {"lat": 33.884984, "lon": -84.530778, "time": "2026-05-24T05:21:21Z"}, {"lat": 33.884981, "lon": -84.530778, "time": "2026-05-24T05:22:36Z"}, {"lat": 33.884978, "lon": -84.530778, "time": "2026-05-24T05:23:27Z"}, {"lat": 33.884979, "lon": -84.530781, "time": "2026-05-24T05:24:18Z"}, {"lat": 33.884989, "lon": -84.530777, "time": "2026-05-24T05:25:09Z"}, {"lat": 33.884992, "lon": -84.530777, "time": "2026-05-24T05:25:57Z"}, {"lat": 33.884994, "lon": -84.530774, "time": "2026-05-24T05:27:12Z"}, {"lat": 33.884994, "lon": -84.530774, "time": "2026-05-24T06:11:26Z"}, {"lat": 33.884994, "lon": -84.530774, "time": "2026-05-24T07:11:26Z"}, {"lat": 33.884994, "lon": -84.530774, "time": "2026-05-24T08:11:26Z"}, {"lat": 33.884994, "lon": -84.530774, "time": "2026-05-24T09:11:26Z"}, {"lat": 33.884994, "lon": -84.530774, "time": "2026-05-24T10:11:26Z"}, {"lat": 33.885009, "lon": -84.530819, "time": "2026-05-24T10:46:25Z"}, {"lat": 33.88508, "lon": -84.530834, "time": "2026-05-24T10:48:47Z"}, {"lat": 33.884943, "lon": -84.530972, "time": "2026-05-24T10:51:21Z"}, {"lat": 33.884834, "lon": -84.531134, "time": "2026-05-24T10:53:54Z"}, {"lat": 33.885001, "lon": -84.530921, "time": "2026-05-24T10:56:19Z"}, {"lat": 33.884751, "lon": -84.530998, "time": "2026-05-24T10:58:51Z"}, {"lat": 33.884889, "lon": -84.530931, "time": "2026-05-24T11:01:17Z"}, {"lat": 33.885006, "lon": -84.530546, "time": "2026-05-24T11:03:47Z"}, {"lat": 33.884761, "lon": -84.530335, "time": "2026-05-24T11:06:17Z"}, {"lat": 33.884738, "lon": -84.530297, "time": "2026-05-24T11:08:47Z"}, {"lat": 33.884707, "lon": -84.530322, "time": "2026-05-24T11:11:19Z"}, {"lat": 33.884601, "lon": -84.530414, "time": "2026-05-24T11:13:52Z"}, {"lat": 33.884656, "lon": -84.530368, "time": "2026-05-24T11:16:18Z"}, {"lat": 33.88477, "lon": -84.530396, "time": "2026-05-24T11:18:47Z"}, {"lat": 33.884753, "lon": -84.530269, "time": "2026-05-24T11:21:16Z"}, {"lat": 33.88497, "lon": -84.530396, "time": "2026-05-24T11:23:46Z"}, {"lat": 33.885135, "lon": -84.530444, "time": "2026-05-24T11:26:18Z"}, {"lat": 33.884913, "lon": -84.530982, "time": "2026-05-24T11:28:48Z"}, {"lat": 33.884916, "lon": -84.531141, "time": "2026-05-24T11:31:18Z"}, {"lat": 33.884918, "lon": -84.531014, "time": "2026-05-24T11:33:49Z"}, {"lat": 33.885042, "lon": -84.530747, "time": "2026-05-24T11:36:19Z"}, {"lat": 33.885078, "lon": -84.530705, "time": "2026-05-24T11:38:46Z"}, {"lat": 33.884998, "lon": -84.530719, "time": "2026-05-24T11:41:26Z"}, {"lat": 33.884853, "lon": -84.530871, "time": "2026-05-24T11:43:46Z"}, {"lat": 33.884888, "lon": -84.530848, "time": "2026-05-24T11:46:16Z"}, {"lat": 33.884883, "lon": -84.530857, "time": "2026-05-24T11:48:47Z"}, {"lat": 33.884785, "lon": -84.530737, "time": "2026-05-24T11:51:17Z"}, {"lat": 33.884779, "lon": -84.530739, "time": "2026-05-24T11:53:48Z"}, {"lat": 33.884758, "lon": -84.530772, "time": "2026-05-24T11:56:16Z"}, {"lat": 33.884767, "lon": -84.530776, "time": "2026-05-24T11:58:47Z"}, {"lat": 33.884699, "lon": -84.530768, "time": "2026-05-24T12:01:17Z"}, {"lat": 33.884841, "lon": -84.530756, "time": "2026-05-24T12:03:47Z"}, {"lat": 33.884858, "lon": -84.530785, "time": "2026-05-24T12:06:17Z"}, {"lat": 33.884807, "lon": -84.530947, "time": "2026-05-24T12:08:47Z"}, {"lat": 33.884858, "lon": -84.530509, "time": "2026-05-24T12:11:15Z"}, {"lat": 33.884775, "lon": -84.530403, "time": "2026-05-24T12:13:47Z"}, {"lat": 33.884842, "lon": -84.530422, "time": "2026-05-24T12:16:20Z"}, {"lat": 33.885094, "lon": -84.530958, "time": "2026-05-24T12:18:49Z"}, {"lat": 33.885021, "lon": -84.530723, "time": "2026-05-24T12:21:21Z"}, {"lat": 33.88503, "lon": -84.530866, "time": "2026-05-24T12:23:51Z"}, {"lat": 33.885015, "lon": -84.530817, "time": "2026-05-24T12:26:20Z"}, {"lat": 33.884997, "lon": -84.530822, "time": "2026-05-24T12:28:48Z"}, {"lat": 33.88509, "lon": -84.530833, "time": "2026-05-24T12:31:17Z"}, {"lat": 33.885098, "lon": -84.530747, "time": "2026-05-24T12:33:43Z"}, {"lat": 33.885018, "lon": -84.530881, "time": "2026-05-24T12:36:30Z"}, {"lat": 33.885273, "lon": -84.531098, "time": "2026-05-24T12:39:12Z"}, {"lat": 33.884939, "lon": -84.531238, "time": "2026-05-24T12:41:18Z"}, {"lat": 33.885183, "lon": -84.531153, "time": "2026-05-24T12:43:48Z"}, {"lat": 33.884953, "lon": -84.530953, "time": "2026-05-24T12:46:17Z"}, {"lat": 33.884996, "lon": -84.531204, "time": "2026-05-24T12:48:47Z"}, {"lat": 33.884995, "lon": -84.53116, "time": "2026-05-24T12:51:17Z"}, {"lat": 33.884982, "lon": -84.531215, "time": "2026-05-24T12:53:48Z"}, {"lat": 33.885045, "lon": -84.531243, "time": "2026-05-24T12:56:18Z"}, {"lat": 33.884955, "lon": -84.531064, "time": "2026-05-24T12:58:47Z"}, {"lat": 33.884959, "lon": -84.531111, "time": "2026-05-24T13:01:19Z"}, {"lat": 33.885082, "lon": -84.531208, "time": "2026-05-24T13:03:48Z"}, {"lat": 33.88504, "lon": -84.530758, "time": "2026-05-24T13:06:16Z"}, {"lat": 33.885004, "lon": -84.530822, "time": "2026-05-24T13:08:45Z"}, {"lat": 33.885038, "lon": -84.530719, "time": "2026-05-24T13:11:15Z"}, {"lat": 33.884963, "lon": -84.530762, "time": "2026-05-24T13:12:26Z"}, {"lat": 33.884975, "lon": -84.530677, "time": "2026-05-24T13:13:45Z"}, {"lat": 33.884949, "lon": -84.530797, "time": "2026-05-24T13:16:21Z"}, {"lat": 33.884985, "lon": -84.530799, "time": "2026-05-24T13:18:46Z"}, {"lat": 33.885025, "lon": -84.530761, "time": "2026-05-24T13:21:16Z"}, {"lat": 33.88494, "lon": -84.530966, "time": "2026-05-24T13:23:48Z"}, {"lat": 33.885053, "lon": -84.531034, "time": "2026-05-24T13:29:49Z"}, {"lat": 33.885186, "lon": -84.530885, "time": "2026-05-24T13:32:24Z"}, {"lat": 33.885143, "lon": -84.530925, "time": "2026-05-24T13:34:50Z"}, {"lat": 33.885001, "lon": -84.530922, "time": "2026-05-24T13:37:22Z"}, {"lat": 33.885064, "lon": -84.530889, "time": "2026-05-24T13:40:40Z"}, {"lat": 33.885016, "lon": -84.530812, "time": "2026-05-24T13:43:12Z"}, {"lat": 33.88533, "lon": -84.53068, "time": "2026-05-24T13:45:37Z"}, {"lat": 33.885495, "lon": -84.53076, "time": "2026-05-24T13:48:08Z"}, {"lat": 33.885633, "lon": -84.530499, "time": "2026-05-24T13:50:39Z"}, {"lat": 33.885737, "lon": -84.530361, "time": "2026-05-24T13:53:07Z"}, {"lat": 33.88581, "lon": -84.530414, "time": "2026-05-24T13:55:39Z"}, {"lat": 33.88556, "lon": -84.530104, "time": "2026-05-24T13:58:06Z"}, {"lat": 33.884966, "lon": -84.530337, "time": "2026-05-24T14:00:38Z"}, {"lat": 33.884689, "lon": -84.5306, "time": "2026-05-24T14:03:09Z"}, {"lat": 33.88501, "lon": -84.530624, "time": "2026-05-24T14:05:36Z"}, {"lat": 33.885024, "lon": -84.530863, "time": "2026-05-24T14:08:09Z"}, {"lat": 33.88495, "lon": -84.530752, "time": "2026-05-24T14:10:45Z"}, {"lat": 33.884952, "lon": -84.530788, "time": "2026-05-24T14:13:16Z"}, {"lat": 33.88503, "lon": -84.530755, "time": "2026-05-24T14:15:45Z"}, {"lat": 33.885011, "lon": -84.530726, "time": "2026-05-24T14:18:14Z"}, {"lat": 33.884951, "lon": -84.53076, "time": "2026-05-24T14:20:43Z"}, {"lat": 33.885011, "lon": -84.530769, "time": "2026-05-24T14:23:14Z"}, {"lat": 33.884996, "lon": -84.530756, "time": "2026-05-24T14:25:44Z"}, {"lat": 33.88503, "lon": -84.530721, "time": "2026-05-24T14:28:11Z"}, {"lat": 33.884935, "lon": -84.530763, "time": "2026-05-24T14:30:39Z"}, {"lat": 33.885016, "lon": -84.530713, "time": "2026-05-24T14:33:10Z"}, {"lat": 33.884995, "lon": -84.530718, "time": "2026-05-24T14:35:38Z"}, {"lat": 33.884779, "lon": -84.53085, "time": "2026-05-24T14:38:08Z"}, {"lat": 33.884806, "lon": -84.53089, "time": "2026-05-24T14:40:38Z"}, {"lat": 33.884775, "lon": -84.530811, "time": "2026-05-24T14:43:13Z"}, {"lat": 33.884721, "lon": -84.530862, "time": "2026-05-24T14:45:39Z"}, {"lat": 33.884833, "lon": -84.530952, "time": "2026-05-24T14:48:08Z"}, {"lat": 33.884809, "lon": -84.53086, "time": "2026-05-24T14:50:39Z"}, {"lat": 33.88475, "lon": -84.530832, "time": "2026-05-24T14:53:08Z"}, {"lat": 33.884911, "lon": -84.530868, "time": "2026-05-24T14:55:40Z"}, {"lat": 33.88498, "lon": -84.530745, "time": "2026-05-24T14:58:12Z"}, {"lat": 33.884903, "lon": -84.531007, "time": "2026-05-24T15:00:37Z"}, {"lat": 33.884487, "lon": -84.530891, "time": "2026-05-24T15:03:10Z"}, {"lat": 33.884669, "lon": -84.530978, "time": "2026-05-24T15:05:38Z"}, {"lat": 33.884618, "lon": -84.530842, "time": "2026-05-24T15:08:08Z"}, {"lat": 33.884643, "lon": -84.530883, "time": "2026-05-24T15:10:38Z"}, {"lat": 33.88468, "lon": -84.530871, "time": "2026-05-24T15:13:09Z"}, {"lat": 33.884694, "lon": -84.530901, "time": "2026-05-24T15:15:39Z"}, {"lat": 33.884714, "lon": -84.530918, "time": "2026-05-24T15:18:20Z"}, {"lat": 33.884771, "lon": -84.531087, "time": "2026-05-24T15:20:49Z"}, {"lat": 33.884823, "lon": -84.530918, "time": "2026-05-24T15:23:09Z"}, {"lat": 33.884904, "lon": -84.530722, "time": "2026-05-24T15:25:38Z"}, {"lat": 33.884977, "lon": -84.530698, "time": "2026-05-24T15:28:10Z"}, {"lat": 33.884953, "lon": -84.530919, "time": "2026-05-24T15:30:48Z"}, {"lat": 33.884959, "lon": -84.530907, "time": "2026-05-24T15:33:09Z"}, {"lat": 33.884955, "lon": -84.530889, "time": "2026-05-24T15:35:38Z"}, {"lat": 33.884967, "lon": -84.530924, "time": "2026-05-24T15:38:10Z"}, {"lat": 33.885013, "lon": -84.530961, "time": "2026-05-24T15:40:39Z"}, {"lat": 33.884953, "lon": -84.530668, "time": "2026-05-24T15:43:10Z"}, {"lat": 33.884975, "lon": -84.530833, "time": "2026-05-24T15:45:40Z"}, {"lat": 33.884968, "lon": -84.53091, "time": "2026-05-24T15:48:08Z"}, {"lat": 33.884954, "lon": -84.530873, "time": "2026-05-24T15:50:59Z"}, {"lat": 33.884965, "lon": -84.530784, "time": "2026-05-24T15:56:12Z"}, {"lat": 33.885129, "lon": -84.530931, "time": "2026-05-24T15:58:52Z"}, {"lat": 33.885007, "lon": -84.530874, "time": "2026-05-24T16:01:09Z"}, {"lat": 33.884995, "lon": -84.530889, "time": "2026-05-24T16:03:32Z"}, {"lat": 33.884995, "lon": -84.530889, "time": "2026-05-24T16:06:06Z"}, {"lat": 33.885037, "lon": -84.531116, "time": "2026-05-24T16:14:03Z"}, {"lat": 33.885037, "lon": -84.531116, "time": "2026-05-24T16:16:06Z"}, {"lat": 33.884987, "lon": -84.530886, "time": "2026-05-24T16:24:02Z"}, {"lat": 33.885007, "lon": -84.530892, "time": "2026-05-24T16:26:22Z"}, {"lat": 33.884947, "lon": -84.530913, "time": "2026-05-24T16:28:49Z"}, {"lat": 33.884881, "lon": -84.530994, "time": "2026-05-24T16:31:19Z"}, {"lat": 33.885021, "lon": -84.530806, "time": "2026-05-24T16:33:53Z"}, {"lat": 33.885037, "lon": -84.530613, "time": "2026-05-24T16:36:18Z"}, {"lat": 33.884903, "lon": -84.53088, "time": "2026-05-24T16:38:49Z"}, {"lat": 33.885053, "lon": -84.530921, "time": "2026-05-24T16:41:20Z"}, {"lat": 33.885087, "lon": -84.530737, "time": "2026-05-24T16:43:48Z"}, {"lat": 33.884917, "lon": -84.530526, "time": "2026-05-24T16:46:20Z"}, {"lat": 33.884947, "lon": -84.530853, "time": "2026-05-24T16:48:49Z"}, {"lat": 33.884978, "lon": -84.531021, "time": "2026-05-24T16:51:17Z"}, {"lat": 33.884932, "lon": -84.530918, "time": "2026-05-24T16:53:47Z"}, {"lat": 33.884987, "lon": -84.531021, "time": "2026-05-24T16:56:27Z"}, {"lat": 33.885013, "lon": -84.530677, "time": "2026-05-24T16:58:50Z"}, {"lat": 33.885026, "lon": -84.530556, "time": "2026-05-24T17:01:17Z"}, {"lat": 33.885191, "lon": -84.530302, "time": "2026-05-24T17:03:49Z"}, {"lat": 33.885319, "lon": -84.530379, "time": "2026-05-24T17:06:16Z"}, {"lat": 33.884985, "lon": -84.530351, "time": "2026-05-24T17:08:49Z"}, {"lat": 33.885051, "lon": -84.530683, "time": "2026-05-24T17:11:20Z"}, {"lat": 33.885013, "lon": -84.530313, "time": "2026-05-24T17:13:47Z"}, {"lat": 33.884794, "lon": -84.530408, "time": "2026-05-24T17:16:17Z"}, {"lat": 33.884782, "lon": -84.530392, "time": "2026-05-24T17:18:47Z"}, {"lat": 33.884749, "lon": -84.530317, "time": "2026-05-24T17:21:17Z"}, {"lat": 33.884734, "lon": -84.530354, "time": "2026-05-24T17:23:48Z"}, {"lat": 33.8846, "lon": -84.530377, "time": "2026-05-24T17:26:33Z"}, {"lat": 33.884627, "lon": -84.530506, "time": "2026-05-24T17:29:00Z"}, {"lat": 33.884592, "lon": -84.530363, "time": "2026-05-24T17:31:19Z"}, {"lat": 33.884592, "lon": -84.530363, "time": "2026-05-24T17:36:27Z"}, {"lat": 33.884676, "lon": -84.530277, "time": "2026-05-24T17:36:58Z"}, {"lat": 33.884676, "lon": -84.530277, "time": "2026-05-24T17:46:27Z"}, {"lat": 33.884684, "lon": -84.530344, "time": "2026-05-24T18:01:11Z"}, {"lat": 33.884615, "lon": -84.530357, "time": "2026-05-24T18:33:05Z"}, {"lat": 33.884583, "lon": -84.530311, "time": "2026-05-24T18:36:05Z"}, {"lat": 33.884504, "lon": -84.530314, "time": "2026-05-24T18:38:55Z"}, {"lat": 33.884514, "lon": -84.530397, "time": "2026-05-24T18:41:02Z"}, {"lat": 33.884514, "lon": -84.530397, "time": "2026-05-24T18:42:59Z"}, {"lat": 33.88456, "lon": -84.530358, "time": "2026-05-24T18:44:12Z"}, {"lat": 33.88467, "lon": -84.530355, "time": "2026-05-24T18:46:45Z"}, {"lat": 33.88467, "lon": -84.530355, "time": "2026-05-24T18:52:59Z"}, {"lat": 33.884577, "lon": -84.530273, "time": "2026-05-24T19:03:50Z"}, {"lat": 33.884602, "lon": -84.5304, "time": "2026-05-24T19:06:32Z"}, {"lat": 33.884602, "lon": -84.5304, "time": "2026-05-24T19:12:59Z"}, {"lat": 33.884679, "lon": -84.530292, "time": "2026-05-24T19:26:41Z"}, {"lat": 33.88481, "lon": -84.530492, "time": "2026-05-24T19:29:12Z"}, {"lat": 33.884714, "lon": -84.530406, "time": "2026-05-24T19:32:11Z"}, {"lat": 33.884715, "lon": -84.530483, "time": "2026-05-24T19:34:41Z"}, {"lat": 33.884702, "lon": -84.530679, "time": "2026-05-24T19:37:11Z"}, {"lat": 33.884798, "lon": -84.530592, "time": "2026-05-24T19:39:44Z"}, {"lat": 33.884809, "lon": -84.530347, "time": "2026-05-24T19:42:09Z"}, {"lat": 33.885022, "lon": -84.530656, "time": "2026-05-24T19:44:39Z"}, {"lat": 33.885107, "lon": -84.530714, "time": "2026-05-24T19:47:13Z"}, {"lat": 33.885082, "lon": -84.530621, "time": "2026-05-24T19:49:39Z"}, {"lat": 33.884901, "lon": -84.530902, "time": "2026-05-24T19:52:08Z"}, {"lat": 33.884837, "lon": -84.531186, "time": "2026-05-24T19:54:43Z"}, {"lat": 33.884863, "lon": -84.530947, "time": "2026-05-24T19:57:10Z"}, {"lat": 33.884721, "lon": -84.530742, "time": "2026-05-24T19:59:44Z"}, {"lat": 33.884678, "lon": -84.530887, "time": "2026-05-24T20:02:11Z"}, {"lat": 33.884642, "lon": -84.530949, "time": "2026-05-24T20:04:40Z"}, {"lat": 33.884579, "lon": -84.531219, "time": "2026-05-24T20:07:09Z"}, {"lat": 33.884828, "lon": -84.530987, "time": "2026-05-24T20:09:40Z"}, {"lat": 33.884814, "lon": -84.530966, "time": "2026-05-24T20:12:12Z"}, {"lat": 33.884861, "lon": -84.531054, "time": "2026-05-24T20:14:40Z"}, {"lat": 33.884878, "lon": -84.531199, "time": "2026-05-24T20:17:09Z"}, {"lat": 33.884732, "lon": -84.530983, "time": "2026-05-24T20:19:41Z"}, {"lat": 33.884947, "lon": -84.531097, "time": "2026-05-24T20:22:11Z"}, {"lat": 33.884638, "lon": -84.531078, "time": "2026-05-24T20:24:40Z"}, {"lat": 33.884832, "lon": -84.53111, "time": "2026-05-24T20:27:08Z"}, {"lat": 33.884724, "lon": -84.530949, "time": "2026-05-24T20:29:40Z"}, {"lat": 33.884801, "lon": -84.530711, "time": "2026-05-24T20:32:09Z"}, {"lat": 33.884738, "lon": -84.530891, "time": "2026-05-24T20:34:46Z"}, {"lat": 33.88477, "lon": -84.530707, "time": "2026-05-24T20:37:15Z"}, {"lat": 33.884777, "lon": -84.530705, "time": "2026-05-24T20:39:43Z"}, {"lat": 33.884769, "lon": -84.53085, "time": "2026-05-24T20:42:42Z"}, {"lat": 33.884797, "lon": -84.530745, "time": "2026-05-24T20:44:38Z"}, {"lat": 33.884993, "lon": -84.530582, "time": "2026-05-24T20:47:08Z"}, {"lat": 33.885111, "lon": -84.530673, "time": "2026-05-24T20:49:38Z"}, {"lat": 33.88486, "lon": -84.530641, "time": "2026-05-24T20:52:08Z"}, {"lat": 33.884778, "lon": -84.530651, "time": "2026-05-24T20:54:38Z"}, {"lat": 33.884778, "lon": -84.530651, "time": "2026-05-24T20:57:02Z"}, {"lat": 33.884703, "lon": -84.530649, "time": "2026-05-24T21:01:01Z"}, {"lat": 33.884702, "lon": -84.530647, "time": "2026-05-24T21:03:28Z"}, {"lat": 33.884804, "lon": -84.530738, "time": "2026-05-24T21:05:59Z"}, {"lat": 33.884791, "lon": -84.530737, "time": "2026-05-24T21:08:28Z"}, {"lat": 33.884797, "lon": -84.5306, "time": "2026-05-24T21:15:44Z"}, {"lat": 33.884904, "lon": -84.530692, "time": "2026-05-24T21:18:17Z"}, {"lat": 33.88497, "lon": -84.530615, "time": "2026-05-24T21:20:45Z"}, {"lat": 33.884987, "lon": -84.530845, "time": "2026-05-24T21:23:17Z"}, {"lat": 33.885061, "lon": -84.530824, "time": "2026-05-24T21:25:51Z"}, {"lat": 33.885085, "lon": -84.530699, "time": "2026-05-24T21:28:18Z"}, {"lat": 33.88512, "lon": -84.530751, "time": "2026-05-24T21:30:52Z"}, {"lat": 33.885055, "lon": -84.53065, "time": "2026-05-24T21:33:22Z"}, {"lat": 33.885055, "lon": -84.53065, "time": "2026-05-24T21:38:12Z"}, {"lat": 33.885046, "lon": -84.530799, "time": "2026-05-24T21:45:01Z"}, {"lat": 33.885012, "lon": -84.530656, "time": "2026-05-24T21:47:37Z"}, {"lat": 33.885039, "lon": -84.530701, "time": "2026-05-24T21:50:05Z"}, {"lat": 33.88503, "lon": -84.53072, "time": "2026-05-24T21:53:36Z"}, {"lat": 33.884943, "lon": -84.53073, "time": "2026-05-24T21:56:34Z"}, {"lat": 33.885058, "lon": -84.530748, "time": "2026-05-24T21:58:45Z"}, {"lat": 33.884974, "lon": -84.530747, "time": "2026-05-24T22:01:07Z"}, {"lat": 33.885039, "lon": -84.530738, "time": "2026-05-24T22:03:39Z"}, {"lat": 33.884981, "lon": -84.530797, "time": "2026-05-24T22:06:58Z"}, {"lat": 33.885057, "lon": -84.530682, "time": "2026-05-24T22:09:31Z"}, {"lat": 33.885075, "lon": -84.530746, "time": "2026-05-24T22:35:46Z"}, {"lat": 33.884935, "lon": -84.530755, "time": "2026-05-24T22:38:58Z"}, {"lat": 33.884965, "lon": -84.530713, "time": "2026-05-24T22:42:40Z"}, {"lat": 33.885016, "lon": -84.530791, "time": "2026-05-24T22:45:06Z"}, {"lat": 33.884896, "lon": -84.530703, "time": "2026-05-24T22:48:05Z"}, {"lat": 33.884954, "lon": -84.530962, "time": "2026-05-24T22:50:35Z"}, {"lat": 33.884976, "lon": -84.530973, "time": "2026-05-24T22:53:06Z"}, {"lat": 33.885024, "lon": -84.530607, "time": "2026-05-24T22:55:41Z"}, {"lat": 33.885081, "lon": -84.530663, "time": "2026-05-24T22:58:09Z"}, {"lat": 33.884991, "lon": -84.530609, "time": "2026-05-24T23:00:33Z"}, {"lat": 33.884961, "lon": -84.530571, "time": "2026-05-24T23:03:05Z"}, {"lat": 33.884794, "lon": -84.53039, "time": "2026-05-24T23:05:34Z"}, {"lat": 33.884796, "lon": -84.53042, "time": "2026-05-24T23:08:05Z"}, {"lat": 33.88483, "lon": -84.530901, "time": "2026-05-24T23:10:34Z"}, {"lat": 33.884876, "lon": -84.531063, "time": "2026-05-24T23:13:09Z"}, {"lat": 33.884925, "lon": -84.530876, "time": "2026-05-24T23:15:39Z"}, {"lat": 33.884945, "lon": -84.530723, "time": "2026-05-24T23:18:13Z"}, {"lat": 33.884886, "lon": -84.53081, "time": "2026-05-24T23:20:36Z"}, {"lat": 33.884824, "lon": -84.530884, "time": "2026-05-24T23:23:05Z"}, {"lat": 33.884778, "lon": -84.530977, "time": "2026-05-24T23:25:36Z"}, {"lat": 33.88502, "lon": -84.530806, "time": "2026-05-24T23:28:08Z"}, {"lat": 33.885, "lon": -84.530693, "time": "2026-05-24T23:30:35Z"}, {"lat": 33.885021, "lon": -84.530664, "time": "2026-05-24T23:33:04Z"}, {"lat": 33.8851, "lon": -84.530713, "time": "2026-05-24T23:35:36Z"}, {"lat": 33.88515, "lon": -84.530753, "time": "2026-05-24T23:38:06Z"}, {"lat": 33.885136, "lon": -84.530765, "time": "2026-05-24T23:40:36Z"}, {"lat": 33.885101, "lon": -84.530735, "time": "2026-05-24T23:43:05Z"}, {"lat": 33.885182, "lon": -84.530637, "time": "2026-05-24T23:45:36Z"}, {"lat": 33.885054, "lon": -84.530758, "time": "2026-05-24T23:48:05Z"}, {"lat": 33.8849, "lon": -84.530782, "time": "2026-05-24T23:49:37Z"}, {"lat": 33.885016, "lon": -84.530826, "time": "2026-05-24T23:50:44Z"}, {"lat": 33.8849, "lon": -84.530781, "time": "2026-05-24T23:50:52Z"}, {"lat": 33.884906, "lon": -84.530785, "time": "2026-05-24T23:51:43Z"}, {"lat": 33.884906, "lon": -84.530786, "time": "2026-05-24T23:52:34Z"}, {"lat": 33.884903, "lon": -84.530784, "time": "2026-05-24T23:53:22Z"}, {"lat": 33.884901, "lon": -84.530786, "time": "2026-05-24T23:54:13Z"}, {"lat": 33.884904, "lon": -84.530791, "time": "2026-05-24T23:55:28Z"}, {"lat": 33.884906, "lon": -84.530794, "time": "2026-05-24T23:56:19Z"}, {"lat": 33.884906, "lon": -84.530792, "time": "2026-05-24T23:57:07Z"}, {"lat": 33.884906, "lon": -84.530794, "time": "2026-05-24T23:57:58Z"}, {"lat": 33.884909, "lon": -84.530795, "time": "2026-05-24T23:58:49Z"}, {"lat": 33.884909, "lon": -84.530795, "time": "2026-05-24T23:59:26Z"}, {"lat": 33.884901, "lon": -84.530791, "time": "2026-05-25T00:00:28Z"}, {"lat": 33.884901, "lon": -84.530791, "time": "2026-05-25T00:01:06Z"}, {"lat": 33.884895, "lon": -84.530798, "time": "2026-05-25T00:02:07Z"}, {"lat": 33.8849, "lon": -84.530793, "time": "2026-05-25T00:02:58Z"}, {"lat": 33.884901, "lon": -84.530793, "time": "2026-05-25T00:03:49Z"}, {"lat": 33.884901, "lon": -84.530793, "time": "2026-05-25T00:04:05Z"}, {"lat": 33.884905, "lon": -84.530797, "time": "2026-05-25T00:06:43Z"}, {"lat": 33.884916, "lon": -84.530795, "time": "2026-05-25T00:10:04Z"}, {"lat": 33.884915, "lon": -84.530794, "time": "2026-05-25T00:11:19Z"}, {"lat": 33.884906, "lon": -84.530802, "time": "2026-05-25T00:13:49Z"}, {"lat": 33.884908, "lon": -84.530791, "time": "2026-05-25T00:15:58Z"}, {"lat": 33.884885, "lon": -84.530781, "time": "2026-05-25T00:17:37Z"}, {"lat": 33.884882, "lon": -84.530781, "time": "2026-05-25T00:18:52Z"}, {"lat": 33.884884, "lon": -84.53078, "time": "2026-05-25T00:20:34Z"}, {"lat": 33.88489, "lon": -84.530786, "time": "2026-05-25T00:21:22Z"}, {"lat": 33.88489, "lon": -84.530786, "time": "2026-05-25T00:59:26Z"}, {"lat": 33.88489, "lon": -84.530786, "time": "2026-05-25T01:06:14Z"}, {"lat": 33.884909, "lon": -84.530945, "time": "2026-05-25T01:07:30Z"}, {"lat": 33.88494, "lon": -84.530883, "time": "2026-05-25T01:09:59Z"}, {"lat": 33.884865, "lon": -84.530874, "time": "2026-05-25T01:12:29Z"}, {"lat": 33.884863, "lon": -84.53072, "time": "2026-05-25T01:16:17Z"}, {"lat": 33.884876, "lon": -84.530857, "time": "2026-05-25T01:18:40Z"}, {"lat": 33.884972, "lon": -84.530789, "time": "2026-05-25T01:39:11Z"}, {"lat": 33.88506, "lon": -84.530792, "time": "2026-05-25T06:40:21Z"}, {"lat": 33.884836, "lon": -84.530871, "time": "2026-05-25T06:41:50Z"}, {"lat": 33.88501, "lon": -84.530735, "time": "2026-05-25T06:42:38Z"}, {"lat": 33.884742, "lon": -84.530905, "time": "2026-05-25T06:43:04Z"}, {"lat": 33.884879, "lon": -84.530783, "time": "2026-05-25T06:43:55Z"}, {"lat": 33.884802, "lon": -84.530826, "time": "2026-05-25T06:44:43Z"}, {"lat": 33.884927, "lon": -84.530792, "time": "2026-05-25T06:45:01Z"}, {"lat": 33.884945, "lon": -84.530771, "time": "2026-05-25T06:45:34Z"}, {"lat": 33.884864, "lon": -84.530831, "time": "2026-05-25T06:46:49Z"}, {"lat": 33.884798, "lon": -84.530677, "time": "2026-05-25T06:47:28Z"}, {"lat": 33.884784, "lon": -84.53082, "time": "2026-05-25T06:47:40Z"}, {"lat": 33.884864, "lon": -84.530916, "time": "2026-05-25T06:48:28Z"}, {"lat": 33.884866, "lon": -84.530758, "time": "2026-05-25T06:49:19Z"}, {"lat": 33.884808, "lon": -84.530827, "time": "2026-05-25T06:49:59Z"}, {"lat": 33.884882, "lon": -84.530805, "time": "2026-05-25T06:50:10Z"}, {"lat": 33.884805, "lon": -84.53087, "time": "2026-05-25T06:51:25Z"}, {"lat": 33.88488, "lon": -84.530708, "time": "2026-05-25T06:52:30Z"}, {"lat": 33.884791, "lon": -84.530675, "time": "2026-05-25T06:54:59Z"}, {"lat": 33.885006, "lon": -84.530812, "time": "2026-05-25T06:57:31Z"}, {"lat": 33.885009, "lon": -84.53072, "time": "2026-05-25T07:00:05Z"}, {"lat": 33.884982, "lon": -84.530732, "time": "2026-05-25T07:02:30Z"}, {"lat": 33.884961, "lon": -84.530677, "time": "2026-05-25T07:04:59Z"}, {"lat": 33.884949, "lon": -84.530831, "time": "2026-05-25T07:07:40Z"}, {"lat": 33.885005, "lon": -84.530791, "time": "2026-05-25T07:10:01Z"}, {"lat": 33.884851, "lon": -84.530866, "time": "2026-05-25T07:12:30Z"}, {"lat": 33.885032, "lon": -84.530863, "time": "2026-05-25T07:15:01Z"}, {"lat": 33.884956, "lon": -84.530747, "time": "2026-05-25T07:17:28Z"}, {"lat": 33.885011, "lon": -84.530569, "time": "2026-05-25T07:19:56Z"}, {"lat": 33.885565, "lon": -84.530521, "time": "2026-05-25T07:22:26Z"}, {"lat": 33.885851, "lon": -84.530352, "time": "2026-05-25T07:24:56Z"}, {"lat": 33.885868, "lon": -84.530339, "time": "2026-05-25T07:27:26Z"}, {"lat": 33.885797, "lon": -84.530377, "time": "2026-05-25T07:29:56Z"}, {"lat": 33.885677, "lon": -84.530198, "time": "2026-05-25T07:32:27Z"}, {"lat": 33.885662, "lon": -84.530181, "time": "2026-05-25T07:34:59Z"}, {"lat": 33.885513, "lon": -84.530402, "time": "2026-05-25T07:37:28Z"}, {"lat": 33.885564, "lon": -84.530401, "time": "2026-05-25T07:40:04Z"}, {"lat": 33.884851, "lon": -84.530571, "time": "2026-05-25T07:42:27Z"}, {"lat": 33.884814, "lon": -84.530543, "time": "2026-05-25T07:44:56Z"}, {"lat": 33.884792, "lon": -84.530635, "time": "2026-05-25T07:47:24Z"}, {"lat": 33.8848, "lon": -84.530575, "time": "2026-05-25T07:49:55Z"}, {"lat": 33.884711, "lon": -84.53061, "time": "2026-05-25T07:52:25Z"}, {"lat": 33.884178, "lon": -84.530343, "time": "2026-05-25T07:54:57Z"}, {"lat": 33.884142, "lon": -84.530371, "time": "2026-05-25T07:57:26Z"}, {"lat": 33.883546, "lon": -84.530462, "time": "2026-05-25T07:59:58Z"}, {"lat": 33.883633, "lon": -84.530551, "time": "2026-05-25T08:02:29Z"}, {"lat": 33.883635, "lon": -84.53067, "time": "2026-05-25T08:04:59Z"}, {"lat": 33.883685, "lon": -84.530424, "time": "2026-05-25T08:07:27Z"}, {"lat": 33.883417, "lon": -84.530336, "time": "2026-05-25T08:09:56Z"}, {"lat": 33.883522, "lon": -84.53063, "time": "2026-05-25T08:12:26Z"}, {"lat": 33.883412, "lon": -84.530399, "time": "2026-05-25T08:14:57Z"}, {"lat": 33.883283, "lon": -84.530461, "time": "2026-05-25T08:17:27Z"}, {"lat": 33.883243, "lon": -84.530556, "time": "2026-05-25T08:19:58Z"}, {"lat": 33.883044, "lon": -84.530753, "time": "2026-05-25T08:22:27Z"}, {"lat": 33.882971, "lon": -84.530684, "time": "2026-05-25T08:24:58Z"}, {"lat": 33.88285, "lon": -84.530877, "time": "2026-05-25T08:27:27Z"}, {"lat": 33.88302, "lon": -84.53113, "time": "2026-05-25T08:29:57Z"}, {"lat": 33.883145, "lon": -84.531257, "time": "2026-05-25T08:32:26Z"}, {"lat": 33.883156, "lon": -84.531302, "time": "2026-05-25T08:34:56Z"}, {"lat": 33.883357, "lon": -84.53123, "time": "2026-05-25T08:37:27Z"}, {"lat": 33.883435, "lon": -84.530943, "time": "2026-05-25T08:39:56Z"}, {"lat": 33.883594, "lon": -84.53107, "time": "2026-05-25T08:42:28Z"}, {"lat": 33.883899, "lon": -84.530699, "time": "2026-05-25T08:44:55Z"}, {"lat": 33.884862, "lon": -84.530548, "time": "2026-05-25T08:47:25Z"}, {"lat": 33.885034, "lon": -84.530634, "time": "2026-05-25T08:49:55Z"}, {"lat": 33.885139, "lon": -84.530622, "time": "2026-05-25T08:52:27Z"}, {"lat": 33.88538, "lon": -84.530513, "time": "2026-05-25T08:54:56Z"}, {"lat": 33.885172, "lon": -84.530508, "time": "2026-05-25T08:57:24Z"}, {"lat": 33.885, "lon": -84.530655, "time": "2026-05-25T08:59:57Z"}, {"lat": 33.884932, "lon": -84.53067, "time": "2026-05-25T09:02:26Z"}, {"lat": 33.885002, "lon": -84.53067, "time": "2026-05-25T09:04:56Z"}, {"lat": 33.885088, "lon": -84.530918, "time": "2026-05-25T09:07:27Z"}, {"lat": 33.88496, "lon": -84.530827, "time": "2026-05-25T09:09:59Z"}, {"lat": 33.88503, "lon": -84.530745, "time": "2026-05-25T09:12:30Z"}, {"lat": 33.885012, "lon": -84.530835, "time": "2026-05-25T09:15:16Z"}, {"lat": 33.884854, "lon": -84.530815, "time": "2026-05-25T09:17:29Z"}, {"lat": 33.884835, "lon": -84.53084, "time": "2026-05-25T09:19:57Z"}, {"lat": 33.885036, "lon": -84.530778, "time": "2026-05-25T09:22:30Z"}, {"lat": 33.884821, "lon": -84.530729, "time": "2026-05-25T09:25:00Z"}, {"lat": 33.884828, "lon": -84.530766, "time": "2026-05-25T09:27:28Z"}, {"lat": 33.885061, "lon": -84.530905, "time": "2026-05-25T09:29:59Z"}, {"lat": 33.885166, "lon": -84.53081, "time": "2026-05-25T09:32:29Z"}, {"lat": 33.885039, "lon": -84.530722, "time": "2026-05-25T09:35:05Z"}, {"lat": 33.885022, "lon": -84.530774, "time": "2026-05-25T09:37:31Z"}, {"lat": 33.885009, "lon": -84.530858, "time": "2026-05-25T09:39:57Z"}, {"lat": 33.88504, "lon": -84.530845, "time": "2026-05-25T09:42:28Z"}, {"lat": 33.885013, "lon": -84.530772, "time": "2026-05-25T09:45:02Z"}, {"lat": 33.885102, "lon": -84.530692, "time": "2026-05-25T09:47:29Z"}, {"lat": 33.884999, "lon": -84.530785, "time": "2026-05-25T09:49:57Z"}, {"lat": 33.885053, "lon": -84.530815, "time": "2026-05-25T09:52:27Z"}, {"lat": 33.884987, "lon": -84.530708, "time": "2026-05-25T10:06:33Z"}, {"lat": 33.884917, "lon": -84.530769, "time": "2026-05-25T10:09:03Z"}, {"lat": 33.885053, "lon": -84.530754, "time": "2026-05-25T10:12:06Z"}, {"lat": 33.885001, "lon": -84.530824, "time": "2026-05-25T10:14:38Z"}, {"lat": 33.885001, "lon": -84.530824, "time": "2026-05-25T10:16:26Z"}, {"lat": 33.884988, "lon": -84.530665, "time": "2026-05-25T10:28:04Z"}, {"lat": 33.884949, "lon": -84.530753, "time": "2026-05-25T10:30:32Z"}, {"lat": 33.884839, "lon": -84.530826, "time": "2026-05-25T10:32:59Z"}, {"lat": 33.884718, "lon": -84.530823, "time": "2026-05-25T10:35:30Z"}, {"lat": 33.884815, "lon": -84.530826, "time": "2026-05-25T10:37:59Z"}, {"lat": 33.884876, "lon": -84.530875, "time": "2026-05-25T10:40:31Z"}, {"lat": 33.884812, "lon": -84.530837, "time": "2026-05-25T10:43:20Z"}, {"lat": 33.884857, "lon": -84.53081, "time": "2026-05-25T10:45:44Z"}, {"lat": 33.884857, "lon": -84.53081, "time": "2026-05-25T10:47:52Z"}, {"lat": 33.884814, "lon": -84.530834, "time": "2026-05-25T11:09:42Z"}, {"lat": 33.88478, "lon": -84.53091, "time": "2026-05-25T11:14:35Z"}, {"lat": 33.884928, "lon": -84.53079, "time": "2026-05-25T11:16:44Z"}, {"lat": 33.884822, "lon": -84.53098, "time": "2026-05-25T11:19:13Z"}, {"lat": 33.884773, "lon": -84.530832, "time": "2026-05-25T11:21:47Z"}, {"lat": 33.88485, "lon": -84.530764, "time": "2026-05-25T11:24:19Z"}, {"lat": 33.88485, "lon": -84.530764, "time": "2026-05-25T11:29:06Z"}, {"lat": 33.884805, "lon": -84.530843, "time": "2026-05-25T11:35:48Z"}, {"lat": 33.884805, "lon": -84.530843, "time": "2026-05-25T11:39:06Z"}, {"lat": 33.884873, "lon": -84.530862, "time": "2026-05-25T11:47:14Z"}, {"lat": 33.884873, "lon": -84.530862, "time": "2026-05-25T11:49:06Z"}, {"lat": 33.884777, "lon": -84.530822, "time": "2026-05-25T12:12:08Z"}, {"lat": 33.884828, "lon": -84.530793, "time": "2026-05-25T12:14:35Z"}, {"lat": 33.884828, "lon": -84.530793, "time": "2026-05-25T12:22:01Z"}, {"lat": 33.88473, "lon": -84.530771, "time": "2026-05-25T12:56:24Z"}, {"lat": 33.884839, "lon": -84.5307, "time": "2026-05-25T12:59:06Z"}, {"lat": 33.884918, "lon": -84.531081, "time": "2026-05-25T13:01:34Z"}, {"lat": 33.884918, "lon": -84.531081, "time": "2026-05-25T13:06:17Z"}, {"lat": 33.884832, "lon": -84.530814, "time": "2026-05-25T13:20:27Z"}, {"lat": 33.884893, "lon": -84.530817, "time": "2026-05-25T13:22:58Z"}, {"lat": 33.884771, "lon": -84.530783, "time": "2026-05-25T13:25:29Z"}, {"lat": 33.884771, "lon": -84.530783, "time": "2026-05-25T13:25:46Z"}, {"lat": 33.884803, "lon": -84.530837, "time": "2026-05-25T13:33:46Z"}, {"lat": 33.884803, "lon": -84.530837, "time": "2026-05-25T13:35:46Z"}, {"lat": 33.88479, "lon": -84.530898, "time": "2026-05-25T13:50:38Z"}, {"lat": 33.88479, "lon": -84.530898, "time": "2026-05-25T13:55:46Z"}, {"lat": 33.884757, "lon": -84.530856, "time": "2026-05-25T14:05:18Z"}, {"lat": 33.884709, "lon": -84.53091, "time": "2026-05-25T14:07:48Z"}, {"lat": 33.884859, "lon": -84.530788, "time": "2026-05-25T14:10:25Z"}, {"lat": 33.884916, "lon": -84.530864, "time": "2026-05-25T14:13:23Z"}, {"lat": 33.884916, "lon": -84.530864, "time": "2026-05-25T14:15:11Z"}, {"lat": 33.88486, "lon": -84.530741, "time": "2026-05-25T14:29:56Z"}, {"lat": 33.884827, "lon": -84.530783, "time": "2026-05-25T14:32:38Z"}, {"lat": 33.88492, "lon": -84.530702, "time": "2026-05-25T14:45:54Z"}, {"lat": 33.88492, "lon": -84.530702, "time": "2026-05-25T14:49:48Z"}, {"lat": 33.884769, "lon": -84.530792, "time": "2026-05-25T14:58:37Z"}, {"lat": 33.885, "lon": -84.530925, "time": "2026-05-25T15:01:06Z"}, {"lat": 33.884967, "lon": -84.530842, "time": "2026-05-25T15:03:34Z"}, {"lat": 33.884961, "lon": -84.530966, "time": "2026-05-25T15:06:14Z"}, {"lat": 33.884958, "lon": -84.531022, "time": "2026-05-25T15:08:46Z"}, {"lat": 33.885278, "lon": -84.530881, "time": "2026-05-25T15:11:10Z"}, {"lat": 33.88507, "lon": -84.530775, "time": "2026-05-25T15:13:39Z"}, {"lat": 33.88511, "lon": -84.530281, "time": "2026-05-25T15:16:09Z"}, {"lat": 33.88478, "lon": -84.530649, "time": "2026-05-25T15:18:33Z"}, {"lat": 33.884802, "lon": -84.530759, "time": "2026-05-25T15:21:04Z"}, {"lat": 33.884768, "lon": -84.530684, "time": "2026-05-25T15:23:33Z"}, {"lat": 33.884764, "lon": -84.530626, "time": "2026-05-25T15:26:04Z"}, {"lat": 33.884764, "lon": -84.530626, "time": "2026-05-25T15:31:02Z"}, {"lat": 33.884707, "lon": -84.530627, "time": "2026-05-25T15:31:20Z"}, {"lat": 33.885038, "lon": -84.530736, "time": "2026-05-25T15:33:51Z"}, {"lat": 33.884992, "lon": -84.530818, "time": "2026-05-25T15:36:23Z"}, {"lat": 33.884926, "lon": -84.530863, "time": "2026-05-25T15:38:55Z"}, {"lat": 33.884897, "lon": -84.530154, "time": "2026-05-25T15:41:24Z"}, {"lat": 33.884942, "lon": -84.530232, "time": "2026-05-25T15:43:52Z"}, {"lat": 33.885061, "lon": -84.530728, "time": "2026-05-25T15:46:20Z"}, {"lat": 33.884986, "lon": -84.531101, "time": "2026-05-25T15:48:56Z"}, {"lat": 33.885003, "lon": -84.531189, "time": "2026-05-25T15:51:26Z"}, {"lat": 33.884927, "lon": -84.531127, "time": "2026-05-25T15:53:57Z"}, {"lat": 33.884973, "lon": -84.531188, "time": "2026-05-25T15:56:23Z"}, {"lat": 33.884832, "lon": -84.531157, "time": "2026-05-25T15:58:51Z"}, {"lat": 33.88453, "lon": -84.530886, "time": "2026-05-25T16:01:29Z"}, {"lat": 33.884929, "lon": -84.530927, "time": "2026-05-25T16:03:51Z"}, {"lat": 33.884999, "lon": -84.530811, "time": "2026-05-25T16:06:21Z"}, {"lat": 33.885034, "lon": -84.530838, "time": "2026-05-25T16:08:52Z"}, {"lat": 33.884766, "lon": -84.530675, "time": "2026-05-25T16:11:21Z"}, {"lat": 33.884801, "lon": -84.530671, "time": "2026-05-25T16:13:50Z"}, {"lat": 33.884629, "lon": -84.530469, "time": "2026-05-25T16:16:20Z"}, {"lat": 33.884759, "lon": -84.530638, "time": "2026-05-25T16:18:52Z"}, {"lat": 33.884691, "lon": -84.530712, "time": "2026-05-25T16:21:21Z"}, {"lat": 33.884702, "lon": -84.530653, "time": "2026-05-25T16:23:50Z"}, {"lat": 33.884791, "lon": -84.530654, "time": "2026-05-25T16:26:20Z"}, {"lat": 33.884787, "lon": -84.530648, "time": "2026-05-25T16:28:51Z"}, {"lat": 33.884788, "lon": -84.530648, "time": "2026-05-25T16:31:21Z"}, {"lat": 33.884773, "lon": -84.530619, "time": "2026-05-25T16:33:50Z"}, {"lat": 33.884781, "lon": -84.530643, "time": "2026-05-25T16:36:22Z"}, {"lat": 33.884802, "lon": -84.530811, "time": "2026-05-25T16:38:53Z"}, {"lat": 33.884796, "lon": -84.530699, "time": "2026-05-25T16:41:23Z"}, {"lat": 33.884838, "lon": -84.530581, "time": "2026-05-25T16:43:53Z"}, {"lat": 33.884777, "lon": -84.530844, "time": "2026-05-25T16:46:24Z"}, {"lat": 33.884786, "lon": -84.530667, "time": "2026-05-25T16:48:54Z"}, {"lat": 33.884786, "lon": -84.530667, "time": "2026-05-25T16:51:15Z"}, {"lat": 33.88474, "lon": -84.530642, "time": "2026-05-25T16:52:06Z"}, {"lat": 33.884812, "lon": -84.53066, "time": "2026-05-25T16:54:37Z"}, {"lat": 33.884835, "lon": -84.530687, "time": "2026-05-25T16:57:05Z"}, {"lat": 33.884708, "lon": -84.530762, "time": "2026-05-25T16:59:35Z"}, {"lat": 33.884685, "lon": -84.53065, "time": "2026-05-25T17:02:06Z"}, {"lat": 33.884866, "lon": -84.530733, "time": "2026-05-25T17:04:35Z"}, {"lat": 33.884761, "lon": -84.530645, "time": "2026-05-25T17:07:06Z"}, {"lat": 33.884788, "lon": -84.530906, "time": "2026-05-25T17:09:38Z"}, {"lat": 33.884851, "lon": -84.530708, "time": "2026-05-25T17:12:09Z"}, {"lat": 33.884807, "lon": -84.530892, "time": "2026-05-25T17:16:57Z"}, {"lat": 33.884725, "lon": -84.530776, "time": "2026-05-25T17:19:02Z"}, {"lat": 33.88485, "lon": -84.530859, "time": "2026-05-25T17:21:34Z"}, {"lat": 33.88485, "lon": -84.530859, "time": "2026-05-25T17:22:01Z"}, {"lat": 33.884723, "lon": -84.530709, "time": "2026-05-25T17:24:46Z"}, {"lat": 33.88471, "lon": -84.530883, "time": "2026-05-25T17:27:17Z"}, {"lat": 33.884815, "lon": -84.530855, "time": "2026-05-25T17:31:17Z"}, {"lat": 33.885071, "lon": -84.53075, "time": "2026-05-25T17:33:45Z"}, {"lat": 33.884871, "lon": -84.530163, "time": "2026-05-25T17:36:18Z"}, {"lat": 33.884979, "lon": -84.530386, "time": "2026-05-25T17:38:48Z"}, {"lat": 33.885335, "lon": -84.530451, "time": "2026-05-25T17:41:15Z"}, {"lat": 33.885382, "lon": -84.530339, "time": "2026-05-25T17:43:46Z"}, {"lat": 33.885359, "lon": -84.530348, "time": "2026-05-25T17:46:16Z"}, {"lat": 33.884795, "lon": -84.530325, "time": "2026-05-25T17:48:45Z"}, {"lat": 33.884725, "lon": -84.530331, "time": "2026-05-25T17:51:14Z"}, {"lat": 33.884762, "lon": -84.530435, "time": "2026-05-25T17:53:45Z"}, {"lat": 33.885088, "lon": -84.530629, "time": "2026-05-25T17:56:15Z"}, {"lat": 33.884807, "lon": -84.530095, "time": "2026-05-25T17:58:48Z"}, {"lat": 33.884877, "lon": -84.530762, "time": "2026-05-25T18:01:33Z"}, {"lat": 33.884956, "lon": -84.530928, "time": "2026-05-25T18:03:46Z"}, {"lat": 33.885003, "lon": -84.530873, "time": "2026-05-25T18:06:15Z"}, {"lat": 33.88495, "lon": -84.530966, "time": "2026-05-25T18:08:46Z"}, {"lat": 33.884995, "lon": -84.530934, "time": "2026-05-25T18:11:14Z"}, {"lat": 33.884986, "lon": -84.530911, "time": "2026-05-25T18:13:45Z"}, {"lat": 33.885062, "lon": -84.530893, "time": "2026-05-25T18:16:15Z"}, {"lat": 33.885025, "lon": -84.530935, "time": "2026-05-25T18:18:54Z"}, {"lat": 33.885035, "lon": -84.530851, "time": "2026-05-25T18:21:25Z"}, {"lat": 33.885009, "lon": -84.530885, "time": "2026-05-25T18:23:56Z"}, {"lat": 33.885024, "lon": -84.530825, "time": "2026-05-25T18:26:29Z"}, {"lat": 33.885013, "lon": -84.530932, "time": "2026-05-25T18:29:20Z"}, {"lat": 33.884931, "lon": -84.530863, "time": "2026-05-25T18:31:50Z"}, {"lat": 33.885058, "lon": -84.530882, "time": "2026-05-25T18:34:21Z"}, {"lat": 33.885021, "lon": -84.5309, "time": "2026-05-25T18:36:52Z"}, {"lat": 33.88501, "lon": -84.530838, "time": "2026-05-25T18:39:20Z"}, {"lat": 33.885072, "lon": -84.530826, "time": "2026-05-25T18:41:52Z"}, {"lat": 33.884982, "lon": -84.530899, "time": "2026-05-25T18:44:22Z"}, {"lat": 33.885006, "lon": -84.53101, "time": "2026-05-25T19:02:28Z"}, {"lat": 33.88497, "lon": -84.530921, "time": "2026-05-25T19:04:58Z"}, {"lat": 33.885018, "lon": -84.530853, "time": "2026-05-25T19:07:26Z"}, {"lat": 33.884933, "lon": -84.531016, "time": "2026-05-25T19:09:58Z"}, {"lat": 33.884984, "lon": -84.53086, "time": "2026-05-25T19:12:28Z"}, {"lat": 33.884914, "lon": -84.531183, "time": "2026-05-25T19:15:09Z"}, {"lat": 33.884945, "lon": -84.530959, "time": "2026-05-25T19:17:29Z"}, {"lat": 33.884966, "lon": -84.530957, "time": "2026-05-25T19:19:56Z"}, {"lat": 33.885028, "lon": -84.530907, "time": "2026-05-25T19:22:27Z"}, {"lat": 33.885028, "lon": -84.530907, "time": "2026-05-25T19:25:02Z"}, {"lat": 33.885021, "lon": -84.53086, "time": "2026-05-25T19:25:42Z"}, {"lat": 33.885002, "lon": -84.530985, "time": "2026-05-25T19:28:13Z"}, {"lat": 33.88502, "lon": -84.530797, "time": "2026-05-25T19:30:42Z"}, {"lat": 33.88502, "lon": -84.530797, "time": "2026-05-25T19:35:02Z"}, {"lat": 33.884989, "lon": -84.530976, "time": "2026-05-25T19:35:41Z"}, {"lat": 33.885011, "lon": -84.530971, "time": "2026-05-25T19:38:10Z"}, {"lat": 33.884998, "lon": -84.530954, "time": "2026-05-25T19:40:41Z"}, {"lat": 33.884942, "lon": -84.530897, "time": "2026-05-25T19:43:12Z"}, {"lat": 33.884841, "lon": -84.530996, "time": "2026-05-25T19:45:40Z"}, {"lat": 33.884487, "lon": -84.531081, "time": "2026-05-25T19:48:13Z"}, {"lat": 33.884882, "lon": -84.530657, "time": "2026-05-25T19:50:40Z"}, {"lat": 33.884854, "lon": -84.530625, "time": "2026-05-25T19:53:11Z"}, {"lat": 33.884948, "lon": -84.530694, "time": "2026-05-25T19:55:42Z"}, {"lat": 33.884793, "lon": -84.530782, "time": "2026-05-25T19:58:10Z"}, {"lat": 33.885105, "lon": -84.530656, "time": "2026-05-25T20:00:41Z"}, {"lat": 33.885067, "lon": -84.530699, "time": "2026-05-25T20:03:19Z"}, {"lat": 33.885015, "lon": -84.530735, "time": "2026-05-25T20:06:21Z"}, {"lat": 33.884931, "lon": -84.531026, "time": "2026-05-25T20:08:21Z"}, {"lat": 33.884975, "lon": -84.531092, "time": "2026-05-25T20:10:56Z"}, {"lat": 33.885116, "lon": -84.531159, "time": "2026-05-25T20:13:34Z"}, {"lat": 33.884991, "lon": -84.530982, "time": "2026-05-25T20:15:44Z"}, {"lat": 33.88508, "lon": -84.530668, "time": "2026-05-25T20:18:12Z"}, {"lat": 33.885098, "lon": -84.530511, "time": "2026-05-25T20:20:41Z"}, {"lat": 33.885091, "lon": -84.530182, "time": "2026-05-25T20:23:12Z"}, {"lat": 33.88524, "lon": -84.530138, "time": "2026-05-25T20:25:43Z"}, {"lat": 33.88538, "lon": -84.530232, "time": "2026-05-25T20:28:13Z"}, {"lat": 33.885195, "lon": -84.53025, "time": "2026-05-25T20:30:48Z"}, {"lat": 33.885166, "lon": -84.530154, "time": "2026-05-25T20:33:15Z"}, {"lat": 33.884923, "lon": -84.530442, "time": "2026-05-25T20:35:43Z"}, {"lat": 33.884808, "lon": -84.530325, "time": "2026-05-25T20:38:12Z"}, {"lat": 33.884664, "lon": -84.530347, "time": "2026-05-25T20:40:46Z"}, {"lat": 33.884588, "lon": -84.530309, "time": "2026-05-25T20:43:14Z"}, {"lat": 33.884588, "lon": -84.530309, "time": "2026-05-25T20:45:35Z"}, {"lat": 33.884853, "lon": -84.530064, "time": "2026-05-25T20:46:14Z"}, {"lat": 33.884712, "lon": -84.530345, "time": "2026-05-25T20:48:27Z"}, {"lat": 33.884592, "lon": -84.530369, "time": "2026-05-25T20:51:01Z"}, {"lat": 33.884588, "lon": -84.530522, "time": "2026-05-25T20:53:32Z"}, {"lat": 33.884796, "lon": -84.53035, "time": "2026-05-25T20:56:06Z"}, {"lat": 33.884483, "lon": -84.530421, "time": "2026-05-25T20:58:34Z"}, {"lat": 33.884644, "lon": -84.530286, "time": "2026-05-25T21:04:08Z"}, {"lat": 33.884217, "lon": -84.529936, "time": "2026-05-25T21:06:43Z"}, {"lat": 33.884559, "lon": -84.530137, "time": "2026-05-25T21:09:24Z"}, {"lat": 33.884653, "lon": -84.530311, "time": "2026-05-25T21:15:59Z"}, {"lat": 33.884646, "lon": -84.530278, "time": "2026-05-25T21:18:23Z"}, {"lat": 33.884508, "lon": -84.530327, "time": "2026-05-25T21:35:46Z"}, {"lat": 33.884546, "lon": -84.530217, "time": "2026-05-25T21:38:21Z"}, {"lat": 33.884575, "lon": -84.530393, "time": "2026-05-25T21:40:39Z"}, {"lat": 33.884582, "lon": -84.530155, "time": "2026-05-25T21:43:05Z"}, {"lat": 33.884593, "lon": -84.530269, "time": "2026-05-25T21:45:41Z"}, {"lat": 33.884687, "lon": -84.530202, "time": "2026-05-25T21:50:30Z"}, {"lat": 33.884549, "lon": -84.530254, "time": "2026-05-25T21:52:58Z"}, {"lat": 33.884549, "lon": -84.530254, "time": "2026-05-25T21:55:38Z"}, {"lat": 33.884668, "lon": -84.53032, "time": "2026-05-25T21:58:53Z"}, {"lat": 33.884603, "lon": -84.530277, "time": "2026-05-25T22:01:23Z"}, {"lat": 33.884598, "lon": -84.530377, "time": "2026-05-25T22:03:51Z"}, {"lat": 33.884938, "lon": -84.530291, "time": "2026-05-25T22:06:10Z"}, {"lat": 33.88488, "lon": -84.530318, "time": "2026-05-25T22:06:14Z"}, {"lat": 33.884819, "lon": -84.53033, "time": "2026-05-25T22:06:18Z"}, {"lat": 33.884779, "lon": -84.530323, "time": "2026-05-25T22:06:22Z"}, {"lat": 33.884763, "lon": -84.530315, "time": "2026-05-25T22:06:26Z"}, {"lat": 33.884758, "lon": -84.530322, "time": "2026-05-25T22:06:30Z"}, {"lat": 33.884747, "lon": -84.530336, "time": "2026-05-25T22:06:34Z"}, {"lat": 33.884618, "lon": -84.530346, "time": "2026-05-25T22:06:59Z"}, {"lat": 33.884768, "lon": -84.530212, "time": "2026-05-25T22:09:27Z"}, {"lat": 33.884521, "lon": -84.530381, "time": "2026-05-25T22:13:02Z"}, {"lat": 33.884775, "lon": -84.530221, "time": "2026-05-25T22:15:36Z"}, {"lat": 33.884739, "lon": -84.530313, "time": "2026-05-25T22:18:05Z"}, {"lat": 33.884729, "lon": -84.53031, "time": "2026-05-25T22:20:05Z"}, {"lat": 33.884741, "lon": -84.530263, "time": "2026-05-25T22:20:09Z"}, {"lat": 33.884751, "lon": -84.530271, "time": "2026-05-25T22:20:13Z"}, {"lat": 33.884739, "lon": -84.530283, "time": "2026-05-25T22:20:17Z"}, {"lat": 33.884687, "lon": -84.530357, "time": "2026-05-25T22:20:28Z"}, {"lat": 33.884707, "lon": -84.530391, "time": "2026-05-25T22:23:05Z"}, {"lat": 33.884799, "lon": -84.530278, "time": "2026-05-25T22:23:11Z"}, {"lat": 33.88475, "lon": -84.530303, "time": "2026-05-25T22:23:15Z"}, {"lat": 33.884755, "lon": -84.530312, "time": "2026-05-25T22:23:19Z"}, {"lat": 33.88475, "lon": -84.5303, "time": "2026-05-25T22:23:23Z"}, {"lat": 33.884734, "lon": -84.530303, "time": "2026-05-25T22:23:27Z"}, {"lat": 33.884733, "lon": -84.530297, "time": "2026-05-25T22:23:31Z"}, {"lat": 33.88473, "lon": -84.530312, "time": "2026-05-25T22:23:35Z"}, {"lat": 33.884723, "lon": -84.530326, "time": "2026-05-25T22:23:39Z"}, {"lat": 33.884721, "lon": -84.530333, "time": "2026-05-25T22:23:43Z"}, {"lat": 33.884717, "lon": -84.530333, "time": "2026-05-25T22:23:47Z"}, {"lat": 33.884713, "lon": -84.530344, "time": "2026-05-25T22:23:51Z"}, {"lat": 33.884712, "lon": -84.530342, "time": "2026-05-25T22:23:55Z"}, {"lat": 33.884714, "lon": -84.530352, "time": "2026-05-25T22:23:59Z"}, {"lat": 33.884716, "lon": -84.530354, "time": "2026-05-25T22:24:03Z"}, {"lat": 33.884717, "lon": -84.530351, "time": "2026-05-25T22:24:07Z"}, {"lat": 33.884717, "lon": -84.530338, "time": "2026-05-25T22:24:11Z"}, {"lat": 33.88472, "lon": -84.530354, "time": "2026-05-25T22:24:15Z"}, {"lat": 33.884722, "lon": -84.53036, "time": "2026-05-25T22:24:19Z"}, {"lat": 33.884724, "lon": -84.530356, "time": "2026-05-25T22:24:23Z"}, {"lat": 33.884725, "lon": -84.530343, "time": "2026-05-25T22:24:27Z"}, {"lat": 33.884727, "lon": -84.530326, "time": "2026-05-25T22:24:31Z"}, {"lat": 33.88473, "lon": -84.530309, "time": "2026-05-25T22:24:35Z"}, {"lat": 33.884739, "lon": -84.530324, "time": "2026-05-25T22:24:39Z"}, {"lat": 33.884743, "lon": -84.530346, "time": "2026-05-25T22:24:43Z"}, {"lat": 33.884745, "lon": -84.530408, "time": "2026-05-25T22:24:47Z"}, {"lat": 33.884831, "lon": -84.530521, "time": "2026-05-25T22:24:51Z"}, {"lat": 33.884931, "lon": -84.530616, "time": "2026-05-25T22:24:55Z"}, {"lat": 33.884968, "lon": -84.530655, "time": "2026-05-25T22:24:59Z"}, {"lat": 33.884987, "lon": -84.530674, "time": "2026-05-25T22:25:03Z"}, {"lat": 33.884989, "lon": -84.530662, "time": "2026-05-25T22:25:07Z"}, {"lat": 33.884986, "lon": -84.530662, "time": "2026-05-25T22:25:11Z"}, {"lat": 33.884982, "lon": -84.530651, "time": "2026-05-25T22:25:15Z"}, {"lat": 33.884972, "lon": -84.530662, "time": "2026-05-25T22:25:19Z"}, {"lat": 33.884975, "lon": -84.530653, "time": "2026-05-25T22:25:23Z"}, {"lat": 33.884978, "lon": -84.530641, "time": "2026-05-25T22:25:27Z"}, {"lat": 33.884975, "lon": -84.53066, "time": "2026-05-25T22:25:31Z"}, {"lat": 33.884977, "lon": -84.530674, "time": "2026-05-25T22:25:35Z"}, {"lat": 33.884978, "lon": -84.530683, "time": "2026-05-25T22:25:39Z"}, {"lat": 33.884974, "lon": -84.530687, "time": "2026-05-25T22:25:43Z"}, {"lat": 33.884972, "lon": -84.530682, "time": "2026-05-25T22:25:47Z"}, {"lat": 33.884961, "lon": -84.530678, "time": "2026-05-25T22:25:51Z"}, {"lat": 33.884959, "lon": -84.530695, "time": "2026-05-25T22:25:55Z"}, {"lat": 33.884973, "lon": -84.530693, "time": "2026-05-25T22:25:59Z"}, {"lat": 33.884977, "lon": -84.530692, "time": "2026-05-25T22:26:03Z"}, {"lat": 33.88497, "lon": -84.530695, "time": "2026-05-25T22:26:07Z"}, {"lat": 33.884978, "lon": -84.53069, "time": "2026-05-25T22:26:11Z"}, {"lat": 33.885001, "lon": -84.530694, "time": "2026-05-25T22:26:15Z"}, {"lat": 33.884991, "lon": -84.530696, "time": "2026-05-25T22:26:19Z"}, {"lat": 33.884987, "lon": -84.5307, "time": "2026-05-25T22:26:23Z"}, {"lat": 33.884988, "lon": -84.530699, "time": "2026-05-25T22:26:27Z"}, {"lat": 33.884987, "lon": -84.530701, "time": "2026-05-25T22:26:31Z"}, {"lat": 33.884987, "lon": -84.530707, "time": "2026-05-25T22:26:35Z"}, {"lat": 33.884986, "lon": -84.530713, "time": "2026-05-25T22:26:39Z"}, {"lat": 33.884973, "lon": -84.530697, "time": "2026-05-25T22:26:43Z"}, {"lat": 33.88495, "lon": -84.530683, "time": "2026-05-25T22:26:47Z"}, {"lat": 33.884958, "lon": -84.530701, "time": "2026-05-25T22:26:51Z"}, {"lat": 33.884964, "lon": -84.530712, "time": "2026-05-25T22:26:55Z"}, {"lat": 33.884977, "lon": -84.530734, "time": "2026-05-25T22:26:59Z"}, {"lat": 33.884972, "lon": -84.530736, "time": "2026-05-25T22:27:03Z"}, {"lat": 33.884962, "lon": -84.530748, "time": "2026-05-25T22:27:07Z"}, {"lat": 33.884947, "lon": -84.530746, "time": "2026-05-25T22:27:11Z"}, {"lat": 33.88496, "lon": -84.530754, "time": "2026-05-25T22:27:15Z"}, {"lat": 33.884982, "lon": -84.53074, "time": "2026-05-25T22:27:19Z"}, {"lat": 33.884976, "lon": -84.53074, "time": "2026-05-25T22:27:23Z"}, {"lat": 33.884977, "lon": -84.530774, "time": "2026-05-25T22:27:27Z"}, {"lat": 33.884968, "lon": -84.530775, "time": "2026-05-25T22:27:31Z"}, {"lat": 33.884954, "lon": -84.530783, "time": "2026-05-25T22:27:35Z"}, {"lat": 33.884982, "lon": -84.530761, "time": "2026-05-25T22:27:39Z"}, {"lat": 33.884984, "lon": -84.530793, "time": "2026-05-25T22:27:43Z"}, {"lat": 33.884989, "lon": -84.530788, "time": "2026-05-25T22:27:47Z"}, {"lat": 33.884986, "lon": -84.530792, "time": "2026-05-25T22:27:51Z"}, {"lat": 33.885002, "lon": -84.530791, "time": "2026-05-25T22:27:55Z"}, {"lat": 33.885002, "lon": -84.530787, "time": "2026-05-25T22:27:59Z"}, {"lat": 33.885005, "lon": -84.530768, "time": "2026-05-25T22:28:03Z"}, {"lat": 33.884991, "lon": -84.530781, "time": "2026-05-25T22:28:07Z"}, {"lat": 33.884971, "lon": -84.530768, "time": "2026-05-25T22:28:11Z"}, {"lat": 33.884939, "lon": -84.530776, "time": "2026-05-25T22:28:15Z"}, {"lat": 33.884963, "lon": -84.530764, "time": "2026-05-25T22:28:19Z"}, {"lat": 33.885017, "lon": -84.530753, "time": "2026-05-25T22:28:23Z"}, {"lat": 33.885048, "lon": -84.530703, "time": "2026-05-25T22:28:27Z"}, {"lat": 33.885016, "lon": -84.530667, "time": "2026-05-25T22:28:31Z"}, {"lat": 33.885079, "lon": -84.530603, "time": "2026-05-25T22:28:38Z"}, {"lat": 33.884931, "lon": -84.530723, "time": "2026-05-25T22:31:16Z"}, {"lat": 33.88499, "lon": -84.530979, "time": "2026-05-25T22:33:45Z"}, {"lat": 33.884929, "lon": -84.530764, "time": "2026-05-25T22:36:18Z"}, {"lat": 33.88487, "lon": -84.530834, "time": "2026-05-25T22:38:46Z"}, {"lat": 33.884859, "lon": -84.530806, "time": "2026-05-25T22:41:14Z"}, {"lat": 33.884806, "lon": -84.530758, "time": "2026-05-25T22:43:48Z"}, {"lat": 33.885133, "lon": -84.530733, "time": "2026-05-25T22:46:18Z"}, {"lat": 33.885047, "lon": -84.530768, "time": "2026-05-25T22:49:04Z"}, {"lat": 33.885129, "lon": -84.530721, "time": "2026-05-25T22:51:26Z"}, {"lat": 33.88509, "lon": -84.530804, "time": "2026-05-25T22:54:03Z"}, {"lat": 33.885125, "lon": -84.530701, "time": "2026-05-25T22:56:21Z"}, {"lat": 33.884968, "lon": -84.530742, "time": "2026-05-25T22:59:23Z"}, {"lat": 33.88502, "lon": -84.530869, "time": "2026-05-25T23:01:21Z"}, {"lat": 33.885108, "lon": -84.53075, "time": "2026-05-25T23:03:48Z"}, {"lat": 33.88495, "lon": -84.530827, "time": "2026-05-25T23:06:14Z"}, {"lat": 33.884882, "lon": -84.530783, "time": "2026-05-25T23:08:47Z"}, {"lat": 33.885058, "lon": -84.530725, "time": "2026-05-25T23:11:27Z"}, {"lat": 33.885054, "lon": -84.530676, "time": "2026-05-25T23:13:46Z"}, {"lat": 33.885107, "lon": -84.530822, "time": "2026-05-25T23:16:23Z"}, {"lat": 33.88494, "lon": -84.530824, "time": "2026-05-25T23:18:46Z"}, {"lat": 33.884844, "lon": -84.531009, "time": "2026-05-25T23:21:20Z"}, {"lat": 33.884802, "lon": -84.530948, "time": "2026-05-25T23:23:50Z"}, {"lat": 33.884919, "lon": -84.530954, "time": "2026-05-25T23:26:18Z"}, {"lat": 33.884894, "lon": -84.530919, "time": "2026-05-25T23:28:49Z"}, {"lat": 33.884894, "lon": -84.530848, "time": "2026-05-25T23:31:15Z"}, {"lat": 33.885006, "lon": -84.530914, "time": "2026-05-25T23:33:45Z"}, {"lat": 33.885001, "lon": -84.530733, "time": "2026-05-25T23:36:16Z"}, {"lat": 33.885126, "lon": -84.530693, "time": "2026-05-25T23:38:47Z"}, {"lat": 33.884912, "lon": -84.530016, "time": "2026-05-25T23:41:15Z"}, {"lat": 33.884937, "lon": -84.530133, "time": "2026-05-25T23:43:44Z"}, {"lat": 33.884912, "lon": -84.530872, "time": "2026-05-25T23:46:29Z"}, {"lat": 33.8851, "lon": -84.531138, "time": "2026-05-25T23:49:19Z"}, {"lat": 33.884924, "lon": -84.530625, "time": "2026-05-25T23:59:03Z"}, {"lat": 33.884739, "lon": -84.531073, "time": "2026-05-26T00:01:33Z"}, {"lat": 33.884942, "lon": -84.531185, "time": "2026-05-26T00:03:58Z"}, {"lat": 33.885036, "lon": -84.530709, "time": "2026-05-26T00:06:27Z"}, {"lat": 33.88496, "lon": -84.53038, "time": "2026-05-26T00:08:56Z"}, {"lat": 33.884869, "lon": -84.530395, "time": "2026-05-26T00:11:25Z"}, {"lat": 33.884994, "lon": -84.530444, "time": "2026-05-26T00:13:58Z"}, {"lat": 33.88497, "lon": -84.530615, "time": "2026-05-26T00:16:31Z"}, {"lat": 33.884863, "lon": -84.530856, "time": "2026-05-26T00:21:27Z"}, {"lat": 33.884918, "lon": -84.530975, "time": "2026-05-26T00:24:00Z"}, {"lat": 33.884976, "lon": -84.530858, "time": "2026-05-26T00:26:35Z"}, {"lat": 33.885046, "lon": -84.530682, "time": "2026-05-26T00:28:56Z"}, {"lat": 33.884977, "lon": -84.530767, "time": "2026-05-26T00:30:21Z"}, {"lat": 33.885045, "lon": -84.530851, "time": "2026-05-26T00:31:55Z"}, {"lat": 33.88483, "lon": -84.53081, "time": "2026-05-26T00:33:57Z"}, {"lat": 33.88483, "lon": -84.53081, "time": "2026-05-26T00:40:39Z"}, {"lat": 33.88483, "lon": -84.53081, "time": "2026-05-26T01:40:39Z"}, {"lat": 33.88483, "lon": -84.53081, "time": "2026-05-26T02:40:39Z"}, {"lat": 33.884764, "lon": -84.530869, "time": "2026-05-26T03:34:29Z"}, {"lat": 33.884323, "lon": -84.531625, "time": "2026-05-26T03:36:58Z"}, {"lat": 33.884323, "lon": -84.531625, "time": "2026-05-26T03:44:20Z"}, {"lat": 33.884886, "lon": -84.530772, "time": "2026-05-26T03:45:06Z"}, {"lat": 33.88483, "lon": -84.530916, "time": "2026-05-26T03:47:29Z"}, {"lat": 33.884925, "lon": -84.530797, "time": "2026-05-26T03:50:08Z"}, {"lat": 33.884736, "lon": -84.530913, "time": "2026-05-26T03:52:31Z"}, {"lat": 33.885021, "lon": -84.530791, "time": "2026-05-26T03:55:01Z"}, {"lat": 33.88502, "lon": -84.530706, "time": "2026-05-26T03:57:34Z"}, {"lat": 33.884985, "lon": -84.530822, "time": "2026-05-26T04:00:04Z"}, {"lat": 33.884993, "lon": -84.530803, "time": "2026-05-26T04:02:31Z"}, {"lat": 33.884993, "lon": -84.530803, "time": "2026-05-26T04:11:42Z"}, {"lat": 33.884993, "lon": -84.530803, "time": "2026-05-26T04:51:57Z"}, {"lat": 33.884993, "lon": -84.530803, "time": "2026-05-26T05:51:57Z"}, {"lat": 33.884993, "lon": -84.530803, "time": "2026-05-26T06:51:57Z"}, {"lat": 33.884993, "lon": -84.530803, "time": "2026-05-26T07:51:57Z"}, {"lat": 33.884993, "lon": -84.530803, "time": "2026-05-26T08:51:57Z"}, {"lat": 33.884993, "lon": -84.530803, "time": "2026-05-26T09:51:57Z"}, {"lat": 33.884993, "lon": -84.530803, "time": "2026-05-26T10:51:57Z"}, {"lat": 33.88493, "lon": -84.530795, "time": "2026-05-26T10:59:39Z"}, {"lat": 33.885012, "lon": -84.530742, "time": "2026-05-26T11:01:54Z"}, {"lat": 33.885031, "lon": -84.530225, "time": "2026-05-26T11:04:28Z"}, {"lat": 33.885037, "lon": -84.530398, "time": "2026-05-26T11:06:54Z"}, {"lat": 33.885073, "lon": -84.530593, "time": "2026-05-26T11:09:22Z"}, {"lat": 33.884981, "lon": -84.531006, "time": "2026-05-26T11:11:59Z"}, {"lat": 33.884985, "lon": -84.531059, "time": "2026-05-26T11:15:19Z"}, {"lat": 33.884985, "lon": -84.531059, "time": "2026-05-26T11:19:30Z"}, {"lat": 33.885035, "lon": -84.530717, "time": "2026-05-26T11:20:40Z"}, {"lat": 33.884915, "lon": -84.530737, "time": "2026-05-26T11:23:04Z"}, {"lat": 33.885067, "lon": -84.5307, "time": "2026-05-26T11:25:37Z"}, {"lat": 33.88511, "lon": -84.531025, "time": "2026-05-26T11:28:09Z"}, {"lat": 33.884935, "lon": -84.53107, "time": "2026-05-26T11:30:58Z"}, {"lat": 33.885117, "lon": -84.530846, "time": "2026-05-26T11:33:11Z"}, {"lat": 33.885072, "lon": -84.531207, "time": "2026-05-26T11:36:10Z"}, {"lat": 33.885121, "lon": -84.530977, "time": "2026-05-26T11:38:37Z"}, {"lat": 33.885063, "lon": -84.530739, "time": "2026-05-26T11:41:03Z"}, {"lat": 33.884958, "lon": -84.530645, "time": "2026-05-26T11:43:36Z"}, {"lat": 33.885105, "lon": -84.530598, "time": "2026-05-26T11:46:04Z"}, {"lat": 33.885026, "lon": -84.530481, "time": "2026-05-26T11:48:36Z"}, {"lat": 33.885026, "lon": -84.530481, "time": "2026-05-26T11:50:54Z"}, {"lat": 33.885064, "lon": -84.530529, "time": "2026-05-26T11:53:04Z"}, {"lat": 33.885111, "lon": -84.530629, "time": "2026-05-26T11:55:34Z"}, {"lat": 33.88511, "lon": -84.530463, "time": "2026-05-26T11:58:04Z"}, {"lat": 33.885031, "lon": -84.530547, "time": "2026-05-26T12:00:34Z"}, {"lat": 33.884961, "lon": -84.530347, "time": "2026-05-26T12:04:26Z"}, {"lat": 33.885013, "lon": -84.530437, "time": "2026-05-26T12:09:24Z"}, {"lat": 33.885074, "lon": -84.530616, "time": "2026-05-26T12:11:53Z"}, {"lat": 33.885053, "lon": -84.530459, "time": "2026-05-26T12:16:57Z"}, {"lat": 33.885108, "lon": -84.530591, "time": "2026-05-26T12:19:26Z"}, {"lat": 33.885053, "lon": -84.530558, "time": "2026-05-26T12:21:55Z"}, {"lat": 33.885047, "lon": -84.530497, "time": "2026-05-26T12:24:25Z"}];
+        const throneData = [{"throne_id": 1, "latitude": 33.88492666493249, "longitude": -84.53082325782592, "ping_density": 16293, "estimated_minutes": 8146.5}];
+        
+        // Map initialization
+        const map = L.map('map', { zoomControl: false }).setView([33.884866, -84.530719], 18);
+        L.control.zoom({ position: 'bottomright' }).addTo(map);
+
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abcd',
+            maxZoom: 22
+        }).addTo(map);
+
+        // Layers
+        let heatLayer = null;
+        let traceLayer = null;
+        const anomalyMarkers = L.layerGroup().addTo(map);
+
+        // Core Centroid (Home Base approximation based on average of first 50 points)
+        let homeLat = 33.884866, homeLon = -84.530719;
+
+        // Render starting marker for James' House (2816 Parkwood Rd SE)
+        const homeIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: "<div style='background:#fff9c4; border:3px solid #8d6e63; box-shadow: 2px 2px 0px #5d4037; color:#2d1b4e; padding:4px 8px; border-radius:4px; font-weight:800; font-size:11px; white-space:nowrap; font-family:var(--font-header);'>🏡 START: JAMES' HOUSE (2816 Parkwood Rd SE)</div>",
+            iconSize: [200, 30],
+            iconAnchor: [100, 15]
+        });
+        L.marker([homeLat, homeLon], {icon: homeIcon}).addTo(map);
+        if(rawGpxPoints.length > 50) {
+            homeLat = rawGpxPoints.slice(0,50).reduce((sum, p) => sum + p.lat, 0) / 50;
+            homeLon = rawGpxPoints.slice(0,50).reduce((sum, p) => sum + p.lon, 0) / 50;
+        }
+
+        // Sam's Known Safehouses (Approximations based on outliers)
+        // We will scan the data to find the furthest East (Crestwood) and furthest South (Hillside)
+        let crestwood = {lat: homeLat, lon: homeLon};
+        let hillside = {lat: homeLat, lon: homeLon};
+        
+        rawGpxPoints.forEach(p => {
+            if(p.lon > crestwood.lon) crestwood = p; // Furthest East
+            if(p.lat < hillside.lat) hillside = p;   // Furthest South
+        });
+
+        // Render Anomaly Markers for Safehouses
+        const crestwoodIcon = L.divIcon({className: 'custom-div-icon', html: "<div style='background:#fffdf9; border:2px solid #8d6e63; box-shadow: 2px 2px 0px #5d4037; color:#2d1b4e; padding:3px 6px; border-radius:2px; font-weight:bold; font-size:10px; white-space:nowrap; font-family:var(--font-header);'>🎯 SAM: CRESTWOOD</div>"});
+        const hillsideIcon = L.divIcon({className: 'custom-div-icon', html: "<div style='background:#fffdf9; border:2px solid #8d6e63; box-shadow: 2px 2px 0px #5d4037; color:#2d1b4e; padding:3px 6px; border-radius:2px; font-weight:bold; font-size:10px; white-space:nowrap; font-family:var(--font-header);'>🎯 SAM: HILLSIDE</div>"});
+        
+        L.marker([crestwood.lat, crestwood.lon], {icon: crestwoodIcon}).addTo(anomalyMarkers);
+        L.marker([hillside.lat, hillside.lon], {icon: hillsideIcon}).addTo(anomalyMarkers);
+
+        // Haversine distance formula
+        function calculateDistance(points) {
+            if(points.length < 2) return 0;
+            let dist = 0;
+            for(let i=1; i<points.length; i++) {
+                const p1 = points[i-1], p2 = points[i];
+                const R = 3958.8; // Radius of earth in miles
+                const dLat = (p2.lat - p1.lat) * Math.PI / 180;
+                const dLon = (p2.lon - p1.lon) * Math.PI / 180;
+                const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                        Math.cos(p1.lat * Math.PI / 180) * Math.cos(p2.lat * Math.PI / 180) *
+                        Math.sin(dLon/2) * Math.sin(dLon/2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                dist += R * c;
+            }
+            return dist;
+        }
+
+        function updateMap(endIndex) {
+            const visiblePoints = rawGpxPoints.slice(0, endIndex);
+            
+            // Update Metric Hub
+            const dist = calculateDistance(visiblePoints);
+            document.getElementById('distance-calc').innerText = dist.toFixed(2) + " mi";
+            document.getElementById('point-count').innerText = visiblePoints.length;
+
+            if(visiblePoints.length > 0) {
+                const d = new Date(visiblePoints[visiblePoints.length-1].time);
+                document.getElementById('scrubber-date').innerText = d.toLocaleString();
+            }
+
+            // 1. Heat Layer (The Thrones)
+            if(heatLayer) map.removeLayer(heatLayer);
+            const heatData = visiblePoints.map(p => [p.lat, p.lon, 1]);
+            heatLayer = L.heatLayer(heatData, {radius: 20, blur: 15, maxZoom: 17, gradient: {0.4: '#8d6e63', 0.6: '#81c784', 1.0: '#2d1b4e'}});
+            if (document.getElementById('heat-toggle').checked) {
+                heatLayer.addTo(map);
+            }
+
+            // 2. Trace Layer (Warm Cardboard Dotted Crayon Track - limited to sliding tail of last 150 points for absolute legibility)
+            if(traceLayer) map.removeLayer(traceLayer);
+            const tracePoints = visiblePoints.slice(-150);
+            const latlngs = tracePoints.map(p => [p.lat, p.lon]);
+            traceLayer = L.polyline(latlngs, {color: '#8d6e63', weight: 3, opacity: 0.5, dashArray: '4, 6', lineJoin: 'round'});
+            if (document.getElementById('trace-toggle').checked) {
+                traceLayer.addTo(map);
+            }
+
+            // 3. Predictive Anomaly Loop (Log excursions)
+            const logElement = document.getElementById('recon-log');
+            logElement.innerHTML = '';
+            let excursionCount = 0;
+            
+            // Analyze the last 100 points of the visible set for anomalies
+            const recentPoints = visiblePoints.slice(-100);
+            for(let p of recentPoints) {
+                // Check distance from home base
+                const dLat = (p.lat - homeLat) * Math.PI / 180;
+                const dLon = (p.lon - homeLon) * Math.PI / 180;
+                const distHome = 3958.8 * 2 * Math.atan2(Math.sqrt(Math.sin(dLat/2)**2 + Math.cos(homeLat*Math.PI/180)*Math.cos(p.lat*Math.PI/180)*Math.sin(dLon/2)**2), Math.sqrt(1-(Math.sin(dLat/2)**2 + Math.cos(homeLat*Math.PI/180)*Math.cos(p.lat*Math.PI/180)*Math.sin(dLon/2)**2)));
+                
+                if(distHome > 0.05) { // Escaped normal perimeter (> ~250ft)
+                    excursionCount++;
+                    const timeStr = new Date(p.time).toLocaleTimeString();
+                    if(excursionCount < 10) {
+                        let target = "UNKNOWN";
+                        if(p.lon > homeLon) target = "CRESTWOOD APPROACH";
+                        if(p.lat < homeLat) target = "HILLSIDE APPROACH";
+                        logElement.innerHTML += `<div>[${timeStr}] EXCURSION: ${target}</div>`;
+                    }
+                }
+            }
+            if(excursionCount >= 10) {
+                logElement.innerHTML += `<div>...[+${excursionCount-10} sustained boundary breaches]</div>`;
+            }
+            if(excursionCount === 0 && visiblePoints.length > 0) {
+                logElement.innerHTML = `<div>[${new Date(visiblePoints[visiblePoints.length-1].time).toLocaleTimeString()}] PERIMETER SECURE.</div>`;
+            }
+        }
+
+        // Initialize Scrubber
+        if(rawGpxPoints.length > 0) {
+            const slider = document.getElementById('time-slider');
+            slider.max = rawGpxPoints.length;
+            slider.value = rawGpxPoints.length;
+            
+            document.getElementById('start-time').innerText = new Date(rawGpxPoints[0].time).toLocaleDateString();
+            document.getElementById('end-time').innerText = new Date(rawGpxPoints[rawGpxPoints.length-1].time).toLocaleDateString();
+
+            slider.addEventListener('input', (e) => {
+                updateMap(e.target.value);
+            });
+
+            updateMap(rawGpxPoints.length);
+        }
+
+        // Initialize Payload Recovery Layer
+        const payloadLayer = L.layerGroup().addTo(map);
+        let activePayloadMarkers = [];
+        
+        async function loadPayloadCandidates() {
+            try {
+                const response = await fetch('/data/metsy_payload_candidates.json');
+                const data = await response.json();
+                const candidates = data.candidates || [];
+                
+                const listContainer = document.getElementById('payload-candidates');
+                listContainer.innerHTML = '';
+                
+                payloadLayer.clearLayers();
+                activePayloadMarkers = [];
+                
+                candidates.forEach((cand, index) => {
+                    const isPrimary = index === 0;
+                    
+                    // Parse date and compute Eastern time (Smyrna, GA)
+                    const depDate = new Date(cand.start_time);
+                    const easternTimeStr = depDate.toLocaleString('en-US', { 
+                        timeZone: 'America/New_York', 
+                        month: 'short', 
+                        day: 'numeric', 
+                        hour: 'numeric', 
+                        minute: '2-digit',
+                        hour12: true 
+                    });
+                    
+                    // Live relative freshness:
+                    const now = new Date();
+                    const diffMs = now - depDate;
+                    const diffHrs = diffMs / (1000 * 60 * 60);
+                    let recencyStr = '';
+                    if (diffHrs < 1) {
+                        const mins = Math.max(1, Math.round(diffHrs * 60));
+                        recencyStr = `${mins} min${mins === 1 ? '' : 's'} ago (FRESH drop)`;
+                    } else if (diffHrs < 24) {
+                        const hrs = Math.round(diffHrs);
+                        recencyStr = `~${hrs} hr${hrs === 1 ? '' : 's'} ago (FRESH drop)`;
+                    } else {
+                        const days = Math.round(diffHrs / 24);
+                        recencyStr = `~${days} day${days === 1 ? '' : 's'} ago (${Math.round(diffHrs)} hrs fresh)`;
+                    }
+
+                    // Create candidate element in sidebar
+                    const item = document.createElement('div');
+                    item.className = `candidate-item ${isPrimary ? 'active' : ''}`;
+                    item.innerHTML = `
+                        <div style="display:flex; justify-content:space-between; font-weight:bold; color:${isPrimary ? 'var(--alert-red)' : 'var(--accent-indigo)'}">
+                            <span>${isPrimary ? '💩 PRIMARY LOCK' : `💩 CANDIDATE #${index+1}`}</span>
+                            <span>Score: ${cand.score}</span>
+                        </div>
+                        <div style="font-size:0.8rem; font-weight:bold; color:var(--text-main); margin-top:2px;">
+                            Time: ${easternTimeStr}
+                        </div>
+                        <div style="font-size:0.8rem; color:var(--text-dim); margin-top:2px;">
+                            Duration: ${Math.round(cand.duration/60 * 10)/10}m | Speed: ${cand.avg_speed.toFixed(2)} m/s
+                        </div>
+                        <div style="font-size:0.75rem; color:var(--cardboard-dark); margin-top:4px; font-family:monospace; line-height:1.2;">
+                            ${cand.description}
+                        </div>
+                    `;
+                    
+                    item.addEventListener('click', () => {
+                        map.setView([cand.lat, cand.lon], 21);
+                        activePayloadMarkers[index].openPopup();
+                    });
+                    
+                    listContainer.appendChild(item);
+                    
+                    // Render Map Elements (Glowing poops)
+                    const poopHtml = `<div class="poop-pulse-icon ${isPrimary ? 'primary-target' : ''}">💩</div>`;
+                    const poopIcon = L.divIcon({
+                        className: 'custom-poop-icon',
+                        html: poopHtml,
+                        iconSize: isPrimary ? [44, 44] : [32, 32],
+                        iconAnchor: isPrimary ? [22, 22] : [16, 16]
+                    });
+                    
+                    const marker = L.marker([cand.lat, cand.lon], {icon: poopIcon});
+                    
+                    // Create a beautiful popup detailed telemetry metrics
+                    const popupContent = `
+                        <div style="padding:4px; color:#3e2723; min-width:220px; font-family:'Outfit', sans-serif;">
+                            <h3 style="margin:0 0 8px 0; font-family:'Outfit'; color:#2d1b4e; font-size:1.1rem; border-bottom:2px dashed #fbc02d; padding-bottom:4px; display:flex; justify-content:space-between; align-items:center; font-weight:800;">
+                                <span>${isPrimary ? '💩 PRIMARY LOCK' : '💩 DROP ZONE'}</span>
+                                <span style="font-size:0.8rem; background:rgba(0,0,0,0.05); padding:2px 6px; border-radius:2px;">#${index+1}</span>
+                            </h3>
+                            <div style="font-size:0.85rem; margin-bottom:4px;"><strong>Lat/Lon:</strong> ${cand.lat.toFixed(6)}, ${cand.lon.toFixed(6)}</div>
+                            <div style="font-size:0.85rem; margin-bottom:4px;"><strong>Deposited:</strong> ${easternTimeStr}</div>
+                            <div style="font-size:0.85rem; margin-bottom:4px;"><strong>Recency:</strong> ${recencyStr}</div>
+                            <div style="font-size:0.85rem; margin-bottom:4px;"><strong>Duration:</strong> ${Math.round(cand.duration)} seconds</div>
+                            <div style="font-size:0.85rem; margin-bottom:4px;"><strong>Avg Speed:</strong> ${cand.avg_speed.toFixed(2)} m/s</div>
+                            <div style="font-size:0.85rem; margin-bottom:8px;"><strong>Score:</strong> <span style="color:#d32f2f; font-weight:bold;">${cand.score}</span></div>
+                            <p style="margin:4px 0 0 0; font-size:0.75rem; color:#5d4037; border-top:1px dashed rgba(0,0,0,0.1); padding-top:6px; line-height:1.3; font-style:italic;">
+                                ${cand.description}
+                            </p>
+                        </div>
+                    `;
+                    
+                    marker.bindPopup(popupContent, {maxWidth: 300, className: 'poop-popup'});
+                    payloadLayer.addLayer(marker);
+                    activePayloadMarkers.push(marker);
+                });
+                
+                // Toggle switch handlers
+                const toggle = document.getElementById('payload-toggle');
+                toggle.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        map.addLayer(payloadLayer);
+                    } else {
+                        map.removeLayer(payloadLayer);
+                    }
+                });
+
+                const heatToggle = document.getElementById('heat-toggle');
+                heatToggle.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        if (heatLayer) map.addLayer(heatLayer);
+                    } else {
+                        if (heatLayer) map.removeLayer(heatLayer);
+                    }
+                });
+
+                const traceToggle = document.getElementById('trace-toggle');
+                traceToggle.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        if (traceLayer) map.addLayer(traceLayer);
+                    } else {
+                        if (traceLayer) map.removeLayer(traceLayer);
+                    }
+                });
+                
+            } catch (err) {
+                console.error("Error loading payload candidates:", err);
+            }
+        }
+        
+        loadPayloadCandidates();
+    </script>
+</body>
+</html>

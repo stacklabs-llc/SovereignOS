@@ -1,0 +1,16 @@
+{
+  "STRY1779973334": {
+    "brand": "Wild Paws Canvas",
+    "required_deliverables": [
+      "/home/james/SovereignOS/23_WildPawsCanvas/public/audio",
+      "/home/james/sovereign_inbox/reports/Wild_Paws_&_Rusty_Canvas_Art_Rescue_Genesis_Lookbook_and_Production_Bible.pdf"
+    ],
+    "brand_criteria": {
+      "audio_aesthetic": "wood-grain, campfire, acoustics, guitar, cabin vibe, no 1940s jazz",
+      "design_theme": "forest green, cozy woodland landscape, rustic cardboard treehouse, no cyberpunk"
+    },
+    "crawl_routes": [
+      "/"
+    ]
+  }
+}

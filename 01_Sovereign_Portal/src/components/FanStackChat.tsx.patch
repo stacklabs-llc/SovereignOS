@@ -1,0 +1,167 @@
+--- FanStackChat.tsx
++++ FanStackChat.tsx
+@@ -52,6 +52,9 @@
+   const [messages, setMessages] = useState<Message[]>(INITIAL_LOGS);
+   const [avatarTheme, setAvatarTheme] = useState<string>("base");
+   const [inputText, setInputText] = useState("");
++  const [mentionMenuVisible, setMentionMenuVisible] = useState(false);
++  const [mentionFilter, setMentionFilter] = useState("");
++  const [cooldowns, setCooldowns] = useState<Record<string, number>>({});
+   const wsRef = useRef<WebSocket | null>(null);
+ 
+   const cycleTheme = () => {
+@@ -91,6 +94,7 @@
+             timestamp: data.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+             isMeltdown
+           };
++          setCooldowns(prev => ({ ...prev, [newMessage.user]: Date.now() }));
+           setMessages(prev => [...prev.slice(-49), newMessage]);
+ 
+           if (isMeltdown) {
+@@ -102,6 +106,66 @@
+ 
+     return () => ws.close();
+   }, [onMeltdown]);
++
++  const PERSONAS = [
++    "Coach Shrubbs", "The Defector", "Cap Peterson", "The Gambler", 
++    "Stymie Smith", "Dirtbag Dan", "Judge Alistair", "Neon Al", 
++    "Zen Master Ty", "The Chicken Man"
++  ];
++
++  useEffect(() => {
++    const lastWord = inputText.split(" ").pop() || "";
++    if (lastWord.startsWith("@")) {
++      setMentionMenuVisible(true);
++      setMentionFilter(lastWord.slice(1).toLowerCase());
++    } else {
++      setMentionMenuVisible(false);
++    }
++  }, [inputText]);
++
++  const filteredPersonas = PERSONAS.filter(p => p.toLowerCase().includes(mentionFilter));
++
++  const handleSend = () => {
++    if (!inputText.trim()) return;
++    
++    // Extract target if it exists
++    let target = null;
++    const match = inputText.match(/@([\w\s]+)/); // simplistic extraction
++    // refine extraction: check if any persona is mentioned
++    for (const p of PERSONAS) {
++      if (inputText.includes(`@${p}`)) {
++        target = p;
++        break;
++      }
++    }
++
++    if (target) {
++       const lastSpoken = cooldowns[target] || 0;
++       if (Date.now() - lastSpoken < 30000) {
++         // Throw local error
++         const errorMsg: Message = {
++            id: Date.now().toString(),
++            user: "SYSTEM",
++            text: `[REJECTED] ${target} is currently in the bathroom, try again later.`,
++            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
++            isMeltdown: true
++         };
++         setMessages(prev => [...prev.slice(-49), errorMsg]);
++         setInputText("");
++         return;
++       }
++    }
++
++    wsRef.current?.send(JSON.stringify({
++      type: "CHAT_MESSAGE",
++      user: "The Pilot",
++      text: inputText.trim(),
++      target: target,
++      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
++    }));
++    setInputText("");
++  };
+ 
+   return (
+     <div className="h-full w-full flex flex-col p-4 bg-[#1A110B] rounded-lg">
+@@ -165,37 +229,48 @@
+       </ScrollArea>
+ 
+       {/* Pilot Comm-Link Injection */}
+-      <div className="mt-4 pt-4 flex gap-2 w-full bg-[#24150D] p-3 rounded border-4 border-[#3A2518]">
+-         <input 
+-             type="text"
+-             value={inputText}
+-             onChange={(e) => setInputText(e.target.value)}
+-             onKeyDown={(e) => {
+-                 if (e.key === 'Enter' && inputText.trim()) {
+-                     wsRef.current?.send(JSON.stringify({
+-                         type: "CHAT_MESSAGE",
+-                         user: "The Pilot",
+-                         text: inputText.trim(),
+-                         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+-                     }));
+-                     setInputText("");
+-                 }
+-             }}
+-             placeholder="Troll the club..."
+-             className="flex-1 bg-[#1A110B] border border-[#8B2500] text-[#E7C85C] px-4 py-3 font-serif text-sm placeholder:text-white/30 focus:outline-none focus:border-[#E7C85C] focus:bg-black shadow-inner rounded"
+-         />
+-         <button 
+-             onClick={() => {
+-                 if (inputText.trim()) {
+-                     wsRef.current?.send(JSON.stringify({
+-                         type: "CHAT_MESSAGE",
+-                         user: "The Pilot",
+-                         text: inputText.trim(),
+-                         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+-                     }));
+-                     setInputText("");
+-                 }
+-             }}
+-             className="bg-[#8B2500]/80 border-2 border-[#E7C85C] text-[#E7C85C] font-serif font-bold tracking-widest px-6 hover:bg-[#E7C85C] hover:text-black transition-colors rounded shadow-[0_4px_10px_rgba(0,0,0,0.5)] uppercase text-xs"
+-         >
+-             Intervene
+-         </button>
++      <div className="mt-4 pt-4 w-full bg-[#24150D] p-3 rounded border-4 border-[#3A2518] relative">
++         {mentionMenuVisible && filteredPersonas.length > 0 && (
++           <div className="absolute bottom-16 left-3 bg-[#1A110B] border border-[#E7C85C] rounded-lg shadow-2xl max-h-40 overflow-y-auto no-scrollbar z-50">
++              {filteredPersonas.map(p => (
++                 <div 
++                   key={p} 
++                   onClick={() => {
++                      const words = inputText.split(" ");
++                      words.pop();
++                      setInputText([...words, `@${p} `].join(" "));
++                      const currentInput = document.getElementById("pilot-input");
++                      currentInput?.focus();
++                   }}
++                   className="px-4 py-2 hover:bg-[#E7C85C]/20 cursor-pointer text-[#E7C85C] font-serif text-sm border-b border-white/5 last:border-b-0"
++                 >
++                    {p}
++                 </div>
++              ))}
++           </div>
++         )}
++         <div className="flex gap-2">
++           <input 
++               id="pilot-input"
++               type="text"
++               value={inputText}
++               onChange={(e) => setInputText(e.target.value)}
++               onKeyDown={(e) => {
++                   if (e.key === 'Enter') {
++                       handleSend();
++                   }
++               }}
++               placeholder="Troll the club... (Use @ to mention)"
++               className="flex-1 bg-[#1A110B] border border-[#8B2500] text-[#E7C85C] px-4 py-3 font-serif text-sm placeholder:text-white/30 focus:outline-none focus:border-[#E7C85C] focus:bg-black shadow-inner rounded"
++           />
++           <button 
++               onClick={handleSend}
++               className="bg-[#8B2500]/80 border-2 border-[#E7C85C] text-[#E7C85C] font-serif font-bold tracking-widest px-6 hover:bg-[#E7C85C] hover:text-black transition-colors rounded shadow-[0_4px_10px_rgba(0,0,0,0.5)] uppercase text-xs"
++           >
++               Intervene
++           </button>
++         </div>
+       </div>

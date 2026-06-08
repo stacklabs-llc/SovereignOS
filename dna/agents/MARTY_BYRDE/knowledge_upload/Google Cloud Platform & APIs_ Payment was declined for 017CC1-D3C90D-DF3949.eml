@@ -1,0 +1,840 @@
+Delivered-To: jc2pointzero@gmail.com
+Received: by 2002:a05:7208:3103:b0:101:88d0:e111 with SMTP id b3csp529541rba;
+        Fri, 17 Apr 2026 19:35:37 -0700 (PDT)
+X-Received: by 2002:a05:690e:154a:10b0:64e:a1d0:1142 with SMTP id 956f58d0204a3-653109b37a2mr3951402d50.30.1776479737548;
+        Fri, 17 Apr 2026 19:35:37 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1776479737; cv=none;
+        d=google.com; s=arc-20240605;
+        b=hUnzhkwqUMJof2R5BAPVt5LiaLR1PKTtU+DuR/kMl0yEQ18wu2zBzOo98FebhzkYPC
+         i03450uA59XkRVxdHzHeWitfNCF0wePQMlgUmNJ8dhP8SZnLDP91lRNrUiWCne185GT8
+         8JHY8ynJ4dZ083n7D6mtdKaKRiHl7e0pONJR4U0zraZcBNtdLsX+72riBQ86FkcdQNeu
+         MUqtTDDWCL/5adZegSinBcl24jjF5NaCSK+xxdzWRT0SCBGpEnyWyLuImwtG/b6h159W
+         p3n0TFGSdBT2CwBpiRRQCBB9RSOYdceAJmcge1EO87ZkGAqoOUXrdKtWkH3yWASTKpAb
+         eKVw==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=to:from:subject:message-id:gmsai:feedback-id:reply-to:date
+         :mime-version:dkim-signature;
+        bh=WKyfph1D3vBklx4vnZqBov2/Lxd/byGqC2oIbQKhEqM=;
+        fh=dRWMI6yx+SvbvTYZrL5KKNJHimcPFlRxeu3wK3cfR4I=;
+        b=elUW5ejom9aUT3PxcVAwJy5LsN0A8So4XMSaNwB6CZ+EvSVpebMdmRquxrWKdhKXs8
+         sIwXPClp4hwuzCroUzMpSwXlqjuRvNffp7tAEvRDftOG1gc/t1fcGggM0fK29VpN5b7n
+         17vL2Kd2/saeoLrKZeZyXG5eMc0d+PeUyVIDq0u9Dcq3hSEiwhwCqvWVBmoCF5MyC3jz
+         4eevvOKnBW+CrpBZEQpTod04dJRyw0gPNtHuPKSIALsQlEydd2pevp/1ymyDZWmohZ1Q
+         SKK2bungFzKgG+z/+vYwTzJxjhHJfSYUU2cfXMO1vSKsKLUR7Cl3ISvXUJOXT6PYfmip
+         wCtQ==;
+        dara=google.com
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@google.com header.s=20251104 header.b=mekRtII5;
+       spf=pass (google.com: domain of 3-e3iarakdlylwuiajpo-jknalhuckkcha.ykifyylkejpvankciweh.yki@scoutcamp.bounces.google.com designates 209.85.220.69 as permitted sender) smtp.mailfrom=3-e3iaRAKDLYlWuiajpo-jknalhuckkcha.YkifYylkejpvankciWeh.Yki@scoutcamp.bounces.google.com;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=google.com;
+       dara=pass header.i=@gmail.com
+Return-Path: <3-e3iaRAKDLYlWuiajpo-jknalhuckkcha.YkifYylkejpvankciWeh.Yki@scoutcamp.bounces.google.com>
+Received: from mail-sor-f69.google.com (mail-sor-f69.google.com. [209.85.220.69])
+        by mx.google.com with SMTPS id 956f58d0204a3-65314b541c8sor1230505d50.4.2026.04.17.19.35.37
+        for <jc2pointzero@gmail.com>
+        (Google Transport Security);
+        Fri, 17 Apr 2026 19:35:37 -0700 (PDT)
+Received-SPF: pass (google.com: domain of 3-e3iarakdlylwuiajpo-jknalhuckkcha.ykifyylkejpvankciweh.yki@scoutcamp.bounces.google.com designates 209.85.220.69 as permitted sender) client-ip=209.85.220.69;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@google.com header.s=20251104 header.b=mekRtII5;
+       spf=pass (google.com: domain of 3-e3iarakdlylwuiajpo-jknalhuckkcha.ykifyylkejpvankciweh.yki@scoutcamp.bounces.google.com designates 209.85.220.69 as permitted sender) smtp.mailfrom=3-e3iaRAKDLYlWuiajpo-jknalhuckkcha.YkifYylkejpvankciWeh.Yki@scoutcamp.bounces.google.com;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=google.com;
+       dara=pass header.i=@gmail.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20251104; t=1776479737; x=1777084537; dara=google.com;
+        h=to:from:subject:message-id:gmsai:feedback-id:reply-to:date
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=WKyfph1D3vBklx4vnZqBov2/Lxd/byGqC2oIbQKhEqM=;
+        b=mekRtII523IiE/dCLXBP6ndk4sFB2ukMFh84ZgBgDRZOSIAEPaRN6ewfc+jKlReFRW
+         /C54i9J1sVQQy/r43UjpF+wUHLE5itVojcLyARgnuYCssvb89LITJP3tQvj0zVrFyLir
+         f+tF2AohFE4gsNpFRQ0Va2cHuAHVcp2HVP+tNFxDe7WGJh3EMBJyR8NALmPxLfVNJZNm
+         DavfGnii6TImUWYFcy/4Votn8UJ0r0wEsJCuRGjBS4UkUhYxNqkL4pVdmEw4yC3UnyA0
+         XZao0Nq42NrRF1jR+2C8UK/x19FGhbUWq2otJDACxrlsheo5d9vUamRZlK6zMKyHruad
+         55mA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1776479737; x=1777084537;
+        h=to:from:subject:message-id:gmsai:feedback-id:reply-to:date
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=WKyfph1D3vBklx4vnZqBov2/Lxd/byGqC2oIbQKhEqM=;
+        b=Ho+98k/YtO6OzLKw30jhwbIqdP4pxLogMrhB19IXixRj8w0AoTXeXqA3L1xcFbRNl2
+         NB4n5dVzVM/wcXMiqgawOmvmm9NQjg8reSSc2yRH3jFB3hLfKg+xtGrW72JHJHQtKseO
+         SYHh9RRLo2XOD1h0xOdSkgitJL8wptuQixC4y3/D7EV43bkW0KozG1ugi0FKJeBI3L0B
+         9Zn1ZRwBJtVQO1iJQoPgttR/8K0auRcGWQtWkOcvdVc9KhgcgyO3xFevPPcXUypKXmq/
+         oI5Lb7wk4xu0AaNwe1rSTW/SEcliJY1vE8IIIKuNMyok1ydziJ3IH9CCh8QPSLSrh+Cr
+         sf5w==
+X-Gm-Message-State: AOJu0YwHLLr/mmgQ71rAiWifl+nM5EcsW3aMPkmUAY4eeQ0SxdppDP3U
+	HEHVmw1cP8+7V2UmCEfZHU2eAVs44/NOzw/PIduYd374IKKh4iI=
+MIME-Version: 1.0
+X-Received: by 2002:a05:690e:2505:10b0:652:f6aa:f73c with SMTP id
+ 956f58d0204a3-65310af5008mr4149611d50.62.1776479737112; Fri, 17 Apr 2026
+ 19:35:37 -0700 (PDT)
+Date: Fri, 17 Apr 2026 19:35:37 -0700
+Reply-To: Google Payments <payments-noreply@google.com>
+X-Google-Id: 13608031
+Feedback-ID: P-58-0:C571507:M110105595-en-US:gamma
+gmsai: true
+X-Google-Notification-Metadata: CgISAA
+X-Notifications: 9bd7025dcf360000
+X-Notifications-Bounce-Info: AZ3VuTjA9ZXl6TpzaZi6Fn3NyFBQOAlsHxGCnDk2dSu1_nNWWATsqt5YtzcAXapE_GPmga3GatF4Sge97ffLtKr-tWMSq_R0gda2VvbZ1PKyy8X4i2Q5rv04gwnibuMDw5rpakyjhUOYQ0jqXDDHalShJYUuHmbFi5gS5V2yu_Knwpt0MA7aDsDtac6xEOD4h-NZSA0zx1Fb4j2auOwsY4dcr_-wc5KK_0icICh1VdUMR_PkCx-nd4r06INA9ovr5kHHG45wsNCTMHuQeul_mX2MBbTYyhsIUekYSuY71ZPdVtV-cOrkVOE9HFpuJ84VWoHka-yQE8P5tbOpiD3ew-c8ZMD4h8_OLypEaxGicuT1UaWJW5LZ2r6lrEog_Y-i41YxKI5NTgVyioCmPlZ5eMJy9h2Mc8rPXKDKSKDyW1Stm-Z25fmRaxUHok_6XjlqI_XllSfDFYTGIiIr0YtoCuJTnhMBT5ljPrIt9yw2SpYX8wue0tfeumgjh298kGP4D-vqkuvUTwrGO_T6wAUr1CgXTYXnrJpqol9_PDZUYOPfxEsQ-PB28liNXZr2RxOf634cC0s8LL6Z42Gqa7YuTgNi1Gs8gAKQl5DprQWZiSNjoLXi4mpNTC-22A1aLd5xwaBxVgi9--qDq4ugF63ks8awiOwrPLg7SZ1R_8kZIIiGbkThjJUgtdh-rOOKdGUze-V4G0nxTAM2wuY9O-Pw4zbZpMSKSb0BSN6vt7oY4iAtnoDt2R5DJhTU9vOEb8nqkbodYQtBN61l6XNjQ79K-zRXJnD4dzBOABXIPmEmhrm1TRJhiUskffFKEaQNjAwNjA0MDQxNTM1NTk2OTMzMg
+Message-ID: <8f37929a9c2e9439afe78f8f6f0d06569e97b56d-571507-100234108@google.com>
+Subject: Google Cloud Platform & APIs: Payment was declined for 017CC1-D3C90D-DF3949
+From: Google Payments <payments-noreply@google.com>
+To: jc2pointzero@gmail.com
+Content-Type: multipart/alternative; boundary="000000000000ae68d9064fb2ebc7"
+
+--000000000000ae68d9064fb2ebc7
+Content-Type: text/plain; charset="UTF-8"; format=flowed; delsp=yes
+Content-Transfer-Encoding: base64
+
+R29vZ2xlIENsb3VkIFBsYXRmb3JtICYgQVBJcw0KDQoNCllvdXIgZmluYW5jaWFsIGluc3RpdHV0
+aW9uIGRlY2xpbmVkIGEgcGF5bWVudCBmcm9tIHlvdXIgTWFzdGVyY2FyZMKgwqDigKLigIbigKLi
+gIbigKLigIbigKLigIYgDQoyMTM1IGFzc29jaWF0ZWQgd2l0aCB0aGUgR29vZ2xlIENsb3VkIFBs
+YXRmb3JtICYgQVBJcyBhY2NvdW50IGZvciAgDQowMTdDQzEtRDNDOTBELURGMzk0OSBvbiBBcHIg
+MTcsIDIwMjYuIFRoZXkgcHJvdmlkZWQgdGhlIGZvbGxvd2luZyByZWFzb246DQpVbmZvcnR1bmF0
+ZWx5LCB5b3VyIGFjY291bnQgaGFzIGluc3VmZmljaWVudCBmdW5kcyBmb3IgdGhpcyB0cmFuc2Fj
+dGlvbi4NCg0KWW91ciBzZXJ2aWNlIG1heSBjb250aW51ZSB0byBydW4gZm9yIGEgYnJpZWYgcGVy
+aW9kLCBidXQgdG8gZW5zdXJlICANCnVuaW50ZXJydXB0ZWQgc2VydmljZSwgeW91IHdpbGwgbmVl
+ZCB0byBjb250YWN0IHlvdXIgZmluYW5jaWFsIGluc3RpdHV0aW9uICANCnRvIGZpeCB0aGUgdW5k
+ZXJseWluZyBwcm9ibGVtLiBPbmNlIHRoaXMgaGFzIGJlZW4gZG9uZSwgdXBkYXRlIHlvdXIgcHJp
+bWFyeSAgDQpmb3JtIG9mIHBheW1lbnQgYW5kIHBheSBhbnkgb3V0c3RhbmRpbmcgYmFsYW5jZXMu
+DQoNClRvIHVwZGF0ZSBvciBjaGFuZ2UgeW91ciBwcmltYXJ5IHBheW1lbnQgbWV0aG9kOg0KDQog
+IFNpZ24gaW4gdG8geW91ciBHb29nbGUgQ2xvdWQgY29uc29sZSAgDQo8aHR0cHM6Ly9hdXRoLmNs
+b3VkLmdvb2dsZS9zZWxlY3Qtc2Vzc2lvbj9mbG93PXVuaWZpZWQmY29udGludWVVcmw9aHR0cHM6
+Ly9jb25zb2xlLmNsb3VkLmdvb2dsZS8+DQoNCiAgT3BlbiB0aGUgY29uc29sZSBOYXZpZ2F0aW9u
+IG1lbnUsIGFuZCBzZWxlY3QgQmlsbGluZyAgSWYgeW91IGhhdmUgbW9yZSAgDQp0aGFuIG9uZSBD
+bG91ZCBCaWxsaW5nIGFjY291bnQ6ICBTZWxlY3QgR28gdG8gbGlua2VkIGJpbGxpbmcgYWNjb3Vu
+dCB0byAgDQptYW5hZ2UgQ2xvdWQgQmlsbGluZyBmb3IgdGhlIGN1cnJlbnQgcHJvamVjdA0KICBT
+ZWxlY3QgTWFuYWdlIGJpbGxpbmcgYWNjb3VudHMgdG8gbG9jYXRlIGEgZGlmZmVyZW50IENsb3Vk
+IEJpbGxpbmcgIA0KYWNjb3VudCwgdGhlbiBzZWxlY3QgdGhlIGFjY291bnQgeW91IHdhbnQgdG8g
+bWFuYWdlDQoNCg0KDQoNCg0KLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tDQoNCkhlbHAgY2Vu
+dGVyPGh0dHBzOi8vc3VwcG9ydC5nb29nbGUuY29tL2Nsb3VkLyN0b3BpYz02Mjg4NjM2Pg0KDQpD
+b250YWN0IHVzPGh0dHBzOi8vc3VwcG9ydC5nb29nbGUuY29tL2Nsb3VkL2NvbnRhY3QvY2xvdWRf
+cGxhdGZvcm1fYmlsbGluZz4NCg0KR29vZ2xlIENsb3VkIFBsYXRmb3JtIGN1c3RvbWVyIElEOg0K
+MDE3Q0MxLUQzQzkwRC1ERjM5NDkNCg0KUGF5bWVudHMgcHJvZmlsZSBJRDoNCjM5MjYtMjcyMC0y
+MjYyDQoNCg0KR29vZ2xlIExMQyAxNjAwIEFtcGhpdGhlYXRyZSBQYXJrd2F5LCBNb3VudGFpbiBW
+aWV3LCBDQSA5NDA0Mw0KDQpZb3UgaGF2ZSByZWNlaXZlZCB0aGlzIG1hbmRhdG9yeSBzZXJ2aWNl
+IGFubm91bmNlbWVudCB0byB1cGRhdGUgeW91IGFib3V0ICANCmltcG9ydGFudCBjaGFuZ2VzIHRv
+IEdvb2dsZSBDbG91ZCBQbGF0Zm9ybSAmIEFQSXMgb3IgeW91ciBhY2NvdW50Lg0KDQpHb29nbGUN
+Cg0KICAJDQoNCg==
+--000000000000ae68d9064fb2ebc7
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+
+
+
+
+     =20
+=20
+=20
+   =20
+ =20
+ =20
+ =20
+  =20
+
+
+
+
+
+
+
+
+
+=20
+
+
+     =20
+=20
+=20
+   =20
+ =20
+ =20
+ =20
+  =20
+
+
+
+
+
+=20
+
+<!doctype html>
+<html lang=3Den>
+ <head>
+   <title>Google Cloud Platform &amp; APIs: Payment was declined for 017CC1=
+-D3C90D-DF3949</title>
+   <meta http-equiv=3DContent-Type content=3D"text/html; charset=3DUTF-8">
+   <meta name=3Dviewport content=3Dinitial-scale=3D1>
+   <meta name=3Dsupported-color-schemes content=3D"light dark">
+   <style type=3Dtext/css>
+      a {color: #1967D2;}
+      #body_container{max-width:600px;}
+   </style>
+
+	<link href=3Dhttps://fonts.googleapis.com/css?family=3DGoogle+Sans:400,400=
+i,500,500i,700,700i|Google+Sans+Display:400,400i,500,500i,700,700i&amp;subs=
+et=3Dlatin,latin-ext,vietnamese,greek,cyrillic rel=3Dstylesheet>
+  =20
+    <style>
+	:root {     color-scheme: light dark;     supported-color-schemes: light d=
+ark;   }    =20
+	@media (prefers-color-scheme: dark ) {   /* Custom Dark Mode Font Colors *=
+/  =20
+		td, span, h1, h2, h3, h4, h5, h6, h7, p, div {    =20
+		color: #ffffff !important;}
+      .dark_headline{color:#555555 !important;}
+      .dark_link_color{color:#1967D2 !important;}
+		div, table, td { background-color: transparent !important;  }
+      .cart_bg_top{background: url('https://www.gstatic.com/gumdrop/files/p=
+ayments-dark-mode-cart-top-transparent-w800px-h78px-2x.png') no-repeat !imp=
+ortant;
+    background-size: 100% 100% !important;}
+       .cart_bg_bottom{background: url('https://www.gstatic.com/gumdrop/fil=
+es/payments-dark-mode-cart-bottom-transparent-w800px-h92px-2x.png') no-repe=
+at !important;
+    background-size: 100% 100% !important;}
+  		.cart_bg{background: url('https://www.gstatic.com/gumdrop/files/payment=
+s-dark-middle-cart-fill-w800px-h40px-2x.png') repeat-y !important;
+    background-size: 100% 100% !important;
+         =20
+    }
+		body { background-color: #202124 !important; }
+  			.footer_wrapper{background-color:#202124 !important;}
+      .darkmode_fix_datacard{background-color:#494f58 !important; }
+      .border_rad_cart{border-radius:20px !important;}
+      .link_fixNative{color:#bfbfbf !important;}
+      .header_dm_fix{background-color: #ffffff !important;}
+      .bg_red
+     {background-color:#7D6967 !important;
+     color: #ffffff !important;}
+     .bg_grey
+     {background-color:#6D6E70 !important;
+     color:#ffffff !important;}
+    =20
+     td
+     {color:#ffffff !important;}
+      .data_tbl_head
+      {background:#4285F4 !important;}
+      .footer_link
+      {color:#1967D2 !important;}
+      .table_data_color a
+      {color:#ffffff !important;}
+		}
+	</style>
+   <style>
+  @media only screen and (max-width:812px) {
+    .bullet_section_device_fix{
+     =20
+       padding: 0px 0px 0px 20px !important;
+    }
+  }
+     @media only screen and (min-width: 393px) and (max-width: 400px) {
+     	.bullet_section_device_fix{
+       padding: 0px 0px 0px 20px !important;
+    	}
+    =20
+      =20
+     }
+    =20
+     @media only screen and (min-width: 480px)and (max-width: 948px) {
+       .footer_icon
+       {max-width:100% !important;
+       margin:0px auto !important;
+       min-width:unset !important;
+      =20
+        max-width:320px !important;
+       }
+       .mob_icon_pad
+       {padding:0px 30px 0px 30px !important;
+       }
+       .div_data_table
+       {margin:0px auto 32px !important;}
+      =20
+       .landscape_spacer
+       {padding-top:16px !important;}
+        =20
+     }
+     @media only screen and (max-width: 851px){
+      .indent_class
+       {
+          margin: 0 16px 32px 30px !important;
+       }
+      =20
+      =20
+        .width_set
+       {=20
+         width:200px!important;
+      =20
+       }
+       .footer_touch_target
+       {padding:12px 12px !important;}
+       .cart_para
+       {padding: 0px 16px 16px 16px !important; }
+       .footer_text_class
+       {margin:0px 0px !important;}
+      =20
+       .mob_icon_pad
+       {
+          padding:0px 23px 0px 23px !important;
+       }
+
+      table{
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 100% !important;
+  }
+  .bullet_section_device_fix{
+       padding: 0px 0px 0px 20px !important;
+    }
+       .logo_class
+       {padding:15px 16px !important;}
+     .darkmode_fix_datacard{
+        max-width: 100% !important;
+        margin: 0px 0px 32px !important;
+        width: 100% !important;
+       =09
+      }
+       .cart_btn
+        {margin:0px 16px 0px 16px !important;}
+  .data_table_clm_right{
+    padding-right: 5px !important
+  }
+      =20
+        .div_main_first
+      {margin:24px 16px 48px 16px !important;
+      }=20
+      =20
+   .div_main
+      {margin:0px 16px 32px 16px !important;
+      }
+     .mob_bullet_above_spacer
+       {margin:0px 16px 16px 16px !important;}
+    .greetings_cls
+       {margin:32px 16px 32px 16px !important;}
+       .showdesktop{display:none !important;}
+       .mobile_show{display:block !important;
+         width:100%!important;}
+       .not_icon_class
+       {margin:0px 0px !important;}
+       .list_bullet_spacer
+       {
+         padding:0px 0px 0px 35px !important;
+       }
+  =20
+}
+    =20
+     </style>
+   <style>
+      @media only screen and (max-width: 851px){
+     =20
+        .main_Div_section
+       {width:100% !important;
+       max-width:100% !important;
+       min-width:100% !important;
+      }
+     =20
+=20
+     }
+   </style>
+   <!--[if mso]>=20
+<style>=20
+html, body, table, tr, td, div{=20
+font-family: Arial, sans-serif !important;
+}=20
+
+</style>
+<![endif]-->
+    <!--[if gte mso 9]>
+<xml>
+    <o:OfficeDocumentSettings>
+    <o:AllowPNG/>
+    <o:PixelsPerInch>96</o:PixelsPerInch>
+    </o:OfficeDocumentSettings>
+</xml>
+<![endif]-->
+           <style>
+              @media only screen and (max-width: 851px){
+   .learn_more
+   {margin:32px 16px 32px 16px !important;
+      }
+   }
+
+        </style>
+    </head>
+	<body class=3Dbody>
+      <div style=3D"font-size: 0px; line-height:0px; color: #ffffff; displa=
+y: none;">=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0=C2=A0 =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=C2=A0 =C2=A0 =
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0=
+=C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=
+=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =C2=A0 =
+=C2=A0 =C2=A0=C2=A0 =C2=A0 </div>
+        <center>
+		<table border=3D0 cellpadding=3D0 cellspacing=3D0 style=3D"min-width: 100=
+%; width: 100%; max-width: 100%; margin:0 auto;background:#ffffff; backgrou=
+nd-color: #ffffff;" align=3Dcenter valign=3Dtop role=3Dpresentation>
+		  <tbody><tr>
+           =20
+      =20
+      <td dir=3Dltr valign=3Dtop>
+                 =20
+				<div class=3Dmain_Div_section style=3D"font-family: Google Sans Text,&#=
+39;Roboto&#39;, &#39;Segoe UI&#39;, &#39;Helvetica Neue&#39;, Frutiger, &#3=
+9;Frutiger Linotype&#39;, &#39;Dejavu Sans&#39;, &#39;Trebuchet MS&#39;, Ve=
+rdana, Arial, sans-serif; color: #3C4043; font-size: 14px; font-weight: nor=
+mal; line-height: 21px; margin: 0 auto; padding: 0; max-width: 600px;">
+     <table class=3D"header_dm_fix main_Div_section" border=3D0 cellpadding=
+=3D0 cellspacing=3D0 style=3D"min-width: 100%; width: 100%; background:#fff=
+fff; background-color: #ffffff;" bgcolor=3D#ffffff align=3Dleft valign=3Dto=
+p role=3Dpresentation>
+		  <tr>
+                 <td>
+			  <table class=3Dmain_Div_section border=3D0 cellpadding=3D0 cellspacing=
+=3D0 style=3D"min-width: 600px; width: 600px; max-width: 600px; margin:0 au=
+to;" align=3Dcenter valign=3Dtop role=3Dpresentation>
+				<tr>
+                    <!--[if mso]>=20
+  <td class=3D"logo_class" dir=3D"ltr" style=3D"border-bottom: 1px solid #D=
+ADCE0; padding: 10px 32px;" align=3D"left">
+                       <a href=3D"#" style=3D"text-decoration:none; outline=
+:0; border:0; cursor: text !important; cursor: text; pointer-events:none;">
+                         <img src=3D"https://services.google.com/fh/files/e=
+mails/google_cloud_lockup_rgb_2900x512px.png" width=3D"250" alt=3D"Google C=
+loud Platform & APIs" vspace=3D"8" /></a>
+  				  </td>
+<![endif]-->
+                  <!--[if !mso]-->
+                  <td class=3Dlogo_class dir=3Dltr style=3D"border-bottom: =
+1px solid #DADCE0; padding: 0px 32px;">
+                       <a href=3D# style=3D"text-decoration:none; outline:0=
+; border:0; cursor: text !important; cursor: text; pointer-events:none;">
+                         <img src=3Dhttps://services.google.com/fh/files/em=
+ails/google_cloud_lockup_rgb_2900x512px.png width=3D250 alt=3D"Google Cloud=
+ Platform &amp; APIs" vspace=3D8 align=3Dleft></a>
+  				  </td><!--[endif]-->
+                </tr>
+              </table>=20
+            </td>
+          </tr>
+      </table>
+              </div>
+            </td>
+            </tr>
+          </tbody>
+          </table>
+        </center>
+       =20
+	  <center>
+		<table class=3Dmain_Div_section border=3D0 cellpadding=3D0 cellspacing=3D=
+0 style=3D"min-width: 600px; width: 600px; max-width: 600px; margin:0 auto;=
+" align=3Dcenter valign=3Dtop role=3Dpresentation>
+		  <tr>
+            <td dir=3Dltr valign=3Dtop>
+				<div class=3Dmain_Div_section style=3D"font-family: Google Sans Text,&#=
+39;Roboto&#39;, &#39;Segoe UI&#39;, &#39;Helvetica Neue&#39;, Frutiger, &#3=
+9;Frutiger Linotype&#39;, &#39;Dejavu Sans&#39;, &#39;Trebuchet MS&#39;, Ve=
+rdana, Arial, sans-serif; color: #3C4043; font-size: 14px; font-weight: nor=
+mal; line-height: 21px; margin: 0 auto; padding: 0; max-width: 600px;">
+
+
+  <div class=3D"div_main learn_more" style=3D"margin: 0px 32px 32px 32px; f=
+ont-size: 14px; line-height:21px;font-weight: normal;margin:32px 32px 32px =
+32px;">
+    Your financial institution declined a payment from your Mastercard=C2=
+=A0=C2=A0=E2=80=A2=E2=80=86=E2=80=A2=E2=80=86=E2=80=A2=E2=80=86=E2=80=A2=E2=
+=80=862135 associated with the Google Cloud Platform &amp; APIs account for=
+ 017CC1-D3C90D-DF3949 on <span style=3Dwhite-space:nowrap;>Apr 17, 2026</sp=
+an>. They provided the following reason:
+  </div>
+  <div class=3D"indent_class " style=3D"margin: 0 24px 32px 48px; font-size=
+: 14px; font-weight: normal;">
+    Unfortunately, your account has insufficient funds for this transaction=
+.
+  </div>
+
+  <div class=3D"div_main " style=3D"margin: 0px 32px 32px 32px; font-size: =
+14px; line-height:21px;font-weight: normal;">
+    Your service may continue to run for a brief period, but to ensure unin=
+terrupted service, <span style=3Dfont-weight:bold;>you will need to contact=
+ your financial institution to fix the underlying problem.</span> Once this=
+ has been done, update your primary form of payment and pay any outstanding=
+ balances.
+  </div>
+
+  <div class=3D"div_main " style=3D"margin: 0px 32px 32px 32px; font-size: =
+14px; line-height:21px;font-weight: normal;">
+    To update or change your primary payment method:
+  </div>
+
+  <div class=3D"indent_class " style=3D"margin: 0 24px 32px 48px; font-size=
+: 14px; font-weight: normal;">
+    <ol> <li>Sign in to your <a href=3Dhttps://c.gle/ADMV5J9zFB18CwVRHKW3iQ=
+A_NHLOgu8fepEoUCtaL3CvPYFkh7w58fcKgf5O2hSeBLLisL3tLpQ0hoZHviVyO0y4Cd871mitm=
+Ut9VuVAtxvYzIm39G1SHiaT_ZnpgifAqx5a8t4UKfcuiEoQbg3VASQJakfMPNu2RFfyJDnyJbsI=
+KRsH2T7mjLdioHsDCbAE7GJ1Y_1ADnxmisQTQcSv>Google Cloud console</a></li><p> <=
+li>Open the console <strong>Navigation menu,</strong> and select <strong>Bi=
+lling</strong> <p> If you have more than one Cloud Billing account: <ul> <l=
+i>Select <strong>Go to linked billing account</strong> to manage Cloud Bill=
+ing for the current project</li> <li>Select <strong>Manage billing accounts=
+</strong> to locate a different Cloud Billing account, then select the acco=
+unt you want to manage</li> </ul> </li> </ol>
+  </div>
+
+   =20
+   =20
+    <table role=3Dpresentation cellpadding=3D0 cellspacing=3D0 border=3D0>
+<tr><td height=3D20 style=3Dheight:20px;line-height:20px;>=C2=A0</td></tr><=
+/table>
+<div class=3Dmain_Div_section style=3D" padding-top: 0px; text-align: cente=
+r; line-height: 21px;margin:0px auto;max-width:600px;border-top: 1px solid =
+#bdbdbd;    font-family: Google Sans Text,&#39;Roboto&#39;, &#39;Segoe UI&#=
+39;, &#39;Helvetica Neue&#39;, Frutiger, &#39;Frutiger Linotype&#39;, &#39;=
+Dejavu Sans&#39;, &#39;Trebuchet MS&#39;, Verdana, Arial, sans-serif;;font-=
+size:14px;">
+ =20
+             <div class=3Dlandscape_spacer style=3Dpadding-top:12px;padding=
+-bottom:30px;>
+
+
+
+        <div class=3D"">
+          <!--[if mso]>=20
+          <table role=3D"presentation" cellspacing=3D"0" cellpadding=3D"0" =
+border=3D"0" width=3D"600" align=3D"center">
+<![endif]-->
+             <!--[if !mso]><!-->
+<table dir=3Dltr role=3Dpresentation border=3D0 cellspacing=3D0 cellpadding=
+=3D0 style=3D"margin:0px auto;direction:ltr" class=3Dmob_footer_potrait>
+<!--<![endif]-->
+<tr>
+  <!--[if mso]>=20
+<td align=3D"center" style=3D"text-align:center;padding-bottom:40px;padding=
+:24px 20px 15px 20px;border-top: 1px solid #bdbdbd;width:600px;"><![endif]-=
+->
+   <!--[if !mso]><!-->
+<td class=3Dmob_icon_pad align=3Dcenter style=3D"text-align:center;padding-=
+bottom:40px;padding:0px 50px 10px 25px;padding:0px 50px 0px 25px;"><!--<![e=
+ndif]-->
+ =20
+  <table class=3D"footer_icon mob_footer_potrait" role=3Dpresentation borde=
+r=3D0 cellspacing=3D0 cellpadding=3D0>
+    <tr>
+   =20
+  =20
+ =20
+  <!--[if mso]>
+<td>
+<table role=3D"presentation" border=3D"0" cellspacing=3D"0" cellpadding=3D"=
+0" width=3D"100%">
+<tr>
+<td style=3D"padding-right:10px;">
+<a href=3D"https://support.google.com/cloud/#topic=3D6288636" style=3D"colo=
+r: #1967D2; display: inline-block; margin: 0 20px; text-transform: capitali=
+ze; text-decoration:none;">
+       <img src=3D"https://www.gstatic.com/gumdrop/files/payments-help-cent=
+er-footer-transparent-w48px-h48px-2x.png" width=3D"22" valign=3D"bottom" st=
+yle=3D"vertical-align:bottom;"/>=20
+</a>
+
+</td>
+<td>
+<a href=3D"https://support.google.com/cloud/#topic=3D6288636" style=3D"colo=
+r: #1967D2;; display: inline-block; margin: 0 20px; text-transform: capital=
+ize; text-decoration:none;">
+      <span valign=3D"top" class=3D"footer_link" style=3D"direction:ltr;fon=
+t-family:Google Sans Text,'Roboto', 'Segoe UI', 'Helvetica Neue', Frutiger,=
+ 'Frutiger Linotype', 'Dejavu Sans', 'Trebuchet MS', Verdana, Arial, sans-s=
+erif;font-size:14px;line-height:48px;font-weight:500;padding:0px 0px 40px 0=
+px;vertical-align:top;" dir=3D"ltr"> Help center</span>
+</a>
+</td>
+</tr>
+</table>
+</td>
+
+
+<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>  <![endif]-->
+  =20
+  <!--[if !mso]><!-->
+<td class=3Dwidth_set style=3Dtext-align:center;>
+<table role=3Dpresentation border=3D0 cellspacing=3D0 cellpadding=3D0>
+<tr>
+<td style=3Dwidth:50px>
+<a href=3Dhttps://c.gle/ADMV5J8Ptj8Ge9kSRq3mLgtvpo5nE8mWmqWeL2Fbw-yqO8gPGHX=
+2I42o8FpYM1lePkqMJLIY5T89vkiG3hOrU9xzeWovr9A_ujfUZPVll9kviCMMv6CQqocq5euOp7=
+4bdy-lvbBti9lgh3J21f9r class=3Dfooter_touch_target style=3D"color: #1967D2;=
+ display: inline-block; margin: 0 0px; text-transform: capitalize; text-dec=
+oration:none;padding:12px 6px 12px 18px;padding:12px 4px 12px 20px;">
+       <img src=3Dhttps://www.gstatic.com/gumdrop/files/payments-help-cente=
+r-footer-transparent-w48px-h48px-2x.png width=3D24 valign=3Dbottom style=3D=
+vertical-align:bottom; alt=3D"Help center">=20
+</a>
+
+</td>
+<td style=3Dtext-align:left;>
+<a class=3Dfooter_text_class href=3Dhttps://c.gle/ADMV5J8Ptj8Ge9kSRq3mLgtvp=
+o5nE8mWmqWeL2Fbw-yqO8gPGHX2I42o8FpYM1lePkqMJLIY5T89vkiG3hOrU9xzeWovr9A_ujfU=
+ZPVll9kviCMMv6CQqocq5euOp74bdy-lvbBti9lgh3J21f9r style=3D"color: #1967D2; d=
+isplay: inline-block; margin: 0px 0px;  text-decoration:none;padding:13px 0=
+px">
+      <span valign=3Dtop class=3D"footer_link not_icon_class" style=3D"font=
+-family:Google Sans Text,&#39;Roboto&#39;, &#39;Segoe UI&#39;, &#39;Helveti=
+ca Neue&#39;, Frutiger, &#39;Frutiger Linotype&#39;, &#39;Dejavu Sans&#39;,=
+ &#39;Trebuchet MS&#39;, Verdana, Arial, sans-serif;font-size:14px;line-hei=
+ght:21px;font-weight:500;padding:0px 0px 0px 0px;vertical-align:top;word-br=
+eak:break-word;">Help center</span>
+</a>
+</td>
+</tr>
+</table>
+</td>=20
+  <td width=3D10 style=3Dwidth:10px;>=C2=A0=C2=A0</td> =20
+  <!--<![endif]-->
+ =20
+  <!--[if mso]>
+<td>
+<table role=3D"presentation" border=3D"0" cellspacing=3D"0" cellpadding=3D"=
+0" width=3D"100%">
+<tr>
+<td style=3D"padding-right:10px;">
+<a href=3D"https://support.google.com/cloud/contact/cloud_platform_billing"=
+ style=3D"color: #1967D2; display: inline-block; margin: 0 20px; text-trans=
+form: capitalize; text-decoration:none;">
+       <img src=3D"https://www.gstatic.com/gumdrop/files/payments-contact-u=
+s-footer-transparent-w48px-h48px-2x.png" width=3D"22" valign=3D"bottom" sty=
+le=3D"vertical-align:bottom;"/>=20
+</a>
+
+</td>
+<td>
+<a href=3D"https://support.google.com/cloud/contact/cloud_platform_billing"=
+ style=3D"color: #1967D2;; display: inline-block; margin: 0 20px; text-tran=
+sform: capitalize; text-decoration:none;">
+      <span valign=3D"top" class=3D"footer_link" style=3D"direction:ltr;fon=
+t-family:Google Sans Text,'Roboto', 'Segoe UI', 'Helvetica Neue', Frutiger,=
+ 'Frutiger Linotype', 'Dejavu Sans', 'Trebuchet MS', Verdana, Arial, sans-s=
+erif;font-size:14px;line-height:48px;font-weight:500;padding:0px 0px 40px 0=
+px;vertical-align:top;" dir=3D"ltr"> Contact us</span>
+</a>
+</td>
+</tr>
+</table>
+</td>
+
+
+ <![endif]-->
+  =20
+  <!--[if !mso]><!-->
+<td class=3Dwidth_set style=3Dtext-align:center;>
+<table role=3Dpresentation border=3D0 cellspacing=3D0 cellpadding=3D0>
+<tr>
+<td style=3Dwidth:50px>
+<a href=3Dhttps://c.gle/ADMV5J_ZmAAk2jNRZNwqDi1pVekAb_TAoxqClVRvxMS7dt7NZU0=
+xeraQJHli_t5fqGlpdYcwGUh-Pmo8JMyNspHmF8Md6PPikrzVcc6KLnBGaanB-9zorm7wNb6iCc=
+s_2rpm3Mh63fp2R3zGul1avp8rpHAMIlMCdQPVmm5Cwg class=3Dfooter_touch_target st=
+yle=3D"color: #1967D2; display: inline-block; margin: 0 0px; text-transform=
+: capitalize; text-decoration:none;padding:12px 6px 12px 18px;padding:12px =
+8px 12px 16px;">
+       <img src=3Dhttps://www.gstatic.com/gumdrop/files/payments-contact-us=
+-footer-transparent-w48px-h48px-2x.png width=3D24 valign=3Dbottom style=3Dv=
+ertical-align:bottom; alt=3D"Contact us">=20
+</a>
+
+</td>
+<td style=3Dtext-align:left;>
+<a class=3Dfooter_text_class href=3Dhttps://c.gle/ADMV5J_ZmAAk2jNRZNwqDi1pV=
+ekAb_TAoxqClVRvxMS7dt7NZU0xeraQJHli_t5fqGlpdYcwGUh-Pmo8JMyNspHmF8Md6PPikrzV=
+cc6KLnBGaanB-9zorm7wNb6iCcs_2rpm3Mh63fp2R3zGul1avp8rpHAMIlMCdQPVmm5Cwg styl=
+e=3D"color: #1967D2; display: inline-block; margin: 0px 0px;  text-decorati=
+on:none;padding:13px 0px">
+      <span valign=3Dtop class=3D"footer_link not_icon_class" style=3D"font=
+-family:Google Sans Text,&#39;Roboto&#39;, &#39;Segoe UI&#39;, &#39;Helveti=
+ca Neue&#39;, Frutiger, &#39;Frutiger Linotype&#39;, &#39;Dejavu Sans&#39;,=
+ &#39;Trebuchet MS&#39;, Verdana, Arial, sans-serif;font-size:14px;line-hei=
+ght:21px;font-weight:500;padding:0px 0px 0px 0px;vertical-align:top;word-br=
+eak:break-word;">Contact us</span>
+</a>
+</td>
+</tr>
+</table>
+</td>=20
+  =20
+  <!--<![endif]-->
+  </tr>
+  </table></td>
+  =20
+</tr>
+</table>
+        </div>
+ =20
+ =20
+ =20
+
+  <!--[if !mso]><!-->=20
+  <div style=3D"font-size: 12px; line-height: 20px;color:#3C4043;font-famil=
+y:Google Sans Text,&#39;Roboto&#39;, &#39;Segoe UI&#39;, &#39;Helvetica Neu=
+e&#39;, Frutiger, &#39;Frutiger Linotype&#39;, &#39;Dejavu Sans&#39;, &#39;=
+Trebuchet MS&#39;, Verdana, Arial, sans-serif;margin-top:8px;direction:ltr"=
+>
+        <!--<![endif]-->
+     <!--[if mso]>=20
+<div style=3D"font-size: 12px; line-height: 20px;color:#3C4043;font-family:=
+Google Sans Text,'Roboto', 'Segoe UI', 'Helvetica Neue', Frutiger, 'Frutige=
+r Linotype', 'Dejavu Sans', 'Trebuchet MS', Verdana, Arial, sans-serif;">
+<table role=3D"presentation" cellspacing=3D"0" cellpadding=3D"0" border=3D"=
+0" width=3D"528" align=3D"center">
+      <tr>
+      <td dir=3D"ltr" style=3D"text-align:center;font-family:Google Sans Te=
+xt,'Roboto', 'Segoe UI', 'Helvetica Neue', Frutiger, 'Frutiger Linotype', '=
+Dejavu Sans', 'Trebuchet MS', Verdana, Arial, sans-serif;padding-top:0px;ma=
+rgin-top:16px; font-family:Google Sans Text,'Roboto', 'Segoe UI', 'Helvetic=
+a Neue', Frutiger, 'Frutiger Linotype', 'Dejavu Sans', 'Trebuchet MS', Verd=
+ana, Arial, sans-serif;font-size:12px;line-height:20px;padding:0px 20px;dir=
+ection:ltr;word-break:normal;margin-top:0px "><![endif]-->
+      Google Cloud Platform customer ID:=20
+<span style=3Dwhite-space:nowrap;><span class=3D"" role=3Dtext aria-label=
+=3D"0 1 7 C C 1 D 3 C 9 0 D D F 3 9 4 9" style=3D"">017CC1-D3C90D-DF3949</s=
+pan></span>
+=20
+    <br>=20
+
+  Payments profile ID:=20
+<span style=3Dwhite-space:nowrap;><span class=3D"" role=3Dtext aria-label=
+=3D"3 9 2 6 2 7 2 0 2 2 6 2" style=3D"">3926-2720-2262</span></span>
+
+
+         <!--[if mso]> </td></tr>
+    </table>
+    <![endif]-->
+  </div>
+=20
+ =20
+  <!--[if !mso]><!-->=20
+  <div style=3D"font-size: 12px; line-height: 20px;color:#3C4043;font-famil=
+y:Google Sans Text,&#39;Roboto&#39;, &#39;Segoe UI&#39;, &#39;Helvetica Neu=
+e&#39;, Frutiger, &#39;Frutiger Linotype&#39;, &#39;Dejavu Sans&#39;, &#39;=
+Trebuchet MS&#39;, Verdana, Arial, sans-serif;margin-bottom:0px;font-family=
+:Google Sans Text,&#39;Roboto&#39;, &#39;Segoe UI&#39;, &#39;Helvetica Neue=
+&#39;, Frutiger, &#39;Frutiger Linotype&#39;, &#39;Dejavu Sans&#39;, &#39;T=
+rebuchet MS&#39;, Verdana, Arial, sans-serif;font-size:12px;line-height:20p=
+x;font-weight:bold;margin:0px 32px;margin-top:15px;direction:ltr;margin-top=
+:12px" class=3Dtable_data_color>
+        <!--<![endif]-->
+     <!--[if mso]>=20
+<div style=3D"font-size: 12px; line-height: 20px;color:#3C4043;font-family:=
+Google Sans Text,'Roboto', 'Segoe UI', 'Helvetica Neue', Frutiger, 'Frutige=
+r Linotype', 'Dejavu Sans', 'Trebuchet MS', Verdana, Arial, sans-serif;marg=
+in:0px 0px;">
+<table role=3D"presentation" cellspacing=3D"0" cellpadding=3D"0" border=3D"=
+0" width=3D"528" align=3D"center">
+      <tr>
+      <td dir=3D"ltr" class=3D"" style=3D"text-align:center;font-family:Goo=
+gle Sans Text,'Roboto', 'Segoe UI', 'Helvetica Neue', Frutiger, 'Frutiger L=
+inotype', 'Dejavu Sans', 'Trebuchet MS', Verdana, Arial, sans-serif;padding=
+-top:0px;margin-top:16px; font-family:Google Sans Text,'Roboto', 'Segoe UI'=
+, 'Helvetica Neue', Frutiger, 'Frutiger Linotype', 'Dejavu Sans', 'Trebuche=
+t MS', Verdana, Arial, sans-serif;font-size:12px;line-height:20px;padding:0=
+px 20px;direction:ltr;word-break:normal;font-weight:bold;margin-top:0px;mar=
+gin-top:12px; "><![endif]-->
+   <a href=3D# aria-hidden=3Dtrue style=3D"text-decoration: none; pointer-e=
+vents: none; cursor: pointer; aria-hidden:true;color:#3C4043">
+    Google LLC 1600 Amphitheatre Parkway, Mountain View, CA 94043</a>
+         <!--[if mso]> </td></tr>
+    </table>
+    <![endif]-->
+  </div>
+
+
+  <!--[if !mso]><!-->=20
+  <div style=3D"font-size: 12px; line-height: 20px;color:#3C4043;font-famil=
+y:Google Sans Text,&#39;Roboto&#39;, &#39;Segoe UI&#39;, &#39;Helvetica Neu=
+e&#39;, Frutiger, &#39;Frutiger Linotype&#39;, &#39;Dejavu Sans&#39;, &#39;=
+Trebuchet MS&#39;, Verdana, Arial, sans-serif;padding-top:0px;margin-top:16=
+px; margin-bottom:16px;;font-family:Google Sans Text,&#39;Roboto&#39;, &#39=
+;Segoe UI&#39;, &#39;Helvetica Neue&#39;, Frutiger, &#39;Frutiger Linotype&=
+#39;, &#39;Dejavu Sans&#39;, &#39;Trebuchet MS&#39;, Verdana, Arial, sans-s=
+erif;font-size:12px;line-height:20px;padding:0px 25px;word-break:normal">
+        <!--<![endif]-->
+     <!--[if mso]>=20
+<div style=3D"font-size: 12px; line-height: 20px;color:#3C4043;font-family:=
+Google Sans Text,'Roboto', 'Segoe UI', 'Helvetica Neue', Frutiger, 'Frutige=
+r Linotype', 'Dejavu Sans', 'Trebuchet MS', Verdana, Arial, sans-serif;">
+<table role=3D"presentation" cellspacing=3D"0" cellpadding=3D"0" border=3D"=
+0" width=3D"528" align=3D"center">
+      <tr>
+      <td dir=3D"ltr" style=3D"text-align:center;font-family:Google Sans Te=
+xt,'Roboto', 'Segoe UI', 'Helvetica Neue', Frutiger, 'Frutiger Linotype', '=
+Dejavu Sans', 'Trebuchet MS', Verdana, Arial, sans-serif;padding-top:0px;ma=
+rgin-top:16px; font-family:Google Sans Text,'Roboto', 'Segoe UI', 'Helvetic=
+a Neue', Frutiger, 'Frutiger Linotype', 'Dejavu Sans', 'Trebuchet MS', Verd=
+ana, Arial, sans-serif;font-size:12px;line-height:20px;padding:0px 20px;dir=
+ection:ltr;word-break:normal; "><![endif]-->
+    You have received this mandatory service announcement to update you abo=
+ut important changes to Google Cloud Platform &amp; APIs or your account.
+         <!--[if mso]> </td></tr>
+    </table>
+    <![endif]-->
+  </div>
+
+   <!--[if !mso]><!-->
+<div>
+  <!--<![endif]-->
+
+  <!--[if mso]>=20
+<table cellspacing=3D"0" cellpadding=3D"0" border=3D"0" align=3D"center" ro=
+le=3D"presentation">
+       <tr>
+           <td align=3D"center" style=3D"padding-top:16px;">
+<![endif]-->
+   =20
+<img src=3Dhttp://services.google.com/fh/files/emails/wa_google_logo.png wi=
+dth=3D76 style=3D"margin: 0;" alt=3DGoogle>
+
+    <!--[if mso]>=20
+</td>
+</tr>
+</table>
+<![endif]-->
+ =20
+  <!--[if !mso]><!-->=20
+</div>
+    <!--<![endif]-->
+ =20
+
+    =20
+=09
+ =20
+</div>
+ =20
+ =20
+</div>
+
+</div>
+</td></tr></table><!-- end body_container -->
+
+</center></body></html>
+ =20
+ =09
+
+
+--000000000000ae68d9064fb2ebc7--

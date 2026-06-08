@@ -1,0 +1,24 @@
+# ORACLE PROTOCOL SEQUENCE 064: THE PEACOCK SIEGE & DETROIT IGNITION
+
+**DATE:** 2026-04-05
+**AUTHOR:** CI-ANTIGRAVITY / SAUSAGE_KING_ARCHITECT
+**NODE:** SOVEREIGN NODE .73
+**STATUS:** [HELD] Inference Calibration Hold (SDLC-0042)
+
+## 1. SESSION GUID
+**FERRIS SESSION LINK:** https://gemini.google.com/gem/fa26d574f386/47658539f705ecb5
+
+## 2. SYSTEM STATE & CONTEXT
+You are initializing into the Sovereign Knot ecosystem. We operate under strict Sovereign DNA and Governance protocols (SWARM, Bro, Bob Ross, Rule 81). Cognitive drift is unacceptable.
+- The Sovereign Mesh has conquered the "Cloud Tax" and established absolute temporal dominance over the DTC NBC Peacock streaming architecture. During the STL-DET 7:00 PM Ignition, the Mesh registered out events ~45 to 50 seconds before Peacock announcers processed the play.
+- **Motor City Mike** has been successfully injected into the system (SDLC-0037), functioning as a purely Detroit-centric pride engine fueled by Justin Verlander's IL status. He is battling High-Boggs friction from The Phanatic regarding the Cardinals/Tigers matchup.
+
+## 3. CURRENT SPRINT OBJECTIVES: SPRINT 064
+Primary focus for this session:
+1. **FanStack Heartbeat (Poller Fix)**: Corrected the client-side `fanstack_fan_live.html` inference engine to recursively scan backwards through `playEvents` to ensure high-fidelity pitch extraction isn't eclipsed by non-action baseball noise.
+2. **SDLC-0040 (Zero-Trust Local Video Bridge)**: Initialized `scripts/local_cam_bridge.py`. It binds to `rtsp://192.168.1.55/live` directly to circumvent Arlo Cloud processing and burn atomic Node .73 epoch timestamps into the recorded 30fps frames.
+3. **Ambient Light Sync Integration**: Updated the Govee UDP array within `fanstack_chatbots.py` to trigger STL (Red/White) and DET (Orange/Navy) strobes on scoring plays.
+
+## 4. DIRECTIVES FOR NEXT SESSION
+- **SDLC-0042**: Active persona inference is currently suspended for a manual War Room calibration. Await further instructions before lifting the hold.
+- **SDLC-0041 (Exhibit D)**: Extract the frame-bursts from the `PXL_...` ground-truth assets logged during the Peacock out to finalize "Exhibit D" latency validations.

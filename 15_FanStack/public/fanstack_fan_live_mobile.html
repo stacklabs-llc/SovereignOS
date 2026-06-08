@@ -1,0 +1,1105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Sovereign FanCast // METS LIVE — NYM vs WSH</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@500;700;800&display=swap');
+
+    :root {
+      --bg-void: #0B0E14;
+      --bg-panel: #111827;
+      --glass-bg: rgba(17, 24, 39, 0.7);
+      --glass-border: rgba(255, 255, 255, 0.1);
+      --mets-orange: #FF5910;
+      --text-dim: #9CA3AF;
+      --text-bright: #F3F4F6;
+      --glow-orange: #FF5910;
+      --glow-blue: #3B82F6;
+    }
+
+    body {
+      margin: 0; padding: 0; background: var(--bg-void); color: var(--text-bright);
+      font-family: 'Inter', sans-serif; height: 100dvh; display: flex; flex-direction: column; overflow: hidden;
+    }
+
+    /* MAIN LAYOUT GRID */
+    .main-layout {
+      display: flex; flex: 1; overflow: hidden; max-width: 1600px; margin: 0 auto; width: 100%; gap: 20px; padding: 20px;
+      box-sizing: border-box; flex-direction: row;
+    }
+
+    @media (max-width: 900px) {
+      body { overflow: hidden; padding: 0; margin: 0; }
+      .main-layout { flex-direction: column; padding: 0; gap: 0; overflow: hidden; border-radius: 0; }
+      .left-panel, .right-panel { border-radius: 0; border-left: none; border-right: none; box-shadow: none; }
+      .left-panel { flex: 0 0 auto; height: auto; max-height: 220px; overflow-y: hidden; background: var(--bg-panel); border-bottom: 2px solid var(--glass-border); z-index: 10; padding-bottom: 5px; }
+      .right-panel { flex: 1 1 auto; height: 100%; min-height: 0; overflow: hidden; display: flex; flex-direction: column; }
+      
+      .diamond-container { display: none !important; }
+      .panel-header { padding: 8px 15px; }
+      .score-area { padding: 5px 0; gap: 15px;}
+      .team-col { width: auto; flex-direction: column !important; gap: 5px; }
+      .team-name { font-size: 0.8rem; }
+      .team-logo { width: 40px; height: 40px; border-radius: 0; }
+      .score-numbers { font-size: 2.2rem; }
+      .metrics-grid { padding: 5px 0; }
+      .metric-box { padding: 5px; }
+      .metric-label { font-size: 0.65rem; margin-bottom: 4px; }
+      .badge-dot { width: 16px; height: 16px; font-size: 0.6rem; border-width: 1px;}
+      .telemetry-footer { padding: 8px 15px; }
+      .telemetry-label { font-size: 0.7rem; margin-bottom: 2px;}
+      .telemetry-value { font-size: 0.85rem; margin-bottom: 4px;}
+      .live-status-bar { padding-top: 5px; font-size: 0.75rem;}
+
+      .chat-container { flex: 1; overflow-y: auto; padding: 10px; padding-bottom: 90px; }
+      .chat-input-wrapper { position: fixed; bottom: 0; left: 0; width: 100%; padding: 10px; box-sizing: border-box; background: rgba(17,24,39, 0.95); backdrop-filter: blur(10px); z-index: 100;}
+      .chat-input { padding: 12px 15px; font-size: 16px; border-radius: 8px;} /* 16px prevents iOS zoom */
+      .chat-card { padding: 8px 10px; }
+      
+      #menu-button { display: none; }
+    }
+
+    /* LEFT SCOREBOARD PANEL */
+    .left-panel, .right-panel {
+      background: var(--glass-bg); backdrop-filter: blur(24px); border: 1px solid var(--glass-border);
+      border-radius: 24px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+    }
+    
+    .left-panel { flex: 0 0 450px; }
+    .right-panel { flex: 1; }
+
+    /* SCOREBOARD HEADER */
+    .panel-header {
+      padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--glass-border);
+    }
+    .panel-title { font-family: 'Outfit'; font-size: 1.2rem; font-weight: 700; letter-spacing: 1px; color: #fff; }
+    .inning-text { font-family: 'Outfit'; font-weight: 700; color: var(--glow-orange); }
+
+    /* TEAMS & SCORES */
+    .score-area { display: flex; justify-content: center; align-items: center; padding: 20px 0; gap: 20px; }
+    .team-col { display: flex; align-items: center; gap: 10px; width: 140px; }
+    .team-col.right { flex-direction: row-reverse; }
+    .team-logo { width: 50px; height: 50px; object-fit: contain; filter: drop-shadow(0 5px 15px rgba(0,0,0,0.5)) drop-shadow(0 0 5px rgba(255,255,255,0.4)); background: radial-gradient(circle, rgba(255,255,255,0.15) 20%, transparent 60%); border-radius: 50%; }
+    .team-name { font-family: 'Outfit'; font-weight: 700; font-size: 1.1rem; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+    
+    .score-numbers { font-family: 'Outfit'; font-size: 3.5rem; font-weight: 800; display: flex; align-items: center; gap: 15px; }
+    .score-dash { color: var(--text-dim); }
+
+    /* METRICS GRID */
+    .metrics-grid { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; border-top: 1px solid var(--glass-border); border-bottom: 1px solid var(--glass-border); }
+    .metric-box { padding: 10px; border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .metric-box:last-child { border-right: none; }
+    .metric-label { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 8px; letter-spacing: 1px; font-weight: 600; text-transform: uppercase; }
+
+    /* BADGES */
+    .badges-row { display: flex; gap: 8px; align-items: center; }
+    .badge-wrap { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+    .badge-dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--text-dim); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; background: var(--bg-void); color: var(--text-dim); }
+    .badge-dot.active-b { border-color: var(--glow-blue); background: rgba(59,130,246,0.2); color: var(--glow-blue); box-shadow: 0 0 10px rgba(59,130,246,0.5); }
+    .badge-dot.active-s { border-color: #ef4444; background: rgba(239,68,68,0.2); color: #ef4444; box-shadow: 0 0 10px rgba(239,68,68,0.5); }
+    .badge-dot.active-o { border-color: var(--glow-orange); background: rgba(255,89,16,0.2); color: var(--glow-orange); box-shadow: 0 0 10px rgba(255,89,16,0.5); }
+
+    /* DIAMOND */
+    .diamond-container { padding: 40px 0; text-align: center; position: relative; }
+    .svg-diamond { filter: drop-shadow(0 0 20px rgba(255,89,16,0.1)); }
+    .base-path { transition: 0.3s; }
+
+    /* TELEMETRY FOOTER */
+    .telemetry-footer { padding: 20px; text-align: left; background: rgba(0,0,0,0.2); font-size: 0.95rem; }
+    .telemetry-label { color: var(--text-dim); font-size: 0.8rem; letter-spacing: 1px; margin-bottom: 4px; display: block; }
+    .telemetry-value { font-family: 'Outfit'; font-weight: 600; font-size: 1.1rem; color: #fff; margin-bottom: 12px; }
+
+    .live-status-bar { color: var(--glow-orange); font-size: 0.85rem; padding-top: 10px; border-top: 1px solid var(--glass-border); line-height: 1.4; }
+
+    /* RIGHT CHAT PANEL */
+    .chat-container { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 8px; -webkit-overflow-scrolling: touch; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+    .chat-card {
+      display: flex; gap: 10px; padding: 10px 12px; border-radius: 12px; background: rgba(255,255,255,0.03);
+      border: 1px solid var(--glass-border); transition: 0.3s ease; position: relative;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2); justify-content: flex-start; align-items: flex-start; flex-shrink: 0;
+    }
+    
+    .chat-card::before {
+       content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+       background: var(--card-color, #fff); box-shadow: 0 0 15px var(--card-color, #fff);
+       border-top-left-radius: 11px; border-bottom-left-radius: 11px;
+    }
+    
+    .chat-card:hover { transform: translateY(-1px); background: rgba(255,255,255,0.06); z-index: 10; }
+
+    .chat-avatar { 
+       width: 32px; height: 32px; border-radius: 50%; object-fit: cover; background: rgba(0,0,0,0.5); 
+       border: 1px solid var(--card-color, #fff); flex-shrink: 0; box-shadow: 0 0 10px var(--card-color, #fff); 
+       margin-top: 2px; transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-radius 0.2s; position: relative; z-index: 2; cursor: pointer;
+    }
+    .chat-avatar:hover {
+       transform: scale(3.5); z-index: 100; border-radius: 8px; box-shadow: 0 0 25px rgba(0,0,0,0.8), 0 0 15px var(--card-color, #fff);
+    }
+    
+    .chat-content { flex: 1; min-width: 0; display:flex; flex-direction: column;}
+    .chat-meta { display: flex; justify-content: space-between; margin-bottom: 2px; align-items: baseline; }
+    .user-badge { font-family: 'Outfit'; font-weight: 700; font-size: 0.85rem; color: var(--card-color, #fff); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 5px;}
+    .chat-timestamp { color: var(--text-dim); font-size: 0.7rem; flex-shrink: 0; }
+    .chat-text { font-size: 0.85rem; line-height: 1.4; color: #E5E7EB; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere;}
+
+    .chat-input-wrapper { padding: 20px; border-top: 1px solid var(--glass-border); background: var(--glass-bg); display: flex; gap: 10px; align-items: center; }
+    .chat-input {
+      width: 100%; padding: 15px 20px; border-radius: 12px; background: rgba(255,255,255,0.05); color: #fff;
+      border: 1px solid rgba(255,255,255,0.1); font-family: 'Inter', sans-serif; outline: none; transition: 0.3s ease;
+      font-size: 1rem; flex: 1;
+    }
+    .chat-input:focus { border-color: var(--glow-blue); box-shadow: 0 0 15px rgba(59,130,246,0.3); background: rgba(255,255,255,0.1); }
+    .chat-attach-btn {
+      width: 50px; height: 50px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      display: flex; justify-content: center; align-items: center; cursor: pointer; transition: 0.3s ease; color: #fff; flex-shrink: 0;
+    }
+    .chat-attach-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--glow-blue); box-shadow: 0 0 10px rgba(59,130,246,0.3); transform: scale(1.05); }
+
+    /* LOADING MODAL */
+    #loading-modal {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.85); backdrop-filter: blur(10px);
+      z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.3s;
+    }
+    #loading-modal.active { opacity: 1; pointer-events: all; }
+    .spinner { width: 50px; height: 50px; border: 4px solid var(--text-dim); border-top-color: var(--glow-orange); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
+    
+    @keyframes flashText { 0% { color: var(--glow-orange); text-shadow: 0 0 10px var(--glow-orange); } 100% { color: #fff; text-shadow: none; } }
+    .score-updated { animation: flashText 1.5s ease; }
+    
+    .rap-battle-card {
+        border-color: #ff00ff !important;
+        box-shadow: 0 0 15px rgba(255, 0, 255, 0.4) !important;
+        background: rgba(255, 0, 255, 0.1) !important;
+    }
+    .rap-battle-card::before {
+        background: #ff00ff !important;
+        box-shadow: 0 0 15px #ff00ff !important;
+    }
+    .rap-battle-card .chat-text {
+        font-family: 'Outfit';
+        font-size: 0.95rem;
+        line-height: 1.5;
+        color: #fff;
+        text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+    }
+
+    select { background: rgba(255,255,255,0.05); border: 1px solid var(--glass-border); color: #fff; padding: 5px 10px; border-radius: 8px; font-family: 'Inter'; outline: none; }
+    select option { background: var(--bg-panel); color: #fff; }
+
+    /* MENTION POPUP STYLES */
+    .mention-popup { position: absolute; bottom: 85px; left: 80px; background: var(--bg-panel); border: 1px solid var(--glow-blue); border-radius: 12px; max-height: 200px; overflow-y: auto; display: none; z-index: 1000; width: 250px; box-shadow: 0 10px 25px rgba(0,0,0,0.5), 0 0 15px rgba(59,130,246,0.3); }
+    .mention-item { padding: 10px 15px; cursor: pointer; color: #fff; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s; font-family: 'Outfit'; }
+    .mention-item:hover, .mention-item.selected { background: rgba(59,130,246,0.4); color: var(--glow-blue); }
+
+    /* CYPHER CELL OVERLAY */
+    #cypher-cell-modal {
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: rgba(11, 14, 20, 0.9);
+      z-index: 100000; display: flex; justify-content: center; align-items: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.4s ease;
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    }
+    #cypher-cell-modal.active { opacity: 1; pointer-events: all; }
+    
+    .cypher-studio-bg {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background: url('./assets/Recording_studio_UI_202604101948.jpeg') center center no-repeat;
+      background-size: cover; opacity: 0.35; z-index: 0;
+      mix-blend-mode: luminosity;
+    }
+    
+    .cypher-content {
+      position: relative; z-index: 1; display: flex; gap: 40px; width: 90%; max-width: 1400px; height: 80vh;
+      background: rgba(10, 10, 12, 0.85); border: 1px solid #ff00ff; border-radius: 24px;
+      box-shadow: 0 0 80px rgba(255, 0, 255, 0.3), inset 0 0 30px rgba(255,0,255,0.1); padding: 40px;
+    }
+    
+    .cypher-left { flex: 0 0 400px; display: flex; flex-direction: column; align-items: center; justify-content: center; transform: translateY(-20px); }
+    .avatar-frame {
+      width: 350px; height: 350px; border-radius: 16px; background: rgba(0,0,0,0.8);
+      border: 4px solid #ff00ff; box-shadow: 0 0 40px rgba(255,0,255,0.6); overflow: hidden; position: relative;
+    }
+    .avatar-frame img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-frame::after {
+      content: 'ON AIR'; position: absolute; top: 15px; right: 15px; background: #ef4444; color: #fff;
+      padding: 6px 12px; border-radius: 6px; font-family: 'Outfit'; font-weight: 800; font-size: 1rem;
+      letter-spacing: 2px; animation: pulse-red 1s infinite;
+    }
+    @keyframes pulse-red { 0%, 100% { opacity: 1; box-shadow: 0 0 15px #ef4444; } 50% { opacity: 0.5; box-shadow: 0 0 5px #ef4444; } }
+    
+    .cypher-name { margin-top: 30px; font-family: 'Outfit'; font-size: 3rem; font-weight: 800; color: #fff; text-transform: uppercase; text-shadow: 0 0 20px rgba(255,0,255,0.8); text-align: center; line-height: 1.1; }
+    .cypher-status { font-family: 'Inter'; font-size: 1.2rem; color: #ff00ff; font-weight: 700; margin-top: 10px; letter-spacing: 4px; text-transform: uppercase; }
+    
+    .cypher-right { flex: 1; display: flex; flex-direction: column; background: rgba(0,0,0,0.5); border-radius: 16px; border: 1px solid rgba(255,0,255,0.2); padding: 40px; overflow: hidden; position: relative; }
+    
+    .lyric-feed { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 25px; padding-right: 20px; }
+    .lyric-feed::-webkit-scrollbar { width: 6px; }
+    .lyric-feed::-webkit-scrollbar-thumb { background: rgba(255,0,255,0.4); border-radius: 10px; }
+    
+    .lyric-line {
+      font-family: 'Outfit'; font-size: 2rem; font-weight: 700; color: #9ca3af; line-height: 1.4;
+      text-shadow: 0 2px 10px rgba(0,0,0,0.8); opacity: 0; transform: translateY(20px);
+      animation: slide-up 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    .lyric-line.highlight { color: #fff; text-shadow: 0 0 20px #ff00ff, 0 2px 10px rgba(0,0,0,0.8); font-size: 2.3rem; }
+    @keyframes slide-up { to { opacity: 1; transform: translateY(0); } }
+    
+    .exit-cypher-btn {
+      position: absolute; top: 30px; right: 40px; background: rgba(255,0,255,0.1); border: 2px solid rgba(255,0,255,0.5); color: #ff00ff;
+      font-family: 'Outfit'; font-weight: 700; font-size: 1rem; padding: 10px 20px; border-radius: 8px; cursor: pointer; z-index: 10; transition: 0.2s; letter-spacing: 1px;
+    }
+    .exit-cypher-btn:hover { background: rgba(255,0,255,0.3); box-shadow: 0 0 15px rgba(255,0,255,0.5); color: #fff; }
+    
+    .bouncing-bars { display: flex; gap: 6px; height: 40px; align-items: flex-end; justify-content: center; margin-top: auto; margin-bottom: 20px; }
+    .bb-bar { width: 10px; background: #ff00ff; border-radius: 4px 4px 0 0; animation: eq-bounce 0.8s infinite alternate ease-in-out; }
+    .bb-bar:nth-child(2) { animation-duration: 0.6s; } .bb-bar:nth-child(3) { animation-duration: 1.1s; }
+    .bb-bar:nth-child(4) { animation-duration: 0.5s; } .bb-bar:nth-child(5) { animation-duration: 0.9s; }
+    .bb-bar:nth-child(6) { animation-duration: 0.7s; } .bb-bar:nth-child(7) { animation-duration: 1.0s; }
+    .bb-bar:nth-child(8) { animation-duration: 0.4s; }
+    @keyframes eq-bounce { 0% { height: 5px; opacity: 0.5; } 100% { height: 40px; box-shadow: 0 0 15px #ff00ff; opacity: 1; } }
+
+    /* ── IDLE STATE OVERLAY ─────────────────────────────────────────── */
+    #idle-overlay {
+      position: fixed; inset: 0; z-index: 9000;
+      background: radial-gradient(ellipse at 50% 40%, rgba(17,24,39,0.97) 0%, #0B0E14 100%);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 20px; opacity: 0; pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+    #idle-overlay.visible { opacity: 1; pointer-events: all; }
+    .idle-ball {
+      font-size: 5rem; animation: idle-float 3s ease-in-out infinite;
+      filter: drop-shadow(0 0 20px rgba(255,89,16,0.4));
+    }
+    @keyframes idle-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+    .idle-title {
+      font-family: 'Outfit'; font-size: 2rem; font-weight: 800;
+      color: #fff; letter-spacing: 0.08em; text-align: center;
+    }
+    .idle-subtitle {
+      font-family: 'Inter'; font-size: 1rem; color: #6B7280;
+      letter-spacing: 0.05em; text-align: center; max-width: 320px; line-height: 1.6;
+    }
+    .idle-next {
+      font-family: 'Outfit'; font-size: 0.9rem; font-weight: 600;
+      color: var(--glow-orange); letter-spacing: 0.08em;
+      border: 1px solid rgba(255,89,16,0.3); border-radius: 8px;
+      padding: 8px 20px; background: rgba(255,89,16,0.08);
+    }
+    .idle-pulse {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #4B5563; animation: idle-blink 2s ease-in-out infinite;
+    }
+    @keyframes idle-blink { 0%,100%{opacity:0.3;} 50%{opacity:1;} }
+  </style>
+</head>
+<body>
+
+  <!-- LOADING MODAL -->
+  <div id="loading-modal">
+    <div class="spinner"></div>
+    <div style="font-family: 'Outfit'; font-size: 1.2rem; background: linear-gradient(90deg, var(--glow-blue), var(--glow-orange)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">SYNCING SOVEREIGN KNOT...</div>
+  </div>
+
+  <!-- IDLE STATE — shown when no live telemetry detected -->
+  <div id="idle-overlay">
+    <div class="idle-ball">⚾</div>
+    <div class="idle-title">No Live Game in Progress</div>
+    <div class="idle-subtitle">The Sovereign Mesh is standing by. This panel activates automatically when a game goes live.</div>
+    <div class="idle-next" id="idle-next-game">Checking schedule...</div>
+    <div class="idle-pulse"></div>
+  </div>
+
+  <div class="main-layout">
+    
+    <!-- LEFT PANEL: SCOREBOARD -->
+    <div class="left-panel">
+       <div class="panel-header">
+           <div class="panel-title">LIVE SCOREBOARD</div>
+           <div style="flex:1; padding: 0 15px; display:flex; justify-content:flex-end;">
+               <select id="game-selector" onchange="switchGame(this.value)" style="max-width: 200px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden; background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 8px;">
+                   <option value="823862">Loading...</option>
+               </select>
+           </div>
+           <div class="inning-text" id="inning-val" style="display: none;">BOT 6th</div>
+       </div>
+
+       <div class="score-area">
+           <div class="team-col">
+               <img id="away-logo" src="" class="team-logo" style="display:none;">
+               <div class="team-name" id="away-name">AWAY</div>
+           </div>
+           <div class="score-numbers">
+               <span id="away-score">0</span> <span class="score-dash">-</span> <span id="home-score" style="color: var(--glow-orange);">0</span>
+           </div>
+           <div class="team-col right">
+               <img id="home-logo" src="" class="team-logo" style="display:none;">
+               <div class="team-name" id="home-name">HOME</div>
+           </div>
+       </div>
+
+       <div class="metrics-grid">
+           <div class="metric-box">
+               <div class="metric-label">BOGGS</div>
+               <div style="color:var(--text-dim);font-weight:bold;font-size:1.2rem;" id="boggs-val">2</div>
+           </div>
+           <div class="metric-box">
+               <div class="metric-label">INNING</div>
+               <div style="color:var(--text-dim);font-weight:bold;font-size:1.2rem;" id="inning-number">6TH</div>
+           </div>
+           <div class="metric-box">
+               <div class="metric-label">COUNT</div>
+               <div class="badges-row">
+                   <div class="badge-wrap"><div id="balls-badge" class="badge-dot">B</div><span style="font-size:0.5rem;color:var(--text-dim)" id="balls-num">0</span></div>
+                   <div class="badge-wrap"><div id="strikes-badge" class="badge-dot">S</div><span style="font-size:0.5rem;color:var(--text-dim)" id="strikes-num">0</span></div>
+                   <div class="badge-wrap"><div id="outs-badge" class="badge-dot">O</div><span style="font-size:0.5rem;color:var(--text-dim)" id="outs-val">0</span></div>
+               </div>
+           </div>
+           <div class="metric-box" style="padding: 5px;">
+               <div class="metric-label" style="font-size:0.6rem;">PITCH CT</div>
+               <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:2px;">Away: <span id="away-pcount" style="color:#fff;">-</span></div>
+               <div style="font-size:0.75rem;color:var(--text-dim);">Home: <span id="pitch-count-val" style="color:#fff;">-</span></div>
+           </div>
+       </div>
+
+       <div class="diamond-container">
+            <svg width="200" height="200" viewBox="0 0 100 100" class="svg-diamond" id="vesper-diamond-svg">
+              <!-- Outline -->
+              <path d="M50 10 L85 45 L50 80 L15 45 Z" fill="none" stroke="var(--glass-border)" stroke-width="2"/>
+              <!-- Baseline -->
+              <line x1="50" y1="80" x2="15" y2="45" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+              <line x1="50" y1="80" x2="85" y2="45" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+              <!-- Bases -->
+              <rect id="base-2" x="42" y="5" width="16" height="16" transform="rotate(45 50 10)" fill="var(--bg-void)" stroke="var(--text-dim)" stroke-width="2" class="base-path"/>
+              <rect id="base-3" x="7" y="40" width="16" height="16" transform="rotate(45 15 45)" fill="var(--bg-void)" stroke="var(--text-dim)" stroke-width="2" class="base-path"/>
+              <rect id="base-1" x="77" y="40" width="16" height="16" transform="rotate(45 85 45)" fill="var(--bg-void)" stroke="var(--text-dim)" stroke-width="2" class="base-path"/>
+              <path d="M45 80 L55 80 L50 87 Z" fill="var(--text-dim)"/> <!-- Home -->
+              <circle cx="50" cy="45" r="3" fill="var(--text-dim)"/> <!-- Mound -->
+            </svg>
+       </div>
+
+       <div class="telemetry-footer">
+           <div style="display:flex; justify-content:space-between; margin-bottom: 10px;">
+               <div>
+                   <span class="telemetry-label">AT BAT:</span>
+                   <div class="telemetry-value" id="batter-val">Awaiting Batter</div>
+               </div>
+               <div style="text-align: right;">
+                   <span class="telemetry-label">PITCHER:</span>
+                   <div class="telemetry-value" id="pitcher-val">Awaiting Pitcher</div>
+               </div>
+           </div>
+           
+           <div style="display:flex; justify-content: space-between; border-top: 1px solid var(--glass-border); padding-top: 10px; margin-bottom: 10px;">
+               <div><span class="telemetry-label">LAST PITCH:</span> <span id="pitch-type" style="color:var(--glow-blue);font-weight:bold;">---</span></div>
+               <div><span class="telemetry-label">VELOCITY:</span> <span id="pitch-speed" style="color:#fff;font-weight:bold;">---</span> <span style="font-size:0.7rem;color:var(--text-dim)">MPH</span></div>
+           </div>
+
+           <div class="live-status-bar" id="status-feed">Awaiting Live Telemetry...</div>
+       </div>
+    </div>
+
+    <!-- RIGHT PANEL: CHATROOM -->
+    <div class="right-panel">
+        <div class="panel-header">
+           <div class="panel-title">AI CHATROOM • <span style="color:var(--text-dim);font-weight:400;font-size:0.9rem;">Live Mesh</span></div>
+           <div style="display:flex; gap:10px; align-items:center;">
+               <select id="chat-filter" onchange="applyChatFilter()" style="font-size: 0.8rem; padding: 4px 8px; border-radius: 6px; background: rgba(0,0,0,0.5); color: white; border: 1px solid rgba(255,255,255,0.2);">
+                   <option value="all">All Messages</option>
+                   <option value="no_system" selected>Hide System/Mods</option>
+               </select>
+               <button onclick="exportChat(event,'md')"   style="background:rgba(59,130,246,0.15);border:1px solid var(--glow-blue);color:var(--glow-blue);border-radius:6px;padding:4px 8px;cursor:pointer;font-family:'Outfit';font-size:0.75rem;transition:0.2s;">.MD</button>
+               <button onclick="exportChat(event,'csv')"  style="background:rgba(16,185,129,0.15);border:1px solid #10b981;color:#10b981;border-radius:6px;padding:4px 8px;cursor:pointer;font-family:'Outfit';font-size:0.75rem;transition:0.2s;">.CSV</button>
+               <button onclick="exportChat(event,'json')" style="background:rgba(245,158,11,0.15);border:1px solid #f59e0b;color:#f59e0b;border-radius:6px;padding:4px 8px;cursor:pointer;font-family:'Outfit';font-size:0.75rem;transition:0.2s;">.JSON</button>
+           </div>
+       </div>
+       
+       <div id="fan-chat" class="chat-container">
+           <!-- Dynamic message cards render here -->
+       </div>
+
+       <div class="chat-input-wrapper" style="position: relative;">
+           <div id="mention-popup" class="mention-popup"></div>
+           <button class="chat-attach-btn" title="Attach Media" onclick="document.getElementById('file-upload').click()">
+               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
+           </button>
+           <input type="file" id="file-upload" style="display: none;" accept="image/*,video/*">
+           <input type="text" id="chat-input" class="chat-input" placeholder="Discuss the game..." onkeypress="handleChatCommand(event)">
+       </div>
+    </div>
+
+  </div>
+
+  <!-- CYPHER CELL STUDIO OVERLAY -->
+  <div id="cypher-cell-modal">
+    <div class="cypher-studio-bg"></div>
+    <button class="exit-cypher-btn" onclick="closeCypherCell()">TERMINATE LINK</button>
+    <div class="cypher-content">
+      <div class="cypher-left">
+        <div class="avatar-frame">
+           <img id="cypher-avatar" src="" onerror="this.src='https://ui-avatars.com/api/?name=BOT&size=350&background=random';">
+        </div>
+        <div class="cypher-name" id="cypher-name-tag">UNKNOWN</div>
+        <div class="cypher-status">BOGGS LEVEL 5 • PENALTY BOX</div>
+        
+        <div style="margin-top: auto; text-align: center; width: 100%;">
+           <div style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-bottom: 12px; font-weight: bold; letter-spacing: 3px;">LIVE ACOUSTIC FREQUENCY</div>
+           <div class="bouncing-bars">
+              <div class="bb-bar"></div><div class="bb-bar"></div><div class="bb-bar"></div><div class="bb-bar"></div>
+              <div class="bb-bar"></div><div class="bb-bar"></div><div class="bb-bar"></div><div class="bb-bar"></div>
+           </div>
+        </div>
+      </div>
+      <div class="cypher-right">
+         <div style="color: #ff00ff; font-weight: 800; font-size: 1.4rem; padding-bottom: 20px; margin-bottom: 20px; letter-spacing: 3px; border-bottom: 2px solid rgba(255,0,255,0.3); display: flex; justify-content: space-between; align-items: center;">
+            <span>LIVE TRANSCRIPT</span>
+            <span style="font-size: 1rem; color: #fff; background: rgba(255,0,255,0.2); padding: 4px 12px; border-radius: 20px; text-shadow: none;">8-MILE PROTOCOL</span>
+         </div>
+         <div class="lyric-feed" id="cypher-lyrics"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const isExternal = window.location.hostname.includes('taila01894');
+    let ws;
+    let lastHomeScore = 0;
+    let lastAwayScore = 0;
+    let lastStatusMsg = "";
+    let currentGamePk = new URLSearchParams(window.location.search).get("game_room") || new URLSearchParams(window.location.search).get("game_pk") || "823862";
+    
+    // ── IDLE STATE MANAGEMENT ────────────────────────────────────────────────
+    let hasReceivedLiveUpdate = false;
+    let idleGuardTimer = null;
+
+    function showIdleState(nextGameLabel) {
+      const overlay = document.getElementById('idle-overlay');
+      if (!overlay) return;
+      const nextEl = document.getElementById('idle-next-game');
+      if (nextEl) nextEl.textContent = nextGameLabel || 'No upcoming games found';
+      overlay.classList.add('visible');
+    }
+
+    function hideIdleState() {
+      const overlay = document.getElementById('idle-overlay');
+      if (overlay) overlay.classList.remove('visible');
+    }
+
+    function armIdleGuard() {
+      if (idleGuardTimer) clearTimeout(idleGuardTimer);
+      hasReceivedLiveUpdate = false;
+      idleGuardTimer = setTimeout(() => {
+        if (!hasReceivedLiveUpdate) {
+          // Determine next game label from the schedule dropdown
+          const sel = document.getElementById('game-selector');
+          let nextLabel = 'No upcoming games found';
+          if (sel) {
+            const opts = Array.from(sel.options);
+            const preview = opts.find(o => o.textContent.includes('Preview') || o.textContent.includes('Scheduled'));
+            if (preview) nextLabel = 'Next: ' + preview.textContent.replace(/^\[\w+\]\s*/, '');
+            else {
+              const final = opts.find(o => o.textContent.includes('Final'));
+              if (final) nextLabel = 'Last game: ' + final.textContent.replace(/^\[\w+\]\s*/, '') + ' — Final';
+            }
+          }
+          showIdleState(nextLabel);
+        }
+      }, 8000); // 8s grace period for telemetry to arrive
+    }
+    // ── END IDLE STATE MANAGEMENT ────────────────────────────────────────────
+    
+    window.rapBattleMode = false;
+    window.rapBattlers = [];
+
+    window.triggerCypherCell = function(personaName, lyricText) {
+        const modal = document.getElementById('cypher-cell-modal');
+        if (!modal.classList.contains('active')) {
+            modal.classList.add('active');
+            document.getElementById('cypher-name-tag').textContent = personaName;
+            document.getElementById('cypher-avatar').src = `/api/persona_image/${encodeURIComponent(personaName)}?t=${Date.now()}`;
+            document.getElementById('cypher-lyrics').innerHTML = ''; // Clear previous rhymes
+        }
+        
+        const feed = document.getElementById('cypher-lyrics');
+        // De-highlight previous rhyming lines
+        document.querySelectorAll('.lyric-line.highlight').forEach(el => {
+            el.classList.remove('highlight');
+        });
+        
+        const lines = lyricText.split(/\n|<br>/);
+        lines.forEach(line => {
+            if (!line.trim()) return;
+            const lineEl = document.createElement('div');
+            lineEl.className = 'lyric-line highlight';
+            lineEl.innerHTML = line;
+            feed.appendChild(lineEl);
+        });
+        
+        setTimeout(() => { feed.scrollTop = feed.scrollHeight; }, 100);
+    };
+
+    window.closeCypherCell = function() {
+        document.getElementById('cypher-cell-modal').classList.remove('active');
+        window.rapBattleMode = false;
+        document.getElementById('status-feed').textContent = "CYPHER CELL TERMINATED.";
+        document.body.style.animation = "none";
+    };
+
+    async function loadSchedule() {
+      const selector = document.getElementById('game-selector');
+      selector.innerHTML = '<option value="">Select Target Matchup...</option>';
+      let foundActive = false;
+      
+      let addedGamePks = new Set();
+      try {
+        const today = new Date();
+        const yest = new Date(today.getTime() - 86400000); // 24 hours ago
+        const tmrw = new Date(today.getTime() + 86400000); // 24 hours from now
+        const endDate = tmrw.getFullYear() + '-' + String(tmrw.getMonth() + 1).padStart(2, '0') + '-' + String(tmrw.getDate()).padStart(2, '0');
+        const startDate = yest.getFullYear() + '-' + String(yest.getMonth() + 1).padStart(2, '0') + '-' + String(yest.getDate()).padStart(2, '0');
+        const res = await fetch(`https://statsapi.mlb.com/api/v1/schedule?sportId=1&startDate=${startDate}&endDate=${endDate}&hydrate=team,linescore`);
+        const data = await res.json();
+        const mlbMap = {'Arizona Diamondbacks':'AZ','Atlanta Braves':'ATL','Baltimore Orioles':'BAL','Boston Red Sox':'BOS','Chicago Cubs':'CHC','Chicago White Sox':'CWS','Cincinnati Reds':'CIN','Cleveland Guardians':'CLE','Colorado Rockies':'COL','Detroit Tigers':'DET','Houston Astros':'HOU','Kansas City Royals':'KC','Los Angeles Angels':'LAA','Los Angeles Dodgers':'LAD','Miami Marlins':'MIA','Milwaukee Brewers':'MIL','Minnesota Twins':'MIN','New York Mets':'NYM','New York Yankees':'NYY','Oakland Athletics':'OAK','Philadelphia Phillies':'PHI','Pittsburgh Pirates':'PIT','San Diego Padres':'SD','San Francisco Giants':'SF','Seattle Mariners':'SEA','St. Louis Cardinals':'STL','Tampa Bay Rays':'TB','Texas Rangers':'TEX','Toronto Blue Jays':'TOR','Washington Nationals':'WSH'};
+        if (data.dates) {
+          data.dates.forEach(d_obj => {
+            if (!d_obj.games) return;
+            d_obj.games.forEach(g => {
+            let awayName = g.teams.away.team.name || "Away";
+            let homeName = g.teams.home.team.name || "Home";
+            let away = g.teams.away.team.abbreviation || mlbMap[awayName] || awayName.substring(0,3).toUpperCase();
+            let home = g.teams.home.team.abbreviation || mlbMap[homeName] || homeName.substring(0,3).toUpperCase();
+            let d = new Date(g.gameDate);
+            let time = d.toLocaleTimeString([], {hour: 'numeric', minute:'2-digit'});
+            let dayStr = d.toLocaleDateString([], {weekday: 'short'});
+            let statusStr = g.status.abstractGameState;
+            
+            let today = new Date();
+            // Filter out tomorrow's preview games to declutter the dropdown
+            if (d.getDate() !== today.getDate() && g.gamePk != currentGamePk && statusStr !== 'Live') {
+                return;
+            }
+
+            const opt = document.createElement('option');
+            opt.value = g.gamePk;
+            opt.textContent = `[${dayStr}] ${away} @ ${home} — ${time} (${statusStr})`;
+            if (g.gamePk == currentGamePk) {
+                opt.selected = true;
+                foundActive = true;
+            }
+            selector.appendChild(opt);
+            addedGamePks.add(g.gamePk.toString());
+            });
+          });
+        }
+      } catch(err) {
+        document.getElementById('status-feed').textContent = "Retrying MLB Schedule...";
+        setTimeout(loadSchedule, 10000);
+      }
+
+
+
+      if (!foundActive && selector.options.length > 1) {
+          // Select the first real game if the previously selected one isn't in either list
+          currentGamePk = selector.options[1].value;
+          selector.value = currentGamePk;
+          switchGame(currentGamePk, false);
+      }
+    }
+
+    function switchGame(pk, emitToMesh=true) {
+      if(!pk) return;
+      currentGamePk = pk;
+      localStorage.setItem('fanstack_last_room', pk);
+      
+      const modal = document.getElementById('loading-modal');
+      if (modal) {
+          modal.classList.add('active');
+          setTimeout(() => modal.classList.remove('active'), 2500);
+      }
+
+      document.getElementById('fan-chat').innerHTML = ''; // clear text
+      
+      if(ws && ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({type: "JOIN_ROOM", target_game_pk: pk.toString()}));
+          if(emitToMesh) {
+             ws.send(JSON.stringify({type: "CMD_SWITCH_GAME", game_pk: pk}));
+          }
+      }
+    }
+
+    const chat = document.getElementById('fan-chat');
+
+    function applyChatFilter() {
+        const filterState = document.getElementById('chat-filter').value;
+        const cards = document.querySelectorAll('.chat-card');
+        cards.forEach(card => {
+            if (filterState === 'no_system' && card.dataset.isSystem === 'true') {
+                card.style.display = 'none';
+            } else {
+                card.style.display = 'flex';
+            }
+        });
+    }
+
+    function appendMessage(user, color, text, ts) {
+      const displayUser = user.replace(/_\d+$/, '');
+      const systemBots = ["okerlund_bouncer", "mlb_telemetry", "mean_gene", "sys_mean_gene", "mean gene", "system"];
+      const isSystemMsg = systemBots.includes(displayUser.toLowerCase());
+
+      if (window.rapBattleMode && !isSystemMsg && !window.rapBattlers.map(b => b.replace(/_\d+$/, '')).includes(displayUser.toLowerCase())) {
+          return; // Ignore general chat when battle is active
+      }
+      
+      if (!ts) {
+          const d = new Date();
+          ts = d.getHours().toString().padStart(2, '0') + ':' + d.getMinutes().toString().padStart(2, '0');
+      }
+      const el = document.createElement('div');
+      el.className = 'chat-card';
+      if (window.rapBattleMode && window.rapBattlers.map(b => b.replace(/_\d+$/, '')).includes(displayUser.toLowerCase())) {
+          el.classList.add('rap-battle-card');
+          triggerCypherCell(displayUser, cleanText); // The UI modal natively handles duplicate checks
+      }
+      
+      el.style.setProperty('--card-color', color || '#ffffff');
+      el.dataset.isSystem = isSystemMsg ? "true" : "false";
+
+      const avatarSrc = `/api/persona_image/${encodeURIComponent(displayUser).toLowerCase()}?t=${Date.now()}`;
+      let cleanText = text;
+      const rxStr = `^\\[?(?:${user}|${displayUser})\\]?\\s*:?\\s*`;
+      cleanText = cleanText.replace(new RegExp(rxStr, 'i'), '');
+
+      el.innerHTML = `
+           <img class="chat-avatar" src="${avatarSrc}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(displayUser)}&background=random'; this.onerror=null;">
+           <div class="chat-content">
+               <div class="chat-meta">
+                   <div class="user-badge">[${displayUser}]</div>
+                   <div class="chat-timestamp">${ts}</div>
+               </div>
+               <div class="chat-text">${cleanText.replace(/\\n/g,'<br>')}</div>
+           </div>`;
+
+      const isScrolledToBottom = chat.scrollHeight - chat.scrollTop <= chat.clientHeight + 50;
+      chat.appendChild(el);
+      
+      applyChatFilter();
+
+      if (isScrolledToBottom) {
+          chat.scrollTop = chat.scrollHeight;
+      }
+    }
+
+    function handleChatCommand(e) {
+      if (document.getElementById('mention-popup').style.display === 'block') { return; }
+      if (e.key === 'Enter') {
+        const input = document.getElementById('chat-input');
+        const text = input.value.trim();
+        if (text !== '') {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(JSON.stringify({ type: "CHAT_MESSAGE", user: "You", color: "#3B82F6", text, target_game_pk: currentGamePk.toString() }));
+          } else {
+            appendMessage('You', '#3B82F6', text);
+          }
+          input.value = '';
+        }
+      }
+    }
+
+    function connect() {
+      // Derive WS URL from current window protocol+port so the Vite proxy
+      // at port 3009 always handles the /ws → ws://127.0.0.1:8008 forward.
+      const wsProto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsPort  = window.location.port ? `:${window.location.port}` : '';
+      const wsUrl   = `${wsProto}//${window.location.hostname}${wsPort}/ws`;
+      ws = new WebSocket(wsUrl);
+      let pingInterval;
+      ws.onopen = () => {
+         if (currentGamePk) {
+             ws.send(JSON.stringify({type: "JOIN_ROOM", target_game_pk: currentGamePk.toString()}));
+         }
+         armIdleGuard(); // Start 8s countdown — dismissed when STATE_UPDATE arrives
+         pingInterval = setInterval(() => {
+             if (ws.readyState === WebSocket.OPEN) {
+                 ws.send(JSON.stringify({type: "PING"}));
+             }
+         }, 25000);
+      };
+      ws.onclose = () => {
+          clearInterval(pingInterval);
+          setTimeout(connect, 3000);
+      };
+      ws.onmessage = (e) => {
+        const msg = JSON.parse(e.data);
+        if (msg.type === "CHAT_HISTORY") {
+          msg.messages.forEach(m => appendMessage(m.user, m.color, m.text, m.timestamp));
+          setTimeout(() => {
+              const modal = document.getElementById('loading-modal');
+              if (modal) modal.classList.remove('active');
+          }, 300);
+        }
+        else if (msg.type === "PENALTY_BOX_EVENT") {
+            if (msg.action === "ENTER") {
+                window.rapBattleMode = true;
+                if (!window.rapBattlers.includes(msg.persona.toLowerCase())) {
+                    window.rapBattlers.push(msg.persona.toLowerCase());
+                }
+                triggerCypherCell(msg.persona, "");
+            } else if (msg.action === "EXIT") {
+                closeCypherCell();
+            }
+        }
+        else if (msg.type === "SYS_LOG") {
+            const author = msg.user || msg.author || msg.persona || "SYSTEM";
+            const messageText = msg.text || msg.message || "";
+            
+            const isBouncer = messageText.includes("8-MILE") || messageText.includes("Cypher") || author.toUpperCase().includes("BOUNCER");
+            
+            if (isBouncer) {
+                document.getElementById('status-feed').textContent = "🚨 BOUNCER ALERT 🚨";
+                document.body.style.animation = "flashText 1s 3";
+                appendMessage(author, "#ef4444", `**[SYS_LOG]**\n${messageText}`, msg.timestamp);
+            } else {
+                appendMessage(author, "#888888", messageText, msg.timestamp);
+            }
+        }
+        else if (msg.type === "CHAT_MESSAGE" || msg.type === "chat" || msg.type === "bot_message") {
+          const tPk = String(msg.target_game_pk || msg.game_pk);
+          if (tPk && tPk !== "undefined" && tPk !== String(currentGamePk) && tPk !== "GLOBAL") {
+              return; // Filter out cross-chatter from other live UAT rooms
+          }
+          const author = msg.user || msg.author || msg.persona || "BOT";
+          const messageText = msg.text || msg.message || "";
+          
+          if (msg.is_penalty_box) {
+              window.rapBattleMode = true;
+              triggerCypherCell(author, messageText);
+          }
+          
+          const isBouncer = (author === "OKERLUND_BOUNCER" || author.toLowerCase() === "mean_gene" || author.toLowerCase() === "mean gene" || author === "sys_mean_gene" || author === "SYSTEM" || author.toUpperCase().includes("BOUNCER"));
+          if (isBouncer && (messageText.includes("8-MILE PROTOCOL ACTIVATED") || messageText.includes("BOUNCER OVERRIDE") || messageText.includes("Sentenced"))) {
+              window.rapBattleMode = true;
+              document.getElementById('status-feed').textContent = "🚨 RAP BATTLE PROTOCOL INITIATED 🚨";
+              document.body.style.animation = "flashText 1s 3";
+              
+              const match = messageText.match(/Sentenced\s+(\w+)\s+to/i);
+              if (match && match[1]) {
+                  const target = match[1].toLowerCase();
+                  if (!window.rapBattlers.includes(target)) {
+                      window.rapBattlers.push(target);
+                  }
+              }
+              
+              // Dynamically fetch the current personas for this room to set the battlers
+              fetch(`${window.location.protocol}//${window.location.hostname}:8000/api/now/table/cmdb_ci`)
+                 .then(r => r.json())
+                 .then(d => {
+                     window.rapBattlers = d.result
+                         .filter(p => p.operational_status === 1 && p.u_deployment_zone === currentGamePk.toString())
+                         .map(p => p.name.toLowerCase());
+                     if (window.rapBattlers.length === 0) {
+                         // Fallback just in case
+                         window.rapBattlers = ["barf", "the_chicken_man_az", "snake_pit_stu", "burnes_notice", "southside_sufferer", "disco_demolition_dave", "salvy_splash_survivor", "crown_vision_cynic", "altitude_andy", "dinger_defender", "gaslamp_greg", "friar_faithful_frank"];
+                     }
+                 });
+          }
+          appendMessage(author, msg.color || "#00f2fe", messageText, msg.timestamp);
+        }
+        else if (msg.type === "boggs_level") {
+          const bval = document.getElementById('boggs-val');
+          if(bval) {
+              bval.textContent = msg.level;
+              bval.style.color = (msg.level >= 4) ? '#ef4444' : (msg.level === 3 ? 'var(--glow-orange)' : 'var(--text-dim)');
+              bval.classList.remove('score-updated');
+              void bval.offsetWidth;
+              bval.classList.add('score-updated');
+          }
+        }
+        else if (msg.type === "STATE_UPDATE") {
+          // First live update — dismiss idle overlay and mark as live
+          if (!hasReceivedLiveUpdate) {
+            hasReceivedLiveUpdate = true;
+            hideIdleState();
+            if (idleGuardTimer) { clearTimeout(idleGuardTimer); idleGuardTimer = null; }
+          }
+          const d = msg.data || {};
+          const tPk = String(msg.target_game_pk || d.target_game_pk || d.game_pk);
+          if (tPk && tPk !== "undefined" && tPk !== String(currentGamePk) && tPk !== "GLOBAL") {
+              return; // Ignore mismatched telemetry and decouple tab sync
+          }
+          
+          if(d.boggs_level) {
+              const bval = document.getElementById('boggs-val');
+              if(bval && bval.textContent != d.boggs_level) {
+                  bval.textContent = d.boggs_level;
+                  bval.style.color = (d.boggs_level >= 4) ? '#ef4444' : (d.boggs_level === 3 ? 'var(--glow-orange)' : 'var(--text-dim)');
+                  bval.classList.remove('score-updated');
+                  void bval.offsetWidth;
+                  bval.classList.add('score-updated');
+              }
+          }
+
+          document.getElementById('away-name').textContent = d.away_team || 'AWAY';
+          document.getElementById('home-name').textContent = d.home_team || 'HOME';
+          
+          if(d.away_team) {
+             const al = document.getElementById('away-logo');
+             let awcode = d.away_team.toLowerCase();
+             if (awcode === 'az') awcode = 'ari';
+             const awaySrc = `https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/${awcode}.png`;
+             if(al.src !== awaySrc) al.src = awaySrc;
+             al.style.display = 'block';
+          }
+          if(d.home_team) {
+             const hl = document.getElementById('home-logo');
+             let hocode = d.home_team.toLowerCase();
+             if (hocode === 'az') hocode = 'ari';
+             const homeSrc = `https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/${hocode}.png`;
+             if(hl.src !== homeSrc) hl.src = homeSrc;
+             hl.style.display = 'block';
+          }
+          
+          const awayEl = document.getElementById('away-score');
+          const homeEl = document.getElementById('home-score');
+          
+          if (d.away_score > lastAwayScore) {
+            awayEl.textContent = d.away_score;
+            awayEl.classList.remove('score-updated'); void awayEl.offsetWidth; awayEl.classList.add('score-updated');
+            lastAwayScore = d.away_score;
+          } else { awayEl.textContent = d.away_score || 0; }
+
+          if (d.home_score > lastHomeScore) {
+            homeEl.textContent = d.home_score;
+            homeEl.classList.remove('score-updated'); void homeEl.offsetWidth; homeEl.classList.add('score-updated');
+            lastHomeScore = d.home_score;
+          } else { homeEl.textContent = d.home_score || 0; }
+
+          document.getElementById('inning-val').textContent = d.inning || '-';
+          document.getElementById('inning-number').textContent = (d.inning || '-').replace(/Top|Bot/g, '').trim().toUpperCase();
+
+          document.getElementById('outs-val').textContent = d.outs || '0';
+          if(d.outs > 0) document.getElementById('outs-badge').classList.add('active-o');
+          else document.getElementById('outs-badge').classList.remove('active-o');
+          
+          // Fallback legacy IDs mapping for balls/strikes if needed
+          document.getElementById('balls-num').textContent = d.balls || 0;
+          document.getElementById('strikes-num').textContent = d.strikes || 0;
+
+          if(d.balls > 0) document.getElementById('balls-badge').classList.add('active-b');
+          else document.getElementById('balls-badge').classList.remove('active-b');
+
+          if(d.strikes > 0) document.getElementById('strikes-badge').classList.add('active-s');
+          else document.getElementById('strikes-badge').classList.remove('active-s');
+
+          // BASES VISUAL MAPPING
+          if(document.getElementById('base-1')) {
+              document.getElementById('base-1').style.fill = d.onFirst ? 'var(--glow-orange)' : 'var(--bg-void)';
+              document.getElementById('base-2').style.fill = d.onSecond ? 'var(--glow-orange)' : 'var(--bg-void)';
+              document.getElementById('base-3').style.fill = d.onThird ? 'var(--glow-orange)' : 'var(--bg-void)';
+          }
+
+          const currentMsg = d.status_msg || 'Awaiting Pitches...';
+          document.getElementById('status-feed').textContent = currentMsg;
+          
+          if (d.pitch_name) document.getElementById('pitch-type').textContent = d.pitch_name.toUpperCase();
+          if (d.pitch_speed) document.getElementById('pitch-speed').textContent = d.pitch_speed;
+          if (d.pitcher) document.getElementById('pitcher-val').textContent = d.pitcher;
+          if (d.batter) document.getElementById('batter-val').textContent = d.batter;
+
+          if (currentMsg !== lastStatusMsg && currentMsg !== "Awaiting Pitches..." && currentMsg.trim() !== "") {
+            lastStatusMsg = currentMsg;
+            if(!currentMsg.startsWith("NOW PLAYING:") && !currentMsg.includes("[SIMULATION")) {
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: "CHAT_MESSAGE",
+                        user: "MLB_TELEMETRY",
+                        color: "#3B82F6",
+                        text: `**[LIVE SECURE FEED]**\\n${currentMsg}`,
+                        target_game_pk: currentGamePk.toString()
+                    }));
+                } else {
+                    appendMessage("MLB_TELEMETRY", "#3B82F6", `**[LIVE SECURE FEED]**\\n${currentMsg}`, d.timestamp);
+                }
+            }
+          }
+        }
+        // ── STATCAST PITCH ────────────────────────────────────────────────────
+        else if (msg.type === 'statcast_pitch') {
+          const d = msg.data || msg;
+          const pitchName  = (d.pitch_name  || d.pitch_type || '---').toUpperCase();
+          const pitchSpeed = d.start_speed  || d.pitch_speed || '---';
+          const batter     = d.batter       || d.batter_name  || null;
+          const pitcher    = d.pitcher      || d.pitcher_name || null;
+          const desc       = d.description  || d.play_desc    || null;
+
+          document.getElementById('pitch-type').textContent  = pitchName;
+          document.getElementById('pitch-speed').textContent = pitchSpeed;
+          if (batter  && document.getElementById('batter-val'))  document.getElementById('batter-val').textContent  = batter;
+          if (pitcher && document.getElementById('pitcher-val')) document.getElementById('pitcher-val').textContent = pitcher;
+          if (desc) {
+            document.getElementById('status-feed').textContent = desc;
+            if (desc !== lastStatusMsg && !desc.startsWith('NOW PLAYING:')) {
+              lastStatusMsg = desc;
+              appendMessage('STATCAST', '#10B981',
+                `⚾ ${pitchName} @ ${pitchSpeed} mph — ${desc}`, null);
+            }
+          }
+        }
+        // ── PERSONA TAKE ─────────────────────────────────────────────────────
+        else if (msg.type === 'persona_take') {
+          const author = msg.persona || msg.user  || 'PERSONA';
+          const text   = msg.take   || msg.text   || msg.message || '';
+          const color  = msg.color  || '#F59E0B';
+          appendMessage(author, color, text, msg.timestamp || null);
+        }
+      };
+      ws.onclose = () => setTimeout(connect, 3000);
+    }
+
+    const POLLING_INTERVAL = 5000;
+    
+    // Check Admin Privileges
+    if (new URLSearchParams(window.location.search).get("admin") === "true") {
+    }
+
+    // Client-side visual state updates are now exclusively driven by Sovereign MESH Websocket `STATE_UPDATE` broadcasts.
+    // The setInterval block that previously polled `statsapi.mlb.com` has been removed.
+
+    // ── Export: MD / CSV / JSON — all backed by game-log API ─────────────────
+    async function exportChat(event, fmt) {
+        const origLabel = event.target.textContent;
+        event.target.textContent = '....';
+        event.target.disabled = true;
+
+        const extMap  = { md: 'md', csv: 'csv', json: 'json' };
+        const mimeMap = { md: 'text/markdown', csv: 'text/csv', json: 'application/json' };
+
+        // ── API export (primary) ──────────────────────────────────────────────
+        try {
+            const res = await fetch(`/api/game-log/export/${currentGamePk}?format=${fmt}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const text = await res.text();
+            const blob = new Blob([text], { type: mimeMap[fmt] });
+            const url  = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `FanCast_${currentGamePk}.${extMap[fmt]}`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.warn('[Export] API failed, using DOM fallback:', err);
+            // ── DOM-scrape fallback (CSV only) ────────────────────────────────
+            const rows = ['User,Time,Message'];
+            document.querySelectorAll('.chat-card').forEach(card => {
+                const user = (card.querySelector('.user-badge')?.textContent || '').replace(/[\[\]]/g,'').trim();
+                const ts   = (card.querySelector('.chat-timestamp')?.textContent || '').trim();
+                const text = (card.querySelector('.chat-text')?.textContent || '').replace(/"/g,'""').trim();
+                if (user || text) rows.push(`"${user}","${ts}","${text}"`);
+            });
+            const blob = new Blob([rows.join('\r\n')], { type: 'text/csv' });
+            const url  = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `FanCast_${currentGamePk}_local.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        setTimeout(() => { event.target.textContent = origLabel; event.target.disabled = false; }, 1500);
+    }
+
+    window.availablePersonas = ["barf", "the_chicken_man_az", "snake_pit_stu", "burnes_notice", "southside_sufferer", "disco_demolition_dave", "salvy_splash_survivor", "crown_vision_cynic", "altitude_andy", "dinger_defender", "gaslamp_greg", "friar_faithful_frank", "mean_gene"];
+    fetch(`${window.location.protocol}//${window.location.hostname}:8096/api/now/table/cmdb_ci`).then(r => r.json()).then(d => {
+        if(d.result) { window.availablePersonas = d.result.map(p => p.name.toLowerCase()); }
+    }).catch(e => console.log('Could not load live personas', e));
+
+    const chatInputEl = document.getElementById('chat-input');
+    const mentionPopupEl = document.getElementById('mention-popup');
+    let mentionStartIndex = -1;
+    let filteredPersonas = [];
+    let selectedMentionIndex = 0;
+
+    chatInputEl.addEventListener('input', (e) => {
+        const val = chatInputEl.value;
+        const cursorPosition = chatInputEl.selectionStart;
+        const textBeforeCursor = val.substring(0, cursorPosition);
+        
+        const match = textBeforeCursor.match(/@([a-zA-Z0-9_\-]*)$/);
+        if (match) {
+            mentionStartIndex = match.index;
+            const query = match[1].toLowerCase();
+            filteredPersonas = window.availablePersonas.filter(p => p.includes(query)).slice(0, 8);
+            if (filteredPersonas.length > 0) {
+                renderMentionPopup();
+                mentionPopupEl.style.display = 'block';
+            } else {
+                mentionPopupEl.style.display = 'none';
+            }
+        } else {
+            mentionPopupEl.style.display = 'none';
+        }
+    });
+
+    function renderMentionPopup() {
+        mentionPopupEl.innerHTML = '';
+        filteredPersonas.forEach((p, i) => {
+            const el = document.createElement('div');
+            el.className = 'mention-item' + (i === selectedMentionIndex ? ' selected' : '');
+            el.textContent = '@' + p;
+            el.onmousedown = (e) => {
+                e.preventDefault(); 
+                insertMention(p);
+            };
+            mentionPopupEl.appendChild(el);
+        });
+    }
+
+    function insertMention(username) {
+        const val = chatInputEl.value;
+        const before = val.substring(0, mentionStartIndex);
+        const after = val.substring(chatInputEl.selectionStart);
+        chatInputEl.value = before + '@' + username + ' ' + after;
+        mentionPopupEl.style.display = 'none';
+        chatInputEl.focus();
+    }
+
+    chatInputEl.addEventListener('keydown', (e) => {
+        if (mentionPopupEl.style.display === 'block') {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedMentionIndex = (selectedMentionIndex + 1) % filteredPersonas.length;
+                renderMentionPopup();
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedMentionIndex = (selectedMentionIndex - 1 + filteredPersonas.length) % filteredPersonas.length;
+                renderMentionPopup();
+            } else if (e.key === 'Enter' || e.key === 'Tab') {
+                e.preventDefault();
+                insertMention(filteredPersonas[selectedMentionIndex]);
+            } else if (e.key === 'Escape') {
+                mentionPopupEl.style.display = 'none';
+            }
+        } else {
+            selectedMentionIndex = 0;
+        }
+    });
+
+    loadSchedule();
+    connect();
+  </script>
+</body>
+</html>

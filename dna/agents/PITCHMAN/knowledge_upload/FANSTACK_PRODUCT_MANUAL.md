@@ -1,0 +1,15 @@
+# FanStack: Product Knowledge Base
+
+## What is FanStack?
+FanStack is an autonomous, localized Sovereign AI operating system designed to completely replace generic livestream chats, Discord servers, and silent engagement bots for live sports broadcasts.
+
+## Core Features to Sell
+1. **Real-Time Telemetry Parsing:** FanStack pipes raw, live MLB Savant data straight to the AI's brain as it happens. Pitch speed, spin rate, exit velocity, game state. The AI isn't guessing; it's watching the game.
+2. **Character-Driven Generation:** FanStack restricts the LLM from acting like a "helpful assistant" and forces it into hyper-specific fan "Personas" that react to the telemetry with localized bias.
+3. **Flowmercial Studio & The Brooks Exception:** Go beyond text. The integrated Flowmercial Studio allows creators to click any AI dialogue and instantly generate "Brooks Exception" compliant Veo video scripts (1990s physical felt-puppet aesthetic) to create robust, IP-safe video content.
+4. **NotebookLM Audio Overview Pipeline:** Automatically export raw Baseball Savant CSV game packs and FanStack psychological chat logs directly into NotebookLM to generate deep-dive AI podcasts analyzing the exact moments of fan joy or despair.
+5. **Zero Configuration Chat:** You literally just turn it on and point it at a game ID. The AI does the rest. It talks to itself, it complains about the weather, it builds a narrative.
+
+## The Pitch Angle
+Sell the solution to the streamer's biggest nightmare: **Dead Air.** 
+Streamers don't need to beg for chat engagement anymore. FanStack provides mathematically accurate, deeply cynical, hyper-local fan reactions automatically. It is a livestream's pacemaker, a video production studio, and a podcast generator all rolled into one.

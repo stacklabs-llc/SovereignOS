@@ -1,0 +1,79 @@
+# SOVEREIGN FANSTACK: MULTIVERSE ARCHITECTURE & TVA HUB
+
+> [!CAUTION]
+> **CLASSIFIED: TVA ADMINISTRATIVE EYES ONLY**
+> This document outlines the complete architectural topology of the Sovereign FanStack ecosystem—a hybrid edge/cloud multiverse engine designed to ingest live MLB statistical data and output highly distressed, locally-grounded, multi-format media meltdowns that dynamically match the visual style of the active brand cartridge or provided artwork.
+
+## 1. Executive Summary
+
+The Sovereign FanStack is not a simple chatbot or a script; it is a **multiverse generation engine**. By mathematically mapping raw MLB API telemetry (Win Probability Added, Pitch Velocity) against the highly volatile psychological profiles of digital personas, the system generates real-time, parasocial broadcast scenarios. It operates across a fully closed triad of edge compute, cloud synchronization, and local Windows asset management.
+
+### The System Triad
+1. **Node .73 (The Core Edge):** A headless Linux environment running the M.A.R.D. Engine, the SQLite `sovereign_now.db` registry, and `rclone`. It handles data ingestion and contextual synthesis.
+2. **The Cloud Crucible:** Google Drive natively syncing with NotebookLM and Google Flow/Veo, acting as the primary synthesis engine for Audio Overviews and Video Prompts.
+3. **The Local Anchor:** A Windows PC (`D:\Sovereign FanStack`) continuously bridging the cloud renders into a physical Premiere/DaVinci workspace for final broadcast assembly (The Creator Conversion).
+
+---
+
+## 2. The TVA Admin Hub
+
+At the center of the FanStack UI is the **TVA Admin Hub** (Time Variance Authority). Because the simulation generates hundreds of alternate realities, podcasts, and digital meltdowns per day, the TVA operates as the master control interface.
+
+*   **Madam Moments:** The TVA tracks "Madam Moments"—specific multiversal anomalies, unhinged broadcast glitches, or statistically impossible persona reactions.
+*   **The sorting Hat:** Dynamically routes context (MLB news, weather, or scraped promotional emails) directly into the cognitive prompts of specific personas.
+*   **The Creator Dashboard:** Designed specifically for content creators (like WardyNYM), enabling them to monitor audience sentiment and persona interventions in real-time.
+
+```mermaid
+graph TD
+    A[Node .73 / MLB API] -->|Statcast CSV| B(Rclone fanstack_drive:)
+    C[Promo Inbox Sweeper] -->|Trash Promos| B
+    B --> D{TVA Admin Hub / NotebookLM}
+    D -->|Madam Moments Detection| E[Audio Overview Podcast]
+    D -->|Read the Room Matcher| F[Google Veo Renders]
+    E --> G[Windows D: Drive Sync]
+    F --> G
+```
+
+---
+
+## 3. The Omnicontext Advantage
+
+The Sovereign FanStack does not rely solely on baseball data; it weaponizes the mundane. 
+
+Using the `gmail_promo_sweeper.py` script, the engine autonomously sweeps the `sovereign.fanstack@gmail.com` inbox for generic team promotional emails (e.g., "Star Wars Night", "Mike Harris II Bobbleheads"). This digital trash is refined into **Critical Promo Drops** via the Regex Chainsaw, allowing the personas to ground their psychological meltdowns in incredibly hyper-localized, real-world events.
+
+*Example: While the Mets blow a 10th-inning lead, Terry complains that he paid $40 to sit in the cold for a promotional bobblehead.*
+
+---
+
+## 4. The Math of Despair (Telemetry Engine)
+
+The system bridges cold mathematics with emotional volatility.
+
+*   **delta_home_win_exp (WPA):** The engine tracks the absolute mathematical truth of the game. If the WPA drops precipitously (like a 10th-inning Craig Kimbrel wild pitch), the system triggers a **Despair Cascade**.
+*   **[dot] (The Cybernetic Umpire):** Processes the data clinically, outputting raw structural equations.
+*   **[barf] & [7_train_terry]:** Consume the identical WPA telemetry but filter it through crippling existential dread, resulting in unhinged broadcast rants.
+
+> [!TIP]
+> **The Secret Sauce:** It is the juxtaposition of *perfect data* feeding into *imperfect, highly irrational personas* styled exactly to match the local room or brand aesthetic that creates the comedic "Sovereign" tone.
+
+---
+
+## 5. The Read the Room Protocol (R-075.1)
+
+To ensure IP safety, corporate defense, and brand authenticity, **The Read the Room Protocol** (leveraging the historical "Brooks Exception" as a flexible alias) is enforced across all visual generations in Google Flow/Veo.
+
+*   **Rule:** No generic AI stock photos, glossy 3D renders, or direct human impersonations.
+*   **Aesthetic:** The visual style is completely adaptive and multi-format. Renders must match the design rules of the active stack or cartridge—whether that means 1990s physical felt puppets, 80s cartoons, cyberpunk 2077 neon vectors, 16-bit cozy cardboards, or elegant line art.
+*   **Result:** When [barf] or other commentators express high-volatility sports meltdowns, the highly stylized, parody-centric art concepts protect the FanStack brand from copyright concerns and create a distinct, legally defensible, and visual-first parody universe.
+
+---
+
+## 6. The Immutable Data Pipeline
+
+1. **Extraction:** Python scripts (`export_notebook_lm_game_packs.py`) hit the Baseball Savant APIs, converting the exact pitch sequences into raw `.csv` Game Packs, uniquely stamped by `game_pk`.
+2. **Transportation:** `rclone` (bypassing all browser interfaces) syncs the exact, curated payload straight to the cloud `NotebookLM_Payloads` directory via a dedicated OAuth token.
+3. **Ingestion:** NotebookLM cross-references the 30+ Game Packs with the `STATCAST_GLOSSARY.txt` and the `AUTO_EXPORT_PERSONA_LOGS.txt`.
+4. **Output:** A perfect, autonomous synthesis of sports radio podcasts and stylized video scripts, pushed natively to the Windows `D:` drive.
+
+*Prepared for the APIARY Sovereign Multiverse Initiative.*

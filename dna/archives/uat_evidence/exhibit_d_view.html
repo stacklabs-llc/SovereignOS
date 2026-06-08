@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exhibit D Verification Gallery</title>
+    <style>
+        :root {
+            --bg-dark: #0f1115;
+            --neon-cyan: #00ffff;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: #ffffff;
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--neon-cyan);
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .watermark {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: rgba(0, 255, 255, 0.8);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            border: 1px dashed var(--neon-cyan);
+            padding: 5px 15px;
+            display: inline-block;
+            margin-bottom: 2rem;
+        }
+
+        .exhibit-section {
+            margin-bottom: 4rem;
+            background: rgba(20, 24, 36, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(66, 220, 219, 0.2);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .exhibit-section h2 {
+            border-bottom: 1px solid var(--neon-cyan);
+            padding-bottom: 0.5rem;
+            color: var(--neon-cyan);
+            margin-top: 0;
+        }
+
+        .scrolling-wrapper {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 20px;
+            padding-bottom: 20px;
+        }
+        
+        .scrolling-wrapper::-webkit-scrollbar {
+            height: 12px;
+        }
+        .scrolling-wrapper::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 10px;
+        }
+        .scrolling-wrapper::-webkit-scrollbar-thumb {
+            background: var(--neon-cyan);
+            border-radius: 10px;
+        }
+
+        .frame-container {
+            flex: 0 0 auto;
+            width: 400px;
+            display: flex;
+            flex-direction: column;
+            background-color: #0b0c10;
+            padding: 10px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            border-radius: 6px;
+        }
+
+        .frame-image {
+            width: 100%;
+            height: auto;
+            border: 2px solid var(--neon-cyan);
+            box-shadow: 0 0 8px rgba(0, 255, 255, 0.4);
+            box-sizing: border-box;
+            background-color: #000;
+        }
+
+        .caption {
+            margin-top: 10px;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #a0aabf;
+        }
+
+        .caption span {
+            color: var(--neon-cyan);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>[ EXHIBIT D: FORENSIC TRIPLE BATCH EXTRACTION ]</h1>
+        <div class="watermark">VERIFIED GROUND TRUTH</div>
+    </header>
+
+    <div class="exhibit-section">
+        <h2>PLAY 1: GORMAN AT-BAT</h2>
+        <div class="scrolling-wrapper" id="gorman-grid"></div>
+    </div>
+    
+    <div class="exhibit-section">
+        <h2>PLAY 2: PICKOFF ATTEMPT [DUAL-CLOCK TELEMETRY SYNC]</h2>
+        <div class="scrolling-wrapper" id="pickoff-grid"></div>
+    </div>
+
+    <div class="exhibit-section">
+        <h2>PLAY 3: LINDOR AT-BAT</h2>
+        <div class="scrolling-wrapper" id="lindor-grid"></div>
+    </div>
+
+    <script>
+        function loadFrames(prefix, containerId, maxExpectedFrames) {
+            const container = document.getElementById(containerId);
+            
+            // Due to ffmpeg extraction taking time, we pre-generate the DOM elements 
+            // relying on the browser to load them. We'll use the onError to hide broken ones.
+            // Since we know approx max frames (16s * 5fps = 80, 17s * 5 = 85, 31s * 5 = 155),
+            // we will build the grid up to maxExpectedFrames and hide errors.
+            for (let i = 1; i <= maxExpectedFrames; i++) {
+                const num = i.toString().padStart(3, '0');
+                const filename = `${prefix}_${num}.png`;
+                
+                const wrap = document.createElement('div');
+                wrap.className = 'frame-container';
+                
+                const frameImg = document.createElement('img');
+                frameImg.className = 'frame-image';
+                frameImg.src = filename;
+                frameImg.loading = 'lazy';
+                
+                frameImg.onerror = function() {
+                    wrap.style.display = 'none'; // hide missing frames smoothly
+                };
+                
+                const caption = document.createElement('div');
+                caption.className = 'caption';
+                caption.innerHTML = `FILE: <span>${filename}</span>`;
+                
+                wrap.appendChild(frameImg);
+                wrap.appendChild(caption);
+                container.appendChild(wrap);
+            }
+        }
+
+        // Generating maximum expected bounds per video length + buffer
+        loadFrames('EXHIBIT_GORMAN', 'gorman-grid', 100);
+        loadFrames('EXHIBIT_PICKOFF', 'pickoff-grid', 100);
+        loadFrames('EXHIBIT_LINDOR', 'lindor-grid', 180);
+    </script>
+</body>
+</html>

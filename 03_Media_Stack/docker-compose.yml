@@ -1,0 +1,38 @@
+version: "3"
+services:
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /home/james/SovereignOS/03_Media_Stack/sabnzbd/config:/config
+      - /home/james/SovereignOS/media_vault:/media_vault
+    ports:
+      - 8080:8080
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    restart: unless-stopped
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /home/james/SovereignOS/03_Media_Stack/sonarr/config:/config
+      - /home/james/SovereignOS/03_Media_Stack/sabnzbd/config/Downloads:/config/Downloads
+      - /home/james/SovereignOS/media_vault:/media_vault
+    ports:
+      - 8989:8989
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    restart: unless-stopped

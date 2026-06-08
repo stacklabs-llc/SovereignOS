@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GREENSTACK | Grow Room 01 Telemetry</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-void: #05060A; /* Deepest green/black */
+            --panel: rgba(18, 30, 25, 0.85);
+            --border: rgba(45, 212, 191, 0.3);
+            --bio-green: #10B981;
+            --accent-cyan: #2DD4BF;
+            --accent-amber: #FBBF24;
+            --alert-red: #EF4444;
+            --text: #ffffff;
+            --text-dim: #94A3B8;
+            --font-body: 'Inter', sans-serif;
+            --font-header: 'Outfit', sans-serif;
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%; font-family: var(--font-body);
+            background: var(--bg-void); color: var(--text);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(16, 185, 129, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 90% 80%, rgba(45, 212, 191, 0.05) 0%, transparent 50%);
+            overflow-x: hidden;
+        }
+
+        .container { display: flex; flex-direction: column; min-height: 100vh; padding: 20px 40px; }
+
+        .header {
+            display: flex; justify-content: space-between; align-items: flex-end;
+            border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-bottom: 30px;
+        }
+        .header h1 { margin: 0; font-family: var(--font-header); font-size: 2rem; letter-spacing: 2px; }
+        .header h1 span { color: var(--bio-green); text-shadow: 0 0 15px rgba(16, 185, 129, 0.4); }
+        .metadata { font-size: 0.85rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1.5px; }
+
+        .dashboard-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 30px;
+        }
+
+        .asset-card {
+            background: var(--panel); border: 1px solid var(--border); border-radius: 16px;
+            padding: 25px; backdrop-filter: blur(10px); position: relative; overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .asset-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(16, 185, 129, 0.1); border-color: var(--accent-cyan); }
+        
+        .asset-card::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+            background: var(--bio-green); box-shadow: 0 0 10px var(--bio-green);
+        }
+
+        .asset-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;}
+        .asset-name { font-family: var(--font-header); font-size: 1.5rem; font-weight: 700; color: var(--text); }
+        .status-badge { background: rgba(16, 185, 129, 0.2); color: var(--bio-green); padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; border: 1px solid var(--bio-green); }
+
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .metric { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05); }
+        .metric-label { font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .metric-value { font-size: 1.8rem; font-weight: 800; font-family: 'Courier New', monospace; color: var(--accent-cyan); text-shadow: 0 0 10px rgba(45, 212, 191, 0.2); }
+        
+        /* Specific metric colors */
+        .temp-val { color: var(--accent-amber); text-shadow: 0 0 10px rgba(251, 191, 36, 0.2);}
+        .humidity-val { color: #38BDF8; text-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
+
+        .chart-box {
+            height: 100px; background: rgba(0,0,0,0.5); border-radius: 8px; margin-top: 20px;
+            border: 1px dashed var(--border); display: flex; align-items: flex-end; padding: 10px; gap: 4px;
+        }
+        .bar { width: 100%; background: var(--bio-green); opacity: 0.7; transition: height 0.5s ease; border-radius: 2px 2px 0 0; }
+
+        .system-log {
+            grid-column: 1 / -1; background: var(--panel); border: 1px solid var(--border);
+            border-radius: 16px; padding: 25px; margin-top: 20px;
+        }
+        .system-log h2 { margin-top: 0; font-family: var(--font-header); font-size: 1.2rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+        .log-entry { font-family: monospace; font-size: 0.85rem; color: var(--text-dim); margin-bottom: 8px; display: flex; gap: 15px; }
+        .log-time { color: var(--accent-cyan); }
+        .log-msg.alert { color: var(--accent-amber); }
+        .log-msg.critical { color: var(--alert-red); font-weight: bold; }
+        
+        .eileen-note { border-left: 3px solid #D946EF; padding-left: 10px; color: #E879F9; font-style: italic; }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div>
+                <h1>GREENSTACK <span>TELEMETRY</span></h1>
+                <div class="metadata">GROW ROOM 01 // KITCHEN NODE</div>
+            </div>
+            <div style="text-align: right;">
+                <div class="metadata" id="clock">00:00:00</div>
+                <div style="color: var(--accent-cyan); font-size: 0.8rem; margin-top: 5px;">SYS. CONNECTION: STABLE</div>
+            </div>
+        </header>
+
+        <div class="dashboard-grid">
+            <!-- ASSET 1: DO-SI-DO -->
+            <div class="asset-card">
+                <div class="asset-header">
+                    <div class="asset-name">Do-Si-Do (Bay 1)</div>
+                    <div class="status-badge" id="dsd-status">NOMINAL</div>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <div class="metric-label">Leaf Surface Temp</div>
+                        <div class="metric-value temp-val" id="dsd-temp">74.2°F</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Soil Hydration</div>
+                        <div class="metric-value humidity-val" id="dsd-hydro">68%</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">VPD (kPa)</div>
+                        <div class="metric-value" id="dsd-vpd">1.02</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Biomass Accumulation</div>
+                        <div class="metric-value" style="color: var(--bio-green);">+4.2g/d</div>
+                    </div>
+                </div>
+                <div class="chart-box" id="dsd-chart">
+                    <!-- Bars injected via JS -->
+                </div>
+            </div>
+
+            <!-- ASSET 2: BLACK CHERRY -->
+            <div class="asset-card" style="border-left-color: #38BDF8;">
+                <div class="asset-header">
+                    <div class="asset-name">Black Cherry (Bay 2)</div>
+                    <div class="status-badge" style="background: rgba(56, 189, 248,0.2); color: #38BDF8; border-color: #38BDF8;">VEGETATIVE</div>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric">
+                        <div class="metric-label">Canopy Temp</div>
+                        <div class="metric-value temp-val" id="bc-temp">76.1°F</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Tissue Hydration</div>
+                        <div class="metric-value humidity-val" id="bc-hydro">71%</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">DLI (mol/m²/d)</div>
+                        <div class="metric-value" id="bc-dli">32.4</div>
+                    </div>
+                    <div class="metric">
+                        <div class="metric-label">Root/Zone Thermal</div>
+                        <div class="metric-value" style="color: var(--accent-amber);">70.5°F</div>
+                    </div>
+                </div>
+                <div class="chart-box" id="bc-chart">
+                    <!-- Bars injected via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- LOG & FIELD NOTES -->
+        <div class="system-log">
+            <h2>PHENOTYPIC DRIFT ENGINE & FIELD NOTES</h2>
+            <div id="log-container">
+                <div class="log-entry"><span class="log-time">[18:05:22]</span><span class="log-msg">Gwen (Science Vessel): Correlation engine initialized. Baseline curves loaded.</span></div>
+                <div class="log-entry"><span class="log-time">[18:10:04]</span><span class="log-msg eileen-note">Eileen (Field Spec): Visual inspection of DSD confirms robust node spacing. Sensor data matches ground truth.</span></div>
+                <div class="log-entry"><span class="log-time">[18:14:45]</span><span class="log-msg alert">WARNING: Minor VPD spike detected in Bay 2. Monitoring stomatal conductance.</span></div>
+                <div class="log-entry"><span class="log-time">[18:22:12]</span><span class="log-msg eileen-note">Eileen (Field Spec): Catnip relocation to Bay 3 complete. Grand Central feline incursion threat neutralized.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Clock
+        setInterval(() => {
+            document.getElementById('clock').innerText = new Date().toLocaleTimeString();
+        }, 1000);
+
+        // Simulation Loop
+        function randomFloat(min, max) { return (Math.random() * (max - min) + min).toFixed(1); }
+        
+        function initCharts(id) {
+            const chart = document.getElementById(id);
+            for(let i=0; i<15; i++) {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = randomFloat(20, 90) + '%';
+                if(id.includes('bc')) bar.style.background = '#38BDF8';
+                chart.appendChild(bar);
+            }
+        }
+
+        function updateTelemetry() {
+            // Update DSD
+            document.getElementById('dsd-temp').innerText = randomFloat(73.5, 75.0) + '°F';
+            document.getElementById('dsd-hydro').innerText = randomFloat(67, 69) + '%';
+            document.getElementById('dsd-vpd').innerText = randomFloat(0.98, 1.05);
+            
+            // Update BC
+            document.getElementById('bc-temp').innerText = randomFloat(75.5, 77.0) + '°F';
+            document.getElementById('bc-hydro').innerText = randomFloat(70, 72) + '%';
+
+            // Animate charts
+            const charts = ['dsd-chart', 'bc-chart'];
+            charts.forEach(id => {
+                const bars = document.getElementById(id).children;
+                for(let bar of bars) {
+                    if(Math.random() > 0.6) {
+                        bar.style.height = randomFloat(20, 90) + '%';
+                    }
+                }
+            });
+        }
+
+        initCharts('dsd-chart');
+        initCharts('bc-chart');
+        setInterval(updateTelemetry, 2500);
+
+        // Add a live log entry shortly after load
+        setTimeout(() => {
+            const logs = document.getElementById('log-container');
+            const d = new Date();
+            const timeStr = `[${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}]`;
+            logs.innerHTML += `<div class="log-entry" style="animation: fadein 1s;"><span class="log-time">${timeStr}</span><span class="log-msg" style="color:#10B981;">GreenStack telemetry sync locked to Node .175 (Eileen).</span></div>`;
+        }, 3000);
+    </script>
+</body>
+</html>

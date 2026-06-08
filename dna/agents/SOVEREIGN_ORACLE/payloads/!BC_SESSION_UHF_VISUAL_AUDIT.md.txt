@@ -1,0 +1,27 @@
+# BC_SESSION_UHF_VISUAL_AUDIT
+
+## 1. Starter Shack (Level 1)
+- State: `/` or `/?room=starter`
+- Purpose: MBA-Trap Analytics Dashboard. Features Live Pitch Radar grid, live video payload injection feed, and realtime stat tables.
+- Input Bindings: Connects down to the WebSocket `STATE_UPDATE` meshes.
+
+## 2. UHF Studio (Level 4)
+- State: `/?room=uhf_studio`
+- Purpose: The Command and Control Hub. Merges Room Configurator, God Mode Console, and Savant Queries.
+- Room Configurator Structure:
+    - Target Game PK (Input) -> Used by DVR logic.
+    - Active Roster CMDB Map -> Array binding -> Fetched securely via `GET http://127.0.0.1:8000/api/now/table/cmdb_ci`.
+    - Boggs Reactivity Slider (1-5) -> Gated variable.
+    - Cadence Toggles -> State mapping.
+    - Global Ambient Entropy Textarea -> Generates massive environment variables.
+    - Ignition -> POSTs payload via `http://127.0.0.1:5055/api/admin/override` configuring backend execution constraints.
+    - DOM relies entirely on highly militaristic non-fluid `#1A110B` Vesper UI constraints.
+
+## 3. DVR Deck (Level 5)
+- State: `/?room=dvr`
+- Purpose: The specific Historical Feed manipulation screen.
+- Layout: Standalone module inside the UI Matrix.
+- Execution Bindings:
+    - Download Statcast ROM -> `POST http://127.0.0.1:5055/api/admin/download_rom`
+    - Ignite Simulation Mesh -> `POST http://127.0.0.1:5055/api/admin/ignite_sim`
+    - Executes the subprocess Python injection via Pybaseball.

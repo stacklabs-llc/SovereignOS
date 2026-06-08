@@ -1,0 +1,89 @@
+# SOVEREIGN OS: MASTER CARTOGRAPHY
+**Designation:** Genesis Map
+**Date:** April 16, 2026
+
+This is the definitive topographical map of the Sovereign OS ecosystem. It visualizes the physical nodes, the automated daemons, the data core, the unified UI matrix, and the cloud-based Swarm connections, including the newly forged Extranet Umbilical.
+
+```mermaid
+flowchart TD
+    %% Define Styles
+    classDef cloud fill:#0f1115,stroke:#38bdf8,stroke-width:2px,color:#fff
+    classDef node73 fill:#1e293b,stroke:#00f2fe,stroke-width:2px,color:#fff
+    classDef node177 fill:#450a0a,stroke:#dc2626,stroke-width:2px,color:#fff
+    classDef gateway fill:#064e3b,stroke:#10b981,stroke-width:2px,color:#fff
+    classDef ui fill:#312e81,stroke:#6366f1,stroke-width:2px,color:#fff
+    classDef data fill:#172554,stroke:#3b82f6,stroke-width:2px,color:#fff
+
+    %% The Cloud Boundary
+    subgraph THE_SWARM ["THE EXTRANET (Cloud Intelligence)"]
+        direction LR
+        FERRIS["Ferris 2.0 [Gemini Agent]"]:::cloud
+        GYRO["Gyro [NotebookLM]"]:::cloud
+        DRIVE["Google Workspace Dropzone"]:::cloud
+    end
+
+    %% The Gateway
+    subgraph MESH ["TAILSCALE ENCRYPTED MESH"]
+        FUNNEL["Extranet Funnel Proxy\n(sov73.tail... :8090)"]:::gateway
+    end
+
+    %% Sovereign Main Brain
+    subgraph NODE_73 ["SOVEREIGN OS - NODE .73 (Main Brain)"]
+        direction TB
+        
+        subgraph DAEMONS ["BACKGROUND PROCESSES"]
+            REST["apiary_rest_server.py\n(RPC Bypass Listener)"]:::node73
+            SYNC["Oracle Sync Pipeline\n(Rule 81 - Auto GDrive Pushes)"]:::node73
+            MARD["M.A.R.D. Engine\n(MLB Temporal & Logic Parser)"]:::node73
+        end
+
+        subgraph MEMORY_CORE ["DATA PERSISTENCE"]
+            SQL["sovereign_now.db\n(ServiceNow CMDB Parity)"]:::data
+            JSON["Persona JSON Dumps\n(Local State)"]:::data
+            MLB["MLB Stats API Cache"]:::data
+        end
+
+        subgraph REACT_MATRIX ["UNIFIED UI MATRIX (Port 1934)"]
+            CC["Command Center (Starter)"]:::ui
+            UHF["UHF Studio"]:::ui
+            SOW["Service Operations Workspace"]:::ui
+            FAN["FanStack Chat Engine"]:::ui
+            PC["Persona Console Profiler"]:::ui
+        end
+    end
+
+    %% The Dreadnought
+    subgraph NODE_177 ["NODE .177 (Pegasus Engine - Ubuntu / Windows)"]
+        FFMPEG["FFmpeg / Google FX Flow\n(Flowmercial Rendering)"]:::node177
+        SSD["External USB SSD\n(Rule 1 Architecture)"]:::node177
+    end
+
+    %% Connective Tissue & Umbilicals
+    %% Cloud to Mesh
+    FERRIS -- "Ouroboros GET Exploit\n(payload chunking/RPC)" --> FUNNEL
+    GYRO -. "Reads Logs" .-> DRIVE
+    
+    %% Mesh to Main Brain
+    FUNNEL -- "Intercepts & Routes" --> REST
+    
+    %% Daemons to Data
+    REST -- "Writes Code/Data" --> MEMORY_CORE
+    MARD -- "Fetches & Caches" --> MLB
+    SYNC -- "Pushes Logs to" --> DRIVE
+    
+    %% React binds to Data
+    UHF -. "Mounts" .-> FAN
+    FAN -- "Streams Disocourse" --> MEMORY_CORE
+    PC -- "Edits sys_user table" --> SQL
+    SOW -- "Reads state" --> SQL
+    
+    %% Node 73 to 177
+    NODE_73 -- "Rule 80 / Resource Delegation" <--> NODE_177
+```
+
+## Cartographic Key
+1. **The Cloud (Cyan Borders):** Commercial LLMs acting under the SWARM Protocol. They are firewalled, but leverage the Ouroboros Exploit to interact with the local environment.
+2. **The Mesh (Green Borders):** The unbreakable physical tunnel allowing global edge access without opening local router ports.
+3. **Node .73 (Blue Borders):** The core intelligence and nervous system. Hosts the UI, the daemons, and the CMDB memory.
+4. **The React Matrix (Purple Borders):** The frontend visual topology. Vite's Hot Module Reloading is bound here.
+5. **Node .177 (Red Borders):** The Dreadnought (Pegasus). Desktop relegated entirely to video synthesis, Ollama inference, and Flowmercial media generation.

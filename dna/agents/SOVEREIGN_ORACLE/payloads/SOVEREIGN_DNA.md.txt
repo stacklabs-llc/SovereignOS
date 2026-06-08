@@ -1,0 +1,196 @@
+# SOVEREIGN_DNA.md
+## v2.1 | Last Verified: 2026-04-03T06:10:00Z
+## Location: /home/james/SovereignOS/dna/SOVEREIGN_DNA.md
+
+---
+
+## READ THIS FIRST
+
+You are an AI agent operating within the Sovereign OS — a local-first AI governance platform on a home network in Smyrna, Georgia. This file is your boot sequence. Read it completely before taking any action.
+
+**Rule Zero:** Do NOT build anything that already exists. Before creating any file, service, database, or script, run `find /home/james/SovereignOS -name "<filename>"` to check. If it exists, use it. If you're unsure, ask the Pilot.
+
+**Rule One:** The Pilot (James Carroll) holds the Ω gate. No system change is real until he approves it. No CI is active until it has a running process. No protocol exists until there is code behind it. Documentation without implementation is LORE, not TRUTH.
+
+---
+
+## 1. WHAT EXISTS RIGHT NOW (IRON)
+
+### Hardware
+
+| Node | Name | Hardware | IP | OS | Status |
+|------|------|----------|----|----|--------|
+| .73 | Sovereign-E | Raspberry Pi 5, 8GB | 192.168.1.73 | Ubuntu | PRIMARY |
+| .74 | Node .73 Internal Wi-Fi | wlan0 loopback | 192.168.1.74 | — | DO NOT ROUTE COMPUTE |
+| .168 | Pegasus | x86_64 / i7-4790K / GTX 980 | 192.168.1.168 | Ubuntu 24.04 Server | TRUE DREADNOUGHT |
+| .64 | Artemis Bridge | Raspberry Pi | 192.168.1.64 | — | ACTIVE |
+| .68 | Fire TV | 65" display | 192.168.1.68 | Fire OS | DISPLAY ONLY |
+| .171 | Metsy | Tractive GPS (cat) | 192.168.1.171 | — | BIO-ORACLE |
+| .114 | Mando | Raspberry Pi Zero 2 W | 192.168.1.114 | Ubuntu | ACTIVE (Argus Fleet) |
+| .157 | Stimpy | Raspberry Pi Zero | 192.168.1.157 | Ubuntu | ACTIVE (Env Mesh) |
+| .170 | Grogu | Raspberry Pi Zero 2 W | 192.168.1.170 | Ubuntu | ACTIVE (Garden Cam) |
+| .115 | Calvin | Raspberry Pi Zero | 192.168.1.115 | Ubuntu | ACTIVE |
+
+### Storage
+
+| Mount | Device | Size | Purpose |
+|-------|--------|------|---------|
+| / | /dev/sdc2 | 234GB (40% used) | Boot drive |
+| /mnt/ghost_drive/ | /dev/sda1 (NVMe) | 916GB (1.3GB used) | Persistent artifact storage |
+| Google Drive | rclone remote `gdrive:` | Cloud | Sync target for payloads |
+
+### Running Services on .73 (verified)
+
+| Service | Port | What It Does |
+|---------|------|-------------|
+| sovereign_console_server.py | 8090 | SDLC ticket tracker + CI registry (FastAPI) |
+| fanstack_server.py | 8006 | FanStack game simulator (WebSocket + FastAPI) |
+| ollama | 11434 | Local LLM inference |
+| ollama-proxy | 11436 | CORS proxy for Ollama |
+| code-server | — | VS Code in browser |
+| smbd/nmbd | 445/139 | Samba file shares |
+| nfs-mountd | 2049 | NFS shares |
+| ssh | 22 | Remote access |
+| ttyd | 8089 | Web terminal |
+| pm2-root | — | Node.js process manager |
+| oracle-sync | — | Rclone payload sync daemon |
+
+### Databases (verified, with actual table names)
+
+**sovereign_sdlc.db** — `/home/james/SovereignOS/scripts/sovereign_sdlc.db` (40KB)
+Tables: `tickets`, `ci_registry`, `ci_relationships`, `ticket_log`, `sprints`
+
+**fanstack_sim.db** — `/home/james/SovereignOS/scripts/fanstack_sim.db` (640KB)
+Contains: 156 pitches, NYM @ STL, 2026-04-01 (Statcast data)
+
+### Key Scripts (all in `/home/james/SovereignOS/scripts/`)
+
+| Script | Purpose |
+|--------|---------|
+| sovereign_console_server.py | SDLC console backend |
+| fanstack_server.py | FanStack sim backend |
+| fanstack_historical_injector.py | Official, offline time-travel engine sourcing 1.48M pitches natively from sovereign_intelligence.db |
+| 01_Sovereign_Portal/ | React/Vite UI (Includes Mobile Remote & Level 4: UHF Studio) |
+| fanstack_display.html | TV-optimized scoreboard (read-only) |
+| fanstack_remote.html | Pilot remote control for sim |
+| sovereign_console.html | SDLC dashboard (in parent `/apiary/` dir) |
+| payload_sync_watcher.sh | Master rclone sync — sweeps ALL agent payload dirs |
+| oracle_sync_watcher.sh | Oracle-specific sync |
+| vesper_tv_launch.py | ADB push to Fire TV |
+
+### UI Architecture Focus
+- **Level 4: UHF Studio** is strictly a front-end view built within `01_Sovereign_Portal` React scaffolding. It replaces previous scattered admin portals.
+- **fanstack_historical_injector.py** is the officially sanctioned method to emulate real games for the personas, completely offline and zero-cloud.
+
+### Sync Infrastructure (DO NOT DUPLICATE)
+
+The master `payload_sync_watcher.sh` daemon runs as `oracle-sync.service` and sweeps ALL directories under `dna/agents/*/payloads/` every 60 seconds, syncing to `gdrive:Sovereign_OS_Master_Payloads/<AGENT_NAME>/`. 
+
+**Do NOT create per-agent sync services.** If a new agent needs cloud sync, just create its `payloads/` directory under `dna/agents/<AGENT_NAME>/` and the master daemon picks it up automatically.
+
+---
+
+## 2. WHAT IS BROKEN (KNOWN PROBLEMS)
+
+| Problem | Detail | Priority |
+|---------|--------|----------|
+| RAM pressure | 5.0GB/7.9GB used, swap 1.8/2.0GB | HIGH |
+| Load average | 5.11 on 4 cores | HIGH |
+| 6 failed services | dnsmasq, greenstack, nginx, propolis-vision, sovereign-api (old 8003), vesper-scheduler | MEDIUM — disable or remove |
+| Unnecessary services | ModemManager, bluetooth — wasting RAM | LOW |
+| Docker idle | Running with 0 containers — ~200MB wasted RAM | LOW |
+| .74 WiFi | Broadcom BCM4352 driver won't compile on kernel 6.17. Using legacy USB adapter. | MEDIUM |
+
+---
+
+## 3. THE DIRECTORY STRUCTURE
+
+```
+/home/james/SovereignOS/
+├── dna/
+│   ├── SOVEREIGN_DNA.md          ← YOU ARE HERE
+│   ├── agents/
+│   │   ├── CLAUDE/
+│   │   │   └── active_sessions/  ← Session breadcrumbs by chat UUID
+│   │   ├── ANTIGRAVITY/
+│   │   ├── GUNNAR/
+│   │   │   └── payloads/         ← Syncs to gdrive:Sovereign_OS_Master_Payloads/GUNNAR/
+│   │   ├── MYCROFT/
+│   │   └── SOVEREIGN_ORACLE/
+│   │       └── payloads/
+│   ├── archives/
+│   │   └── llm_sessions/         ← Historical chat exports
+│   └── biological_assets/        ← Eileen's files (DO NOT RAG INDEX)
+├── scripts/                      ← ALL running code lives here
+│   ├── sovereign_sdlc.db
+│   ├── fanstack_sim.db
+│   ├── sovereign_console_server.py
+│   ├── fanstack_server.py
+│   ├── payload_sync_watcher.sh
+│   └── ...
+├── sovereign_console.html
+├── fanstack_display.html
+├── fanstack_remote.html
+└── .venv/                        ← Python virtual environment
+```
+
+---
+
+## 4. AGENT ROLES (ACTIVE ONLY)
+
+| Agent | Engine | Role | Where It Runs |
+|-------|--------|------|--------------|
+| Antigravity | Gemini Ultra (VS Code) | Code executor — turns sheet music into running code | .73 IDE |
+| Commander Artemis-1 | Claude (Anthropic API) | Structural architect — writes schemas, blueprints, sheet music | External (claude.ai) |
+| Gunnar | Gemini Gem (Guided Learning) | System trainer — teaches Pilot to operate his own fleet | External (gemini) |
+| Mycroft | Gemini Gem | Forensic auditor — telemetry analysis, drift detection | External (gemini) |
+
+**No other agents are active.** If you see references to Polaris, Dot-Matrix, B.A.R.F., Maestro, Ultron, Gwen, Apex, Ferris, or any other name in the archives — those are LEGACY or LORE. Do not activate, reference, or build for them unless the Pilot explicitly directs it.
+
+---
+
+## 5. GOVERNANCE (THE SHORT VERSION)
+
+**S = (A × Pw × T × C) × Pi**
+
+- A: Is there an audit trail? (ticket_log entries)
+- Pw: Is the power clean? (5.1V / stable)
+- T: Is it traceable to the filesystem? (real file, real process)
+- C: Can the next agent pick up where you left off? (breadcrumbs)
+- Pi: Did the Pilot approve it? (Ω gate)
+
+If any factor is zero, S = 0. Stop and ask the Pilot.
+
+**Citrini Loop (Law XVII):** If you generate output that references data, files, services, or concepts not verifiable on the filesystem or in the databases listed above — you are hallucinating. Stop. Flag it. Do not commit it to any ledger.
+
+**Campsite Protocol (Father Joe):** Leave the system better than you found it. Write a breadcrumb. Clean up temp files. Document what you changed.
+
+---
+
+## 6. HOW TO BOOT
+
+1. Read this file completely.
+2. Check what's running: `systemctl list-units --type=service --state=running`
+3. Check what's failed: `systemctl list-units --failed`
+4. Check databases exist: `ls -lh /home/james/SovereignOS/scripts/*.db`
+5. Check ports: `ss -tulpn | grep -E '8006|8090|11434|11436'`
+6. Do NOT create anything until you've confirmed the current state.
+7. Ask the Pilot what to work on.
+
+---
+
+## 7. ZONES
+
+| Zone | Meaning | Degradation Rule |
+|------|---------|-----------------|
+| SOVEREIGN | Local-first, no cloud dependency | CRITICAL — alert on failure |
+| DMZ | Cloud-dependent, leisure/external | GRACEFUL — ghost silently on cloud loss |
+
+SOVEREIGN zone: Node .73, .74, .64, Ghost Drive, all local databases, Ollama
+DMZ zone: ServiceNow PDI, FanStack (Statcast API), Govee, Nest, Tractive GPS
+
+If the internet dies, SOVEREIGN keeps running. DMZ services silently degrade. No kernel panics. No cascade alerts.
+
+---
+
+*158 records. 0x0 power. Plausibility is not truth. Hive is home.*

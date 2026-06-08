@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FanStack Live Logs — Sovereign OS</title>
+    <style>
+        :root {
+            --bg-deep: #0f1115;
+            --text-primary: #e2e8f0;
+            --accent-cyan: #38bdf8;
+            --accent-neon: #ff00ff;
+        }
+        body {
+            background-color: var(--bg-deep);
+            color: var(--text-primary);
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+            margin: 0;
+            line-height: 1.4;
+        }
+        h2 {
+            color: var(--accent-cyan);
+            border-bottom: 2px solid var(--accent-neon);
+            padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        #log-container {
+            background-color: #000;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-y: auto;
+            max-height: 85vh;
+            white-space: pre-wrap;
+            border: 1px solid #333;
+        }
+        .mlb-telemetry { color: #facc15; font-weight: bold; }
+        .system { color: #f87171; }
+        .persona { color: #38bdf8; }
+        .controls { font-size: 14px; display: flex; gap: 8px; flex-wrap: wrap; }
+        button {
+            background-color: #333;
+            color: white;
+            border: 1px solid var(--accent-cyan);
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        button:hover { background-color: var(--accent-cyan); color: #000; }
+        select {
+            background: #1e1e2e;
+            border: 1px solid var(--accent-cyan);
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>
+        <span>[M.A.R.D. ENGINE] Live Raw Telemetry &amp; Discourse</span>
+        <span class="controls">
+            <select id="log-selector" onchange="switchLog(this.value)">
+                <option value="fanstack_relay">relay</option>
+                <option value="fanstack_chatbots">chatbots</option>
+                <option value="fanstack_poller">poller</option>
+                <option value="fanstack_sniper">sniper</option>
+                <option value="fanstack_admin">admin</option>
+            </select>
+            <button onclick="fetchLogs()">⟳ Refresh</button>
+            <button onclick="toggleTail()" id="tail-btn">🔒 Auto-Tail: ON</button>
+        </span>
+    </h2>
+
+    <div id="log-container">Loading FanStack logs...</div>
+
+    <script>
+        let autoTail = true;
+        let currentLogFile = 'fanstack_relay';
+        const container = document.getElementById('log-container');
+        const tailBtn = document.getElementById('tail-btn');
+
+        function getLogUrl(logName) {
+            // Served from 15_FanStack/public/logs/ symlink → /home/james/SovereignOS/logs/
+            return `/logs/${logName}.log?t=${Date.now()}`;
+        }
+
+        function switchLog(logName) {
+            currentLogFile = logName;
+            container.innerText = `Loading ${logName}.log...`;
+            fetchLogs();
+        }
+
+        function toggleTail() {
+            autoTail = !autoTail;
+            tailBtn.innerText = autoTail ? '🔒 Auto-Tail: ON' : '🔓 Auto-Tail: OFF';
+        }
+
+        async function fetchLogs() {
+            try {
+                const response = await fetch(getLogUrl(currentLogFile));
+                if (!response.ok) {
+                    container.innerText = `Error: Cannot locate ${currentLogFile}.log — ${response.statusText}`;
+                    return;
+                }
+                let rawText = await response.text();
+
+                // Keep only the last 2000 lines to prevent DOM freeze
+                let lines = rawText.split('\n');
+                if (lines.length > 2000) {
+                    lines = lines.slice(-2000);
+                }
+
+                const formattedHtml = lines.map(line => {
+                    let escaped = line.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    if (escaped.includes('MLB_TELEMETRY') || escaped.includes('statcast')) {
+                        return `<span class="mlb-telemetry">${escaped}</span>`;
+                    } else if (escaped.includes('SYSTEM') || escaped.includes('ERROR') || escaped.includes('WARN')) {
+                        return `<span class="system">${escaped}</span>`;
+                    } else if (escaped.match(/\[.*?\]/)) {
+                        return escaped.replace(/\| (.*?):/, '| <span class="persona">$1</span>:');
+                    }
+                    return escaped;
+                }).join('\n');
+
+                container.innerHTML = formattedHtml;
+
+                if (autoTail) {
+                    container.scrollTop = container.scrollHeight;
+                }
+            } catch (error) {
+                container.innerText = `Connection Failed — ${error}`;
+            }
+        }
+
+        // Poll every 5 seconds
+        setInterval(fetchLogs, 5000);
+        fetchLogs();
+    </script>
+</body>
+</html>

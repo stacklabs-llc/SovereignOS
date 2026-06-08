@@ -1,0 +1,24 @@
+// themeRouter.js — Sovereign Mesh Theme Engine
+export const THEME_MAP = {
+  base:        { css: '/dna/media/css/theme-core.css', assets: '/dna/media/base/' },
+  cortex:      { css: '/dna/media/css/theme-cortex.css', assets: '/dna/media/cortex/' }, // Fleshy Cortex
+  warroom:     { css: '/dna/media/css/theme-warroom.css', assets: '/dna/media/warroom/' }, // Cardboard War Room
+  retro:       { css: '/dna/media/css/theme-retro.css', assets: '/dna/media/retro/' },    // Pip-Boy UI
+  feline:      { css: '/dna/media/css/theme-feline.css', assets: '/dna/media/feline/' },  // Sam CMDB Large
+  'ren-stimpy':{ css: '/dna/media/css/theme-ren-stimpy.css', assets: '/dna/media/ren-stimpy/' },
+  'calvin-hobbes':{ css: '/dna/media/css/theme-calvin-hobbes.css', assets: '/dna/media/calvin-hobbes/' }
+};
+
+export const applyTheme = (themeKey) => {
+  const theme = THEME_MAP[themeKey] || THEME_MAP.base;
+  document.documentElement.setAttribute('data-theme', themeKey);
+  document.documentElement.style.setProperty('--asset-root', theme.assets);
+  // Hot-swap stylesheet
+  const old = document.querySelector('[data-theme-sheet]');
+  if (old) old.remove();
+  const link = document.createElement('link');
+  link.rel = 'stylesheet';
+  link.href = theme.css;
+  link.setAttribute('data-theme-sheet', 'true');
+  document.head.appendChild(link);
+};

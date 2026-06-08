@@ -1,0 +1,5 @@
+{
+  "name": "FanStack: Crazy Thang Meltdown",
+  "description": "A legally distinct, unhinged FanStack chat log animator featuring the 'Crazy Thang' bullpen meltdown and real-time voice interaction with @Jake_Taylor_6th.",
+  "requestFramePermissions": ["microphone"]
+}

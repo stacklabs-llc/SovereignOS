@@ -1,0 +1,31 @@
+# Sovereign OS - Unified Golf App Architecture Report
+**Target Endpoint:** `/?room=starter` (The Starter Shack / Command Center)
+**Aesthetic Profile:** Augusta Dark Mode Gradient (`#112417` to `#0A1A10`), Crisp White Serif Fonts (`font-serif`, `text-white/90`), Tabular Numerics, High-End Trackman-style UI.
+
+## 1. Global Layout Grid (`lg:grid-cols-12`)
+The primary UI runs on a responsive Tailwind CSS grid, separating the data-feed into three heavily structured panes using frosted glassmorphism panels (`bg-white/5 backdrop-blur-xl shadow-[0_10px_40px_rgba(0,0,0,0.35)]`).
+
+### A. Left Pane: The Leaderboard & Stats (lg:col-span-3)
+- **Live Leaderboard:** A scrolling tabular list of live golfer scores. Styled with crisp indexing (`text-[#8E9CAA]`), player names, and bold Strokes Gained/Total round scores in green (`#6FAF5F`).
+- **Telemetry Cards:** 
+  - **Wind Vector:** Hard data readout (e.g., `4mph NE`).
+  - **Avg Proximity:** Tabular numbers for approach shots (e.g., `24' 2"`).
+
+### B. Center Pane: Video & Broadcast Analytics (lg:col-span-6)
+- **Live Broadcast Embed:** 16:9 Aspect Video container running the CBS live feed.
+- **Sovereign Trackman Validation:** A diagnostic panel showing backend network synchronization (`SYNCING CBS TELEMETRY... 12,045 TRAJECTORIES VERIFIED. Network Verified`).
+- **Broadcast Schedule Widget:** Real-time alignment of TV segments (e.g., "On The Range", "Featured Groups") synced to external clocks.
+
+### C. Right Pane: Amen Corner Live Radar (lg:col-span-3)
+- **3D Isometric SVG Map (Hole 12):** A real-time, animated SVG rendering of Augusta's Hole 12. Contains graphical vectors for:
+  - Rae's Creek (`#143A4D`)
+  - The Green, approach bunkers, and tee box.
+- **Trajectory Lines:** Real-time animated dashed vectors mapping live shot paths across the water.
+- **Current Group Telemetry:** At the bottom of the pane, dynamically displays the current featured group approaching the pin (e.g., "Cantlay, Schauffele, Morikawa"), paired with real-time green status.
+
+## 2. Dynamic Injectors & Unhinged Easter Eggs (Hidden from UAT Initial View)
+- **The "Flowmercial" Trigger Drop:** A WebSocket listener bound to `FLOWMERCIAL_TRIGGER` which forcefully hijacks the CBS video feed (`<video>`) and replaces it with black-market/unsanctioned video adverts via the "Pegasus Uplink."
+- **The Scrambler Ghost Injection:** The `leaderboard` state contains unhandled logic arrays appending a player named "The Scrambler" randomly breaking through the cut line, causing database hallucinations.
+- **Biological Breach Gopher (`samSighting`):** A hidden state boolean that, when true, triggers a full-screen, un-closeable `motion.div` animation overlay featuring an alert about "Node .172" and a giant graphic of a gopher.
+
+**Assessment:** The DOM is architected purely to present hard data with an extreme emphasis on high-dollar financial/sports analytics. The styling mimics authoritative corporate data terminals.

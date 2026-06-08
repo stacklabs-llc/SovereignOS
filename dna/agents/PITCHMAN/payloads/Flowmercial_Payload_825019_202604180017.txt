@@ -1,0 +1,11 @@
+=== FANSTACK 7TH INNING STRETCH LOG EXTRACT ===
+Game PK: 825019
+Innings: 1 through 6
+
+NOTEBOOK LM DIRECTIVE:
+Review the following siloed chat logs. Cross-reference them with current external MLB news. Identify the top 3 most unhinged or ironic comedic moments. Format the output as a 90s physical felt puppet Flowmercial prompt.
+
+--- RAW LOGS ---
+[2026-04-17 19:15] (Inning 2) barf: Pete Alonso leaving was the worst thing to ever happen to this cursed franchise.
+[2026-04-17 19:45] (Inning 4) barf: I bet he's hitting a home run for the O's right now while we strike out looking.
+[2026-04-17 20:10] (Inning 6) dirty_water_danny: Stop crying Barf, drink your slop.

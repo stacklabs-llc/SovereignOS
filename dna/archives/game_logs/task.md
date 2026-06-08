@@ -1,0 +1,27 @@
+# Checklist — Sovereign OS System Restoration & Multi-Stack Seeding Cascade
+
+- [ ] **Core Service Ignition Sequence**
+  - [ ] Start Ollama Local LLM (Port 11434)
+  - [ ] Start Sovereign Core API (Port 8090)
+  - [ ] Start SDLC Ticketing Server (Port 8095)
+  - [ ] Start Admin API (Port 5055)
+  - [ ] Start Decoupled Frontend Vite Portals (restart_servers.sh)
+  - [ ] Start Sports Sim / FanStack Relays & Chatbots (start_fanstack.sh)
+- [x] **Surgical Backup of Current Brands**
+  - [x] Export current WEEDSTACK, UNHINGEDCONVENIENCE, and ANVILANDTWINE personas & agents to JSON backup file
+- [ ] **Multi-Stack Seeding and Character Forge Cascade**
+  - [ ] Seeding WeedStack (WildSeed LLC)
+    - [ ] Run run_clean_seeding_weedstack_stacklabs.py
+    - [ ] Compile WeedStack Genesis PDF Report
+  - [ ] Seeding Gonzas (Gonzo's Convenience / Spite Slice)
+    - [ ] Run Imagen character asset generation script
+    - [ ] Compile UnhingedConvenience Genesis PDF Report
+  - [ ] Seeding Anvil & Twine Hardware
+    - [ ] Run Imagen character asset generation script
+    - [ ] Compile Anvil & Twine Genesis PDF Report
+- [ ] **Post-Reboot Autostart Diagnostic & Solution**
+  - [ ] Verify systemd/cron diagnostics
+  - [ ] Draft auto-start scripts and enable systemd user linger
+- [ ] **Mobile Readiness Configuration**
+  - [ ] Confirm clio_admin.sh SSH responsiveness
+  - [ ] Document secure MagicDNS mobile links

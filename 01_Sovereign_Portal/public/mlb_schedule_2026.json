@@ -1,0 +1,974 @@
+[
+    {
+        "date": "2026-03-26",
+        "game": "PIT @ NYM",
+        "opponent": "PIT",
+        "gamePk": 823649
+    },
+    {
+        "date": "2026-03-28",
+        "game": "PIT @ NYM",
+        "opponent": "PIT",
+        "gamePk": 823651
+    },
+    {
+        "date": "2026-03-29",
+        "game": "PIT @ NYM",
+        "opponent": "PIT",
+        "gamePk": 823647
+    },
+    {
+        "date": "2026-03-30",
+        "game": "NYM @ STL",
+        "opponent": "STL",
+        "gamePk": 823080
+    },
+    {
+        "date": "2026-03-31",
+        "game": "NYM @ STL",
+        "opponent": "STL",
+        "gamePk": 823077
+    },
+    {
+        "date": "2026-04-01",
+        "game": "NYM @ STL",
+        "opponent": "STL",
+        "gamePk": 823078
+    },
+    {
+        "date": "2026-04-02",
+        "game": "NYM @ SF",
+        "opponent": "SF",
+        "gamePk": 823242
+    },
+    {
+        "date": "2026-04-03",
+        "game": "NYM @ SF",
+        "opponent": "SF",
+        "gamePk": 823240
+    },
+    {
+        "date": "2026-04-04",
+        "game": "NYM @ SF",
+        "opponent": "SF",
+        "gamePk": 823239
+    },
+    {
+        "date": "2026-04-05",
+        "game": "NYM @ SF",
+        "opponent": "SF",
+        "gamePk": 823238
+    },
+    {
+        "date": "2026-04-07",
+        "game": "ARI @ NYM",
+        "opponent": "ARI",
+        "gamePk": 823648
+    },
+    {
+        "date": "2026-04-08",
+        "game": "ARI @ NYM",
+        "opponent": "ARI",
+        "gamePk": 823646
+    },
+    {
+        "date": "2026-04-09",
+        "game": "ARI @ NYM",
+        "opponent": "ARI",
+        "gamePk": 823645
+    },
+    {
+        "date": "2026-04-10",
+        "game": "OAK @ NYM",
+        "opponent": "OAK",
+        "gamePk": 823643
+    },
+    {
+        "date": "2026-04-11",
+        "game": "OAK @ NYM",
+        "opponent": "OAK",
+        "gamePk": 823644
+    },
+    {
+        "date": "2026-04-12",
+        "game": "OAK @ NYM",
+        "opponent": "OAK",
+        "gamePk": 823642
+    },
+    {
+        "date": "2026-04-13",
+        "game": "NYM @ LAD",
+        "opponent": "LAD",
+        "gamePk": 823964
+    },
+    {
+        "date": "2026-04-14",
+        "game": "NYM @ LAD",
+        "opponent": "LAD",
+        "gamePk": 823965
+    },
+    {
+        "date": "2026-04-15",
+        "game": "NYM @ LAD",
+        "opponent": "LAD",
+        "gamePk": 823963
+    },
+    {
+        "date": "2026-04-17",
+        "game": "NYM @ CHC",
+        "opponent": "CHC",
+        "gamePk": 824693
+    },
+    {
+        "date": "2026-04-18",
+        "game": "NYM @ CHC",
+        "opponent": "CHC",
+        "gamePk": 824694
+    },
+    {
+        "date": "2026-04-19",
+        "game": "NYM @ CHC",
+        "opponent": "CHC",
+        "gamePk": 824691
+    },
+    {
+        "date": "2026-04-21",
+        "game": "MIN @ NYM",
+        "opponent": "MIN",
+        "gamePk": 823640
+    },
+    {
+        "date": "2026-04-22",
+        "game": "MIN @ NYM",
+        "opponent": "MIN",
+        "gamePk": 823641
+    },
+    {
+        "date": "2026-04-23",
+        "game": "MIN @ NYM",
+        "opponent": "MIN",
+        "gamePk": 823639
+    },
+    {
+        "date": "2026-04-24",
+        "game": "COL @ NYM",
+        "opponent": "COL",
+        "gamePk": 823638
+    },
+    {
+        "date": "2026-04-26",
+        "game": "COL @ NYM",
+        "opponent": "COL",
+        "gamePk": 823637
+    },
+    {
+        "date": "2026-04-26",
+        "game": "COL @ NYM",
+        "opponent": "COL",
+        "gamePk": 823635
+    },
+    {
+        "date": "2026-04-28",
+        "game": "WSH @ NYM",
+        "opponent": "WSH",
+        "gamePk": 823636
+    },
+    {
+        "date": "2026-04-29",
+        "game": "WSH @ NYM",
+        "opponent": "WSH",
+        "gamePk": 823633
+    },
+    {
+        "date": "2026-04-30",
+        "game": "WSH @ NYM",
+        "opponent": "WSH",
+        "gamePk": 823634
+    },
+    {
+        "date": "2026-05-01",
+        "game": "NYM @ LAA",
+        "opponent": "LAA",
+        "gamePk": 824041
+    },
+    {
+        "date": "2026-05-02",
+        "game": "NYM @ LAA",
+        "opponent": "LAA",
+        "gamePk": 824042
+    },
+    {
+        "date": "2026-05-03",
+        "game": "NYM @ LAA",
+        "opponent": "LAA",
+        "gamePk": 824043
+    },
+    {
+        "date": "2026-05-04",
+        "game": "NYM @ COL",
+        "opponent": "COL",
+        "gamePk": 824363
+    },
+    {
+        "date": "2026-05-06",
+        "game": "NYM @ COL",
+        "opponent": "COL",
+        "gamePk": 824361
+    },
+    {
+        "date": "2026-05-07",
+        "game": "NYM @ COL",
+        "opponent": "COL",
+        "gamePk": 824362
+    },
+    {
+        "date": "2026-05-08",
+        "game": "NYM @ ARI",
+        "opponent": "ARI",
+        "gamePk": 825088
+    },
+    {
+        "date": "2026-05-09",
+        "game": "NYM @ ARI",
+        "opponent": "ARI",
+        "gamePk": 825089
+    },
+    {
+        "date": "2026-05-10",
+        "game": "NYM @ ARI",
+        "opponent": "ARI",
+        "gamePk": 825085
+    },
+    {
+        "date": "2026-05-12",
+        "game": "DET @ NYM",
+        "opponent": "DET",
+        "gamePk": 823632
+    },
+    {
+        "date": "2026-05-13",
+        "game": "DET @ NYM",
+        "opponent": "DET",
+        "gamePk": 823631
+    },
+    {
+        "date": "2026-05-14",
+        "game": "DET @ NYM",
+        "opponent": "DET",
+        "gamePk": 823630
+    },
+    {
+        "date": "2026-05-15",
+        "game": "NYY @ NYM",
+        "opponent": "NYY",
+        "gamePk": 823629
+    },
+    {
+        "date": "2026-05-16",
+        "game": "NYY @ NYM",
+        "opponent": "NYY",
+        "gamePk": 823627
+    },
+    {
+        "date": "2026-05-17",
+        "game": "NYY @ NYM",
+        "opponent": "NYY",
+        "gamePk": 823628
+    },
+    {
+        "date": "2026-05-18",
+        "game": "NYM @ WSH",
+        "opponent": "WSH",
+        "gamePk": 822734
+    },
+    {
+        "date": "2026-05-19",
+        "game": "NYM @ WSH",
+        "opponent": "WSH",
+        "gamePk": 822736
+    },
+    {
+        "date": "2026-05-20",
+        "game": "NYM @ WSH",
+        "opponent": "WSH",
+        "gamePk": 822735
+    },
+    {
+        "date": "2026-05-21",
+        "game": "NYM @ WSH",
+        "opponent": "WSH",
+        "gamePk": 822733
+    },
+    {
+        "date": "2026-05-22",
+        "game": "NYM @ MIA",
+        "opponent": "MIA",
+        "gamePk": 823863
+    },
+    {
+        "date": "2026-05-23",
+        "game": "NYM @ MIA",
+        "opponent": "MIA",
+        "gamePk": 823862
+    },
+    {
+        "date": "2026-05-24",
+        "game": "NYM @ MIA",
+        "opponent": "MIA",
+        "gamePk": 823861
+    },
+    {
+        "date": "2026-05-25",
+        "game": "CIN @ NYM",
+        "opponent": "CIN",
+        "gamePk": 823625
+    },
+    {
+        "date": "2026-05-26",
+        "game": "CIN @ NYM",
+        "opponent": "CIN",
+        "gamePk": 823624
+    },
+    {
+        "date": "2026-05-27",
+        "game": "CIN @ NYM",
+        "opponent": "CIN",
+        "gamePk": 823626
+    },
+    {
+        "date": "2026-05-29",
+        "game": "MIA @ NYM",
+        "opponent": "MIA",
+        "gamePk": 823623
+    },
+    {
+        "date": "2026-05-30",
+        "game": "MIA @ NYM",
+        "opponent": "MIA",
+        "gamePk": 823622
+    },
+    {
+        "date": "2026-05-31",
+        "game": "MIA @ NYM",
+        "opponent": "MIA",
+        "gamePk": 823621
+    },
+    {
+        "date": "2026-06-01",
+        "game": "NYM @ SEA",
+        "opponent": "SEA",
+        "gamePk": 823131
+    },
+    {
+        "date": "2026-06-02",
+        "game": "NYM @ SEA",
+        "opponent": "SEA",
+        "gamePk": 823129
+    },
+    {
+        "date": "2026-06-03",
+        "game": "NYM @ SEA",
+        "opponent": "SEA",
+        "gamePk": 823130
+    },
+    {
+        "date": "2026-06-05",
+        "game": "NYM @ SD",
+        "opponent": "SD",
+        "gamePk": 823293
+    },
+    {
+        "date": "2026-06-06",
+        "game": "NYM @ SD",
+        "opponent": "SD",
+        "gamePk": 823292
+    },
+    {
+        "date": "2026-06-07",
+        "game": "NYM @ SD",
+        "opponent": "SD",
+        "gamePk": 823291
+    },
+    {
+        "date": "2026-06-09",
+        "game": "STL @ NYM",
+        "opponent": "STL",
+        "gamePk": 823620
+    },
+    {
+        "date": "2026-06-10",
+        "game": "STL @ NYM",
+        "opponent": "STL",
+        "gamePk": 823618
+    },
+    {
+        "date": "2026-06-11",
+        "game": "STL @ NYM",
+        "opponent": "STL",
+        "gamePk": 823619
+    },
+    {
+        "date": "2026-06-12",
+        "game": "ATL @ NYM",
+        "opponent": "ATL",
+        "gamePk": 823617
+    },
+    {
+        "date": "2026-06-13",
+        "game": "ATL @ NYM",
+        "opponent": "ATL",
+        "gamePk": 823616
+    },
+    {
+        "date": "2026-06-14",
+        "game": "ATL @ NYM",
+        "opponent": "ATL",
+        "gamePk": 823615
+    },
+    {
+        "date": "2026-06-15",
+        "game": "NYM @ CIN",
+        "opponent": "CIN",
+        "gamePk": 824505
+    },
+    {
+        "date": "2026-06-16",
+        "game": "NYM @ CIN",
+        "opponent": "CIN",
+        "gamePk": 824504
+    },
+    {
+        "date": "2026-06-17",
+        "game": "NYM @ CIN",
+        "opponent": "CIN",
+        "gamePk": 824503
+    },
+    {
+        "date": "2026-06-18",
+        "game": "NYM @ PHI",
+        "opponent": "PHI",
+        "gamePk": 823448
+    },
+    {
+        "date": "2026-06-20",
+        "game": "NYM @ PHI",
+        "opponent": "PHI",
+        "gamePk": 823447
+    },
+    {
+        "date": "2026-06-21",
+        "game": "NYM @ PHI",
+        "opponent": "PHI",
+        "gamePk": 823449
+    },
+    {
+        "date": "2026-06-22",
+        "game": "CHC @ NYM",
+        "opponent": "CHC",
+        "gamePk": 823613
+    },
+    {
+        "date": "2026-06-23",
+        "game": "CHC @ NYM",
+        "opponent": "CHC",
+        "gamePk": 823614
+    },
+    {
+        "date": "2026-06-24",
+        "game": "CHC @ NYM",
+        "opponent": "CHC",
+        "gamePk": 823611
+    },
+    {
+        "date": "2026-06-25",
+        "game": "CHC @ NYM",
+        "opponent": "CHC",
+        "gamePk": 823612
+    },
+    {
+        "date": "2026-06-26",
+        "game": "PHI @ NYM",
+        "opponent": "PHI",
+        "gamePk": 823610
+    },
+    {
+        "date": "2026-06-27",
+        "game": "PHI @ NYM",
+        "opponent": "PHI",
+        "gamePk": 823609
+    },
+    {
+        "date": "2026-06-28",
+        "game": "PHI @ NYM",
+        "opponent": "PHI",
+        "gamePk": 823608
+    },
+    {
+        "date": "2026-06-29",
+        "game": "NYM @ TOR",
+        "opponent": "TOR",
+        "gamePk": 822792
+    },
+    {
+        "date": "2026-06-30",
+        "game": "NYM @ TOR",
+        "opponent": "TOR",
+        "gamePk": 822793
+    },
+    {
+        "date": "2026-07-01",
+        "game": "NYM @ TOR",
+        "opponent": "TOR",
+        "gamePk": 822791
+    },
+    {
+        "date": "2026-07-03",
+        "game": "NYM @ ATL",
+        "opponent": "ATL",
+        "gamePk": 824904
+    },
+    {
+        "date": "2026-07-04",
+        "game": "NYM @ ATL",
+        "opponent": "ATL",
+        "gamePk": 824903
+    },
+    {
+        "date": "2026-07-05",
+        "game": "NYM @ ATL",
+        "opponent": "ATL",
+        "gamePk": 824902
+    },
+    {
+        "date": "2026-07-06",
+        "game": "NYM @ ATL",
+        "opponent": "ATL",
+        "gamePk": 824900
+    },
+    {
+        "date": "2026-07-07",
+        "game": "KC @ NYM",
+        "opponent": "KC",
+        "gamePk": 823607
+    },
+    {
+        "date": "2026-07-08",
+        "game": "KC @ NYM",
+        "opponent": "KC",
+        "gamePk": 823605
+    },
+    {
+        "date": "2026-07-09",
+        "game": "KC @ NYM",
+        "opponent": "KC",
+        "gamePk": 823606
+    },
+    {
+        "date": "2026-07-10",
+        "game": "BOS @ NYM",
+        "opponent": "BOS",
+        "gamePk": 823604
+    },
+    {
+        "date": "2026-07-11",
+        "game": "BOS @ NYM",
+        "opponent": "BOS",
+        "gamePk": 823603
+    },
+    {
+        "date": "2026-07-12",
+        "game": "BOS @ NYM",
+        "opponent": "BOS",
+        "gamePk": 823602
+    },
+    {
+        "date": "2026-07-16",
+        "game": "NYM @ PHI",
+        "opponent": "PHI",
+        "gamePk": 823440
+    },
+    {
+        "date": "2026-07-18",
+        "game": "NYM @ PHI",
+        "opponent": "PHI",
+        "gamePk": 823441
+    },
+    {
+        "date": "2026-07-19",
+        "game": "NYM @ PHI",
+        "opponent": "PHI",
+        "gamePk": 823439
+    },
+    {
+        "date": "2026-07-20",
+        "game": "NYM @ MIL",
+        "opponent": "MIL",
+        "gamePk": 823762
+    },
+    {
+        "date": "2026-07-21",
+        "game": "NYM @ MIL",
+        "opponent": "MIL",
+        "gamePk": 823760
+    },
+    {
+        "date": "2026-07-22",
+        "game": "NYM @ MIL",
+        "opponent": "MIL",
+        "gamePk": 823761
+    },
+    {
+        "date": "2026-07-24",
+        "game": "LAD @ NYM",
+        "opponent": "LAD",
+        "gamePk": 823601
+    },
+    {
+        "date": "2026-07-25",
+        "game": "LAD @ NYM",
+        "opponent": "LAD",
+        "gamePk": 823600
+    },
+    {
+        "date": "2026-07-26",
+        "game": "LAD @ NYM",
+        "opponent": "LAD",
+        "gamePk": 823599
+    },
+    {
+        "date": "2026-07-27",
+        "game": "ATL @ NYM",
+        "opponent": "ATL",
+        "gamePk": 823597
+    },
+    {
+        "date": "2026-07-28",
+        "game": "ATL @ NYM",
+        "opponent": "ATL",
+        "gamePk": 823598
+    },
+    {
+        "date": "2026-07-29",
+        "game": "ATL @ NYM",
+        "opponent": "ATL",
+        "gamePk": 823596
+    },
+    {
+        "date": "2026-07-30",
+        "game": "MIA @ NYM",
+        "opponent": "MIA",
+        "gamePk": 823595
+    },
+    {
+        "date": "2026-07-31",
+        "game": "MIA @ NYM",
+        "opponent": "MIA",
+        "gamePk": 823593
+    },
+    {
+        "date": "2026-08-01",
+        "game": "MIA @ NYM",
+        "opponent": "MIA",
+        "gamePk": 823594
+    },
+    {
+        "date": "2026-08-02",
+        "game": "MIA @ NYM",
+        "opponent": "MIA",
+        "gamePk": 823592
+    },
+    {
+        "date": "2026-08-04",
+        "game": "NYM @ CLE",
+        "opponent": "CLE",
+        "gamePk": 824403
+    },
+    {
+        "date": "2026-08-05",
+        "game": "NYM @ CLE",
+        "opponent": "CLE",
+        "gamePk": 824402
+    },
+    {
+        "date": "2026-08-06",
+        "game": "NYM @ CLE",
+        "opponent": "CLE",
+        "gamePk": 824401
+    },
+    {
+        "date": "2026-08-07",
+        "game": "NYM @ PIT",
+        "opponent": "PIT",
+        "gamePk": 823349
+    },
+    {
+        "date": "2026-08-08",
+        "game": "NYM @ PIT",
+        "opponent": "PIT",
+        "gamePk": 823348
+    },
+    {
+        "date": "2026-08-09",
+        "game": "NYM @ PIT",
+        "opponent": "PIT",
+        "gamePk": 823345
+    },
+    {
+        "date": "2026-08-10",
+        "game": "NYM @ ATL",
+        "opponent": "ATL",
+        "gamePk": 824887
+    },
+    {
+        "date": "2026-08-11",
+        "game": "NYM @ ATL",
+        "opponent": "ATL",
+        "gamePk": 824886
+    },
+    {
+        "date": "2026-08-12",
+        "game": "NYM @ ATL",
+        "opponent": "ATL",
+        "gamePk": 824883
+    },
+    {
+        "date": "2026-08-14",
+        "game": "WSH @ NYM",
+        "opponent": "WSH",
+        "gamePk": 823591
+    },
+    {
+        "date": "2026-08-15",
+        "game": "WSH @ NYM",
+        "opponent": "WSH",
+        "gamePk": 823588
+    },
+    {
+        "date": "2026-08-16",
+        "game": "WSH @ NYM",
+        "opponent": "WSH",
+        "gamePk": 823590
+    },
+    {
+        "date": "2026-08-17",
+        "game": "SD @ NYM",
+        "opponent": "SD",
+        "gamePk": 823589
+    },
+    {
+        "date": "2026-08-18",
+        "game": "SD @ NYM",
+        "opponent": "SD",
+        "gamePk": 823586
+    },
+    {
+        "date": "2026-08-19",
+        "game": "SD @ NYM",
+        "opponent": "SD",
+        "gamePk": 823587
+    },
+    {
+        "date": "2026-08-21",
+        "game": "NYM @ CWS",
+        "opponent": "CWS",
+        "gamePk": 824559
+    },
+    {
+        "date": "2026-08-22",
+        "game": "NYM @ CWS",
+        "opponent": "CWS",
+        "gamePk": 824560
+    },
+    {
+        "date": "2026-08-23",
+        "game": "NYM @ CWS",
+        "opponent": "CWS",
+        "gamePk": 824558
+    },
+    {
+        "date": "2026-08-25",
+        "game": "MIL @ NYM",
+        "opponent": "MIL",
+        "gamePk": 823585
+    },
+    {
+        "date": "2026-08-26",
+        "game": "MIL @ NYM",
+        "opponent": "MIL",
+        "gamePk": 823584
+    },
+    {
+        "date": "2026-08-27",
+        "game": "MIL @ NYM",
+        "opponent": "MIL",
+        "gamePk": 823581
+    },
+    {
+        "date": "2026-08-28",
+        "game": "HOU @ NYM",
+        "opponent": "HOU",
+        "gamePk": 823583
+    },
+    {
+        "date": "2026-08-29",
+        "game": "HOU @ NYM",
+        "opponent": "HOU",
+        "gamePk": 823582
+    },
+    {
+        "date": "2026-08-30",
+        "game": "HOU @ NYM",
+        "opponent": "HOU",
+        "gamePk": 823580
+    },
+    {
+        "date": "2026-08-31",
+        "game": "NYM @ TB",
+        "opponent": "TB",
+        "gamePk": 822932
+    },
+    {
+        "date": "2026-09-01",
+        "game": "NYM @ TB",
+        "opponent": "TB",
+        "gamePk": 822929
+    },
+    {
+        "date": "2026-09-02",
+        "game": "NYM @ TB",
+        "opponent": "TB",
+        "gamePk": 822931
+    },
+    {
+        "date": "2026-09-04",
+        "game": "SF @ NYM",
+        "opponent": "SF",
+        "gamePk": 823579
+    },
+    {
+        "date": "2026-09-05",
+        "game": "SF @ NYM",
+        "opponent": "SF",
+        "gamePk": 823577
+    },
+    {
+        "date": "2026-09-06",
+        "game": "SF @ NYM",
+        "opponent": "SF",
+        "gamePk": 823578
+    },
+    {
+        "date": "2026-09-07",
+        "game": "NYM @ MIA",
+        "opponent": "MIA",
+        "gamePk": 823820
+    },
+    {
+        "date": "2026-09-08",
+        "game": "NYM @ MIA",
+        "opponent": "MIA",
+        "gamePk": 823821
+    },
+    {
+        "date": "2026-09-09",
+        "game": "NYM @ MIA",
+        "opponent": "MIA",
+        "gamePk": 823818
+    },
+    {
+        "date": "2026-09-11",
+        "game": "NYM @ NYY",
+        "opponent": "NYY",
+        "gamePk": 823498
+    },
+    {
+        "date": "2026-09-12",
+        "game": "NYM @ NYY",
+        "opponent": "NYY",
+        "gamePk": 823496
+    },
+    {
+        "date": "2026-09-13",
+        "game": "NYM @ NYY",
+        "opponent": "NYY",
+        "gamePk": 823495
+    },
+    {
+        "date": "2026-09-14",
+        "game": "BAL @ NYM",
+        "opponent": "BAL",
+        "gamePk": 823575
+    },
+    {
+        "date": "2026-09-15",
+        "game": "BAL @ NYM",
+        "opponent": "BAL",
+        "gamePk": 823574
+    },
+    {
+        "date": "2026-09-16",
+        "game": "BAL @ NYM",
+        "opponent": "BAL",
+        "gamePk": 823576
+    },
+    {
+        "date": "2026-09-17",
+        "game": "PHI @ NYM",
+        "opponent": "PHI",
+        "gamePk": 823573
+    },
+    {
+        "date": "2026-09-18",
+        "game": "PHI @ NYM",
+        "opponent": "PHI",
+        "gamePk": 823572
+    },
+    {
+        "date": "2026-09-19",
+        "game": "PHI @ NYM",
+        "opponent": "PHI",
+        "gamePk": 823571
+    },
+    {
+        "date": "2026-09-20",
+        "game": "PHI @ NYM",
+        "opponent": "PHI",
+        "gamePk": 823570
+    },
+    {
+        "date": "2026-09-22",
+        "game": "NYM @ TEX",
+        "opponent": "TEX",
+        "gamePk": 822840
+    },
+    {
+        "date": "2026-09-23",
+        "game": "NYM @ TEX",
+        "opponent": "TEX",
+        "gamePk": 822841
+    },
+    {
+        "date": "2026-09-24",
+        "game": "NYM @ TEX",
+        "opponent": "TEX",
+        "gamePk": 822842
+    },
+    {
+        "date": "2026-09-25",
+        "game": "NYM @ WSH",
+        "opponent": "WSH",
+        "gamePk": 822681
+    },
+    {
+        "date": "2026-09-26",
+        "game": "NYM @ WSH",
+        "opponent": "WSH",
+        "gamePk": 822678
+    },
+    {
+        "date": "2026-09-27",
+        "game": "NYM @ WSH",
+        "opponent": "WSH",
+        "gamePk": 822679
+    }
+]

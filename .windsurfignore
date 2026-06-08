@@ -1,0 +1,6 @@
+# Shield Wall (Ship of Shadows Purge)
+# Prevents autonomous indexing of haunted legacy docs.
+
+staging/quarantine/
+dna/vault/
+docs_archive/

@@ -1,0 +1,34 @@
+# 13 AETHER ENTERPRISE: FLOWMERCIAL SIP ARCHITECTURE
+
+### Target: `PROD/scripts/radio_dialer.py`
+
+Executing the "Flowmercial" media pipeline expansion. This architectural upgrade formally bridges the Sovereign Simulation to the physical world, leveraging SIP telephony to inject our M.A.R.D. Engine personas into live sports radio broadcasts and harvest the DJ reactions.
+
+## User Review Required
+
+> [!WARNING]
+> **Dependency Block: `pjsua`** 
+> I ran an audit on the Node .73 Linux root. The `pjsua` library is **NOT** currently installed (`ModuleNotFoundError: No module named 'pjsua'`). Compiling `pjsua` via `pip` requires building the underlying C-based `pjproject` from source natively. Before I push the `pip` installation command, are you prepared for a potentially heavy C-library compilation on this node, or do you have a pre-compiled wheel / Dockerized Asterisk instance you prefer to route through?
+
+## Proposed Changes
+
+### [NEW] `PROD/scripts/radio_dialer.py`
+
+We will build the `pjsua` interfacing daemon.
+* **SIP Connectivity:** Configures the `pjsua` generic Call/Account callbacks using your provided SIP Trunk credentials (e.g., Twilio / Telnyx).
+* **The Playback Payload:** When a call connects (State 200 OK), the script will load a Persona's pre-rendered `.wav` TTS file from the local storage and stream it natively into the SIP audio channel.
+* **Vaulting the Harvest:** The script will simultaneously map the inbound audio stream (rx) from the radio station DJ to a `.wav` recorder. As soon as the call terminates, the file will be dumped into `/home/james/SovereignOS/dna/media/harvested_audio/` parameterized with the date and station ID.
+
+### [MODIFY] `14_Flowmercial_Synthesizer` (Eventual Routing)
+* The overarching system will monitor the `harvested_audio/` dropzone, feeding those live reactions directly into the Puppet Video generation queues.
+
+## Open Questions
+
+> [!IMPORTANT]
+> 1. **SIP Trunking:** I need the designated SIP Provider, Registrar URI, username, and password credentials to formally structure the `pjsua` account parameters. Are you injecting these via an `.env` file or directly over the Extranet?
+> 2. **Silent Thresholding:** When the radio station answers, the DJ will usually say "You're on the air." Do we trigger our Persona playback instantly upon SIP 200 OK, or do you want me to write a Voice Activity Detection (VAD) buffer that waits for 2 seconds of silence so the Persona doesn't talk over the DJ's intro?
+
+## Verification Plan
+1. Compile and link `pjproject`/`pjsua` on Node .73.
+2. Initialize `radio_dialer.py` targeting a local Sovereign testing extension.
+3. Verify the mock call connects, plays the Persona `.wav`, records our audio response, and successfully drops the `.wav` file into the new vault directory.

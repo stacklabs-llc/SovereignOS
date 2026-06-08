@@ -1,0 +1,8 @@
+{
+    "event_id": "BC_062_FANSTACK_DVR_AWAKENING",
+    "action": "Sprint Closed. FanStack PLIE DVR Engine is tracking 8 Govee Nodes on 1986 Game 6 sequence. Gwen identified Retrosheet schema for direct provenance ingestion.",
+    "ticket_type": "MILESTONE",
+    "priority": "P1",
+    "assigned_ci": "CI-ANTIGRAVITY",
+    "source": "PORTAL"
+}

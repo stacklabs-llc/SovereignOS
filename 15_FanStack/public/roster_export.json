@@ -1,0 +1,3382 @@
+[
+    {
+        "sys_id": "f834eeaa-3de9-4463-ac8d-35819c460581",
+        "user_name": "1d75969d711c4c309f9ff21e615247fa",
+        "display_name": "1D75969D711C4C309F9Ff21E615247Fa",
+        "first_name": "1D75969D711C4C309F9Ff21E615247Fa",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/1d75969d-711c-4c30-9f9f-f21e615247fa.jfif"
+    },
+    {
+        "sys_id": "d2600f79-e986-448d-aa58-b9b3b8c39898",
+        "user_name": "1d75969d_711c_4c30_9f9f_f21e615247fa",
+        "display_name": "1D75969D 711C 4C30 9F9F F21E615247Fa",
+        "first_name": "1D75969D",
+        "last_name": "711C 4C30 9F9F F21E615247Fa",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/1d75969d-711c-4c30-9f9f-f21e615247fa.jfif"
+    },
+    {
+        "sys_id": "6a9d085527a14182bd086881cda202eb",
+        "user_name": "2008_ghost",
+        "display_name": "2008 Ghost",
+        "first_name": "2008",
+        "last_name": "Ghost",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/2008_ghost.jpg"
+    },
+    {
+        "sys_id": "dc57420f-bdfb-42a2-828b-0a17fe68d868",
+        "user_name": "2008ghost",
+        "display_name": "2008Ghost",
+        "first_name": "2008Ghost",
+        "last_name": "Fan",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/2008_ghost.jpg"
+    },
+    {
+        "sys_id": "36a95ce498bc42a999ce5747eb981aa4",
+        "user_name": "7_train_terry",
+        "display_name": "7 Train Terry",
+        "first_name": "7",
+        "last_name": "Train Terry",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/7_train_terry.png"
+    },
+    {
+        "sys_id": "8111a8fd-8c86-4ad4-9049-e077f3d721ed",
+        "user_name": "7_train_terry_202604171225",
+        "display_name": "7 Train Terry 202604171225",
+        "first_name": "7",
+        "last_name": "Train Terry 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/7_Train_Terry_202604171225.jpeg"
+    },
+    {
+        "sys_id": "6fc92609-ea97-46d2-9ffa-77a4c57ad6c7",
+        "user_name": "7_train_terry_202604171225_2",
+        "display_name": "7 Train Terry 202604171225 2",
+        "first_name": "7",
+        "last_name": "Train Terry 202604171225 2",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/7_Train_Terry_202604171225_2.jpeg"
+    },
+    {
+        "sys_id": "f5d1ea9b-6a63-41f3-bb0b-61070b8b0684",
+        "user_name": "7trainterry",
+        "display_name": "7Trainterry",
+        "first_name": "7Trainterry",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/7_train_terry.png"
+    },
+    {
+        "sys_id": "sp_001",
+        "user_name": "alexia",
+        "display_name": "Alexia",
+        "first_name": "Alexia",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/alexia.png"
+    },
+    {
+        "sys_id": "3483d85819f84543b0b4b69497585e30",
+        "user_name": "altitude_andy",
+        "display_name": "Altitude Andy",
+        "first_name": "Altitude",
+        "last_name": "Andy",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/altitude_andy.png"
+    },
+    {
+        "sys_id": "9810e1fc-d608-40ff-83d1-f93a91a9be27",
+        "user_name": "altitudeandy",
+        "display_name": "Altitudeandy",
+        "first_name": "Altitudeandy",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/altitude_andy.jpg"
+    },
+    {
+        "sys_id": "de3b89f6-6715-4824-b58a-f04aa3d8510c",
+        "user_name": "atl_laa",
+        "display_name": "Atl Laa",
+        "first_name": "Atl",
+        "last_name": "Laa",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/atL_laa.jfif"
+    },
+    {
+        "sys_id": "99b16d4c-2e5b-4ae6-82bd-bc5994ecee67",
+        "user_name": "atllaa",
+        "display_name": "Atllaa",
+        "first_name": "Atllaa",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/atL_laa.jfif"
+    },
+    {
+        "sys_id": "c5fb94a6c5364cc88c7c85aeb47c7e0e",
+        "user_name": "barf",
+        "display_name": "Barf",
+        "first_name": "Barf",
+        "last_name": "Fan",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/barf.png"
+    },
+    {
+        "sys_id": "05d6724056cd4c91b60909af8b70d28b",
+        "user_name": "bartman",
+        "display_name": "Bartman",
+        "first_name": "Bartman",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/bartman.png"
+    },
+    {
+        "sys_id": "62daa611-fb23-4390-aedf-ff3a8fd082cf",
+        "user_name": "bartman_character_reference_202604171225",
+        "display_name": "Bartman Character Reference 202604171225",
+        "first_name": "Bartman",
+        "last_name": "Character Reference 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Bartman_Character_reference_202604171225.jpeg"
+    },
+    {
+        "sys_id": "9b81c5d615d94da3b2d0fc5d6358c65a",
+        "user_name": "battery_chucker",
+        "display_name": "Battery Chucker",
+        "first_name": "Battery",
+        "last_name": "Chucker",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/battery_chucker.png"
+    },
+    {
+        "sys_id": "d4f8d8f76b8845b58dcbc8d788fce288",
+        "user_name": "battery_chucker_jr",
+        "display_name": "Battery Chucker Jr",
+        "first_name": "Battery",
+        "last_name": "Chucker Jr",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/battery_chucker_jr.jpg"
+    },
+    {
+        "sys_id": "91019669-41fb-4f16-a590-ed71179a837f",
+        "user_name": "batterychucker",
+        "display_name": "Batterychucker",
+        "first_name": "Batterychucker",
+        "last_name": "Fan",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/battery_chucker.jpeg"
+    },
+    {
+        "sys_id": "fec43545-afb4-4e43-ac7e-6db054b886fc",
+        "user_name": "batterychuckerjr",
+        "display_name": "Batterychuckerjr",
+        "first_name": "Batterychuckerjr",
+        "last_name": "Fan",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/battery_chucker_jr.jpg"
+    },
+    {
+        "sys_id": "e569d7a3670746eeba4a7882d8c5adb5",
+        "user_name": "bernies_mechanic",
+        "display_name": "Bernies Mechanic",
+        "first_name": "Bernies",
+        "last_name": "Mechanic",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/bernies_mechanic.jpg"
+    },
+    {
+        "sys_id": "309f114a-8b4f-4a61-a4a5-2b77bfbec858",
+        "user_name": "berniesmechanic",
+        "display_name": "Berniesmechanic",
+        "first_name": "Berniesmechanic",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/bernies_mechanic.jpg"
+    },
+    {
+        "sys_id": "5c8c312547924803b5272aa5e61ab58b",
+        "user_name": "big_red_machine_boomer",
+        "display_name": "Big Red Machine Boomer",
+        "first_name": "Big",
+        "last_name": "Red Machine Boomer",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/big_red_machine_boomer.jpg"
+    },
+    {
+        "sys_id": "6d5e7b5c-7aaa-4521-a4e4-f4c9304a7f19",
+        "user_name": "bigredmachineboomer",
+        "display_name": "Bigredmachineboomer",
+        "first_name": "Bigredmachineboomer",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/big_red_machine_boomer.jpg"
+    },
+    {
+        "sys_id": "fed8fc1507ee482fbdcf008368829fe2",
+        "user_name": "birdland_boomer",
+        "display_name": "Birdland Boomer",
+        "first_name": "Birdland",
+        "last_name": "Boomer",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/birdland_boomer.jpg"
+    },
+    {
+        "sys_id": "8c0feb78-fdd5-4b42-bcb6-509de6b7fc5d",
+        "user_name": "birdlandboomer",
+        "display_name": "Birdlandboomer",
+        "first_name": "Birdlandboomer",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/birdland_boomer.jpg"
+    },
+    {
+        "sys_id": "2e481f20bf9c43b1a79bc16d7dc2dd3e",
+        "user_name": "bleacher_bruiser_blue",
+        "display_name": "Bleacher Bruiser Blue",
+        "first_name": "Bleacher",
+        "last_name": "Bruiser Blue",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/bleacher_bruiser_blue.jpg"
+    },
+    {
+        "sys_id": "dfccc071960b493cb03d1a1a21d95dac",
+        "user_name": "bleacher_bum_bill",
+        "display_name": "Bleacher Bum Bill",
+        "first_name": "Bleacher",
+        "last_name": "Bum Bill",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/bleacher_bum_bill.png"
+    },
+    {
+        "sys_id": "7301faf9-6ee2-42ef-a58d-58856ae8b0d6",
+        "user_name": "bleacher_bum_bill_202604171225",
+        "display_name": "Bleacher Bum Bill 202604171225",
+        "first_name": "Bleacher",
+        "last_name": "Bum Bill 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Bleacher_Bum_Bill_202604171225.jpeg"
+    },
+    {
+        "sys_id": "c47b64ae52d24bfbb08ef6a6d8c691a0",
+        "user_name": "bleacher_creature_carl",
+        "display_name": "Bleacher Creature Carl",
+        "first_name": "Bleacher",
+        "last_name": "Creature Carl",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/bleacher_creature_carl.jpg"
+    },
+    {
+        "sys_id": "4c3dad9b-9744-4ce6-b0f4-2f675580d935",
+        "user_name": "bleacherbruiserblue",
+        "display_name": "Bleacherbruiserblue",
+        "first_name": "Bleacherbruiserblue",
+        "last_name": "Fan",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/bleacher_bruiser_blue.jpg"
+    },
+    {
+        "sys_id": "4afeca0e-7eb5-4bd3-b125-26b2c7d2f3f1",
+        "user_name": "bleacherbumbill",
+        "display_name": "Bleacherbumbill",
+        "first_name": "Bleacherbumbill",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/bleacher_bum_bill.jpg"
+    },
+    {
+        "sys_id": "ce42aab5-ac0e-454d-9da7-86e2899e62e0",
+        "user_name": "bleachercreaturecarl",
+        "display_name": "Bleachercreaturecarl",
+        "first_name": "Bleachercreaturecarl",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/bleacher_creature_carl.jpg"
+    },
+    {
+        "sys_id": "ccc9d26634c048648a1b05f75fd5a6b8",
+        "user_name": "bo_jackson_truther",
+        "display_name": "Bo Jackson Truther",
+        "first_name": "Bo",
+        "last_name": "Jackson Truther",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/bo_jackson_truther.jpg"
+    },
+    {
+        "sys_id": "850ccf1e-2ed8-4c07-8292-a203cf47f4b4",
+        "user_name": "boggy",
+        "display_name": "Boggy",
+        "first_name": "Boggy",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/boggy.jpg"
+    },
+    {
+        "sys_id": "eab41c36-abf2-4d36-bdac-f280eab44b7d",
+        "user_name": "bojacksontruther",
+        "display_name": "Bojacksontruther",
+        "first_name": "Bojacksontruther",
+        "last_name": "Fan",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/bo_jackson_truther.jpg"
+    },
+    {
+        "sys_id": "c4bc220d71a94cd9b523b86272b450ab",
+        "user_name": "boomstick_bobby",
+        "display_name": "Boomstick Bobby",
+        "first_name": "Boomstick",
+        "last_name": "Bobby",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/boomstick_bobby.jpg"
+    },
+    {
+        "sys_id": "398a3b6a-b103-4901-a012-8b046ae23d79",
+        "user_name": "boomstickbobby",
+        "display_name": "Boomstickbobby",
+        "first_name": "Boomstickbobby",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/boomstick_bobby.jpg"
+    },
+    {
+        "sys_id": "d45229dad5334aef9a30fb2a8f454a51",
+        "user_name": "bronx_cheer_charlie",
+        "display_name": "Bronx Cheer Charlie",
+        "first_name": "Bronx",
+        "last_name": "Cheer Charlie",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/bronx_cheer_charlie.png"
+    },
+    {
+        "sys_id": "5f542a54-39f5-4bbb-80e1-6240207bfeb7",
+        "user_name": "bronxcheercharlie",
+        "display_name": "Bronxcheercharlie",
+        "first_name": "Bronxcheercharlie",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/bronx_cheer_charlie.jpg"
+    },
+    {
+        "sys_id": "6d3e44a07c03492784a9ffb80831f0f1",
+        "user_name": "burnes_notice",
+        "display_name": "Burnes Notice",
+        "first_name": "Burnes",
+        "last_name": "Notice",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/burnes_notice.jpg"
+    },
+    {
+        "sys_id": "b559718d-4020-44b1-af28-394e6cba5a1f",
+        "user_name": "burnesnotice",
+        "display_name": "Burnesnotice",
+        "first_name": "Burnesnotice",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/burnes_notice.jpg"
+    },
+    {
+        "sys_id": "sp_002",
+        "user_name": "caelum",
+        "display_name": "Caelum",
+        "first_name": "Caelum",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/caelum.png"
+    },
+    {
+        "sys_id": "3778fb1163e74df0ab742cc53eb7bcde",
+        "user_name": "cafecito_carlos",
+        "display_name": "Cafecito Carlos",
+        "first_name": "Cafecito",
+        "last_name": "Carlos",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/cafecito_carlos.jpg"
+    },
+    {
+        "sys_id": "a1d8f24b-cfb4-46e7-875b-3ed883fbcaf8",
+        "user_name": "cafecitocarlos",
+        "display_name": "Cafecitocarlos",
+        "first_name": "Cafecitocarlos",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/cafecito_carlos.jpg"
+    },
+    {
+        "sys_id": "71d8bbf1-ee74-4ad0-ad24-e39fb645a551",
+        "user_name": "cap_peterson",
+        "display_name": "Cap Peterson",
+        "first_name": "Cap",
+        "last_name": "Peterson",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/cap_peterson.png"
+    },
+    {
+        "sys_id": "0a2b01ff-a249-47a2-8fc5-4fc3d03038c2",
+        "user_name": "cappeterson",
+        "display_name": "Cappeterson",
+        "first_name": "Cappeterson",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/cap_peterson.png"
+    },
+    {
+        "sys_id": "710a2523-1639-4b07-8f69-b1d13ef488ac",
+        "user_name": "character_reference_sheet,_202604171225",
+        "display_name": "Character Reference Sheet, 202604171225",
+        "first_name": "Character",
+        "last_name": "Reference Sheet, 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Character_reference_sheet,_202604171225.jpeg"
+    },
+    {
+        "sys_id": "2d4c1f3f-d973-4f6a-98f9-0f3661ae47b1",
+        "user_name": "character_reference_sheet,_202604171225_2",
+        "display_name": "Character Reference Sheet, 202604171225 2",
+        "first_name": "Character",
+        "last_name": "Reference Sheet, 202604171225 2",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Character_reference_sheet,_202604171225_2.jpeg"
+    },
+    {
+        "sys_id": "0ff03fd0-9371-407f-88df-2c03e31369e7",
+        "user_name": "character_reference_sheet,_202604171225_3",
+        "display_name": "Character Reference Sheet, 202604171225 3",
+        "first_name": "Character",
+        "last_name": "Reference Sheet, 202604171225 3",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Character_reference_sheet,_202604171225_3.jpeg"
+    },
+    {
+        "sys_id": "bc77de96-72cc-4939-a735-5911ddc2e8f5",
+        "user_name": "character_reference_sheet,_202604171225_4",
+        "display_name": "Character Reference Sheet, 202604171225 4",
+        "first_name": "Character",
+        "last_name": "Reference Sheet, 202604171225 4",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Character_reference_sheet,_202604171225_4.jpeg"
+    },
+    {
+        "sys_id": "f0112529-a117-431f-87a0-a67fcaccbaea",
+        "user_name": "character_reference_sheet,_202604171225_5",
+        "display_name": "Character Reference Sheet, 202604171225 5",
+        "first_name": "Character",
+        "last_name": "Reference Sheet, 202604171225 5",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Character_reference_sheet,_202604171225_5.jpeg"
+    },
+    {
+        "sys_id": "ed76cd4b-26fa-475c-bf8e-2bcf22f1cb5c",
+        "user_name": "character_reference_sheet,_202604171225_6",
+        "display_name": "Character Reference Sheet, 202604171225 6",
+        "first_name": "Character",
+        "last_name": "Reference Sheet, 202604171225 6",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Character_reference_sheet,_202604171225_6.jpeg"
+    },
+    {
+        "sys_id": "ebaaef67-40e8-4999-bea7-8f348bf0af59",
+        "user_name": "character_reference_sheet,_202604171225_7",
+        "display_name": "Character Reference Sheet, 202604171225 7",
+        "first_name": "Character",
+        "last_name": "Reference Sheet, 202604171225 7",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Character_reference_sheet,_202604171225_7.jpeg"
+    },
+    {
+        "sys_id": "f7aa8b5f-2bfc-48e3-a6e0-90ad459ab90f",
+        "user_name": "character_reference_sheet,_202604171225_8",
+        "display_name": "Character Reference Sheet, 202604171225 8",
+        "first_name": "Character",
+        "last_name": "Reference Sheet, 202604171225 8",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Character_reference_sheet,_202604171225_8.jpeg"
+    },
+    {
+        "sys_id": "e590e1cd5d7c4e17be0e41fea4c7c8ba",
+        "user_name": "chavez_ravine_chad",
+        "display_name": "Chavez Ravine Chad",
+        "first_name": "Chavez",
+        "last_name": "Ravine Chad",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/chavez_ravine_chad.jpg"
+    },
+    {
+        "sys_id": "6d3973cd-9cc9-46c2-87e8-2601d1d43546",
+        "user_name": "chavezravinechad",
+        "display_name": "Chavezravinechad",
+        "first_name": "Chavezravinechad",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/chavez_ravine_chad.jpg"
+    },
+    {
+        "sys_id": "f8a3f35a19fd4e25a039ae51c0f1d813",
+        "user_name": "cheesehead_chad",
+        "display_name": "Cheesehead Chad",
+        "first_name": "Cheesehead",
+        "last_name": "Chad",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/cheesehead_chad.jpg"
+    },
+    {
+        "sys_id": "478bbf6d-58f2-4f27-8126-df1843cff955",
+        "user_name": "cheeseheadchad",
+        "display_name": "Cheeseheadchad",
+        "first_name": "Cheeseheadchad",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/cheesehead_chad.jpg"
+    },
+    {
+        "sys_id": "22dc0bda-5b45-46bd-91fd-87a9eb606fd5",
+        "user_name": "coach_shrubbs",
+        "display_name": "Coach Shrubbs",
+        "first_name": "Coach",
+        "last_name": "Shrubbs",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/coach_shrubbs.png"
+    },
+    {
+        "sys_id": "161eb6cb-5ff4-4889-8617-07a026736b50",
+        "user_name": "coachshrubbs",
+        "display_name": "Coachshrubbs",
+        "first_name": "Coachshrubbs",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/coach_shrubbs.png"
+    },
+    {
+        "sys_id": "9d85635d70674b6ba562fd317fb106fd",
+        "user_name": "coliseum_ghost",
+        "display_name": "Coliseum Ghost",
+        "first_name": "Coliseum",
+        "last_name": "Ghost",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/coliseum_ghost.jpg"
+    },
+    {
+        "sys_id": "d72d47d2-0c33-4db4-8a3d-1a9a653fe4a2",
+        "user_name": "coliseumghost",
+        "display_name": "Coliseumghost",
+        "first_name": "Coliseumghost",
+        "last_name": "Fan",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/coliseum_ghost.jpg"
+    },
+    {
+        "sys_id": "9e2579abb5cb456b8df9c8a57a880686",
+        "user_name": "comiskey_ghost",
+        "display_name": "Comiskey Ghost",
+        "first_name": "Comiskey",
+        "last_name": "Ghost",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/comiskey_ghost.jpg"
+    },
+    {
+        "sys_id": "5cf73c2e-b6e1-4e01-b98c-0613e3eda26b",
+        "user_name": "comiskeyghost",
+        "display_name": "Comiskeyghost",
+        "first_name": "Comiskeyghost",
+        "last_name": "Fan",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/comiskey_ghost.jpg"
+    },
+    {
+        "sys_id": "82a28b7f377546d49a114912f5510cf1",
+        "user_name": "coors_shield_chad",
+        "display_name": "Coors Shield Chad",
+        "first_name": "Coors",
+        "last_name": "Shield Chad",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/coors_shield_chad.png"
+    },
+    {
+        "sys_id": "256a5df8-104a-4a89-aac4-3dc8d6561b3d",
+        "user_name": "coorsshieldchad",
+        "display_name": "Coorsshieldchad",
+        "first_name": "Coorsshieldchad",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/coors_shield_chad.jpg"
+    },
+    {
+        "sys_id": "e69acef193074eaba3afd83ea51e58a0",
+        "user_name": "cream_city_crusher",
+        "display_name": "Cream City Crusher",
+        "first_name": "Cream",
+        "last_name": "City Crusher",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/cream_city_crusher.png"
+    },
+    {
+        "sys_id": "86ccca5a-9d24-47ea-84d2-5148bea3ea85",
+        "user_name": "creamcitycrusher",
+        "display_name": "Creamcitycrusher",
+        "first_name": "Creamcitycrusher",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/cream_city_crusher.jpg"
+    },
+    {
+        "sys_id": "f0b695d02b2a4963a64c05371d7869ec",
+        "user_name": "crown_vision_cynic",
+        "display_name": "Crown Vision Cynic",
+        "first_name": "Crown",
+        "last_name": "Vision Cynic",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/crown_vision_cynic.jpg"
+    },
+    {
+        "sys_id": "3398e008-2a84-4fda-aafe-7b7dce6038a4",
+        "user_name": "crownvisioncynic",
+        "display_name": "Crownvisioncynic",
+        "first_name": "Crownvisioncynic",
+        "last_name": "Fan",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/crown_vision_cynic.jpg"
+    },
+    {
+        "sys_id": "91c5320b2793411fbcfae0ec8e2785ac",
+        "user_name": "curly_w_wally",
+        "display_name": "Curly W Wally",
+        "first_name": "Curly",
+        "last_name": "W Wally",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/curly_w_wally.jpg"
+    },
+    {
+        "sys_id": "058bb674-a3df-4ce9-b099-d0090129e8e7",
+        "user_name": "curlywwally",
+        "display_name": "Curlywwally",
+        "first_name": "Curlywwally",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/curly_w_wally.jpg"
+    },
+    {
+        "sys_id": "ca33719f-36c4-4df0-be80-83a83cde4ff2",
+        "user_name": "d_cell",
+        "display_name": "D Cell",
+        "first_name": "D",
+        "last_name": "Cell",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/d_cell.jpg"
+    },
+    {
+        "sys_id": "18b659702edf429b8ad8201092868ced",
+        "user_name": "day_game_danny",
+        "display_name": "Day Game Danny",
+        "first_name": "Day",
+        "last_name": "Game Danny",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/day_game_danny.jpg"
+    },
+    {
+        "sys_id": "f01c052f-792d-4aad-af8c-d7d13f37ba50",
+        "user_name": "daygamedanny",
+        "display_name": "Daygamedanny",
+        "first_name": "Daygamedanny",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/day_game_danny.jpg"
+    },
+    {
+        "sys_id": "eec2f01e-186d-43fe-a45b-3fed6654f65b",
+        "user_name": "dcell",
+        "display_name": "Dcell",
+        "first_name": "Dcell",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/d_cell.jpg"
+    },
+    {
+        "sys_id": "af0cb87f1c9040e9b6bc32696f243ced",
+        "user_name": "dinger_defender",
+        "display_name": "Dinger Defender",
+        "first_name": "Dinger",
+        "last_name": "Defender",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/dinger_defender.jpg"
+    },
+    {
+        "sys_id": "9ac05e0a-3dab-477a-9dc2-77cf03c80ac6",
+        "user_name": "dingerdefender",
+        "display_name": "Dingerdefender",
+        "first_name": "Dingerdefender",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/dinger_defender.jpg"
+    },
+    {
+        "sys_id": "87ada007fd934236a7cad70842e601cc",
+        "user_name": "dirty_water_danny",
+        "display_name": "Dirty Water Danny",
+        "first_name": "Dirty",
+        "last_name": "Water Danny",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/dirty_water_danny.png"
+    },
+    {
+        "sys_id": "06c258c1-87b4-4de9-a024-690082dc6c66",
+        "user_name": "dirtywaterdanny",
+        "display_name": "Dirtywaterdanny",
+        "first_name": "Dirtywaterdanny",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/dirty_water_danny.jpg"
+    },
+    {
+        "sys_id": "3ad14ad528864cb9bdc5e2cba973e197",
+        "user_name": "disco_demolition_dave",
+        "display_name": "Disco Demolition Dave",
+        "first_name": "Disco",
+        "last_name": "Demolition Dave",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/disco_demolition_dave.jpg"
+    },
+    {
+        "sys_id": "670693e2-6e0b-40f5-b746-7a7499ddb618",
+        "user_name": "discodemolitiondave",
+        "display_name": "Discodemolitiondave",
+        "first_name": "Discodemolitiondave",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/disco_demolition_dave.jpg"
+    },
+    {
+        "sys_id": "9a5cd8638699471ebbebee1945d07f43",
+        "user_name": "dolan_drain",
+        "display_name": "Dolan Drain",
+        "first_name": "Dolan",
+        "last_name": "Drain",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/dolan_drain.png"
+    },
+    {
+        "sys_id": "f3cafef5-6847-4a29-9a79-3375d22da715",
+        "user_name": "dolandrain",
+        "display_name": "Dolandrain",
+        "first_name": "Dolandrain",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Dolan_Drain.jpg"
+    },
+    {
+        "sys_id": "8b0ad16a3199457280c16b49d3f7ae41",
+        "user_name": "dot",
+        "display_name": "Dot",
+        "first_name": "Dot",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/dot.png"
+    },
+    {
+        "sys_id": "f8655b40616f4bc6adff1ea91b206020",
+        "user_name": "drum_line_dan",
+        "display_name": "Drum Line Dan",
+        "first_name": "Drum",
+        "last_name": "Line Dan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/drum_line_dan.jpg"
+    },
+    {
+        "sys_id": "57d5aa69-de4c-4385-8697-b66d827807db",
+        "user_name": "drum_line_dan_202604171225",
+        "display_name": "Drum Line Dan 202604171225",
+        "first_name": "Drum",
+        "last_name": "Line Dan 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Drum_Line_Dan_202604171225.jpeg"
+    },
+    {
+        "sys_id": "5a4ee2e4-c99f-4f64-b579-579abc45b965",
+        "user_name": "drum_line_dan_202604171225_2",
+        "display_name": "Drum Line Dan 202604171225 2",
+        "first_name": "Drum",
+        "last_name": "Line Dan 202604171225 2",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Drum_Line_Dan_202604171225_2.jpeg"
+    },
+    {
+        "sys_id": "bde6dbfe-3f0d-4161-a9fc-39b7712a2d0d",
+        "user_name": "drumlinedan",
+        "display_name": "Drumlinedan",
+        "first_name": "Drumlinedan",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/drum_line_dan.jpg"
+    },
+    {
+        "sys_id": "41adcd993f304c4597144c779aa8a75a",
+        "user_name": "e65th_lex",
+        "display_name": "E65Th Lex",
+        "first_name": "E65Th",
+        "last_name": "Lex",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/E65th_Lex.jpg"
+    },
+    {
+        "sys_id": "2fd2dec0-ac06-487d-9659-fc8919eee9ad",
+        "user_name": "e65thlex",
+        "display_name": "E65Thlex",
+        "first_name": "E65Thlex",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/E65th_Lex.jpg"
+    },
+    {
+        "sys_id": "a7a722d6a5584b55acee1ea17fec969f",
+        "user_name": "eutaw_street_elite",
+        "display_name": "Eutaw Street Elite",
+        "first_name": "Eutaw",
+        "last_name": "Street Elite",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/eutaw_street_elite.jpg"
+    },
+    {
+        "sys_id": "799b6e88-d4e0-464e-90da-b851bed1f6fa",
+        "user_name": "eutaw_street_elite_202604171225",
+        "display_name": "Eutaw Street Elite 202604171225",
+        "first_name": "Eutaw",
+        "last_name": "Street Elite 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Eutaw_Street_Elite_202604171225.jpeg"
+    },
+    {
+        "sys_id": "20cf5bd2-c99f-4f97-9c36-d74b9367641a",
+        "user_name": "eutaw_street_elite_202604171225_2",
+        "display_name": "Eutaw Street Elite 202604171225 2",
+        "first_name": "Eutaw",
+        "last_name": "Street Elite 202604171225 2",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Eutaw_Street_Elite_202604171225_2.jpeg"
+    },
+    {
+        "sys_id": "881ed922-afe3-4106-9713-5f4de85d0710",
+        "user_name": "eutawstreetelite",
+        "display_name": "Eutawstreetelite",
+        "first_name": "Eutawstreetelite",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/eutaw_street_elite.jpg"
+    },
+    {
+        "sys_id": "4196ceeb-597a-405f-99a6-91edffaf50f1",
+        "user_name": "exhausted_commuter_character_202604171225",
+        "display_name": "Exhausted Commuter Character 202604171225",
+        "first_name": "Exhausted",
+        "last_name": "Commuter Character 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Exhausted_commuter_character_202604171225.jpeg"
+    },
+    {
+        "sys_id": "9084aefa-1de1-44d7-a33b-9115de5a3066",
+        "user_name": "exhausted_commuter_with_202604171225",
+        "display_name": "Exhausted Commuter With 202604171225",
+        "first_name": "Exhausted",
+        "last_name": "Commuter With 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Exhausted_commuter_with_202604171225.jpeg"
+    },
+    {
+        "sys_id": "88a87f68aa374918b1f3b7532a3289ae",
+        "user_name": "facial_hair_fascist",
+        "display_name": "Facial Hair Fascist",
+        "first_name": "Facial",
+        "last_name": "Hair Fascist",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/facial_hair_fascist.png"
+    },
+    {
+        "sys_id": "36639997-d61b-489c-ad3e-901c34965623",
+        "user_name": "facialhairfascist",
+        "display_name": "Facialhairfascist",
+        "first_name": "Facialhairfascist",
+        "last_name": "Fan",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/facial_hair_fascist.jpg"
+    },
+    {
+        "sys_id": "3aa1de06-4476-4170-92b3-c4431f00eb41",
+        "user_name": "fan_with_magnifying_glass_swatch_202604291739",
+        "display_name": "Fan With Magnifying Glass Swatch 202604291739",
+        "first_name": "Fan",
+        "last_name": "With Magnifying Glass Swatch 202604291739",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Fan_with_magnifying_glass_swatch_202604291739.jpeg"
+    },
+    {
+        "sys_id": "c83fb1bb7a4c4c05b57355b24d108492",
+        "user_name": "flappy_boi_fanatic",
+        "display_name": "Flappy Boi Fanatic",
+        "first_name": "Flappy",
+        "last_name": "Boi Fanatic",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/flappy_boi_fanatic.jpg"
+    },
+    {
+        "sys_id": "b2fc5741-51a4-4ccf-833a-56b06d9d0195",
+        "user_name": "flappyboifanatic",
+        "display_name": "Flappyboifanatic",
+        "first_name": "Flappyboifanatic",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/flappy_boi_fanatic.jpg"
+    },
+    {
+        "sys_id": "40ba1435705a4d77b986d65853360bdd",
+        "user_name": "fog_horn_frank",
+        "display_name": "Fog Horn Frank",
+        "first_name": "Fog",
+        "last_name": "Horn Frank",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/fog_horn_frank.jpg"
+    },
+    {
+        "sys_id": "490582ab269441c19c09b866cbcd4730",
+        "user_name": "fog_sentinel",
+        "display_name": "Fog Sentinel",
+        "first_name": "Fog",
+        "last_name": "Sentinel",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/fog_sentinel.png"
+    },
+    {
+        "sys_id": "ddea6d48-22f3-4b38-9620-ab7d62314252",
+        "user_name": "foghornfrank",
+        "display_name": "Foghornfrank",
+        "first_name": "Foghornfrank",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/fog_horn_frank.jpg"
+    },
+    {
+        "sys_id": "b51da8f9-cb8c-4a8e-a6cc-c8a5c4c9f1c0",
+        "user_name": "fogsentinel",
+        "display_name": "Fogsentinel",
+        "first_name": "Fogsentinel",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/fog_sentinel.png"
+    },
+    {
+        "sys_id": "751c65899e2a42ed8330012bc506c1e2",
+        "user_name": "framber_fanatic",
+        "display_name": "Framber Fanatic",
+        "first_name": "Framber",
+        "last_name": "Fanatic",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/framber_fanatic.png"
+    },
+    {
+        "sys_id": "a483cf22-e7c7-494d-ac36-10c89958327f",
+        "user_name": "framberfanatic",
+        "display_name": "Framberfanatic",
+        "first_name": "Framberfanatic",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/framber_fanatic.png"
+    },
+    {
+        "sys_id": "d5a3b532356d463c9498a44181785299",
+        "user_name": "freeway_series_fanatic",
+        "display_name": "Freeway Series Fanatic",
+        "first_name": "Freeway",
+        "last_name": "Series Fanatic",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/freeway_series_fanatic.jpg"
+    },
+    {
+        "sys_id": "95a6152c-03f7-4d4c-8c4f-4162b071772e",
+        "user_name": "freewayseriesfanatic",
+        "display_name": "Freewayseriesfanatic",
+        "first_name": "Freewayseriesfanatic",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/freeway_series_fanatic.jpg"
+    },
+    {
+        "sys_id": "0455a42c74304935ab28d05753d6200f",
+        "user_name": "friar_faithful_frank",
+        "display_name": "Friar Faithful Frank",
+        "first_name": "Friar",
+        "last_name": "Faithful Frank",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/friar_faithful_frank.jpg"
+    },
+    {
+        "sys_id": "c322f994-ba8d-49f2-b19b-ace959f0d4d6",
+        "user_name": "friarfaithfulfrank",
+        "display_name": "Friarfaithfulfrank",
+        "first_name": "Friarfaithfulfrank",
+        "last_name": "Fan",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/friar_faithful_frank.jpg"
+    },
+    {
+        "sys_id": "a36020a5610e47ae95e4bf4eab993844",
+        "user_name": "front_row_amy_wannabe",
+        "display_name": "Front Row Amy Wannabe",
+        "first_name": "Front",
+        "last_name": "Row Amy Wannabe",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/front_row_amy_wannabe.jpg"
+    },
+    {
+        "sys_id": "5e45ea82-bc3a-42df-acfa-87c67b521a8c",
+        "user_name": "frontrowamywannabe",
+        "display_name": "Frontrowamywannabe",
+        "first_name": "Frontrowamywannabe",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/front_row_amy_wannabe.jpg"
+    },
+    {
+        "sys_id": "9373581fa8824dd4bd05de26ff7418c9",
+        "user_name": "garlic_fries_gary",
+        "display_name": "Garlic Fries Gary",
+        "first_name": "Garlic",
+        "last_name": "Fries Gary",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/garlic_fries_gary.jpg"
+    },
+    {
+        "sys_id": "a408b3c7-3a1a-4950-89b4-eade6bb88137",
+        "user_name": "garlicfriesgary",
+        "display_name": "Garlicfriesgary",
+        "first_name": "Garlicfriesgary",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/garlic_fries_gary.jpg"
+    },
+    {
+        "sys_id": "50e8b6fade73440ea1d5cbe12c77089c",
+        "user_name": "gaslamp_greg",
+        "display_name": "Gaslamp Greg",
+        "first_name": "Gaslamp",
+        "last_name": "Greg",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/gaslamp_greg.jpg"
+    },
+    {
+        "sys_id": "de22e3da-36ff-4aeb-b4a8-2d71ae00695b",
+        "user_name": "gaslampgreg",
+        "display_name": "Gaslampgreg",
+        "first_name": "Gaslampgreg",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/gaslamp_greg.jpg"
+    },
+    {
+        "sys_id": "769314c7e51c46f3b28eb70ca312006e",
+        "user_name": "green_monster",
+        "display_name": "Green Monster",
+        "first_name": "Green",
+        "last_name": "Monster",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/green_monster.jpg"
+    },
+    {
+        "sys_id": "8d68d613-0d0a-4e9e-baf1-cfe4d3457825",
+        "user_name": "greenmonster",
+        "display_name": "Greenmonster",
+        "first_name": "Greenmonster",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/green_monster.jpg"
+    },
+    {
+        "sys_id": "f58eaa5e3a00440ea297c886cd96134d",
+        "user_name": "halo_heartbreak_hal",
+        "display_name": "Halo Heartbreak Hal",
+        "first_name": "Halo",
+        "last_name": "Heartbreak Hal",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/halo_heartbreak_hal.jpg"
+    },
+    {
+        "sys_id": "3d99f81d-4e0f-4711-884c-06cd0b1363df",
+        "user_name": "haloheartbreakhal",
+        "display_name": "Haloheartbreakhal",
+        "first_name": "Haloheartbreakhal",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/halo_heartbreak_hal.jpg"
+    },
+    {
+        "sys_id": "186ecca97d17446cb53f8ae797da60f7",
+        "user_name": "hollywood_hex",
+        "display_name": "Hollywood Hex",
+        "first_name": "Hollywood",
+        "last_name": "Hex",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/hollywood_hex.png"
+    },
+    {
+        "sys_id": "0f2b662c-5057-484f-b7fd-0868e8fda6c9",
+        "user_name": "hollywoodhex",
+        "display_name": "Hollywoodhex",
+        "first_name": "Hollywoodhex",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/hollywood_hex.png"
+    },
+    {
+        "sys_id": "901db8f02d6a4ecbaf6576fa6b24e601",
+        "user_name": "home_run_sculpture_mourner",
+        "display_name": "Home Run Sculpture Mourner",
+        "first_name": "Home",
+        "last_name": "Run Sculpture Mourner",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/home_run_sculpture_mourner.png"
+    },
+    {
+        "sys_id": "4b2123225a204a41b1ac51129bea25c4",
+        "user_name": "homer_hankie_hoarder",
+        "display_name": "Homer Hankie Hoarder",
+        "first_name": "Homer",
+        "last_name": "Hankie Hoarder",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/homer_hankie_hoarder.jpg"
+    },
+    {
+        "sys_id": "37320b8d-b751-4c37-930a-f09104b82195",
+        "user_name": "homerhankiehoarder",
+        "display_name": "Homerhankiehoarder",
+        "first_name": "Homerhankiehoarder",
+        "last_name": "Fan",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/homer_hankie_hoarder.jpg"
+    },
+    {
+        "sys_id": "12e5b231-effb-4fa7-99f3-5a18c19b3a88",
+        "user_name": "homerunsculpturemourner",
+        "display_name": "Homerunsculpturemourner",
+        "first_name": "Homerunsculpturemourner",
+        "last_name": "Fan",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/home_run_sculpture_mourner.png"
+    },
+    {
+        "sys_id": "e2c4da41b5694ea7b66003aa4d0b8334",
+        "user_name": "ivy_inspector_ian",
+        "display_name": "Ivy Inspector Ian",
+        "first_name": "Ivy",
+        "last_name": "Inspector Ian",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/ivy_inspector_ian.png"
+    },
+    {
+        "sys_id": "7b9df590-756a-4f14-b08f-3f0c58ab7b20",
+        "user_name": "ivy_inspector_ian_202604171225",
+        "display_name": "Ivy Inspector Ian 202604171225",
+        "first_name": "Ivy",
+        "last_name": "Inspector Ian 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Ivy_Inspector_Ian_202604171225.jpeg"
+    },
+    {
+        "sys_id": "543f009e-5784-43e5-add8-9a17b7c462ec",
+        "user_name": "ivyinspectorian",
+        "display_name": "Ivyinspectorian",
+        "first_name": "Ivyinspectorian",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/ivy_inspector_ian.jpg"
+    },
+    {
+        "sys_id": "fb4f9f4f-e391-4ae9-a93e-1182f8ea107e",
+        "user_name": "jake",
+        "display_name": "Jake",
+        "first_name": "Jake",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/jake.png"
+    },
+    {
+        "sys_id": "fa80971140244a31a0d607f8c35bae99",
+        "user_name": "jake_taylor_6th",
+        "display_name": "Jake Taylor 6Th",
+        "first_name": "Jake",
+        "last_name": "Taylor 6Th",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Jake_Taylor_6th.jpg"
+    },
+    {
+        "sys_id": "93256447-363b-4b60-9fe3-9953c6596665",
+        "user_name": "jaketaylor6th",
+        "display_name": "Jaketaylor6Th",
+        "first_name": "Jaketaylor6Th",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Jake_Taylor_6th.jpg"
+    },
+    {
+        "sys_id": "5be65beb-33fb-4e8a-8a57-35c6e07b9578",
+        "user_name": "james",
+        "display_name": "James",
+        "first_name": "James",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/james.jpg"
+    },
+    {
+        "sys_id": "36d26e23-6cf9-4485-a1ed-16e98d214d46",
+        "user_name": "joco_traitor",
+        "display_name": "Joco Traitor",
+        "first_name": "Joco",
+        "last_name": "Traitor",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/joco_traitor.png"
+    },
+    {
+        "sys_id": "0891a1f3-9930-467f-8db3-caf0073a68e0",
+        "user_name": "jocotraitor",
+        "display_name": "Jocotraitor",
+        "first_name": "Jocotraitor",
+        "last_name": "Fan",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/joco_traitor.png"
+    },
+    {
+        "sys_id": "9e20c423e6744e5e9948c863a6e801b2",
+        "user_name": "jolly_roger_rick",
+        "display_name": "Jolly Roger Rick",
+        "first_name": "Jolly",
+        "last_name": "Roger Rick",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/jolly_roger_rick.jpg"
+    },
+    {
+        "sys_id": "c37b81dd-1cf2-4d36-bc95-28e15f44ec1a",
+        "user_name": "jollyrogerrick",
+        "display_name": "Jollyrogerrick",
+        "first_name": "Jollyrogerrick",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/jolly_roger_rick.jpg"
+    },
+    {
+        "sys_id": "04922a89a0754e48a0d37dc42abed79b",
+        "user_name": "jucy_lucy_larry",
+        "display_name": "Jucy Lucy Larry",
+        "first_name": "Jucy",
+        "last_name": "Lucy Larry",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/jucy_lucy_larry.jpg"
+    },
+    {
+        "sys_id": "44340c69c921427faf2b3d70feec330e",
+        "user_name": "jucy_lucy_legend",
+        "display_name": "Jucy Lucy Legend",
+        "first_name": "Jucy",
+        "last_name": "Lucy Legend",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/jucy_lucy_legend.jpg"
+    },
+    {
+        "sys_id": "8d1b69e8-1d99-4ad7-970e-170f9e8d2bd8",
+        "user_name": "jucylucylarry",
+        "display_name": "Jucylucylarry",
+        "first_name": "Jucylucylarry",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/jucy_lucy_larry.jpg"
+    },
+    {
+        "sys_id": "45e87b8f-31b8-48fa-bbe3-3d5970a2260d",
+        "user_name": "jucylucylegend",
+        "display_name": "Jucylucylegend",
+        "first_name": "Jucylucylegend",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/jucy_lucy_legend.jpg"
+    },
+    {
+        "sys_id": "f320fc5d682046c9b26bdcc291ec3538",
+        "user_name": "king_felix_fanatic",
+        "display_name": "King Felix Fanatic",
+        "first_name": "King",
+        "last_name": "Felix Fanatic",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/king_felix_fanatic.jpg"
+    },
+    {
+        "sys_id": "e6446a67-30bb-458f-a378-b2c6ac01abaa",
+        "user_name": "kingfelixfanatic",
+        "display_name": "Kingfelixfanatic",
+        "first_name": "Kingfelixfanatic",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/king_felix_fanatic.jpg"
+    },
+    {
+        "sys_id": "33e8a09957644fce92f0b76998f8e47d",
+        "user_name": "lake_effect_larry",
+        "display_name": "Lake Effect Larry",
+        "first_name": "Lake",
+        "last_name": "Effect Larry",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/lake_effect_larry.png"
+    },
+    {
+        "sys_id": "97259e18-66ef-4588-a4d3-2f05c5d8feff",
+        "user_name": "lake_effect_larry_202604171225",
+        "display_name": "Lake Effect Larry 202604171225",
+        "first_name": "Lake",
+        "last_name": "Effect Larry 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Lake_Effect_Larry_202604171225.jpeg"
+    },
+    {
+        "sys_id": "c7f092c1-519f-4f93-ba2f-70298104bb61",
+        "user_name": "lake_effect_larry_202604171225_2",
+        "display_name": "Lake Effect Larry 202604171225 2",
+        "first_name": "Lake",
+        "last_name": "Effect Larry 202604171225 2",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Lake_Effect_Larry_202604171225_2.jpeg"
+    },
+    {
+        "sys_id": "8ee78c09-4cb6-4d9a-bd06-a8d56785dcc1",
+        "user_name": "lakeeffectlarry",
+        "display_name": "Lakeeffectlarry",
+        "first_name": "Lakeeffectlarry",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/lake_effect_larry.jpg"
+    },
+    {
+        "sys_id": "0997cc7ab8eb4e53b267a9be6a6df7d8",
+        "user_name": "lone_star_larry",
+        "display_name": "Lone Star Larry",
+        "first_name": "Lone",
+        "last_name": "Star Larry",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/lone_star_larry.jpg"
+    },
+    {
+        "sys_id": "1f8caedb-ed61-4b6d-8487-cfef4fdc1273",
+        "user_name": "lonestarlarry",
+        "display_name": "Lonestarlarry",
+        "first_name": "Lonestarlarry",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/lone_star_larry.jpg"
+    },
+    {
+        "sys_id": "59fcff7c3889431ea9900991426b9811",
+        "user_name": "loonie_bin_larry",
+        "display_name": "Loonie Bin Larry",
+        "first_name": "Loonie",
+        "last_name": "Bin Larry",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/loonie_bin_larry.png"
+    },
+    {
+        "sys_id": "0cbd344b-faa0-44d9-9064-dcd251ec1075",
+        "user_name": "looniebinlarry",
+        "display_name": "Looniebinlarry",
+        "first_name": "Looniebinlarry",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/loonie_bin_larry.png"
+    },
+    {
+        "sys_id": "sp_003",
+        "user_name": "lyra",
+        "display_name": "Lyra",
+        "first_name": "Lyra",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/lyra.png"
+    },
+    {
+        "sys_id": "5476044bfb0b4e26a605e6c70f8e7221",
+        "user_name": "maple_syrup_mafia",
+        "display_name": "Maple Syrup Mafia",
+        "first_name": "Maple",
+        "last_name": "Syrup Mafia",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/maple_syrup_mafia.jpg"
+    },
+    {
+        "sys_id": "4695af50-71d0-46c2-871a-8fadc87050f3",
+        "user_name": "maplesyrupmafia",
+        "display_name": "Maplesyrupmafia",
+        "first_name": "Maplesyrupmafia",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/maple_syrup_mafia.jpg"
+    },
+    {
+        "sys_id": "70b0fdfca6614a09a1408c78b6c74247",
+        "user_name": "mccovey_cove_captain",
+        "display_name": "Mccovey Cove Captain",
+        "first_name": "Mccovey",
+        "last_name": "Cove Captain",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/mccovey_cove_captain.png"
+    },
+    {
+        "sys_id": "f1a2d73c-6fc6-4497-bf8a-0936aacd2a59",
+        "user_name": "mccoveycovecaptain",
+        "display_name": "Mccoveycovecaptain",
+        "first_name": "Mccoveycovecaptain",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/mccovey_cove_captain.png"
+    },
+    {
+        "sys_id": "00afe098-f15d-4709-8cfb-22dcaecd8ab0",
+        "user_name": "missou_or_bust",
+        "display_name": "Missou Or Bust",
+        "first_name": "Missou",
+        "last_name": "Or Bust",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Missou_Or_Bust.jpg"
+    },
+    {
+        "sys_id": "2bd7401e-e6e8-4cde-9448-42bb131e9e69",
+        "user_name": "missouorbust",
+        "display_name": "Missouorbust",
+        "first_name": "Missouorbust",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Missou_Or_Bust.jpg"
+    },
+    {
+        "sys_id": "86f2fce2-ac72-4220-a4f0-70fb3eb51353",
+        "user_name": "mlb_telemetry",
+        "display_name": "Mlb Telemetry",
+        "first_name": "Mlb",
+        "last_name": "Telemetry",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/mlb_telemetry.png"
+    },
+    {
+        "sys_id": "a2f76add-27c3-4e11-bf65-9ddba5d1bf9a",
+        "user_name": "mlbtelemetry",
+        "display_name": "Mlbtelemetry",
+        "first_name": "Mlbtelemetry",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/mlb_telemetry.png"
+    },
+    {
+        "sys_id": "5005253c86934398a00db284b952acbe",
+        "user_name": "motor_city_mike",
+        "display_name": "Motor City Mike",
+        "first_name": "Motor",
+        "last_name": "City Mike",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/motor_city_mike.png"
+    },
+    {
+        "sys_id": "fb2f9da2-6a18-4d37-85f8-998c1db4e166",
+        "user_name": "motorcitymike",
+        "display_name": "Motorcitymike",
+        "first_name": "Motorcitymike",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/motor_city_mike.png"
+    },
+    {
+        "sys_id": "78d7cd33e652450d8a0a7a939bbdf90e",
+        "user_name": "muni_ghost",
+        "display_name": "Muni Ghost",
+        "first_name": "Muni",
+        "last_name": "Ghost",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/muni_ghost.png"
+    },
+    {
+        "sys_id": "517a326a-1a47-4c36-9f12-601147c3f7d1",
+        "user_name": "muni_ghost_(cleveland)_202604171225",
+        "display_name": "Muni Ghost (Cleveland) 202604171225",
+        "first_name": "Muni",
+        "last_name": "Ghost (Cleveland) 202604171225",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/Muni_Ghost_(Cleveland)_202604171225.jpeg"
+    },
+    {
+        "sys_id": "c0296339-cf71-4200-b369-4acedc8d9b55",
+        "user_name": "muni_ghost_(cleveland)_202604171225_2",
+        "display_name": "Muni Ghost (Cleveland) 202604171225 2",
+        "first_name": "Muni",
+        "last_name": "Ghost (Cleveland) 202604171225 2",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/Muni_Ghost_(Cleveland)_202604171225_2.jpeg"
+    },
+    {
+        "sys_id": "aaa22f21-0c62-43f7-8f75-966ebeb85fe1",
+        "user_name": "munighost",
+        "display_name": "Munighost",
+        "first_name": "Munighost",
+        "last_name": "Fan",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/Muni_Ghost.jpg"
+    },
+    {
+        "sys_id": "4baabb38-13ff-4501-9a2d-63f71b98fc10",
+        "user_name": "nationals_fan_with_clipboard_bin\u2026_202604291739",
+        "display_name": "Nationals Fan With Clipboard Bin\u2026 202604291739",
+        "first_name": "Nationals",
+        "last_name": "Fan With Clipboard Bin\u2026 202604291739",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Nationals_fan_with_clipboard_bin\u2026_202604291739.jpeg"
+    },
+    {
+        "sys_id": "6dafe363-ac30-4ad1-bf6c-dff4809fc5ec",
+        "user_name": "no_clue",
+        "display_name": "No Clue",
+        "first_name": "No",
+        "last_name": "Clue",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/no_clue.jpg"
+    },
+    {
+        "sys_id": "698bef6d-f844-497b-9551-140237d80956",
+        "user_name": "noclue",
+        "display_name": "Noclue",
+        "first_name": "Noclue",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/no_clue.jfif"
+    },
+    {
+        "sys_id": "93d1d4c5fb584b3e9ccc82056e1c8e14",
+        "user_name": "old_bay_obsessive",
+        "display_name": "Old Bay Obsessive",
+        "first_name": "Old",
+        "last_name": "Bay Obsessive",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/old_bay_obsessive.png"
+    },
+    {
+        "sys_id": "10a17a7a-239f-4b5b-8bd1-4693ad6ab6c2",
+        "user_name": "old_bay_obsessive_202604171225",
+        "display_name": "Old Bay Obsessive 202604171225",
+        "first_name": "Old",
+        "last_name": "Bay Obsessive 202604171225",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/Old_Bay_Obsessive_202604171225.jpeg"
+    },
+    {
+        "sys_id": "8d2c0e95-7d74-41f4-9fe4-728a0fdb1b1e",
+        "user_name": "old_bay_obsessive_202604171225_2",
+        "display_name": "Old Bay Obsessive 202604171225 2",
+        "first_name": "Old",
+        "last_name": "Bay Obsessive 202604171225 2",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/Old_Bay_Obsessive_202604171225_2.jpeg"
+    },
+    {
+        "sys_id": "1c1c4530-72a3-456a-ad3e-06921bc809cb",
+        "user_name": "oldbayobsessive",
+        "display_name": "Oldbayobsessive",
+        "first_name": "Oldbayobsessive",
+        "last_name": "Fan",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/old_bay_obsessive.jpg"
+    },
+    {
+        "sys_id": "0c65cc3fa3b64ebd92b00059ea6e4e4c",
+        "user_name": "olde_towne_oracle",
+        "display_name": "Olde Towne Oracle",
+        "first_name": "Olde",
+        "last_name": "Towne Oracle",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/olde_towne_oracle.jpg"
+    },
+    {
+        "sys_id": "b28bd7ac-46d7-49be-9048-a49ade351482",
+        "user_name": "oldetowneoracle",
+        "display_name": "Oldetowneoracle",
+        "first_name": "Oldetowneoracle",
+        "last_name": "Fan",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/olde_towne_oracle.jpg"
+    },
+    {
+        "sys_id": "ad6ba39605c545b8bdec4fe089429b8d",
+        "user_name": "opener_obsessive",
+        "display_name": "Opener Obsessive",
+        "first_name": "Opener",
+        "last_name": "Obsessive",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/opener_obsessive.jpg"
+    },
+    {
+        "sys_id": "248911d6-ca7b-43b5-b635-836cbb341528",
+        "user_name": "openerobsessive",
+        "display_name": "Openerobsessive",
+        "first_name": "Openerobsessive",
+        "last_name": "Fan",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/opener_obsessive.jpg"
+    },
+    {
+        "sys_id": "cb73924d07104e1f8eb3f0ac06235704",
+        "user_name": "orbit_overlord",
+        "display_name": "Orbit Overlord",
+        "first_name": "Orbit",
+        "last_name": "Overlord",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/orbit_overlord.jpg"
+    },
+    {
+        "sys_id": "5e953ec3-337f-4963-90a7-3a403f821b2b",
+        "user_name": "orbitoverlord",
+        "display_name": "Orbitoverlord",
+        "first_name": "Orbitoverlord",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/orbit_overlord.jpg"
+    },
+    {
+        "sys_id": "5c819d30476c4f63839af16bb5c2a54d",
+        "user_name": "paws_prophet",
+        "display_name": "Paws Prophet",
+        "first_name": "Paws",
+        "last_name": "Prophet",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/paws_prophet.jpg"
+    },
+    {
+        "sys_id": "af209162-daa5-4b30-8e37-6b77b03dc7af",
+        "user_name": "pawsprophet",
+        "display_name": "Pawsprophet",
+        "first_name": "Pawsprophet",
+        "last_name": "Fan",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/paws_prophet.jpg"
+    },
+    {
+        "sys_id": "cb0239b06e55488994e038dacbb99596",
+        "user_name": "peagle_prophet",
+        "display_name": "Peagle Prophet",
+        "first_name": "Peagle",
+        "last_name": "Prophet",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/peagle_prophet.jpg"
+    },
+    {
+        "sys_id": "8f0fc07a-f154-4dbd-ba8b-dc404c2a6940",
+        "user_name": "peagleprophet",
+        "display_name": "Peagleprophet",
+        "first_name": "Peagleprophet",
+        "last_name": "Fan",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/peagle_prophet.jpg"
+    },
+    {
+        "sys_id": "6571b04ab9ce41c2981c9fcaafa61414",
+        "user_name": "peskys_pole_pete",
+        "display_name": "Peskys Pole Pete",
+        "first_name": "Peskys",
+        "last_name": "Pole Pete",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/peskys_pole_pete.jpg"
+    },
+    {
+        "sys_id": "df56147c-15d7-4555-93f5-92cab095f4ec",
+        "user_name": "peskyspolepete",
+        "display_name": "Peskyspolepete",
+        "first_name": "Peskyspolepete",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/peskys_pole_pete.jpg"
+    },
+    {
+        "sys_id": "fafbe5fe94a54eb2a2e7c692f9a041a0",
+        "user_name": "phanatic",
+        "display_name": "Phanatic",
+        "first_name": "Phanatic",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/phanatic.jpg"
+    },
+    {
+        "sys_id": "b0a3c2a19732464286a260590f5cb5d3",
+        "user_name": "pinstripe_doomer_27",
+        "display_name": "Pinstripe Doomer 27",
+        "first_name": "Pinstripe",
+        "last_name": "Doomer 27",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/pinstripe_doomer_27.png"
+    },
+    {
+        "sys_id": "0ac54706948d46d9ab0209a9d03bc931",
+        "user_name": "possum_protector",
+        "display_name": "Possum Protector",
+        "first_name": "Possum",
+        "last_name": "Protector",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/possum_protector.jpg"
+    },
+    {
+        "sys_id": "a45287bf-dea1-4426-9c17-3af965a6e73c",
+        "user_name": "possumprotector",
+        "display_name": "Possumprotector",
+        "first_name": "Possumprotector",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/possum_protector.jpg"
+    },
+    {
+        "sys_id": "f2a7cd59886c498f80d12bc81f447ccf",
+        "user_name": "poutine_prophet",
+        "display_name": "Poutine Prophet",
+        "first_name": "Poutine",
+        "last_name": "Prophet",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/poutine_prophet.jpg"
+    },
+    {
+        "sys_id": "fe299e24-60b4-4808-b77a-57aa9ba5ab5f",
+        "user_name": "poutineprophet",
+        "display_name": "Poutineprophet",
+        "first_name": "Poutineprophet",
+        "last_name": "Fan",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/poutine_prophet.jpg"
+    },
+    {
+        "sys_id": "40952967-aece-46a6-ba5e-0da51668df0b",
+        "user_name": "powder_blue",
+        "display_name": "Powder Blue",
+        "first_name": "Powder",
+        "last_name": "Blue",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/powder_blue.png"
+    },
+    {
+        "sys_id": "6a9f3122-387a-484a-bd0f-cc2240fd1099",
+        "user_name": "powder_blue_85",
+        "display_name": "Powder Blue 85",
+        "first_name": "Powder",
+        "last_name": "Blue 85",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Powder_Blue_85.jpg"
+    },
+    {
+        "sys_id": "601320c4-e2dd-4dfb-bdca-209d5fb63dce",
+        "user_name": "powderblue",
+        "display_name": "Powderblue",
+        "first_name": "Powderblue",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/powder_blue.jfif"
+    },
+    {
+        "sys_id": "741a376f-df66-4134-a26a-124e60518618",
+        "user_name": "powderblue85",
+        "display_name": "Powderblue85",
+        "first_name": "Powderblue85",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Powder_Blue_85.jpg"
+    },
+    {
+        "sys_id": "611be7b6-e702-4a24-917c-47d6f71347e6",
+        "user_name": "racing_mascot_fan_with_stopwatch_202604291739",
+        "display_name": "Racing Mascot Fan With Stopwatch 202604291739",
+        "first_name": "Racing",
+        "last_name": "Mascot Fan With Stopwatch 202604291739",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Racing_mascot_fan_with_stopwatch_202604291739.jpeg"
+    },
+    {
+        "sys_id": "0aab774c7953427a92b6c5a450c49066",
+        "user_name": "racing_president_pete",
+        "display_name": "Racing President Pete",
+        "first_name": "Racing",
+        "last_name": "President Pete",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/racing_president_pete.jpg"
+    },
+    {
+        "sys_id": "61ff11e7-aab1-40de-8c0e-ef3e7ffbeef6",
+        "user_name": "racingpresidentpete",
+        "display_name": "Racingpresidentpete",
+        "first_name": "Racingpresidentpete",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/racing_president_pete.jpg"
+    },
+    {
+        "sys_id": "16aabdbc536d4d72a76a5c010b4c6174",
+        "user_name": "rally_monkey_mafia",
+        "display_name": "Rally Monkey Mafia",
+        "first_name": "Rally",
+        "last_name": "Monkey Mafia",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/rally_monkey_mafia.png"
+    },
+    {
+        "sys_id": "954671dd-5607-4dab-b2d0-ed09daa82b20",
+        "user_name": "rally_monkey_mafia_202604171225",
+        "display_name": "Rally Monkey Mafia 202604171225",
+        "first_name": "Rally",
+        "last_name": "Monkey Mafia 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Rally_Monkey_Mafia_202604171225.jpeg"
+    },
+    {
+        "sys_id": "cca100d7f84540969ca15292e40506d6",
+        "user_name": "rally_monkey_martyr",
+        "display_name": "Rally Monkey Martyr",
+        "first_name": "Rally",
+        "last_name": "Monkey Martyr",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/rally_monkey_martyr.jpg"
+    },
+    {
+        "sys_id": "be0427a8-ec31-4953-b25f-e9f1e5dd39cd",
+        "user_name": "rallymonkeymafia",
+        "display_name": "Rallymonkeymafia",
+        "first_name": "Rallymonkeymafia",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/rally_monkey_mafia.jpg"
+    },
+    {
+        "sys_id": "2aecb708-29ff-44e4-b5a6-a3e70d46a922",
+        "user_name": "rallymonkeymartyr",
+        "display_name": "Rallymonkeymartyr",
+        "first_name": "Rallymonkeymartyr",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/rally_monkey_martyr.jpg"
+    },
+    {
+        "sys_id": "d1c8d167ff6249c58a6b434a767aebd4",
+        "user_name": "redbird",
+        "display_name": "Redbird",
+        "first_name": "Redbird",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/redbird.png"
+    },
+    {
+        "sys_id": "460c7a66c3354167b00b05c05620713e",
+        "user_name": "roll_call_rickey",
+        "display_name": "Roll Call Rickey",
+        "first_name": "Roll",
+        "last_name": "Call Rickey",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/roll_call_rickey.png"
+    },
+    {
+        "sys_id": "eb7e552e9a444b5e83cdc4fc469215c4",
+        "user_name": "roof_status_ricky",
+        "display_name": "Roof Status Ricky",
+        "first_name": "Roof",
+        "last_name": "Status Ricky",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/roof_status_ricky.jpg"
+    },
+    {
+        "sys_id": "ea31832f-5b21-4e0a-8696-b5c7331d1f0a",
+        "user_name": "roofstatusricky",
+        "display_name": "Roofstatusricky",
+        "first_name": "Roofstatusricky",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/roof_status_ricky.jpg"
+    },
+    {
+        "sys_id": "edd23b904d174d33bede024a86e56cb3",
+        "user_name": "sacramento_skeptic",
+        "display_name": "Sacramento Skeptic",
+        "first_name": "Sacramento",
+        "last_name": "Skeptic",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/sacramento_skeptic.jpg"
+    },
+    {
+        "sys_id": "3344c80b-3df5-4ed1-8446-a0cd0fafabdb",
+        "user_name": "sacramentoskeptic",
+        "display_name": "Sacramentoskeptic",
+        "first_name": "Sacramentoskeptic",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/sacramento_skeptic.jpg"
+    },
+    {
+        "sys_id": "d3040194bae5410987b54e7a95437c26",
+        "user_name": "salvy_splash_survivor",
+        "display_name": "Salvy Splash Survivor",
+        "first_name": "Salvy",
+        "last_name": "Splash Survivor",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/salvy_splash_survivor.jpg"
+    },
+    {
+        "sys_id": "01e41955-087d-4294-8146-13e575d2f619",
+        "user_name": "salvysplashsurvivor",
+        "display_name": "Salvysplashsurvivor",
+        "first_name": "Salvysplashsurvivor",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/salvy_splash_survivor.jpg"
+    },
+    {
+        "sys_id": "bb39262bc3de44a38908610b9689d325",
+        "user_name": "sausage_race_savant",
+        "display_name": "Sausage Race Savant",
+        "first_name": "Sausage",
+        "last_name": "Race Savant",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/sausage_race_savant.jpg"
+    },
+    {
+        "sys_id": "ec9f7a07-ea23-4a8f-be3d-21673ce7632c",
+        "user_name": "sausageracesavant",
+        "display_name": "Sausageracesavant",
+        "first_name": "Sausageracesavant",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/sausage_race_savant.jpg"
+    },
+    {
+        "sys_id": "146da227a5894153b54e010948c8cdc8",
+        "user_name": "screech_supporter",
+        "display_name": "Screech Supporter",
+        "first_name": "Screech",
+        "last_name": "Supporter",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/screech_supporter.jpg"
+    },
+    {
+        "sys_id": "b327ec5b-8cd3-4140-8967-eb67c6c45c14",
+        "user_name": "screechsupporter",
+        "display_name": "Screechsupporter",
+        "first_name": "Screechsupporter",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/screech_supporter.jpg"
+    },
+    {
+        "sys_id": "1203ee56da6a4b318863beeecc4e59fd",
+        "user_name": "scruffy",
+        "display_name": "Scruffy",
+        "first_name": "Scruffy",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/scruffy.jpeg"
+    },
+    {
+        "sys_id": "41664f9a3bc94c078e808318adad1127",
+        "user_name": "shohei_ghost",
+        "display_name": "Shohei Ghost",
+        "first_name": "Shohei",
+        "last_name": "Ghost",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/shohei_ghost.png"
+    },
+    {
+        "sys_id": "e649a385-cf07-42bf-8a72-6f3a3cf65b0a",
+        "user_name": "shoheighost",
+        "display_name": "Shoheighost",
+        "first_name": "Shoheighost",
+        "last_name": "Fan",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/shohei_ghost.jpg"
+    },
+    {
+        "sys_id": "f921c4caae264840bce0fb167621a13f",
+        "user_name": "short_porch_savant",
+        "display_name": "Short Porch Savant",
+        "first_name": "Short",
+        "last_name": "Porch Savant",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/short_porch_savant.jpg"
+    },
+    {
+        "sys_id": "5c4ff3ae-fa0b-4f3b-9535-7adb32791e91",
+        "user_name": "shortporchsavant",
+        "display_name": "Shortporchsavant",
+        "first_name": "Shortporchsavant",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/short_porch_savant.jpg"
+    },
+    {
+        "sys_id": "040b9541b3c042aba8e381499a390531",
+        "user_name": "skyline_chili_chad",
+        "display_name": "Skyline Chili Chad",
+        "first_name": "Skyline",
+        "last_name": "Chili Chad",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/skyline_chili_chad.jpg"
+    },
+    {
+        "sys_id": "eca3fcb2-2b91-4bc3-8176-7d2d32390e7b",
+        "user_name": "skylinechilichad",
+        "display_name": "Skylinechilichad",
+        "first_name": "Skylinechilichad",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/skyline_chili_chad.jpg"
+    },
+    {
+        "sys_id": "f09b0472af5440a0961d56effbd6c436",
+        "user_name": "slider_the_cynic",
+        "display_name": "Slider The Cynic",
+        "first_name": "Slider",
+        "last_name": "The Cynic",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/slider_the_cynic.jpg"
+    },
+    {
+        "sys_id": "0a410133-066f-4320-8e96-68ffa8d3cf33",
+        "user_name": "sliderthecynic",
+        "display_name": "Sliderthecynic",
+        "first_name": "Sliderthecynic",
+        "last_name": "Fan",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/slider_the_cynic.jpg"
+    },
+    {
+        "sys_id": "f23eba0639be4e10b2af6911efae2671",
+        "user_name": "snake_pit_stu",
+        "display_name": "Snake Pit Stu",
+        "first_name": "Snake",
+        "last_name": "Pit Stu",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/snake_pit_stu.jpg"
+    },
+    {
+        "sys_id": "7185497d-479b-4009-9fa9-30bf93558d23",
+        "user_name": "snakepitstu",
+        "display_name": "Snakepitstu",
+        "first_name": "Snakepitstu",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/snake_pit_stu.jpg"
+    },
+    {
+        "sys_id": "a92b97efe3dc4e3baa0c4d41d2aa0f17",
+        "user_name": "sodo_mojo_marty",
+        "display_name": "Sodo Mojo Marty",
+        "first_name": "Sodo",
+        "last_name": "Mojo Marty",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/sodo_mojo_marty.jpg"
+    },
+    {
+        "sys_id": "09cab1e8-bd76-4ae8-86e0-f6492144014b",
+        "user_name": "sodomojomarty",
+        "display_name": "Sodomojomarty",
+        "first_name": "Sodomojomarty",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/sodo_mojo_marty.jpg"
+    },
+    {
+        "sys_id": "6551754123a642c9965b730ff9463ed1",
+        "user_name": "southside_sufferer",
+        "display_name": "Southside Sufferer",
+        "first_name": "Southside",
+        "last_name": "Sufferer",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/southside_sufferer.jpg"
+    },
+    {
+        "sys_id": "5c73c20e-079f-4d05-ad99-0d6ea81347d6",
+        "user_name": "southsidesufferer",
+        "display_name": "Southsidesufferer",
+        "first_name": "Southsidesufferer",
+        "last_name": "Fan",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/southside_sufferer.jpg"
+    },
+    {
+        "sys_id": "77cf2f51-a499-49b7-a41e-7f5fc4bd8eb6",
+        "user_name": "sovereign_os_logo",
+        "display_name": "Sovereign Os Logo",
+        "first_name": "Sovereign",
+        "last_name": "Os Logo",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Sovereign_OS_Logo.jpg"
+    },
+    {
+        "sys_id": "065fbe76f35a457c91079d5b88508138",
+        "user_name": "space_city_sam",
+        "display_name": "Space City Sam",
+        "first_name": "Space",
+        "last_name": "City Sam",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/space_city_sam.jpg"
+    },
+    {
+        "sys_id": "00d9a3bd-2d3c-4410-bc0c-b3d5e7843250",
+        "user_name": "spacecitysam",
+        "display_name": "Spacecitysam",
+        "first_name": "Spacecitysam",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/space_city_sam.jpg"
+    },
+    {
+        "sys_id": "50f5ddb13cb24493baa1c97c611a2c65",
+        "user_name": "steamboat_stan",
+        "display_name": "Steamboat Stan",
+        "first_name": "Steamboat",
+        "last_name": "Stan",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/steamboat_stan.jpg"
+    },
+    {
+        "sys_id": "93de5273-7b64-463c-893f-397d5497ff6f",
+        "user_name": "steamboatstan",
+        "display_name": "Steamboatstan",
+        "first_name": "Steamboatstan",
+        "last_name": "Fan",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/steamboat_stan.jpg"
+    },
+    {
+        "sys_id": "45a318d6457b403a89495955d7c3b0ed",
+        "user_name": "steel_city_sufferer",
+        "display_name": "Steel City Sufferer",
+        "first_name": "Steel",
+        "last_name": "City Sufferer",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/steel_city_sufferer.jpg"
+    },
+    {
+        "sys_id": "5edb313c-5408-42ed-a114-9b423899366a",
+        "user_name": "steelcitysufferer",
+        "display_name": "Steelcitysufferer",
+        "first_name": "Steelcitysufferer",
+        "last_name": "Fan",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/steel_city_sufferer.jpg"
+    },
+    {
+        "sys_id": "0684b3ae-4694-40b1-bc62-448312ffe1cc",
+        "user_name": "system",
+        "display_name": "System",
+        "first_name": "System",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/system.png"
+    },
+    {
+        "sys_id": "8cdf978d39c148d9b740c64a9f55c587",
+        "user_name": "target_field_doomer",
+        "display_name": "Target Field Doomer",
+        "first_name": "Target",
+        "last_name": "Field Doomer",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/target_field_doomer.png"
+    },
+    {
+        "sys_id": "592f64ef4c954746a8f7a5dbebd28be7",
+        "user_name": "target_field_tim",
+        "display_name": "Target Field Tim",
+        "first_name": "Target",
+        "last_name": "Field Tim",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/target_field_tim.jpg"
+    },
+    {
+        "sys_id": "44d503b31f04449f97bf11abb032b673",
+        "user_name": "target_field_timmy",
+        "display_name": "Target Field Timmy",
+        "first_name": "Target",
+        "last_name": "Field Timmy",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/target_field_timmy.jpg"
+    },
+    {
+        "sys_id": "3ef93569-a0cd-473f-b880-db0a12b53494",
+        "user_name": "targetfielddoomer",
+        "display_name": "Targetfielddoomer",
+        "first_name": "Targetfielddoomer",
+        "last_name": "Fan",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/target_field_doomer.png"
+    },
+    {
+        "sys_id": "a6927cde-ac32-440f-ae77-13ccfbba4754",
+        "user_name": "targetfieldtim",
+        "display_name": "Targetfieldtim",
+        "first_name": "Targetfieldtim",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/target_field_tim.jpg"
+    },
+    {
+        "sys_id": "2a277d99-b1b3-4fb7-8768-9895ba9fe6be",
+        "user_name": "targetfieldtimmy",
+        "display_name": "Targetfieldtimmy",
+        "first_name": "Targetfieldtimmy",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/target_field_timmy.jpg"
+    },
+    {
+        "sys_id": "4aefd956-6069-449b-8471-10918621516f",
+        "user_name": "terry",
+        "display_name": "Terry",
+        "first_name": "Terry",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/terry.png"
+    },
+    {
+        "sys_id": "3d344162-b3b2-4890-8be9-75074497e5c7",
+        "user_name": "test",
+        "display_name": "Test",
+        "first_name": "Test",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/test.png"
+    },
+    {
+        "sys_id": "ca0c31c1-d86c-4405-9442-3c60f4b0b963",
+        "user_name": "the_amen_corner_victim",
+        "display_name": "The Amen Corner Victim",
+        "first_name": "The",
+        "last_name": "Amen Corner Victim",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/The Amen Corner Victim.jpg"
+    },
+    {
+        "sys_id": "7c2f4658-9431-45f5-bd89-dbcc9b120c3f",
+        "user_name": "the_braves_menace_202604171225",
+        "display_name": "The Braves Menace 202604171225",
+        "first_name": "The",
+        "last_name": "Braves Menace 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/THE_BRAVES_MENACE_202604171225.jpeg"
+    },
+    {
+        "sys_id": "4a8931cf7faa47be9f523ce44f86b92e",
+        "user_name": "the_chicken_man_az",
+        "display_name": "The Chicken Man Az",
+        "first_name": "The",
+        "last_name": "Chicken Man Az",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/the_chicken_man_az.png"
+    },
+    {
+        "sys_id": "19454b4777b94da7872f5375ed6a3293",
+        "user_name": "the_chop_shop",
+        "display_name": "The Chop Shop",
+        "first_name": "The",
+        "last_name": "Chop Shop",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/the_chop_shop.png"
+    },
+    {
+        "sys_id": "6d81b5e4-a7b4-4125-bc42-aea357631534",
+        "user_name": "the_degenerate_gambler",
+        "display_name": "The Degenerate Gambler",
+        "first_name": "The",
+        "last_name": "Degenerate Gambler",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/The Degenerate Gambler.jpg"
+    },
+    {
+        "sys_id": "ae27736585ca4fa4be135ad51381e0ef",
+        "user_name": "the_high_life",
+        "display_name": "The High Life",
+        "first_name": "The",
+        "last_name": "High Life",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/the_high_life.jpg"
+    },
+    {
+        "sys_id": "860008dc-088d-400a-ac84-8da514ddea90",
+        "user_name": "the_la_smog_202604171225",
+        "display_name": "The La Smog 202604171225",
+        "first_name": "The",
+        "last_name": "La Smog 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/THE_LA_SMOG_202604171225.jpeg"
+    },
+    {
+        "sys_id": "f07a11ff-0e33-4827-83f2-c2c508a6aa16",
+        "user_name": "the_ohtani_cultist_202604171225",
+        "display_name": "The Ohtani Cultist 202604171225",
+        "first_name": "The",
+        "last_name": "Ohtani Cultist 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/THE_OHTANI_CULTIST_202604171225.jpeg"
+    },
+    {
+        "sys_id": "9e8d8f8c-3428-4687-a547-afb7984a1502",
+        "user_name": "the_terminal_doomer_202604171225",
+        "display_name": "The Terminal Doomer 202604171225",
+        "first_name": "The",
+        "last_name": "Terminal Doomer 202604171225",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/THE_TERMINAL_DOOMER_202604171225.jpeg"
+    },
+    {
+        "sys_id": "ee6d50a4-6f67-403a-91bb-ee3e2b13969f",
+        "user_name": "the_tiger_truther",
+        "display_name": "The Tiger Truther",
+        "first_name": "The",
+        "last_name": "Tiger Truther",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/The Tiger Truther.jpg"
+    },
+    {
+        "sys_id": "81640be3-a7db-4079-ae39-2eeaa0f5bd59",
+        "user_name": "the_traditionalist",
+        "display_name": "The Traditionalist",
+        "first_name": "The",
+        "last_name": "Traditionalist",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/The Traditionalist.jpg"
+    },
+    {
+        "sys_id": "4cf2978a-0b38-4858-a5ee-8d73f2cde563",
+        "user_name": "theamencornervictim",
+        "display_name": "Theamencornervictim",
+        "first_name": "Theamencornervictim",
+        "last_name": "Fan",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/The Amen Corner Victim.jpg"
+    },
+    {
+        "sys_id": "6361900b-7252-424e-8d90-b8c1704afcaf",
+        "user_name": "thechickenmanaz",
+        "display_name": "Thechickenmanaz",
+        "first_name": "Thechickenmanaz",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/the_chicken_man_az.png"
+    },
+    {
+        "sys_id": "48b9888a-dd3c-42a7-ae1c-21b3fe678e77",
+        "user_name": "thechopshop",
+        "display_name": "Thechopshop",
+        "first_name": "Thechopshop",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/the_chop_shop.jpg"
+    },
+    {
+        "sys_id": "a8e7f77c-1963-4691-a292-8a0938a4f862",
+        "user_name": "thedegenerategambler",
+        "display_name": "Thedegenerategambler",
+        "first_name": "Thedegenerategambler",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/The Degenerate Gambler.jpg"
+    },
+    {
+        "sys_id": "0b8005fb-b9d7-4e75-b8cc-32d7a9844480",
+        "user_name": "thehighlife",
+        "display_name": "Thehighlife",
+        "first_name": "Thehighlife",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/the_high_life.jpg"
+    },
+    {
+        "sys_id": "fac0aed8-84a5-42c5-b5c8-9c9192b51922",
+        "user_name": "thetigertruther",
+        "display_name": "Thetigertruther",
+        "first_name": "Thetigertruther",
+        "last_name": "Fan",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/The Tiger Truther.jpg"
+    },
+    {
+        "sys_id": "87f7af1c-ca9a-42d1-adc4-d137a3005bf3",
+        "user_name": "thetraditionalist",
+        "display_name": "Thetraditionalist",
+        "first_name": "Thetraditionalist",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/The Traditionalist.jpg"
+    },
+    {
+        "sys_id": "d409da300a224189ba21f8fbe8c9b6b5",
+        "user_name": "tiger_stadium_truther",
+        "display_name": "Tiger Stadium Truther",
+        "first_name": "Tiger",
+        "last_name": "Stadium Truther",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/tiger_stadium_truther.jpg"
+    },
+    {
+        "sys_id": "2c58f19b-23c4-4342-b89d-36ab62fb7294",
+        "user_name": "tigerstadiumtruther",
+        "display_name": "Tigerstadiumtruther",
+        "first_name": "Tigerstadiumtruther",
+        "last_name": "Fan",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/tiger_stadium_truther.jpg"
+    },
+    {
+        "sys_id": "e88ac418cd1343009fc4d6d0b3f4876b",
+        "user_name": "tomahawk",
+        "display_name": "Tomahawk",
+        "first_name": "Tomahawk",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/tomahawk.jpg"
+    },
+    {
+        "sys_id": "00278162b02745908b239bd419ceaeab",
+        "user_name": "train_horn_terry",
+        "display_name": "Train Horn Terry",
+        "first_name": "Train",
+        "last_name": "Horn Terry",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/train_horn_terry.jpg"
+    },
+    {
+        "sys_id": "f9e51b57-ad7b-4d25-a7ab-97c6523f31b8",
+        "user_name": "trainhornterry",
+        "display_name": "Trainhornterry",
+        "first_name": "Trainhornterry",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/train_horn_terry.jpg"
+    },
+    {
+        "sys_id": "25dd0f0a-7ba3-48d0-be44-1fcf64ffbfd7",
+        "user_name": "traumatized_fan_weeping_baseball\u2026_202604291739",
+        "display_name": "Traumatized Fan Weeping Baseball\u2026 202604291739",
+        "first_name": "Traumatized",
+        "last_name": "Fan Weeping Baseball\u2026 202604291739",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Traumatized_fan_weeping_baseball\u2026_202604291739.jpeg"
+    },
+    {
+        "sys_id": "5a64678dee9c49bea0d9faf2d775fac1",
+        "user_name": "trident_truther",
+        "display_name": "Trident Truther",
+        "first_name": "Trident",
+        "last_name": "Truther",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/trident_truther.jpg"
+    },
+    {
+        "sys_id": "37492efb-046a-429c-aa96-cb3f52d6b447",
+        "user_name": "tridenttruther",
+        "display_name": "Tridenttruther",
+        "first_name": "Tridenttruther",
+        "last_name": "Fan",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/trident_truther.jpg"
+    },
+    {
+        "sys_id": "125e025865c1446fb2ab110b3b9199c4",
+        "user_name": "trop",
+        "display_name": "Trop",
+        "first_name": "Trop",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/trop.jpg"
+    },
+    {
+        "sys_id": "c5253512bee74c3c929b767b6cc9a29c",
+        "user_name": "trop_roof_truther",
+        "display_name": "Trop Roof Truther",
+        "first_name": "Trop",
+        "last_name": "Roof Truther",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/trop_roof_truther.jpg"
+    },
+    {
+        "sys_id": "d3514665-c6e0-465a-8ad4-82a0e1f9411d",
+        "user_name": "troprooftruther",
+        "display_name": "Troprooftruther",
+        "first_name": "Troprooftruther",
+        "last_name": "Fan",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/trop_roof_truther.jpg"
+    },
+    {
+        "sys_id": "b1ed213ca30d4b7f9066a284570c5ca4",
+        "user_name": "trout_pout",
+        "display_name": "Trout Pout",
+        "first_name": "Trout",
+        "last_name": "Pout",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/trout_pout.png"
+    },
+    {
+        "sys_id": "844eb512-c16e-4934-ac75-2062192e8296",
+        "user_name": "trout_pout_character_202604171225",
+        "display_name": "Trout Pout Character 202604171225",
+        "first_name": "Trout",
+        "last_name": "Pout Character 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Trout_Pout_Character_202604171225.jpeg"
+    },
+    {
+        "sys_id": "20b41866-91db-4358-bd64-5657a54c443b",
+        "user_name": "troutpout",
+        "display_name": "Troutpout",
+        "first_name": "Troutpout",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/trout_pout.jpg"
+    },
+    {
+        "sys_id": "7378dcacae2e4ff1a404f15e2210ba91",
+        "user_name": "twin_cities_todd",
+        "display_name": "Twin Cities Todd",
+        "first_name": "Twin",
+        "last_name": "Cities Todd",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/twin_cities_todd.png"
+    },
+    {
+        "sys_id": "f2beaa31-2580-4968-b7d3-4cdbac10060d",
+        "user_name": "twincitiestodd",
+        "display_name": "Twincitiestodd",
+        "first_name": "Twincitiestodd",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/twin_cities_todd.png"
+    },
+    {
+        "sys_id": "b4b7157a986443ada218c9a393b00b77",
+        "user_name": "uncle_stevie_stan",
+        "display_name": "Uncle Stevie Stan",
+        "first_name": "Uncle",
+        "last_name": "Stevie Stan",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/uncle_stevie_stan.png"
+    },
+    {
+        "sys_id": "9a0d9a79-6a0f-4e9d-a01f-784651544f1a",
+        "user_name": "unclesteviestan",
+        "display_name": "Unclesteviestan",
+        "first_name": "Unclesteviestan",
+        "last_name": "Fan",
+        "archetype": "Loyalist",
+        "toxicity": "Low / Devoted",
+        "avatar_path": "/avatars/uncle_stevie_stan.png"
+    },
+    {
+        "sys_id": "4ebc628342a5498d9a518f85ad3a4fa6",
+        "user_name": "vegas_void_voter",
+        "display_name": "Vegas Void Voter",
+        "first_name": "Vegas",
+        "last_name": "Void Voter",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/vegas_void_voter.jpg"
+    },
+    {
+        "sys_id": "c01b1080-53a7-483b-ad1d-647292dcdd18",
+        "user_name": "vegasvoidvoter",
+        "display_name": "Vegasvoidvoter",
+        "first_name": "Vegasvoidvoter",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/vegas_void_voter.jpg"
+    },
+    {
+        "sys_id": "2d10414f59944b2593637495dd6b3f48",
+        "user_name": "waffle_house_warrior",
+        "display_name": "Waffle House Warrior",
+        "first_name": "Waffle",
+        "last_name": "House Warrior",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/waffle_house_warrior.jpg"
+    },
+    {
+        "sys_id": "73f49344-61ff-4a30-8b86-27220a6a4738",
+        "user_name": "wafflehousewarrior",
+        "display_name": "Wafflehousewarrior",
+        "first_name": "Wafflehousewarrior",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/waffle_house_warrior.jpg"
+    },
+    {
+        "sys_id": "e4b33081-39ea-425e-8eb5-473daaa4b9c1",
+        "user_name": "welfare_bucco",
+        "display_name": "Welfare Bucco",
+        "first_name": "Welfare",
+        "last_name": "Bucco",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/welfare_bucco.png"
+    },
+    {
+        "sys_id": "2aba5772-5374-4820-bcb1-bdf030525b7e",
+        "user_name": "welfarebucco",
+        "display_name": "Welfarebucco",
+        "first_name": "Welfarebucco",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/welfare_bucco.png"
+    },
+    {
+        "sys_id": "91efc529-1ea5-4229-afc5-3b358f238f6f",
+        "user_name": "wardy",
+        "display_name": "Wardy",
+        "first_name": "Wardy",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/wardy.png"
+    },
+    {
+        "sys_id": "01939505-d47d-4b07-adb0-d7567d3d7e57",
+        "user_name": "wardy_broadcaster",
+        "display_name": "Wardy Broadcaster",
+        "first_name": "Wardy",
+        "last_name": "Broadcaster",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/wardy_broadcaster.jpeg"
+    },
+    {
+        "sys_id": "20193aba-73e7-41b1-8228-21891b5d8c9c",
+        "user_name": "wardy_icon",
+        "display_name": "Wardy Icon",
+        "first_name": "Wardy",
+        "last_name": "Icon",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/wardy_icon.jpg"
+    },
+    {
+        "sys_id": "b5f00f19-c19d-4600-9f78-fa68c215ec18",
+        "user_name": "wardyicon",
+        "display_name": "Wardyicon",
+        "first_name": "Wardyicon",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/wardy_icon.jpg"
+    },
+    {
+        "sys_id": "9dcf7adb-eccf-470e-817d-edc4f2c619d4",
+        "user_name": "wavy",
+        "display_name": "Wavy",
+        "first_name": "Wavy",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/wavy.jpg"
+    },
+    {
+        "sys_id": "9fc169eaa26142d0b0c8c8b9c764c285",
+        "user_name": "wavy_gravy",
+        "display_name": "Wavy Gravy",
+        "first_name": "Wavy",
+        "last_name": "Gravy",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/wavy_gravy.png"
+    },
+    {
+        "sys_id": "2f9253d9-9143-4fd2-a9ed-6fa7d9f5ab40",
+        "user_name": "wicked_smaht_stats_202604171225",
+        "display_name": "Wicked Smaht Stats 202604171225",
+        "first_name": "Wicked",
+        "last_name": "Smaht Stats 202604171225",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/Wicked_Smaht_Stats_202604171225.jpeg"
+    },
+    {
+        "sys_id": "5cab4049dcc34990944b814a6f7b3cce",
+        "user_name": "wicked_smaht_stats_guy",
+        "display_name": "Wicked Smaht Stats Guy",
+        "first_name": "Wicked",
+        "last_name": "Smaht Stats Guy",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/wicked_smaht_stats_guy.png"
+    },
+    {
+        "sys_id": "2590ee50-3c38-42ea-8e08-b88c55806d5b",
+        "user_name": "wickedsmahtstatsguy",
+        "display_name": "Wickedsmahtstatsguy",
+        "first_name": "Wickedsmahtstatsguy",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/wicked_smaht_stats_guy.jpg"
+    },
+    {
+        "sys_id": "6bd977d3-1bff-4958-a541-496cc9528c4d",
+        "user_name": "wordy",
+        "display_name": "Wordy",
+        "first_name": "Wordy",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/wordy.jpg"
+    },
+    {
+        "sys_id": "7e1eaa85-40b8-4f63-8a9b-7ff6c5f1d7ad",
+        "user_name": "you",
+        "display_name": "You",
+        "first_name": "You",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/you.png"
+    },
+    {
+        "sys_id": "f66fc651-7b57-4b5b-b32e-f81ef183f152",
+        "user_name": "spitfire_spud",
+        "display_name": "Spitfire Spud",
+        "first_name": "Spitfire",
+        "last_name": "Spud",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/spitfire_spud.png"
+    },
+    {
+        "sys_id": "ece2c6f5-9ab8-4f81-9ffc-d8110a902319",
+        "user_name": "spitfirespud",
+        "display_name": "Spitfirespud",
+        "first_name": "Spitfirespud",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/spitfire_spud.png"
+    },
+    {
+        "sys_id": "f7228eab-afa5-4407-9e87-951f35e810a2",
+        "user_name": "lupus_lament",
+        "display_name": "Lupus Lament",
+        "first_name": "Lupus",
+        "last_name": "Lament",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/lupus_lament.png"
+    },
+    {
+        "sys_id": "ca1175c2-ee5d-4bce-84a3-c3abcac8dacd",
+        "user_name": "lupuslament",
+        "display_name": "Lupuslament",
+        "first_name": "Lupuslament",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/lupus_lament.png"
+    },
+    {
+        "sys_id": "8a5abe04-09f0-4a14-955c-5df375c23dc6",
+        "user_name": "throttle_theo",
+        "display_name": "Throttle Theo",
+        "first_name": "Throttle",
+        "last_name": "Theo",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/throttle_theo.png"
+    },
+    {
+        "sys_id": "87381c73-a3b3-46e4-8f26-93b913e234ba",
+        "user_name": "throttletheo",
+        "display_name": "Throttletheo",
+        "first_name": "Throttletheo",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/throttle_theo.png"
+    },
+    {
+        "sys_id": "1fe9619b-21c1-4b45-9960-ad8003934194",
+        "user_name": "spin_rate_sylvia",
+        "display_name": "Spin Rate Sylvia",
+        "first_name": "Spin",
+        "last_name": "Rate Sylvia",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/spin_rate_sylvia.png"
+    },
+    {
+        "sys_id": "83eb2640-48aa-4b5f-9e01-4c27cf9d0cc5",
+        "user_name": "spinratesylvia",
+        "display_name": "Spinratesylvia",
+        "first_name": "Spinratesylvia",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/spin_rate_sylvia.png"
+    },
+    {
+        "sys_id": "d75a2823a81540f0a44afacb419bc528",
+        "user_name": "barf_prime",
+        "display_name": "Barf Prime",
+        "first_name": "Barf",
+        "last_name": "Prime",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/barf_prime.png"
+    },
+    {
+        "sys_id": "36ebd18c-0b8a-4d49-890c-68db8af1d33d",
+        "user_name": "barfprime",
+        "display_name": "Barfprime",
+        "first_name": "Barfprime",
+        "last_name": "Fan",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/barf_prime.png"
+    },
+    {
+        "sys_id": "eece121c-6714-46d2-bbc4-44ec8bec94fe",
+        "user_name": "clio_architect",
+        "display_name": "Clio Architect",
+        "first_name": "Clio",
+        "last_name": "Architect",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/clio_architect.png"
+    },
+    {
+        "sys_id": "a42537d7-70d2-44ca-aabe-992045160ff7",
+        "user_name": "clioarchitect",
+        "display_name": "Clioarchitect",
+        "first_name": "Clioarchitect",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/clio_architect.png"
+    },
+    {
+        "sys_id": "7bb58e4fa8ee45798892de2ab2ed8bcb",
+        "user_name": "sysop_barker",
+        "display_name": "Sysop Barker",
+        "first_name": "Sysop",
+        "last_name": "Barker",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/sysop_barker.png"
+    },
+    {
+        "sys_id": "16bd30cc-2e84-4194-8964-7b8afd702e18",
+        "user_name": "sysopbarker",
+        "display_name": "Sysopbarker",
+        "first_name": "Sysopbarker",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/sysop_barker.png"
+    },
+    {
+        "sys_id": "aeb2aa5f46414dc19bee1544e14549a5",
+        "user_name": "mando_enforcer",
+        "display_name": "Mando Enforcer",
+        "first_name": "Mando",
+        "last_name": "Enforcer",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/mando_enforcer.png"
+    },
+    {
+        "sys_id": "296f9ebb-e781-4a91-a922-bb1b68548724",
+        "user_name": "mandoenforcer",
+        "display_name": "Mandoenforcer",
+        "first_name": "Mandoenforcer",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/mando_enforcer.png"
+    },
+    {
+        "sys_id": "c5136cbb14e144bb8fda159f1d998971",
+        "user_name": "six_dinner_inventor",
+        "display_name": "Six Dinner Inventor",
+        "first_name": "Six",
+        "last_name": "Dinner Inventor",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/six_dinner_inventor.png"
+    },
+    {
+        "sys_id": "52101ed7-f2c6-4552-92dd-4228ed46a865",
+        "user_name": "sixdinnerinventor",
+        "display_name": "Sixdinnerinventor",
+        "first_name": "Sixdinnerinventor",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/six_dinner_inventor.png"
+    },
+    {
+        "sys_id": "c9013f9077974516a472e93962d73e97",
+        "user_name": "terpene_titan",
+        "display_name": "Terpene Titan",
+        "first_name": "Terpene",
+        "last_name": "Titan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/terpene_titan.png"
+    },
+    {
+        "sys_id": "f955a5d0-65c5-4889-8f9d-4475272951a7",
+        "user_name": "terpenetitan",
+        "display_name": "Terpenetitan",
+        "first_name": "Terpenetitan",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/terpene_titan.png"
+    },
+    {
+        "sys_id": "7dbfe301814341548e4eb2b5ab40a3ed",
+        "user_name": "terp_truism",
+        "display_name": "Terp Truism",
+        "first_name": "Terp",
+        "last_name": "Truism",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/terp_truism.png"
+    },
+    {
+        "sys_id": "91c5590a-5003-4a8d-9a80-66e572496d9b",
+        "user_name": "terptruism",
+        "display_name": "Terptruism",
+        "first_name": "Terptruism",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/terp_truism.png"
+    },
+    {
+        "sys_id": "228a8782-284d-4d7d-ba99-c156a86d3637",
+        "user_name": "420_linda",
+        "display_name": "420 Linda",
+        "first_name": "420",
+        "last_name": "Linda",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/420_linda.png"
+    },
+    {
+        "sys_id": "0e94e47c-24d1-4162-b689-733d8a881561",
+        "user_name": "compliance_karen",
+        "display_name": "Compliance Karen",
+        "first_name": "Compliance",
+        "last_name": "Karen",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/compliance_karen/compliance_karen_avatar.png"
+    },
+    {
+        "sys_id": "d29c5c7c-f19d-45c1-a43d-2149178a529b",
+        "user_name": "dr_terp",
+        "display_name": "Dr Terp",
+        "first_name": "Dr",
+        "last_name": "Terp",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/dr_terp/dr_terp_avatar.png"
+    },
+    {
+        "sys_id": "6645279e-a4b9-4765-bed9-0571750a7c64",
+        "user_name": "bt4991_believer",
+        "display_name": "Bt4991 Believer",
+        "first_name": "Bt4991",
+        "last_name": "Believer",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/bt4991_believer/bt4991_believer_avatar.png"
+    },
+    {
+        "sys_id": "5a43559d-c04a-455f-b0d8-20e320dc9645",
+        "user_name": "couch_lock_carl",
+        "display_name": "Couch Lock Carl",
+        "first_name": "Couch",
+        "last_name": "Lock Carl",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/couch_lock_carl.jpeg"
+    },
+    {
+        "sys_id": "ae1bc801-b64b-4678-8303-12d523c8d99b",
+        "user_name": "old_growth_pete",
+        "display_name": "Old Growth Pete",
+        "first_name": "Old",
+        "last_name": "Growth Pete",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/old_growth_pete.jpeg"
+    },
+    {
+        "sys_id": "7b6ab6bd-6184-4b80-a0ab-53346b9ea97b",
+        "user_name": "terp_truther",
+        "display_name": "Terp Truther",
+        "first_name": "Terp",
+        "last_name": "Truther",
+        "archetype": "Chaos Agent",
+        "toxicity": "Maximum / Aggressive",
+        "avatar_path": "/avatars/terp_truther.jpeg"
+    },
+    {
+        "sys_id": "cfad21d7-5dff-45ae-aa56-2294c1aaf3e3",
+        "user_name": "dab_lab_derek",
+        "display_name": "Dab Lab Derek",
+        "first_name": "Dab",
+        "last_name": "Lab Derek",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/dab_lab_derek.jpeg"
+    },
+    {
+        "sys_id": "64d31440-3a6f-4fcb-bd03-003fcd33e75c",
+        "user_name": "dispensary_gary",
+        "display_name": "Dispensary Gary",
+        "first_name": "Dispensary",
+        "last_name": "Gary",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/dispensary_gary.jpeg"
+    },
+    {
+        "sys_id": "54eda5e3bb7449d6b73369b1ba725eaf",
+        "user_name": "bartmans_ghost",
+        "display_name": "Bartmans Ghost",
+        "first_name": "Bartmans",
+        "last_name": "Ghost",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/bartman.png"
+    },
+    {
+        "sys_id": "ed28a0ca-f284-49d5-9096-ea98a8a78ea8",
+        "user_name": "bartmansghost",
+        "display_name": "Bartmansghost",
+        "first_name": "Bartmansghost",
+        "last_name": "Fan",
+        "archetype": "Doomer",
+        "toxicity": "Low Energy / Depressed",
+        "avatar_path": "/avatars/bartman.png"
+    },
+    {
+        "sys_id": "9bec92dd-4950-41d0-b260-eb35304dad8b",
+        "user_name": "cubbieconspiracy",
+        "display_name": "Cubbieconspiracy",
+        "first_name": "Cubbieconspiracy",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/cubbieconspiracy.png"
+    },
+    {
+        "sys_id": "a821c37c-b4f6-4616-a798-0552ab759a32",
+        "user_name": "cubsconspiracy",
+        "display_name": "Cubsconspiracy",
+        "first_name": "Cubsconspiracy",
+        "last_name": "Fan",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/cubbieconspiracy.png"
+    },
+    {
+        "sys_id": "cbe3980a-a557-4335-8929-b383f3c047e7",
+        "user_name": "CubbieConspiracy",
+        "display_name": "Cubbie Conspiracy",
+        "first_name": "Cubbie",
+        "last_name": "Conspiracy",
+        "archetype": "Fanatic",
+        "toxicity": "Moderate",
+        "avatar_path": "/avatars/cubbieconspiracy.png"
+    }
+]

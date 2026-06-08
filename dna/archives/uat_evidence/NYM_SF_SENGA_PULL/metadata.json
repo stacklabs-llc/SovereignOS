@@ -1,0 +1,15 @@
+{
+  "project": "Sovereign Multi-LLM Operating System (PPA filing)",
+  "vault_id": "NYM_SF_SENGA_PULL",
+  "evidence_type": "Amulet of Ground Truth",
+  "description": "Preserved artifacts securing the epoch timestamps of the Brazobán pitching change for USPTO patent specification.",
+  "status": "SECURED",
+  "metrics": {
+    "stability": "S=1.0000"
+  },
+  "contents": [
+    "relay_truth.log",
+    "(awaiting Pilot-captured video/photo assets)"
+  ],
+  "timestamp": "2026-04-05T17:41:00-04:00"
+}

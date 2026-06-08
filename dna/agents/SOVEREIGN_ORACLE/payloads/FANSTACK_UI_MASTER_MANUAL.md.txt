@@ -1,0 +1,58 @@
+# FanStack UI Master Manual
+A complete mapping of all interactive elements across the 01_Sovereign_Portal ecosystem.
+Generated dynamically via Headless DOM Crawl.
+---
+
+## Command Center
+**Route:** `/?room=starter`
+
+**Screenshot Vaulted:** `/home/james/SovereignOS/uat_screenshots/ui_manual/Command_Center.png`
+
+### Interactive Surface Area:
+- **Buttons/Triggers:** Command Center, FanStack, Umpire, Pegasus, UHF Studio, The Skew, Vision Studio, DVR, TVA Admin, God Mode, Configurator, CSV Ingestor, Wardy Desk, Employee Center, Knowledge Hub, Service Ops, 📱 Mobile, 📺 65" TV, 📺 55" TV, ▶ ON AIR, ⏸ CUT FEED, SNY FEED ACTIVE
+---
+
+## Live Chat - Dive Bar
+**Route:** `/?room=snackbar`
+
+**Screenshot Vaulted:** `/home/james/SovereignOS/uat_screenshots/ui_manual/Live_Chat___Dive_Bar.png`
+
+### Interactive Surface Area:
+- **Buttons/Triggers:** Command Center, FanStack, Umpire, Pegasus, UHF Studio, The Skew, Vision Studio, DVR, TVA Admin, God Mode, Configurator, CSV Ingestor, Wardy Desk, Employee Center, Knowledge Hub, Service Ops, 📱 Mobile, 📺 65" TV, 📺 55" TV, ▶ ON AIR, ⏸ CUT FEED, SNY FEED ACTIVE
+---
+
+## Producers Desk & 5-Point Matrix
+**Route:** `/?room=uhf_studio`
+
+**Screenshot Vaulted:** `/home/james/SovereignOS/uat_screenshots/ui_manual/Producers_Desk_&_5_Point_Matrix.png`
+
+### Interactive Surface Area:
+- **Buttons/Triggers:** Command Center, FanStack, Umpire, Pegasus, UHF Studio, The Skew, Vision Studio, DVR, TVA Admin, God Mode, Configurator, CSV Ingestor, Wardy Desk, Employee Center, Knowledge Hub, Service Ops, 📱 Mobile, 📺 65" TV, 📺 55" TV, ▶ ON AIR, ⏸ CUT FEED, SNY FEED ACTIVE
+---
+
+## JSON Injector
+**Route:** `/?room=god_mode`
+
+**Screenshot Vaulted:** `/home/james/SovereignOS/uat_screenshots/ui_manual/JSON_Injector.png`
+
+### Interactive Surface Area:
+- **Buttons/Triggers:** Command Center, FanStack, Umpire, Pegasus, UHF Studio, The Skew, Vision Studio, DVR, TVA Admin, God Mode, Configurator, CSV Ingestor, Wardy Desk, Employee Center, Knowledge Hub, Service Ops, 📱 Mobile, 📺 65" TV, 📺 55" TV, ▶ ON AIR, ⏸ CUT FEED, SNY FEED ACTIVE
+---
+
+## Persona Matrix - DB Sync
+**Route:** `/?room=persona_console`
+
+**Screenshot Vaulted:** `/home/james/SovereignOS/uat_screenshots/ui_manual/Persona_Matrix___DB_Sync.png`
+
+### Interactive Surface Area:
+- **Buttons/Triggers:** Command Center, FanStack, Umpire, Pegasus, UHF Studio, The Skew, Vision Studio, DVR, TVA Admin, God Mode, Configurator, CSV Ingestor, Wardy Desk, Employee Center, Knowledge Hub, Service Ops, 📱 Mobile, 📺 65" TV, 📺 55" TV, ▶ ON AIR, ⏸ CUT FEED, SNY FEED ACTIVE
+---
+
+## Umpires Review
+**Route:** `/?room=auditor`
+
+**Screenshot Vaulted:** `/home/james/SovereignOS/uat_screenshots/ui_manual/Umpires_Review.png`
+
+### Interactive Surface Area:
+- **Buttons/Triggers:** Command Center, FanStack, Umpire, Pegasus, UHF Studio, The Skew, Vision Studio, DVR, TVA Admin, God Mode, Configurator, CSV Ingestor, Wardy Desk, Employee Center, Knowledge Hub, Service Ops, 📱 Mobile, 📺 65" TV, 📺 55" TV, ▶ ON AIR, ⏸ CUT FEED, SNY FEED ACTIVE
+---

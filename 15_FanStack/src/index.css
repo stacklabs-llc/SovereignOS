@@ -1,0 +1,812 @@
+@import "tailwindcss";
+
+@theme {
+  /* Premium FanCast Base */
+  --color-void: #0B0E14;
+  --color-panel: #111827;
+
+  /* FanCast Accents */
+  --color-mets-orange: #FF5910;
+  --color-glow-blue: #3B82F6;
+  --color-glass-overlay: rgba(255, 255, 255, 0.05);
+
+  /* FanCast UI Colors */
+  --color-status-cyan: #3B82F6;
+  --color-status-emerald: #3B82F6;
+
+  /* Glass Blur */
+  --blur-vesper-glass: 24px;
+
+  /* Type */
+  --font-sans: 'Inter', sans-serif;
+  --font-serif: 'Playfair Display', serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Outfit', sans-serif;
+  --font-header: 'Outfit', sans-serif;
+  --font-body: 'Inter', sans-serif;
+}
+
+body {
+  background-color: var(--color-void);
+  color: white;
+  margin: 0;
+  overflow: hidden;
+  height: 100dvh;
+  width: 100vw;
+}
+
+#root {
+  height: 100%;
+  width: 100%;
+}
+
+/* Fix native dropdown options having white text on white background in Windows/some OS */
+option {
+  background-color: #111827;
+  color: #ffffff;
+}
+
+/* Custom UI Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(59, 130, 246, 0.5);
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+@layer components {
+  /* THE CORE GLASSMorphism PANEL */
+  .vm-panel-glass {
+    @apply bg-[#111827]/70 border border-white/10 backdrop-blur-[24px] transform-gpu rounded-[24px];
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  /* PREMIUM ACCENT TEXT */
+  .vm-accent-glow {
+    @apply text-white font-['Outfit'];
+    transition: color 0.2s ease-in-out, text-shadow 0.2s ease-in-out;
+  }
+  
+  .vm-accent-glow:hover {
+    color: #3B82F6;
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  }
+
+  /* HEADER TEXT - OUTFIT */
+  .vm-header {
+    @apply font-['Outfit'] font-bold tracking-wide;
+  }
+
+  /* BODY TEXT - INTER */
+  .vm-body {
+    @apply font-['Inter'] text-gray-300 antialiased;
+  }
+
+  /* PREVIOUSLY VANCOUVER SLATE - NOW PREMIUM */
+  .vds-container {
+    @apply bg-[#111827]/70 backdrop-blur-[24px] border border-white/10 rounded-[24px] shadow-[0_20px_40px_rgba(0,0,0,0.4)];
+  }
+  
+  .vds-input {
+    @apply w-full bg-white/5 border border-white/10 text-white font-['Inter'] rounded-[12px] p-3 
+           focus:border-[#3B82F6]  focus:bg-white/10 focus:ring-0 outline-none transition-all;
+  }
+
+  .vds-label {
+    @apply text-[12px] text-gray-400 font-['Inter'] font-semibold mb-2 block tracking-wide;
+  }
+
+  .vds-btn-armed {
+    @apply bg-white/5 border border-white/10 text-white rounded-[12px] 
+           font-['Outfit'] font-semibold text-sm px-6 py-3 transition-all cursor-pointer
+           hover:bg-white/10 hover:border-[#3B82F6]  hover:scale-[1.02];
+  }
+
+  /* Accessible Glass Card */
+  .vm-nav-item {
+    @apply font-['Outfit'] text-[13px] font-bold text-gray-400 hover:text-white transition-all cursor-pointer px-4 py-2 rounded-[8px];
+  }
+  
+  .vm-nav-item.active {
+    @apply text-[#3B82F6] bg-[#3B82F6]/20;
+  }
+
+  .vm-node-card {
+    @apply bg-white/[0.03] border border-white/10 p-4 rounded-[12px] 
+           flex flex-col items-center gap-3 hover:-translate-y-1 hover:bg-white/[0.06] shadow-sm
+           transition-all cursor-pointer z-10 hover:z-20;
+  }
+  
+  .vm-node-card::before {
+       content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
+       background: #fff; opacity: 0.1;
+       border-top-left-radius: 11px; border-bottom-left-radius: 11px;
+  }
+
+  .vm-node-label {
+    @apply font-['Outfit'] text-[14px] font-bold text-white tracking-wide;
+  }
+
+  .vm-btn-primary {
+    @apply bg-[#3B82F6] text-white
+           font-['Outfit'] font-bold px-8 py-3 rounded-[12px] 
+           text-[15px] hover:scale-[1.02] active:scale-[0.98] transition-all
+           ;
+  }
+
+  /* studio/high-density.css -> Premium Form */
+  .vds-deck-wrapper {
+    @apply h-screen w-full bg-[#0B0E14] overflow-hidden flex flex-col text-white font-['Inter'];
+  }
+
+  .vds-sidebar {
+    @apply w-72 bg-[#111827]/70 backdrop-blur-[24px] border-r border-white/10 p-4 flex flex-col gap-6;
+  }
+
+  .vds-data-label {
+    @apply font-['Inter'] text-[11px] font-semibold text-gray-400 uppercase tracking-wide;
+  }
+
+  .vds-btn-ignite {
+    @apply w-full py-4 border border-[#3B82F6] text-[#3B82F6] bg-[#3B82F6]/10 rounded-[12px]
+           font-['Outfit'] font-bold text-sm tracking-wide 
+           hover:bg-[#3B82F6] hover:text-white  transition-all duration-300 cursor-pointer;
+  }
+
+  /* Chaos States */
+  .vds-state-unhinged {
+    @apply border-[#FF5910] ;
+  }
+
+  .vds-feed-entry-persona {
+    @apply border border-white/10 bg-white/5 rounded-[12px] p-4 my-2 
+           font-['Inter'] text-[14px] leading-relaxed text-gray-200 shadow-sm
+           hover:bg-white/10 hover:-translate-y-[1px] transition-all;
+  }
+
+  /* =========================================
+     [ SOVEREIGN ESCAPE VENUE SCI-FI CLASSES (Level 4) ]
+     ========================================= */
+
+  .sci-fi-container {
+      @apply bg-[#0B0E14] relative overflow-hidden;
+      background-image: 
+        radial-gradient(ellipse at center, rgba(35, 122, 252, 0.05) 0%, transparent 70%),
+        linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 30px 30px, 30px 30px;
+      background-position: 0 0, 15px 15px, 15px 15px;
+  }
+
+  .sci-fi-border {
+      clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  }
+
+  /* Sci-Fi inner glowing border trick using a pseudo-element */
+  .sci-fi-glow-box {
+      @apply relative p-px bg-[#111827];
+      z-index: 1;
+  }
+  .sci-fi-glow-box::before {
+      content: "";
+      @apply absolute inset-0 bg-gradient-to-br from-[#38bdf8]/40 via-transparent to-[#38bdf8]/20 z-[-1];
+      clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  }
+  .sci-fi-glow-box > div {
+      @apply h-full w-full bg-[#0A0D12];
+      clip-path: polygon(12px 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%, 0 12px);
+  }
+
+  .sci-fi-tab {
+      @apply absolute -top-3 left-6 px-3 py-0.5 bg-[#0A0D12] border border-[#38bdf8]/40 text-[#38bdf8] font-mono text-[9px] uppercase tracking-widest font-bold  rounded-sm z-10;
+  }
+
+  /* =========================================
+     CHINDOGU THEME SLIDER MATRIX 
+     ========================================= */
+
+  /* WORKSPACE OS BASE COMPONENTS */
+  .os-panel {
+      @apply bg-[#111827]/50;
+  }
+  .os-card {
+      @apply bg-black/40 border border-white/10 rounded-2xl shadow-lg backdrop-blur-md;
+  }
+  .os-card-primary {
+      @apply bg-black/40 border border-[#38bdf8]/30 rounded-2xl overflow-hidden  backdrop-blur-md;
+  }
+  .os-card-header {
+      @apply border-b border-white/10 bg-white/5;
+  }
+  .os-card-primary .os-card-header {
+      @apply border-b border-[#38bdf8]/30 bg-[#38bdf8]/10;
+  }
+
+  /* WORKSPACE OS THEMES */
+  
+  /* Theme: Windows (Fluent/Metro) */
+  .theme-windows .os-card, .theme-windows .os-card-primary {
+      @apply rounded-none bg-[#111111] border border-white/20 shadow-none backdrop-blur-none;
+  }
+  .theme-windows .os-panel {
+      @apply bg-[#000000];
+  }
+  .theme-windows .os-card-primary {
+      @apply border-[#0078D4]/50;
+  }
+  .theme-windows .os-card-primary .os-card-header {
+      @apply bg-[#0078D4]/20 border-[#0078D4]/50;
+  }
+  .theme-windows * {
+      font-family: 'Segoe UI', 'Inter', sans-serif !important;
+  }
+  .theme-windows .text-\[\#38bdf8\], .theme-windows .text-\[\#38bdf8\] {
+      color: #0078D4 !important;
+  }
+  .theme-windows .border-\[\#38bdf8\] {
+      border-color: #0078D4 !important;
+  }
+  .theme-windows .bg-\[\#38bdf8\] {
+      background-color: #0078D4 !important;
+  }
+  .theme-windows .shadow-\[0_0_15px_rgba\(0\,242\,254\,0\.3\)\], .theme-windows .shadow-\[0_0_30px_rgba\(0\,242\,254\,0\.8\)\] {
+      box-shadow: none !important;
+  }
+  .theme-windows .bg-gradient-to-br {
+      background: #0078D4 !important;
+  }
+
+  /* Theme: Linux (Hacker Terminal) */
+  .theme-linux .os-card, .theme-linux .os-card-primary {
+      @apply rounded-none bg-[#050505] border border-[#00ff00]/40 shadow-none backdrop-blur-none;
+  }
+  .theme-linux .os-card-header, .theme-linux .os-card-primary .os-card-header {
+      @apply bg-[#00ff00]/10 border-b border-[#00ff00]/50;
+  }
+  .theme-linux .os-panel {
+      @apply bg-[#020202];
+  }
+  .theme-linux * {
+      font-family: monospace !important;
+  }
+  .theme-linux .text-\[\#38bdf8\], .theme-linux .text-\[\#38bdf8\], .theme-linux .text-\[\#8E9CAA\], .theme-linux .text-white {
+      color: #00ff00 !important;
+  }
+  .theme-linux .text-gray-300, .theme-linux .text-gray-200 {
+      color: #00aa00 !important;
+  }
+  .theme-linux .border-\[\#38bdf8\], .theme-linux .border-white\/10 {
+      border-color: #00ff00 !important;
+  }
+  .theme-linux .bg-\[\#38bdf8\] {
+      background-color: #00ff00 !important;
+  }
+  .theme-linux .shadow-\[0_0_15px_rgba\(0\,242\,254\,0\.3\)\] {
+      box-shadow: 0 0 10px rgba(0,255,0,0.2) !important;
+  }
+  .theme-linux .bg-gradient-to-br {
+      background: rgba(0,255,0,0.2) !important;
+      border: 1px solid #00ff00 !important;
+  }
+  
+  /* Theme: Steamboat (1930s Rubberhose) */
+  .theme-steamboat .vm-panel-glass, .theme-steamboat.bg-void, .theme-steamboat .bg-black\/40 {
+      background-color: #dfdcd4 !important;
+      border-color: #333 !important;
+      color: #111 !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+      border-radius: 8px !important;
+  }
+  .theme-steamboat * {
+      font-family: 'Times New Roman', serif !important;
+      text-transform: none !important;
+  }
+  .theme-steamboat .text-\[\#38bdf8\], .theme-steamboat .text-white, .theme-steamboat .text-\[\#8E9CAA\], .theme-steamboat .text-white\/50, .theme-steamboat .text-\[\#64748b\] {
+      color: #111 !important;
+      text-shadow: none !important;
+  }
+  .theme-steamboat .vm-node-card img {
+      filter: grayscale(1) sepia(0.6) contrast(1.5) !important;
+      border-radius: 50% !important;
+      border: 2px solid #333 !important;
+  }
+  .theme-steamboat svg {
+      filter: grayscale(1) sepia(0.5) contrast(1.5) !important;
+  }
+  .theme-steamboat .bg-\[\#38bdf8\] {
+      background-color: #111 !important;
+  }
+
+  /* Theme: Pixel (8-Bit Arcade) */
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  
+  .theme-pixel .vm-panel-glass, .theme-pixel.bg-void, .theme-pixel .bg-black\/40 {
+      background-color: #000 !important;
+      border-color: #00fa1b !important;
+      border-width: 3px !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+  }
+  .theme-pixel * {
+      font-family: 'Press Start 2P', monospace !important;
+      letter-spacing: 0px !important;
+  }
+  .theme-pixel .text-\[\#38bdf8\], .theme-pixel .text-white, .theme-pixel .text-\[\#8E9CAA\], .theme-pixel .text-white\/50, .theme-pixel .text-\[\#64748b\] {
+      color: #00fa1b !important;
+      text-shadow: none !important;
+  }
+  .theme-pixel .text-\[9px\] { font-size: 7px !important; }
+  .theme-pixel .text-\[10px\] { font-size: 8px !important; }
+  .theme-pixel .text-\[11px\] { font-size: 9px !important; }
+  .theme-pixel .text-\[12px\] { font-size: 10px !important; }
+  
+  .theme-pixel .vm-node-card img {
+      image-rendering: pixelated !important;
+      border-radius: 0 !important;
+      border: 2px solid #00fa1b !important;
+  }
+  .theme-pixel svg {
+      filter: hue-rotate(90deg) contrast(2) !important;
+  }
+  /* Theme: NES (Baseball Stars 1989) */
+  .theme-nes .os-card, .theme-nes .os-card-primary {
+      @apply rounded-none bg-black border-4 border-[#ff0000] shadow-none backdrop-blur-none;
+      box-shadow: 4px 4px 0 #00ffff !important;
+  }
+  .theme-nes .os-card-header, .theme-nes .os-card-primary .os-card-header {
+      @apply bg-[#000033] border-b-4 border-[#ff0000];
+  }
+  .theme-nes .os-panel, .theme-nes.bg-\[\#0B0E14\] {
+      background-color: #000000 !important;
+      background-image: linear-gradient(#000033 1px, transparent 1px), linear-gradient(90deg, #000033 1px, transparent 1px) !important;
+      background-size: 8px 8px !important;
+  }
+  .theme-nes * {
+      font-family: 'Press Start 2P', monospace !important;
+      letter-spacing: 0px !important;
+  }
+  .theme-nes .text-\[\#38bdf8\], .theme-nes .text-\[\#38bdf8\], .theme-nes .text-white {
+      color: #ffffff !important;
+  }
+  .theme-nes .text-gray-300, .theme-nes .text-gray-200, .theme-nes .text-\[\#8E9CAA\] {
+      color: #00ffff !important;
+  }
+  .theme-nes .border-\[\#38bdf8\], .theme-nes .border-white\/10 {
+      border-color: #ff0000 !important;
+  }
+  .theme-nes .bg-\[\#38bdf8\] {
+      background-color: #ff0000 !important;
+  }
+  /* CRT Scanlines overlay */
+  .theme-nes::after {
+      content: "";
+      position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      background-size: 100% 4px, 6px 100%;
+      pointer-events: none;
+      z-index: 9999;
+  }
+
+  /* Theme: SNES (16-Bit Super) */
+  .theme-snes .os-card, .theme-snes .os-card-primary {
+      @apply bg-[#e6e6e6] border-4 border-[#b19cd9] shadow-[inset_-2px_-2px_0px_rgba(0,0,0,0.2),_2px_2px_5px_rgba(0,0,0,0.5)] backdrop-blur-none;
+      border-radius: 12px !important;
+  }
+  .theme-snes .os-card-header, .theme-snes .os-card-primary .os-card-header {
+      @apply bg-[#c0c0c0] border-b-2 border-[#a0a0a0];
+  }
+  .theme-snes .os-panel, .theme-snes.bg-\[\#0B0E14\] {
+      background-color: #333333 !important;
+      background-image: repeating-linear-gradient(0deg, transparent, transparent 2px, #222 2px, #222 4px) !important;
+  }
+  .theme-snes * {
+      font-family: 'Verdana', sans-serif !important;
+  }
+  .theme-snes .text-\[\#38bdf8\], .theme-snes .text-\[\#38bdf8\], .theme-snes .text-white {
+      color: #333333 !important;
+  }
+  .theme-snes .text-gray-300, .theme-snes .text-gray-200, .theme-snes .text-\[\#8E9CAA\] {
+      color: #555555 !important;
+  }
+  .theme-snes .border-\[\#38bdf8\], .theme-snes .border-white\/10 {
+      border-color: #5c54a4 !important;
+  }
+  .theme-snes .bg-\[\#38bdf8\] {
+      background-color: #5c54a4 !important;
+  }
+
+  /* Theme: N64 (Atomic Polygon) */
+  .theme-n64 .os-card, .theme-n64 .os-card-primary {
+      @apply bg-[#663399]/40 border-2 border-[#663399] shadow-[0_10px_20px_rgba(102,51,153,0.5)] backdrop-blur-md;
+      border-radius: 24px !important;
+  }
+  .theme-n64 .os-card-header, .theme-n64 .os-card-primary .os-card-header {
+      @apply bg-[#663399]/60 border-b-2 border-[#39ff14]/50;
+  }
+  .theme-n64 .os-panel, .theme-n64.bg-\[\#0B0E14\] {
+      background-color: #1a0a2a !important;
+  }
+  .theme-n64 * {
+      font-family: 'Arial', sans-serif !important;
+  }
+  .theme-n64 .text-\[\#38bdf8\], .theme-n64 .text-\[\#38bdf8\], .theme-n64 .text-white {
+      color: #39ff14 !important;
+      text-shadow: 0 0 5px #39ff14 !important;
+  }
+  .theme-n64 .text-gray-300, .theme-n64 .text-gray-200, .theme-n64 .text-\[\#8E9CAA\] {
+      color: #cccccc !important;
+  }
+  .theme-n64 .border-\[\#38bdf8\], .theme-n64 .border-white\/10 {
+      border-color: #39ff14 !important;
+  }
+  .theme-n64 .bg-\[\#38bdf8\] {
+      background-color: #39ff14 !important;
+  }
+
+  /* Theme: PSX (90s Cyberdeck) */
+  .theme-psx .os-card, .theme-psx .os-card-primary {
+      @apply rounded-none bg-[#2d3238] border-l-4 border-b-4 border-r border-t border-l-[#00ffff] border-b-[#ff00ff] border-r-gray-600 border-t-gray-600 shadow-none backdrop-blur-none;
+  }
+  .theme-psx .os-card-header, .theme-psx .os-card-primary .os-card-header {
+      @apply bg-[#1a1c20] border-b border-gray-600;
+  }
+  .theme-psx .os-panel, .theme-psx.bg-\[\#0B0E14\] {
+      background-color: #0c0e12 !important;
+  }
+  .theme-psx * {
+      font-family: 'Share Tech Mono', monospace !important;
+  }
+  .theme-psx .text-\[\#38bdf8\], .theme-psx .text-\[\#38bdf8\], .theme-psx .text-white {
+      color: #00ffff !important;
+      text-shadow: 2px 2px 0px #ff00ff !important;
+  }
+  .theme-psx .text-gray-300, .theme-psx .text-gray-200, .theme-psx .text-\[\#8E9CAA\] {
+      color: #a0aab5 !important;
+  }
+  .theme-psx .border-\[\#38bdf8\], .theme-psx .border-white\/10 {
+      border-color: #ff00ff !important;
+  }
+  .theme-psx .bg-\[\#38bdf8\] {
+      background-color: #00ffff !important;
+  }
+
+  /* Theme: 90s Cereal Box (Radical RAM-Bran) */
+  .theme-cereal .os-card, .theme-cereal .os-card-primary {
+      @apply rounded-none bg-black border-4 border-[#39ff14] shadow-none backdrop-blur-none transition-all duration-150;
+      box-shadow: 8px 8px 0px #ff00ff !important;
+  }
+  .theme-cereal .os-card-header, .theme-cereal .os-card-primary .os-card-header {
+      @apply bg-[#ff00ff] border-b-4 border-[#39ff14];
+  }
+  .theme-cereal .os-card-header span {
+      color: #00ffff !important;
+      text-shadow: 2px 2px 0px #000000 !important;
+  }
+  .theme-cereal .os-panel, .theme-cereal.bg-\[\#0B0E14\] {
+      background-color: #000000 !important;
+      /* Wireframe maze grid */
+      background-image: 
+        linear-gradient(rgba(57, 255, 20, 0.4) 3px, transparent 3px),
+        linear-gradient(90deg, rgba(57, 255, 20, 0.4) 3px, transparent 3px) !important;
+      background-size: 60px 60px !important;
+  }
+  .theme-cereal * {
+      font-family: 'Arial Black', Impact, sans-serif !important;
+      font-style: italic !important;
+      text-transform: uppercase !important;
+  }
+  .theme-cereal .text-\[\#38bdf8\], .theme-cereal .text-\[\#38bdf8\], .theme-cereal .text-white {
+      color: #00ffff !important;
+      text-shadow: 3px 3px 0px #ff00ff !important;
+  }
+  .theme-cereal .text-gray-300, .theme-cereal .text-gray-200, .theme-cereal .text-\[\#8E9CAA\] {
+      color: #ffffff !important;
+  }
+  .theme-cereal .border-\[\#38bdf8\], .theme-cereal .border-white\/10 {
+      border-color: #39ff14 !important;
+  }
+  .theme-cereal .bg-\[\#38bdf8\] {
+      background-color: #ff00ff !important;
+  }
+  
+  /* Cereal Box Sugar Rush Hover */
+  .theme-cereal button:hover, .theme-cereal .os-card:hover, .theme-cereal tr:hover {
+      transform: scale(1.08) rotate(-2deg) !important;
+      box-shadow: 12px 12px 0px #00ffff !important;
+      border-color: #ff00ff !important;
+      z-index: 50;
+      transition: all 0.15s cubic-bezier(0.68, -0.55, 0.265, 1.55) !important;
+  }
+  /* Theme: Sovereign Rounded (Premium Dark Mode with Soft Edges) */
+  .theme-sovereign-rounded .os-card, .theme-sovereign-rounded .os-card-primary {
+      @apply bg-[#0f1115]/80 border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.5)] backdrop-blur-xl;
+      border-radius: 20px !important;
+  }
+  .theme-sovereign-rounded .os-card-header, .theme-sovereign-rounded .os-card-primary .os-card-header {
+      @apply bg-white/5 border-b border-white/5;
+  }
+  .theme-sovereign-rounded .os-panel, .theme-sovereign-rounded.bg-\[\#0B0E14\] {
+      background-color: #090a0f !important;
+  }
+  .theme-sovereign-rounded * {
+      font-family: 'Outfit', sans-serif !important;
+  }
+  .theme-sovereign-rounded .text-\[\#38bdf8\], .theme-sovereign-rounded .text-\[\#38bdf8\], .theme-sovereign-rounded .text-white {
+      color: #38bdf8 !important;
+      text-shadow: 0 0 10px rgba(0, 242, 254, 0.4) !important;
+  }
+  .theme-sovereign-rounded .text-gray-300, .theme-sovereign-rounded .text-gray-200, .theme-sovereign-rounded .text-\[\#8E9CAA\] {
+      color: #a3b8cc !important;
+  }
+  .theme-sovereign-rounded .border-\[\#38bdf8\], .theme-sovereign-rounded .border-white\/10 {
+      border-color: rgba(0, 242, 254, 0.3) !important;
+  }
+  .theme-sovereign-rounded .bg-\[\#38bdf8\] {
+      background-color: #38bdf8 !important;
+  }
+  
+  /* Theme: Sovereign Home (Mom-Friendly Premium Smart Home) */
+  .theme-sovereign-home .os-card, .theme-sovereign-home .os-card-primary {
+      @apply bg-slate-800/40 border border-slate-700/50 shadow-2xl backdrop-blur-2xl;
+      border-radius: 24px !important;
+  }
+  .theme-sovereign-home .os-card-header, .theme-sovereign-home .os-card-primary .os-card-header {
+      @apply bg-slate-800/60 border-b border-slate-700/50;
+  }
+  .theme-sovereign-home .os-panel, .theme-sovereign-home.bg-\[\#0B0E14\] {
+      background-color: #0f172a !important; /* Slate 900 */
+      background-image: radial-gradient(circle at top right, rgba(56, 189, 248, 0.15), transparent 50%),
+                        radial-gradient(circle at bottom left, rgba(34, 197, 94, 0.1), transparent 50%) !important;
+  }
+  .theme-sovereign-home * {
+      font-family: 'Outfit', sans-serif !important;
+      text-transform: none !important;
+      letter-spacing: normal !important;
+  }
+  .theme-sovereign-home .text-\[\#38bdf8\], .theme-sovereign-home .text-\[\#38bdf8\], .theme-sovereign-home .text-white {
+      color: #f8fafc !important; /* Slate 50 */
+      text-shadow: none !important;
+  }
+  .theme-sovereign-home .text-gray-300, .theme-sovereign-home .text-gray-200, .theme-sovereign-home .text-\[\#8E9CAA\] {
+      color: #94a3b8 !important; /* Slate 400 */
+  }
+  .theme-sovereign-home .border-\[\#38bdf8\], .theme-sovereign-home .border-white\/10 {
+      border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+  .theme-sovereign-home .bg-\[\#38bdf8\] {
+      background-color: #38bdf8 !important; /* Light blue accent */
+  }
+  .theme-sovereign-home .bg-white {
+      background-color: #1e293b !important; /* Slate 800 */
+      border-color: rgba(255, 255, 255, 0.1) !important;
+  }
+  .theme-sovereign-home button.bg-black\/40, .theme-sovereign-home .bg-black\/40 {
+      background-color: rgba(255, 255, 255, 0.05) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      border-radius: 16px !important;
+  }
+  .theme-sovereign-home button.bg-black\/40:hover {
+      background-color: rgba(255, 255, 255, 0.1) !important;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1) !important;
+  }
+
+  /* Theme: ESPN (Premium Red/White Corporate Broadcast) */
+  .theme-espn .os-card, .theme-espn .os-card-primary {
+    @apply bg-white border border-gray-200 shadow-sm backdrop-blur-none;
+    border-radius: 8px !important;
+  }
+  .theme-espn .os-card-header, .theme-espn .os-card-primary .os-card-header {
+    @apply bg-[#f1f2f3] border-b border-gray-200;
+  }
+  .theme-espn .os-panel, .theme-espn.bg-\[\#0B0E14\], .theme-espn .bg-void {
+    background-color: #f8f9fa !important;
+  }
+  .theme-espn .bg-black\/60, .theme-espn .bg-\[\#111827\], .theme-espn .bg-black\/40, .theme-espn .bg-black\/80, .theme-espn .bg-black\/30 {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+  }
+  .theme-espn * {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif !important;
+  }
+  .theme-espn .text-\[\#38bdf8\], .theme-espn .text-\[\#38bdf8\] {
+    color: #cc0000 !important;
+    text-shadow: none !important;
+  }
+  .theme-espn .text-white, .theme-espn .vm-header, .theme-espn .text-white\/90, .theme-espn .text-white\/80 {
+    color: #333333 !important;
+    text-shadow: none !important;
+  }
+  .theme-espn .text-gray-300, .theme-espn .text-gray-200, .theme-espn .text-\[\#8E9CAA\] {
+    color: #333333 !important;
+  }
+  .theme-espn .border-\[\#38bdf8\], .theme-espn .border-white\/10 {
+    border-color: #e5e7eb !important;
+  }
+  .theme-espn .bg-\[\#38bdf8\] {
+    background-color: #cc0000 !important;
+  }
+  .theme-espn button.bg-black\/40 {
+    background-color: #ffffff !important;
+    color: #333333 !important;
+    border: 1px solid #e5e7eb !important;
+  }
+  .theme-espn button.bg-black\/40:hover {
+    background-color: #f1f2f3 !important;
+  }
+  .theme-espn .text-white\/40, .theme-espn .text-white\/50 {
+    color: #666666 !important;
+  }
+
+  /* Room Shake Animation */
+  @keyframes shake-room-anim {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    10% { transform: translate(-3px, -2px) rotate(-0.5deg); }
+    20% { transform: translate(2px, 3px) rotate(1deg); }
+    30% { transform: translate(-1px, 2px) rotate(-1deg); }
+    40% { transform: translate(3px, 1px) rotate(0.5deg); }
+    50% { transform: translate(-2px, -3px) rotate(1deg); }
+    60% { transform: translate(2px, 2px) rotate(-0.5deg); }
+    70% { transform: translate(-3px, 1px) rotate(-1deg); }
+    80% { transform: translate(1px, -2px) rotate(1deg); }
+    90% { transform: translate(-2px, 3px) rotate(0.5deg); }
+  }
+  .shake-room {
+    animation: shake-room-anim 0.7s cubic-bezier(.36,.07,.19,.97) both;
+  }
+
+  /* Rainbow Border Animation */
+  @keyframes rainbow-border-anim {
+    0%, 100% { border-color: #FF5910; box-shadow: 0 0 15px rgba(255, 89, 16, 0.4); }
+    33% { border-color: #38bdf8; box-shadow: 0 0 15px rgba(56, 189, 248, 0.4); }
+    66% { border-color: #e879f9; box-shadow: 0 0 15px rgba(232, 121, 249, 0.4); }
+  }
+  .rainbow-border {
+    animation: rainbow-border-anim 4s linear infinite;
+  }
+
+  /* Shifting Grid for Boggs Level 3-4 */
+  @keyframes moving-grid-anim {
+    from { background-position: 0 0; }
+    to { background-position: 0 40px; }
+  }
+  .moving-grid {
+    background-image: linear-gradient(rgba(255, 89, 16, 0.05) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(255, 89, 16, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    animation: moving-grid-anim 4s linear infinite;
+  }
+
+  /* CRT Scanlines Overlay */
+  .crt-scanlines {
+    position: relative;
+  }
+  .crt-scanlines::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0; left: 0; bottom: 0; right: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+    background-size: 100% 4px, 6px 100%;
+    z-index: 10;
+    pointer-events: none;
+}
+}
+
+/* ==========================================================================
+   THEME: STACKLABS MONOLITH (Minimalist Bare-Metal Invariant)
+   ========================================================================== */
+
+/* Active Background Canvas & Tactical Matrix Grids */
+.theme-stacklabs .os-panel,
+.theme-stacklabs.bg-void,
+.theme-stacklabs .bg-void,
+.theme-stacklabs body {
+  background-color: #030305 !important;
+  background-image: linear-gradient(rgba(0, 212, 255, 0.012) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(0, 212, 255, 0.012) 1px, transparent 1px) !important;
+  background-size: 32px 32px !important;
+  color: #e2e8f0 !important;
+}
+
+/* Sharp, Frosted-Glass Monolith Cards */
+.theme-stacklabs .os-card,
+.theme-stacklabs .os-card-primary,
+.theme-stacklabs .vm-panel-glass,
+.theme-stacklabs .vds-container {
+  background-color: rgba(12, 14, 20, 0.85) !important;
+  border: 1px solid rgba(0, 212, 255, 0.25) !important;
+  border-radius: 4px !important;
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.02) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+/* Card Header Boundaries */
+.theme-stacklabs .os-card-header,
+.theme-stacklabs .os-card-primary .os-card-header {
+  background-color: rgba(0, 212, 255, 0.04) !important;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.2) !important;
+}
+
+/* Recursive Monospace Typographical Enforcement */
+.theme-stacklabs * {
+  font-family: 'JetBrains Mono', 'Courier New', monospace !important;
+  letter-spacing: -0.01em !important;
+}
+
+/* High-Contrast Electric Cyan Glow Overrides */
+.theme-stacklabs .text-white,
+.theme-stacklabs .vm-header,
+.theme-stacklabs h1,
+.theme-stacklabs h2,
+.theme-stacklabs h3,
+.theme-stacklabs h4,
+.theme-stacklabs .vm-accent-glow {
+  color: #00d4ff !important;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.3) !important;
+}
+
+/* Monospace Slate and Low-Density Secondary Text */
+.theme-stacklabs .text-gray-300,
+.theme-stacklabs .text-gray-200,
+.theme-stacklabs .text-\[\#8E9CAA\],
+.theme-stacklabs .text-\[\#94a3b8\],
+.theme-stacklabs .text-slate-400 {
+  color: #94a3b8 !important;
+  text-shadow: none !important;
+}
+
+/* Slate Borders */
+.theme-stacklabs .border-\[\#38bdf8\],
+.theme-stacklabs .border-white\/10,
+.theme-stacklabs .border-white\/5,
+.theme-stacklabs td,
+.theme-stacklabs th {
+  border-color: rgba(0, 212, 255, 0.15) !important;
+}
+
+/* Active Control Badges & High-Contrast Solid Toggles */
+.theme-stacklabs .bg-\[\#38bdf8\],
+.theme-stacklabs .bg-sky-500,
+.theme-stacklabs .vm-btn-primary {
+  background-color: #00d4ff !important;
+  color: #030305 !important;
+  font-weight: 700 !important;
+}
+
+.theme-stacklabs select,
+.theme-stacklabs input,
+.theme-stacklabs textarea {
+  background-color: #08090d !important;
+  border: 1px solid rgba(0, 212, 255, 0.2) !important;
+  color: #ffffff !important;
+  border-radius: 4px !important;
+}
+
+.theme-stacklabs select:focus,
+.theme-stacklabs input:focus,
+.theme-stacklabs textarea:focus {
+  border-color: #00d4ff !important;
+  box-shadow: 0 0 10px rgba(0, 212, 255, 0.2) !important;
+}
+

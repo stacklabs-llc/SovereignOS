@@ -1,0 +1,12 @@
+// Legacy expects this WS message shape:
+{
+  type: "STATE_UPDATE",
+  data: {
+    last_fed_timestamp: <unix_epoch>,
+    last_events: [{ time: "HH:MM", message: "..." }],
+    chindogu_level: 2|4  // → theme mapping
+  }
+}
+// Commands sent upstream:
+{ type: "CMD_FED", message: "..." }
+{ type: "CMD_LOG", message: "..." }

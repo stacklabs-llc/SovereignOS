@@ -1,0 +1,12 @@
+[ORACLE PROTOCOL SEQUENCE: 015]
+TICK: 2026-04-06
+DOMAIN: SOVEREIGN FANCAST MARD ENGINE / GREEN ROOM UAT
+STATUS: HARDENED & SCALABLE
+
+1. MARD DECENTRALIZATION [STRY0000432]: The legacy JSON structure `bot_config.json` has been entirely deprecated. The fanstack_chatbots.py engine now dynamically polls `sovereign_now.db` (CMDB) on every single WebSocket broadcast (Port 8008). Updates made in Wardy Desk v2 (Room, Active State, Engine, Personality) take effect immediately without requiring process restarts.
+2. VIBRANT IDENTITY RENDERING: Removed hardcoded lowercases for agent identities. Dynamic hashing ensures non-blue/high-contrast visibility against the dark UI, explicitly protecting Dot (Yellow), Wardy (White), Barf (Orange), and Phanatic (Green).
+3. MARD GOVERNOR & CHAOS GATING [STRY0000434]: To prevent 30-bot spam avalanches on a single "Ball" event, a random Discourse Throttle algorithm was injected inline. Routine plays allow 1-2 responses; major events (HR/Strikeout/Score) lift the throttle.
+4. UI MASTER TOGGLES: Wardy Desk v2 now features global WebSocket toggles: "MARD Engine" (Master Kill Switch) and "Chaos Gating" (Suppresses personas with Boggs >= 3 or 'chaotic' keywords).
+5. SAVANT ENDPOINT: Port 8006 `fanstack_server.py` micro-daemon was restarted. Neural Statcast queries (Predictive Exit Velo, Pitcher History) function accurately via the SQLite `sovereign_intelligence.db` pipeline mapped cleanly to `wardy_savant_query.html`.
+
+// END OF SEQUENCE

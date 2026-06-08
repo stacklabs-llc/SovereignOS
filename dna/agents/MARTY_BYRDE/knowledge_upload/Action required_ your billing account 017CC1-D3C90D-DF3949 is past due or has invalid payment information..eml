@@ -1,0 +1,404 @@
+Delivered-To: jc2pointzero@gmail.com
+Received: by 2002:a05:7208:3103:b0:101:88d0:e111 with SMTP id b3csp529645rba;
+        Fri, 17 Apr 2026 19:35:59 -0700 (PDT)
+X-Received: by 2002:a05:6808:f0a:b0:467:1e28:64f4 with SMTP id 5614622812f47-4799c802eeemr3778467b6e.4.1776479759367;
+        Fri, 17 Apr 2026 19:35:59 -0700 (PDT)
+ARC-Seal: i=1; a=rsa-sha256; t=1776479759; cv=none;
+        d=google.com; s=arc-20240605;
+        b=YvXC6k0tSdNNxc8Gqi7CvwbFOGjAyp4RKkUOlTd4gLPT5v4KE3xtaHbVhr5SMlV0zr
+         bPZmelDMHkW6vLW/1avZrwgXCA96Ja1mSpZWxSRUmo1EdKfXLEabc6KDOcivJwJZhN9E
+         SBPQUY8my30De+T6++3iWn5ALTTbrbUCdZmN36lrdD2MjiDxrgSBLGHiKLn1Mstzw9H8
+         QqoqKMSk0F0PPVKN7PmyUM//XmE/az5WUcBFjUZ/ZLkMBwLRw3hHZNeRD2o5Ne7orucs
+         4xXaWDYlfKA+y+X46mfaHuJ/qHXrunsUSJ3uuD7T45b3+biz8u9X7MD/++pCjCqqK+zJ
+         XE4g==
+ARC-Message-Signature: i=1; a=rsa-sha256; c=relaxed/relaxed; d=google.com; s=arc-20240605;
+        h=to:from:subject:message-id:gmsai:feedback-id:reply-to:date
+         :mime-version:dkim-signature;
+        bh=mE4ydiqNFvzGqfNY4YVcFzid8cyYRHLus2WJLFWx2Jc=;
+        fh=dRWMI6yx+SvbvTYZrL5KKNJHimcPFlRxeu3wK3cfR4I=;
+        b=XqdFxAoB/yhpOcqCTBZJTUzNz2cjoWnQmwYDXFkUEidqDWrBxW6Gkl/xNBtB2lL2x3
+         b7uf8e6zmOMskCXiuKjSx/XmaRHdml5WxJCzAOV1N8fOQm5LRvBBcTIYhcWmo+ww6wsQ
+         1DzZfAWQDmQGTFH4F/He7ilEqmYAtiuwDxbG9H1PQ9cDAWLweQwASWUUmTkZeXCNLYNw
+         C5pfRGDdztdPqFa/u6Mer2oax22sQlFSPDGIQlvxZukattGkdbTPFqn/FyM5mIy1uRrA
+         CPh/rxcW6Eq+cDMCX6KiLQj4mj2VzQwHRlgIlVGzy9zzHXX5CARTdStdZtHCnN8oUXj7
+         Sdmw==;
+        dara=google.com
+ARC-Authentication-Results: i=1; mx.google.com;
+       dkim=pass header.i=@google.com header.s=20251104 header.b=oKyQIq6P;
+       spf=pass (google.com: domain of 3d-7iarukamwu36cvh3sbx694-569w73gy66y3w.u64@scoutcamp.bounces.google.com designates 209.85.220.69 as permitted sender) smtp.mailfrom=3D-7iaRUKAMwU36Cvh3sBx694-569w73Gy66y3w.u64@scoutcamp.bounces.google.com;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=google.com;
+       dara=pass header.i=@gmail.com
+Return-Path: <3D-7iaRUKAMwU36Cvh3sBx694-569w73Gy66y3w.u64@scoutcamp.bounces.google.com>
+Received: from mail-sor-f69.google.com (mail-sor-f69.google.com. [209.85.220.69])
+        by mx.google.com with SMTPS id 5614622812f47-4799feeb875sor1240445b6e.5.2026.04.17.19.35.59
+        for <jc2pointzero@gmail.com>
+        (Google Transport Security);
+        Fri, 17 Apr 2026 19:35:59 -0700 (PDT)
+Received-SPF: pass (google.com: domain of 3d-7iarukamwu36cvh3sbx694-569w73gy66y3w.u64@scoutcamp.bounces.google.com designates 209.85.220.69 as permitted sender) client-ip=209.85.220.69;
+Authentication-Results: mx.google.com;
+       dkim=pass header.i=@google.com header.s=20251104 header.b=oKyQIq6P;
+       spf=pass (google.com: domain of 3d-7iarukamwu36cvh3sbx694-569w73gy66y3w.u64@scoutcamp.bounces.google.com designates 209.85.220.69 as permitted sender) smtp.mailfrom=3D-7iaRUKAMwU36Cvh3sBx694-569w73Gy66y3w.u64@scoutcamp.bounces.google.com;
+       dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=google.com;
+       dara=pass header.i=@gmail.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=google.com; s=20251104; t=1776479759; x=1777084559; dara=google.com;
+        h=to:from:subject:message-id:gmsai:feedback-id:reply-to:date
+         :mime-version:from:to:cc:subject:date:message-id:reply-to;
+        bh=mE4ydiqNFvzGqfNY4YVcFzid8cyYRHLus2WJLFWx2Jc=;
+        b=oKyQIq6PBd7S2Sx8/RHUgkWQ8FfMW7wkgv1viP9Q4ExUfHLdnYU1tkou0G+XTmhaN2
+         zlf8G1Bk5PqsjNRljfFSReX37g9rdiks6Vt2vqKa7ap+pt4hkghHWuRPpnAVEzfuvXLS
+         3dcbpVWfBgqa59T7Sc2SQ5SEt0OCrHKaI0tyJfNWorPeJ3BhXuRpK0MDhoesJu3ZwlBy
+         rJXjH5MEkxSxRQdei0huD46uX+8iwPFTTWNKbFa0JdSBGHbrcuVJEtipqi4y1Y6lnZjq
+         5k6rk8bYWHmolXO+oxa6vLO68UzzRPAINg2QfcyiosGqsDzfgTV7xzjFPNjSllGh7xa1
+         hfMA==
+X-Google-DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+        d=1e100.net; s=20251104; t=1776479759; x=1777084559;
+        h=to:from:subject:message-id:gmsai:feedback-id:reply-to:date
+         :mime-version:x-gm-message-state:from:to:cc:subject:date:message-id
+         :reply-to;
+        bh=mE4ydiqNFvzGqfNY4YVcFzid8cyYRHLus2WJLFWx2Jc=;
+        b=euXXyPoskDWdut6D58ew8GJqq9uj3kwAYaeAh2mVA/g/B3sgPk+03zDC4Pn6DzBJz1
+         pPNPUfTONDI26xie0JFk1/feAQFqsMiXYLVXvu/NrtMsLq/YMqr34FOyBh3fm9Yi64yH
+         Z5nd3Bnbp3Vfsj6aucav00WHyHywrzXblY5ypL5v9VLH1PCyUd3vLhcTx/ohn9YaKIdb
+         L5+d4p7rlY1NE7icSGj+j3EG5uC5phBXq92k8/QIf1oewnLYlXxfynAErWTorGhUxYb2
+         SimnuYuej+0i9pblOE9DdipnsgAAfYuBj1MQreKAyTPk9YEgQ+CuM2BUEUNQ5UU3/gWj
+         YW1Q==
+X-Gm-Message-State: AOJu0YzhHqzguXszlAMhLSYlWKhdIc6K/TRqyeirQO0jRHcxHFC0VPR6
+	kaT0bFo3+C3fJF2ytutGLkj09L8bJBfBkgP3qZ4SydeYZCLU2oXZNpDhHkEy
+MIME-Version: 1.0
+X-Received: by 2002:a05:6820:82b:b0:692:c2fa:17aa with SMTP id
+ 006d021491bc7-69462e394eamr3140527eaf.16.1776479759098; Fri, 17 Apr 2026
+ 19:35:59 -0700 (PDT)
+Date: Fri, 17 Apr 2026 19:35:59 -0700
+Reply-To: "Google Cloud Platform, Firebase, and APIs" <CloudPlatform-noreply@google.com>
+X-Google-Id: SP#5789218898968576
+Feedback-ID: P-43-0:C359501:M397606-en:gamma
+gmsai: true
+X-Google-Notification-Metadata: CgISAA
+X-Notifications: f3905a0301760000
+X-Notifications-Bounce-Info: AZ3VuTgwxHhaE8tQmCyR2nfF1_p1oVE3HSCju8ejrFzLvVrm1MQU7zMnby35K1_s34vn_JybmHVjfRf2awetilksmYhsBU0ApoiVjUo4czo47sm0iajqemhreid4RVmR4ehJEI6Thl5ZZ_C-_KJpVlqUqfg8XDuJ6yG__QHWb_CSuCfEdphA-FKON_0oq8AfwIul-pJ_5J7cUuGy2ZIZDXSG8W44wK_vsZwnHB4RbqWVlJE6Qe5x6Hta_IanHY3BomGoxd69YQAhycme5CrySeMHwKhgtQ0kV9OHlVW6WMGwyOL7ihEEZmQEhjbpVfJ0EpHPIcF5dYjx6_XC936OAhppE-1dzhcEZij4zT_-l4go2tB2Yjdh_YNwU-MOgUKrFvZxXIMr0jJeQbfv2hTBQFOKm_XTl0CdVc03FCx9a71-7xB7DSwrNS9b4VALLYgzrro94WEGtC4POkZrFWjJCk4UxQzD7KFFdqZ-r10on1cLoHo3Spj3MwHCKOSP5JL2Ty9H_VKnLBL59jwvwx7Ejv7Owk0qNqj1aBMngF--Na-UkGPLFExFNjAwNjA0MDQxNTM1NTk2OTMzMg
+Message-ID: <e70baca77cd323a19fed9094e7b023a43a6f0f60-359501-644015@google.com>
+Subject: Action required: your billing account 017CC1-D3C90D-DF3949 is past
+ due or has invalid payment information.
+From: "Google Cloud Platform, Firebase, and APIs" <CloudPlatform-noreply@google.com>
+To: jc2pointzero@gmail.com
+Content-Type: multipart/alternative; boundary="000000000000fde4a1064fb2ec40"
+
+--000000000000fde4a1064fb2ec40
+Content-Type: text/plain; charset="UTF-8"; format=flowed; delsp=yes
+Content-Transfer-Encoding: base64
+
+R29vZ2xlIENsb3VkIFBsYXRmb3JtIEdvIHRvIG15IGNvbnNvbGUgwrsNCg0KDQoNCg0KDQpBY3Rp
+b24gcmVxdWlyZWQNCg0KDQpEZWFyIEdvb2dsZSBjdXN0b21lciwNCg0KDQpZb3UgYXJlIHJlY2Vp
+dmluZyB0aGlzIGVtYWlsIGJlY2F1c2UgeW91IGFyZSBhIEdvb2dsZSBDbG91ZCBQbGF0Zm9ybSwg
+IA0KRmlyZWJhc2UsIG9yIEFQSSBjdXN0b21lci4NCg0KDQpPdXIgcmVjb3JkcyBpbmRpY2F0ZSB0
+aGF0IHlvdXIgYmlsbGluZyBhY2NvdW50OiAwMTdDQzEtRDNDOTBELURGMzk0OSBpcyAgDQpwYXN0
+IGR1ZSBvciBkb2VzIG5vdCBoYXZlIHZhbGlkIHBheW1lbnQgaW5mb3JtYXRpb24gYXNzb2NpYXRl
+ZCB3aXRoIGl0LiAgDQpUaGlzIG1heSBoYXBwZW4gaWYgeW91ciBjcmVkaXQgY2FyZCBoYXMgZXhw
+aXJlZCBvciB3YXMgY2FuY2VsbGVkLCBhbmQgd2UgIA0KaGF2ZW4ndCByZWNlaXZlZCB2YWxpZCBw
+YXltZW50IGluZm9ybWF0aW9uIGZyb20geW91Lg0KDQpQbGVhc2UgdXBkYXRlIHlvdXIgYmlsbGlu
+ZyBhY2NvdW50IHdpdGggdmFsaWQgcGF5bWVudCBpbmZvcm1hdGlvbiBieSAgDQpmb2xsb3dpbmcg
+dGhpcyBsaW5rOiAgDQpodHRwczovL2NvbnNvbGUuY2xvdWQuZ29vZ2xlLmNvbS9iaWxsaW5nLzAx
+N0NDMS1EM0M5MEQtREYzOTQ5L3NldHRpbmdzDQoNCg0KRmFpbHVyZSB0byBtYWtlIHBheW1lbnRz
+IG1heSByZXN1bHQgaW4gc3VzcGVuc2lvbiBhbmQvb3IgdGVybWluYXRpb24gb2YgIA0KeW91ciBi
+aWxsaW5nIGFjY291bnQgYW5kIHRoZSByZWxhdGVkIFByb2plY3Qocykgb3IgU2VydmljZShzKS4g
+SWYgeW91IGhhdmUgIA0KYWxyZWFkeSB1cGRhdGVkIHlvdXIgcGF5bWVudCBpbmZvcm1hdGlvbiwg
+cGxlYXNlIGRpc3JlZ2FyZCB0aGlzIG1lc3NhZ2UuDQoNCklmIHlvdSBoYXZlIGFueSBxdWVzdGlv
+bnMgcGxlYXNlIGNvbnRhY3QgdXMgdXNpbmcgdGhpcyBmb3JtOiAgDQpodHRwczovL3N1cHBvcnQu
+Z29vZ2xlLmNvbS9jb2RlL2NvbnRhY3QvY2xvdWRfcGxhdGZvcm1fYmlsbGluZw0KDQoNCg0KDQoN
+Cg0KDQpUaGUgR29vZ2xlIHRlYW0NCg0KDQoNCg0KDQpHb29nbGUgUGx1cyBUd2l0dGVyIEJsb2dn
+ZXINCg0KDQoNCsKpIDIwMjYgR29vZ2xlIExMQywgMTYwMCBBbXBoaXRoZWF0cmUgUGFya3dheSwg
+TW91bnRhaW4gVmlldywgQ0EgOTQwNDMNCg0KWW91IGhhdmUgcmVjZWl2ZWQgdGhpcyBtYW5kYXRv
+cnkgc2VydmljZSBhbm5vdW5jZW1lbnQgdG8gdXBkYXRlIHlvdSBhYm91dCAgDQppbXBvcnRhbnQg
+Y2hhbmdlcyB0byBHb29nbGUgQ2xvdWQgUGxhdGZvcm0sIEZpcmViYXNlLCBBUElzLCBvciB0byB5
+b3VyICANCmFjY291bnQuDQoNCg0KDQo=
+--000000000000fde4a1064fb2ec40
+Content-Type: text/html; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.=
+w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns:v=3Durn:schemas-microsoft-com:vml DIR=3DLTR>
+<head>
+<meta http-equiv=3DContent-Type content=3D"text/html; charset=3DUTF-8" />
+<title></title>
+<style type=3Dtext/css>
+.ExternalClass {
+  width: 100%;
+}
+
+.ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font,=
+ .ExternalClass td, .ExternalClass div {
+  line-height: 100%;
+}
+
+body {
+  -webkit-text-size-adjust: none;
+  -ms-text-size-adjust: none;
+  margin: 0;
+  padding: 0;
+}
+
+table {
+  border-collapse: collapse;
+  mso-table-lspace: 0pt;
+  mso-table-rspace: 0pt;
+}
+
+table td {
+  border-collapse: collapse;
+}
+
+img {
+  outline: none;
+  text-decoration: none;
+  -ms-interpolation-mode: bicubic;
+}
+
+a img {
+  border: none;
+}
+
+p {
+  margin: 0;
+  padding: 0;
+  margin-bottom: 0;
+}
+
+.forApple a {
+  color: #666666 !important;
+  text-decoration: none !important;
+}
+
+@media only screen and (max-device-width: 400px) {
+   .width100{
+    width:100% !important;
+    display:block;
+    text-align: left !important;
+   }         =20
+}
+
+</style>
+<!--[if lte mso 7]>
+<style>
+/* Target Outlook 2003 to fix logo max width */
+#logo {
+ width: 120px !important;
+ height: 44px !important;
+}
+</style>
+<![endif]-->
+</head>
+
+<body bgcolor=3D#ffffff>
+
+<table width=3D100% cellspacing=3D0 cellpadding=3D0 border=3D0 bgcolor=3D#f=
+fffff style=3D"font-family: Arial, Helvetica, sans-serif; background-color:=
+ #ffffff;">
+  <!-- the email -->
+  <tr>
+    <td algin=3Dcenter bgcolor=3D#ffffff style=3D"background-color: #ffffff=
+; padding-right: 10px; padding-top: 10px; padding-bottom: 10px; padding-lef=
+t: 10px;">
+<!-- Target Outlook 2003 -->
+<!--[if lte mso 7]>
+<table width=3D"600" cellpadding=3D"0" cellspacing=3D"0" border=3D"0" style=
+=3D"border-collapse:collapse; table-width:fixed;" align=3D"center">
+<tr><td style=3D"width:600px !important;">
+<![endif]-->
+<!-- Target Outlook 2007 and 2010 -->
+<!--[if gte mso 9]>
+<table width=3D"600" cellpadding=3D"0" cellspacing=3D"0" border=3D"0" style=
+=3D"border-collapse:collapse; table-width:fixed;" align=3D"center">
+<tr><td style=3D"width:600px !important;">
+<![endif]-->
+      <div style=3D"max-width: 600px; margin-top: 0; margin-right: auto; ma=
+rgin-bottom: 0; margin-left: auto; padding-top: 0; padding-right: 10px; pad=
+ding-bottom: 0; padding-left: 10px;">
+        <table width=3D100% cellspacing=3D0 cellpadding=3D0 border=3D0 alig=
+n=3Dcenter bgcolor=3D#ffffff style=3D"max-width: 600px; font-family: Arial,=
+ Helvetica, sans-serif; font-weight: normal; font-size: 13px; line-height: =
+18px; color: #444444; text-align: left; margin-top: 0; margin-right: 0; mar=
+gin-bottom: 0; margin-left: 0; padding-top: 0; padding-right: 0; padding-bo=
+ttom: 0; padding-left: 0; border-top-color: #e5e5e5; border-right-color: #e=
+5e5e5; border-bottom-color: #e5e5e5; border-left-color: #e5e5e5; border-top=
+-style: solid; border-right-style: solid; border-bottom-style: solid; borde=
+r-left-style: solid; border-top-width: 25px; border-right-width: 25px; bord=
+er-bottom-width: 25px; border-left-width: 25px; background-color: #ffffff;"=
+>
+          <!-- Header -->
+          <tr>
+            <td width=3D100% style=3D"padding-right: 25px; padding-left: 25=
+px; padding-bottom: 25px; padding-top: 25px; background-color: #ffffff; bor=
+der-bottom-style: solid; border-bottom-color: #eeeeee; border-bottom-width:=
+ 1px;" bgcolor=3D#ffffff>
+              <table align=3Dleft width=3D100% cellspacing=3D0 cellpadding=
+=3D0 border=3D0 style=3D"font-weight: normal; font-family: Arial, Helvetica=
+, sans-serif; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left=
+: 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; =
+background-color: #ffffff;" bgcolor=3D#ffffff>
+                <tr><td class=3Dwidth100 width=3D50% align=3Dleft style=3D"=
+padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0;"><img=
+ class=3Dmarg-auto src=3Dhttp://services.google.com/fh/files/misc/googlelog=
+o_color_120x44dp.png id=3Dlogo alt=3D"Google Cloud Platform" title=3D"Googl=
+e Cloud Platform" width=3D120 height=3D44 border=3D0 style=3D"display: bloc=
+k; max-width: 295px;" /></td>
+                  <td class=3Dwidth100 width=3D50% align=3Dright style=3D"p=
+adding-left: 0; padding-bottom: 0; padding-right: 0; padding-top: 15px; fon=
+t-size: 11px; color: #444444; text-align: right;"><a href=3Dhttps://c.gle/A=
+DMV5J-eyycy5FvdR3RDoJCTd9YWSjdnn0ep0IfEJeR_fB1d1FCg3MZ3i67EbShKA8krxKufPKdM=
+5Eg-MsWB1Kyg_nFSljmnA1aBJUfjYci2X2YB9eoUQhHe4TbzFboWyL6U-y3NJJB8 style=3D"c=
+olor: #1155cc; text-decoration: none;">Go to my console =C2=BB</a></td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Main message -->
+          <tr>
+            <td width=3D100% style=3D"padding-top: 0; padding-right: 25px; =
+padding-bottom: 0; padding-left: 25px;">
+              <table width=3D100% cellspacing=3D0 cellpadding=3D0 border=3D=
+0 align=3Dleft style=3D"font-weight: normal; font-family: Arial, Helvetica,=
+ sans-serif; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left:=
+ 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; b=
+ackground-color: #ffffff;" bgcolor=3D#ffffff>
+                <tr><td style=3D"padding-left: 0; padding-bottom: 10px; pad=
+ding-right: 0; padding-top: 35px; border-top-color: #eeeeee; border-top-wid=
+th: 1px; border-top-style: solid; font-size: 18px; line-height: 25px; color=
+: #356ae9;">Action required</td></tr>
+                <tr><td style=3D"padding-left: 0; padding-bottom: 15px; pad=
+ding-right: 0; padding-top: 0; font-weight: normal; font-size: 12px; line-h=
+eight: 18px; color: #808080;">
+<p>
+Dear Google customer,<!--Gamma/Google Cloud Platform/Billing/Greeting-->
+</p>
+<br />
+<p>
+You are receiving this email because you are a Google Cloud Platform, Fireb=
+ase, or API customer.<!--Gamma/Google Cloud Platform/Billing/Email Explanat=
+ion-->
+</p>
+<br />
+<p>Our records indicate that your billing account: 017CC1-D3C90D-DF3949 is =
+past due or does not have valid payment information associated with it. Thi=
+s may happen if your credit card has expired or was cancelled, and we haven=
+'t received valid payment information from you.</p>
+&nbsp;
+
+<p>Please update your billing account with valid payment information by fol=
+lowing this link: <a href=3Dhttps://console.cloud.google.com/billing/017CC1=
+-D3C90D-DF3949/settings>https://console.cloud.google.com/billing/017CC1-D3C=
+90D-DF3949/settings</a></p>
+&nbsp;
+</p>
+
+<p>Failure to make payments may result in suspension and/or termination of =
+your billing account and the related Project(s) or Service(s). If you have =
+already updated your payment information, please disregard this message.</p=
+>
+&nbsp;
+
+<p>If you have any questions please contact us using this form: <a href=3Dh=
+ttps://support.google.com/code/contact/cloud_platform_billing>https://suppo=
+rt.google.com/code/contact/cloud_platform_billing</a></p>
+</td></tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Ending -->
+          <tr>
+            <td width=3D100% style=3D"padding-right: 25px; padding-left: 25=
+px; padding-bottom: 30px; padding-top: 0; background-color: #ffffff; border=
+-top-style: solid; border-top-color: #eeeeee; border-top-width: 0px;" bgcol=
+or=3D#ffffff>
+              <table width=3D100% cellspacing=3D0 cellpadding=3D0 border=3D=
+0 align=3Dleft style=3D"font-weight: normal; font-family: Arial, Helvetica,=
+ sans-serif; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left:=
+ 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; b=
+ackground-color: #ffffff;" bgcolor=3D#ffffff>
+                <tr>
+                  <td width=3D100% style=3D"padding-left: 0; padding-bottom=
+: 0; padding-right: 0; padding-top: 15px; font-weight: normal; font-size: 1=
+2px; line-height: 18px; color: #808080;">
+                    <br />The Google team<!--Gamma/Google Cloud Platform/Bi=
+lling/Signoff-->
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td width=3D100% style=3D"padding-right: 0; padding-left: 0; pa=
+dding-bottom: 10px; padding-top: 10px; background-color: #ffffff; border-to=
+p-style: solid; border-top-color: #eeeeee; border-top-width: 1px;" bgcolor=
+=3D#ffffff>
+              <table width=3D100% cellspacing=3D0 cellpadding=3D0 border=3D=
+0 align=3Dleft style=3D"font-family: Arial, Helvetica, sans-serif; font-wei=
+ght: normal; margin-top: 0; margin-right: 0; margin-bottom: 0; margin-left:=
+ 0; padding-top: 0; padding-right: 0; padding-bottom: 0; padding-left: 0; b=
+ackground-color: #ffffff;" bgcolor=3D#ffffff>
+                <tr>
+                  <td width=3D100% style=3D"padding-top: 15px; padding-righ=
+t: 25px; padding-bottom: 0; padding-left: 25px;">
+                    <table cellspacing=3D0 cellpadding=3D0 border=3D0 style=
+=3D"font-family: Arial, Helvetica, sans-serif; margin-top: 0; margin-right:=
+ 0; margin-bottom: 0; margin-left: 0; padding-top: 0; padding-right: 0; pad=
+ding-bottom: 0; padding-left: 0;">
+                      <tr>
+                        <td width=3D30><a href=3Dhttps://c.gle/ADMV5J-IB9E1=
+99M_MgSPMZI1Rlmd-PhFkCCUZb5U_t7N6gIPn_E3nYWvY4Tkx-pJ0R9PHDPrMcD-phrca6Pj0XS=
+vOz5y6FgwLyhKTL3FbtGTEW2cjY6w8kx03DcZdksASsG7MOv3TXVLv7Nf8j2yNLry8ohEXEc st=
+yle=3D"color: #1155cc; text-decoration: none;"><img src=3Dhttp://services.g=
+oogle.com/fh/files/misc/google-plus-dark-grey.png alt=3D"Google Plus" title=
+=3D"Google Plus" width=3D100% border=3D0 style=3D"display: block; max-width=
+: 30px;" /></a></td>
+                        <td width=3D30><a href=3Dhttps://c.gle/ADMV5J-gLdvJ=
+40wSibX5M1hBLJDAfuqAwtoQzpzmZbkduUlfypD4LjzdayCjlVDizHhTLyhMwhwZHaWHveejgi1=
+Kg0U6518qixcvRS_pcP_hgFgI_iUZ5OsfPxOXpWuoTSDa3Fcfww style=3D"color: #1155cc=
+; text-decoration: none;"><img src=3Dhttps://www.gstatic.com/gmktg/mtv-img/=
+cloudplatform_icon_round_twitter.png alt=3DTwitter title=3DTwitter width=3D=
+100% border=3D0 style=3D"display: block; max-width: 30px;" /></a></td>
+                        <td width=3D30><a href=3Dhttps://c.gle/ADMV5J9Ke4GB=
+Ih0N36gjpTuL6BgHhMxK7w7fqBLCdEKUwDqGdxqh_ht8k_tiN7m3riaOh-FW-CWd-XYimCmp28c=
+1SCY5jcZ7M76gScW4v3sJwIl4MEgTqpwQb4MAEgk2_Rki8eOJP-GvzgqsZwo3rA style=3D"co=
+lor: #1155cc; text-decoration: none;"><img src=3Dhttps://www.gstatic.com/gm=
+ktg/mtv-img/cloudplatform_icon_round_blogger.png alt=3DBlogger title=3DBlog=
+ger width=3D100% border=3D0 style=3D"display: block; max-width: 30px;" /></=
+a></td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td width=3D100% style=3D"padding-left: 25px; padding-bot=
+tom: 20px; padding-right: 25px; padding-top: 20px; font-family: Arial, Helv=
+etica, sans-serif; font-weight: normal; font-size: 11px; line-height: 16px;=
+ color: #808080;">
+                    =C2=A9 2026 Google LLC, 1600 Amphitheatre Parkway, Moun=
+tain View, CA 94043<!--Gamma/Google Cloud Platform/Billing/Footer Copyright=
+ Address--><br /><br />
+                    You have received this mandatory service announcement t=
+o update you about important changes to Google Cloud Platform, Firebase, AP=
+Is, or to your account.<!--Gamma/Google Cloud Platform/Billing/MSA Footer--=
+>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </div>
+<!--[if lte mso 7]>
+</td></tr></table>
+<![endif]-->
+<!--[if gte mso 9]>
+</td></tr></table>
+<![endif]-->
+    </td>
+  </tr>
+</table>
+</body>
+
+</html>
+--000000000000fde4a1064fb2ec40--
