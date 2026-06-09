@@ -33,6 +33,7 @@ This document serves as the absolute, non-narrative, declarative architecture bl
 | **`3015`** | AetherVet Telemedicine | Vite / React Frontend | AetherVet Smyrna clinical patient and medicine tracker (port 3015). |
 | **`3016`** | Sovereign OS Portal | Vite / React Frontend | Sovereign OS workspace and application launcher dashboard. |
 | **`3017`** | Storybook Station Portal | Vite / React Frontend | Eileen's Storybook Station daily hub portal. |
+| **`3020`** | Barb's Stack | Vite / React Frontend | Barb's Personal Cockpit, Smyrna Sentinel delivery tracker & active stacks. |
 | **`7300`** | Catnip Wars Sandbox | Vite / React | 16-bit emergent World Ledger and active Catnip Wars board interface. |
 | **`5051`** | Sovereign OS Core | FastAPI / Python | Core OS system orchestration API. |
 | **`5055`** | Sovereign OS Auth | FastAPI / Python | Identity and session token validation server. |
@@ -55,6 +56,7 @@ This document serves as the absolute, non-narrative, declarative architecture bl
 | Directory / File Path | Target Purpose |
 | :--- | :--- |
 | `/home/james/SovereignOS` | **Primary Production Worktree Root** |
+| `/home/james/SovereignOS/18_BarbStack` | **Barb's Stack Workspace** — Standalone React + Tailwind client portal for Barb's Personal Cockpit. |
 | `/home/james/SovereignOS-sandbox` | **Strict Sandbox Environment Worktree Root** |
 | `/home/james/SovereignOS/dna/` | **Master Architectural Ledger Directory** |
 | `/home/james/SovereignOS/dna/sovereign_now.db` | **Singular SQLite Database (Canonical Path - KI-038)** |

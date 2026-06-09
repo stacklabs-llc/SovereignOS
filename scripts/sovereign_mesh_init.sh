@@ -48,7 +48,7 @@ fi
 
 if ! sudo ss -tulpn | grep -q ":3020 "; then
     echo "Starting Barbs Portal on 3020..."
-    cd /home/james/SovereignOS/18_BarbsPortal && nohup npm run dev -- --host 127.0.0.1 --port 3020 > /tmp/barbs_portal.log 2>&1 &
+    cd /home/james/SovereignOS/18_BarbStack && nohup npm run dev -- --host 127.0.0.1 --port 3020 > /tmp/barbs_portal.log 2>&1 &
     cd /home/james/SovereignOS
 fi
 
