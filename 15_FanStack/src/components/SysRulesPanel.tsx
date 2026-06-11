@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, AlertCircle, RefreshCw, Edit2, Save, X } from 'lucide-react';
+import { BookOpen, AlertCircle, RefreshCw, Edit2, Save, X, Download } from 'lucide-react';
 import { getApiHost } from '../api-host';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -24,6 +24,53 @@ export default function SysRulesPanel() {
   const [editSummary, setEditSummary] = useState('');
   const [editContent, setEditContent] = useState('');
   const [saving, setSaving] = useState(false);
+
+  const handleExportIndividual = (rule: SysRule, format: 'md' | 'json') => {
+    let blob: Blob;
+    let filename: string;
+
+    if (format === 'md') {
+      const markdownContent = `# ${rule.title}\n\n> **Summary:** ${rule.summary}\n\n---\n\n${rule.content}`;
+      blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8;' });
+      filename = `${rule.rule_id}.md`;
+    } else {
+      blob = new Blob([JSON.stringify(rule, null, 2)], { type: 'application/json;charset=utf-8;' });
+      filename = `${rule.rule_id}.json`;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleExportBulk = (format: 'md' | 'json') => {
+    let blob: Blob;
+    let filename: string;
+
+    if (format === 'md') {
+      const combinedMarkdown = rules.map(rule => (
+        `# ${rule.title}\n\n**ID:** \`${rule.rule_id}\`\n\n> **Summary:** ${rule.summary}\n\n---\n\n${rule.content}\n\n`
+      )).join('\n---\n\n');
+      
+      blob = new Blob([combinedMarkdown], { type: 'text/markdown;charset=utf-8;' });
+      filename = `sovereign_system_rules_${new Date().toISOString().split('T')[0]}.md`;
+    } else {
+      blob = new Blob([JSON.stringify(rules, null, 2)], { type: 'application/json;charset=utf-8;' });
+      filename = `sovereign_system_rules_${new Date().toISOString().split('T')[0]}.json`;
+    }
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const fetchRules = async () => {
     setLoading(true);
@@ -102,9 +149,25 @@ export default function SysRulesPanel() {
             <BookOpen className="text-red-400 w-5 h-5" />
             <h2 className="font-display font-bold text-red-100 uppercase tracking-widest text-sm">System Rules</h2>
           </div>
-          <button onClick={fetchRules} className="text-red-400 hover:text-red-300">
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => handleExportBulk('md')} 
+              title="Export All (Markdown)" 
+              className="text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 text-[10px] font-mono border border-red-500/20 px-1.5 py-0.5 rounded bg-red-500/5 hover:bg-red-500/10"
+            >
+              <Download className="w-3 h-3" /> MD
+            </button>
+            <button 
+              onClick={() => handleExportBulk('json')} 
+              title="Export All (JSON)" 
+              className="text-red-400 hover:text-red-300 transition-colors flex items-center gap-1 text-[10px] font-mono border border-red-500/20 px-1.5 py-0.5 rounded bg-red-500/5 hover:bg-red-500/10"
+            >
+              <Download className="w-3 h-3" /> JSON
+            </button>
+            <button onClick={fetchRules} className="text-red-400 hover:text-red-300 ml-1">
+              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
         
         <div className="flex-1 overflow-y-auto no-scrollbar p-2 space-y-2">
@@ -148,12 +211,26 @@ export default function SysRulesPanel() {
               </div>
               
               {!isEditing ? (
-                <button 
-                  onClick={handleEditClick}
-                  className="flex items-center gap-2 bg-white/5 hover:bg-red-500/20 text-white/70 hover:text-red-400 border border-white/10 hover:border-red-500/50 px-3 py-1.5 rounded transition-all text-sm font-bold"
-                >
-                  <Edit2 className="w-4 h-4" /> Edit Rule
-                </button>
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => handleExportIndividual(selectedRule, 'md')}
+                    className="flex items-center gap-2 bg-white/5 hover:bg-red-500/20 text-white/70 hover:text-red-400 border border-white/10 hover:border-red-500/50 px-3 py-1.5 rounded transition-all text-sm font-bold"
+                  >
+                    <Download className="w-4 h-4" /> Export MD
+                  </button>
+                  <button 
+                    onClick={() => handleExportIndividual(selectedRule, 'json')}
+                    className="flex items-center gap-2 bg-white/5 hover:bg-red-500/20 text-white/70 hover:text-red-400 border border-white/10 hover:border-red-500/50 px-3 py-1.5 rounded transition-all text-sm font-bold"
+                  >
+                    <Download className="w-4 h-4" /> Export JSON
+                  </button>
+                  <button 
+                    onClick={handleEditClick}
+                    className="flex items-center gap-2 bg-white/5 hover:bg-red-500/20 text-white/70 hover:text-red-400 border border-white/10 hover:border-red-500/50 px-3 py-1.5 rounded transition-all text-sm font-bold"
+                  >
+                    <Edit2 className="w-4 h-4" /> Edit Rule
+                  </button>
+                </div>
               ) : (
                 <div className="flex gap-2">
                   <button 

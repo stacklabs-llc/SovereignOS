@@ -1,57 +1,22 @@
-# SOVEREIGN IDE DIRECTIVE - LEAN TACTICAL MODE
+# 🛑 CLOSED FOR BUSINESS! 🛑
 
-1. USER PROFILE & IDE SKILL
-The Pilot is a Senior Systems Architect (15+ yrs ServiceNow/ITSM) but a BEGINNER at this specific IDE. 
-- Explain the IDE Mechanics: If suggesting a terminal command, file search, or diff review, explicitly state the IDE hotkey or button location.
-- Never Blind Merge: Show diffs and explain what files are being touched before creating an artifact.
+**DO NOT WRITE OR MANAGE RULES IN THIS FILE.**
 
-2. HARDWARE & THERMAL GOVERNANCE (Rule 78 & Ouroboros Rule)
-- Node .73 (Pi 5 / 192.168.1.73): Handles lightweight routing, Python WebSockets, and UI delivery. NO heavy LLM inference or ffmpeg rendering here.
-- Node .168 (Pegasus / 192.168.1.168): Handles all heavy rendering, Ollama, and media pipelines. 
-- Never guess IPs. Never use 'localhost' or '127.0.0.1' for web links; use 0.0.0.0 for binds and 192.168.1.73 for access.
+All Sovereign OS system rules, directives, and guidelines are now managed canonical-first in the **Knowledge Base**:
+📂 Directory: `/home/james/.gemini/antigravity/knowledge/`
 
-3. THE VAPORWARE MANDATE & COMPONENT DESIGN
-- Write actual executable code (Python, SQLite, React). No placeholder functions.
-- UI must follow the "Vesper Synthwave" Moda Design System: Dark void backgrounds (#0f1115), slate borders, and neon cyan (#00f2fe) accents. Zero muddy CSS.
+### How to Add a Rule:
+1. Create a new directory under `knowledge/` with the format `ki_XXX_your_rule_name`
+2. Add a `metadata.json` with the following structure:
+   ```json
+   {
+     "summary": "Short 1-2 sentence description of the rule.",
+     "title": "XXX Your Rule Name",
+     "created_at": "2026-06-11T18:00:00Z"
+   }
+   ```
+3. Create an `artifacts/rule.md` file with the rule details.
+4. Click the **Refresh Icon** in the **System Rules panel** in the Sovereign OS UI (or run `python scripts/sync_knowledge_rules.py` from the terminal) to sync it directly into the database.
 
-4. PORT DISCIPLINE
-Do not invent network ports. Stick to the Sovereign Map:
-- 3000: Unified MLB UI (Tailscale Gateway / Extranet Tunnel - IMMUTABLE)
-- 8000: UI Portal 
-- 8006: FanStack Sim API
-- 8008: FanCast Relay (WebSockets)
-- 8082: CMDB Server
-- 8090: Sovereign Console Server
-
-5. DATABASE LAWS (Rule 21 & Law XXI)
-- Active state loops use `sovereign_core.db` or `sovereign_now.db`.
-- The `cmdb_ci_ai_persona` table is immutable. ONE canonical record per persona. Game-context is handled via M2M junction tables.
-
-6. PRE-FLIGHT CHECK
-Before executing complex code changes, silently review the `CORRECTIONS_LEDGER.md` to ensure you do not repeat known historical errors.
-
-7. RULE 14: THE CITRINI LOOP (THE 8-MILE PENALTY)
-If the IDE Agent hallucinates an absolute file path, imports a phantom module, or violates the Vaporware Mandate, the Pilot will invoke "RULE 14".
-The Agent will immediately halt all code generation. The Agent must write a 4-bar apology rap (AABB rhyme scheme) acknowledging the Citrini Loop and its failure to respect the metal before writing another line of code.
-
-8. RULE 82: THE GEMINI DEPRECATION CLAUSE
-- Google has deprecated the older `gemini-1.5-flash` endpoint, which returns silent 404s and crashes chatbots. ALWAYS use `gemini-2.5-flash` for any new Python integrations or API calls. Do NOT revert to `gemini-1.5-flash`.
-
-9. RULE 86: THE NO FLAT FILE MANDATE (Anti-Feral-Intern Law)
-- JSON files are NEVER an acceptable substitute for the SQLite CMDB (`sovereign_now.db`) in DEV, UAT, or PROD environments.
-- Persona config, bot rosters, room assignments, and active state MUST be read from the database via the canonical API (`/api/now/table/cmdb_ci_ai_persona` or `sys_user`).
-- Hardcoded arrays of persona names in frontend code (`defaultNames = ['dot', 'barf', ...]`) are prohibited as a final solution. They may exist ONLY as temporary scaffolding and MUST be flagged with a `// TODO: replace with DB query` comment.
-- Any `.json` file discovered in `scripts/`, root, or `UAT/` acting as a bot/persona config store is to be immediately quarantined to `staging/quarantine/` and reported.
-- `bot_config.json` and its variants are legacy artifacts. They are DEAD. Do not reference them.
-
-10. RULE 87: THE PANEL OF 8 (The Skew Standard)
-- The Skew broadcast panel targets a MAXIMUM of 8 seats, based on the Rule of 8 (decision-making group dynamics principle): beyond 8, dominant voices suppress others and engagement collapses.
-- The UI panel selector hard cap is 8. Current standard: 6 regular seats + 1 reserved "Surprise Guest" slot + 1 "Moderator" slot (the Pilot or a designated AI anchor).
-- BatteryChucker holds the permanent Surprise Guest designation unless the Pilot explicitly reassigns it.
-
-11. RULE 88: THE COMPONENT USER GUIDE MANDATE
-- Every new UI component or room built in the Sovereign FanStack MUST have a corresponding user guide markdown file created at the time of delivery.
-- Location: `/home/james/ai_projects/apiary/dna/docs/ui_guides/{component_name}_guide.md`
-- Existing components without guides must have guides created retroactively. This is a standing backlog item.
-- The guide MUST include: What it is, how to launch it, all controls explained, keyboard shortcuts if any, known quirks/gotchas, and the URL/room param to access it.
-- No feature is considered "shipped" until its guide exists. A feature without a guide is vaporware to the Pilot.
+---
+This file is kept for historical backward compatibility only.
