@@ -35,13 +35,11 @@ COPY_DESTINATIONS = [
     "/home/james/SovereignOS/20_AetherVet/public/avatars",
     "/home/james/SovereignOS/21_Wildseed_GardenStack/public/avatars",
     "/home/james/SovereignOS/dna/media/avatars",
-    "/home/james/SovereignOS/avatars",
     "/home/james/SovereignOS-uat/21_Wildseed_GardenStack/public/avatars",
     "/home/james/SovereignOS-uat/15_FanStack/public/avatars",
     "/home/james/SovereignOS-uat/dna/media/avatars",
     "/home/james/SovereignOS-uat/20_AetherVet/public/avatars",
-    "/home/james/SovereignOS-uat/01_Sovereign_Portal/public/avatars",
-    "/home/james/SovereignOS-uat/avatars"
+    "/home/james/SovereignOS-uat/01_Sovereign_Portal/public/avatars"
 ]
 
 def main():
