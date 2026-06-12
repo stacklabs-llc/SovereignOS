@@ -79,10 +79,28 @@ if [ -n "${LATEST_REPORT}" ] && [ -f "${LATEST_REPORT}" ]; then
 fi
 
 # Latest walkthrough
-LATEST_WALKTHROUGH=$(find -L "${TODAY_DIR}" "/home/james/sovereign_inbox/tickets" -name "walkthrough_*.md" -type f -printf "%T@ %p\n" 2>/dev/null | sort -n | tail -n 1 | cut -d' ' -f2- || true)
+LATEST_WALKTHROUGH=$(find -L "${TODAY_DIR}" "/home/james/sovereign_inbox/walkthroughs" -name "walkthrough_*.md" -type f -printf "%T@ %p\n" 2>/dev/null | sort -n | tail -n 1 | cut -d' ' -f2- || true)
 if [ -n "${LATEST_WALKTHROUGH}" ] && [ -f "${LATEST_WALKTHROUGH}" ]; then
   stage_with_timestamp "${LATEST_WALKTHROUGH}" "$TARGET_NOTEBOOK_DIR/ACTIVE_WALKTHROUGH.md.txt"
 fi
+
+# 4.5. Stage all walkthroughs and implementation plans for external agent ground truth
+echo "📚 Staging all walkthroughs..."
+mkdir -p "$TARGET_NOTEBOOK_DIR/walkthroughs"
+find /home/james/sovereign_inbox/walkthroughs/ /home/james/sovereign_inbox/tickets/ -name "walkthrough_*.md" -type f 2>/dev/null | while read -r f; do
+  if [ -f "$f" ]; then
+    stage_with_timestamp "$f" "$TARGET_NOTEBOOK_DIR/walkthroughs/$(basename "$f").txt"
+  fi
+done
+
+echo "📚 Staging all implementation plans..."
+mkdir -p "$TARGET_NOTEBOOK_DIR/implementation_plans"
+find /home/james/sovereign_inbox/implementation_plans/ /home/james/sovereign_inbox/tickets/ -name "implementation_plan_*.md" -type f 2>/dev/null | while read -r f; do
+  if [ -f "$f" ]; then
+    stage_with_timestamp "$f" "$TARGET_NOTEBOOK_DIR/implementation_plans/$(basename "$f").txt"
+  fi
+done
+
 
 # 5. Stage Critical Synchronization Tokens (both at root and inside dna/ for compatibility)
 if [ -f "$TARGET_NOTEBOOK_DIR/SYNC_ANCHOR_TOKEN.txt" ]; then
