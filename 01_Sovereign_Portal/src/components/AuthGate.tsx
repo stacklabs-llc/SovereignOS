@@ -11,11 +11,11 @@ const getCookie = (name: string): string | null => {
 
 const setCookie = (name: string, value: string, days: number = 7) => {
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; domain=clio.taila01894.ts.net; SameSite=Lax; Secure`;
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax; Secure`;
 };
 
 const deleteCookie = (name: string) => {
-  document.cookie = `${name}=; path=/; domain=clio.taila01894.ts.net; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+  document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
 };
 
 // ── DEV AUTH BYPASS ──────────────────────────────────────────────────────────
@@ -111,14 +111,24 @@ export default function AuthGate({ children }: AuthGateProps) {
       window.history.replaceState({}, '', newUrl.pathname + newUrl.search);
     }
 
+    const cookieToken = getCookie(TOKEN_KEY);
     let stored = localStorage.getItem(TOKEN_KEY);
-    if (!stored) {
-      stored = getCookie(TOKEN_KEY);
-      if (stored) {
-        localStorage.setItem(TOKEN_KEY, stored);
+
+    if (cookieToken) {
+      if (cookieToken !== stored) {
+        localStorage.setItem(TOKEN_KEY, cookieToken);
         localStorage.setItem("sov_auth", "unlocked");
+        stored = cookieToken;
+      }
+    } else {
+      // Cookie is missing. Unless on localhost (handled by bypass), clear local storage token to sync logout.
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (!isLocal && stored) {
+        localStorage.removeItem(TOKEN_KEY);
+        stored = null;
       }
     }
+
     if (stored) {
       verifyToken(stored).then(u => {
         if (u) {

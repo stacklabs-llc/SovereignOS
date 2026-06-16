@@ -62,6 +62,13 @@ export default defineConfig(({mode}) => {
           target: 'http://127.0.0.1:8090',
           changeOrigin: true,
           secure: false,
+          xfwd: true,
+        },
+        '/api/public': {
+          target: 'http://127.0.0.1:8090',
+          changeOrigin: true,
+          secure: false,
+          xfwd: true,
         },
         '/api/cast_tv': {
           target: 'http://127.0.0.1:8090',
