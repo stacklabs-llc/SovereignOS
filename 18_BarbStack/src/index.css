@@ -21,7 +21,7 @@ body {
 }
 
 .mono {
-  font-family: 'Share Tech Mono', monospace;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 .cardboard-panel {
@@ -93,6 +93,7 @@ body {
   background-size: 100% 4px, 6px 100%;
   z-index: 10;
   pointer-events: none;
+  opacity: 0.02 !important; /* Fix physical cut lines through fonts */
 }
 
 @keyframes shake {

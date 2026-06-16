@@ -123,7 +123,7 @@ for script in scripts:
     
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash-tts",
+            model="gemini-1.5-flash-tts",
             contents=contents,
             config=types.GenerateContentConfig(
                 response_modalities=["AUDIO"],

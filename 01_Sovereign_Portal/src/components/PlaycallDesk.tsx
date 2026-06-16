@@ -28,6 +28,8 @@ export default function PlaycallDesk() {
     const [barfCypher, setBarfCypher] = useState(false);
     const [simSpeed, setSimSpeed] = useState('1.0');
     
+    const [systemWarnings, setSystemWarnings] = useState<any[]>([]);
+    const [systemDegraded, setSystemDegraded] = useState<boolean>(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [tmiModalOpen, setTmiModalOpen] = useState(false);
     const [tmiScenarios, setTmiScenarios] = useState<any[]>([]);
@@ -258,6 +260,10 @@ export default function PlaycallDesk() {
             ws.onmessage = (e) => {
                 try {
                     const d = JSON.parse(e.data);
+                    if (d.system) {
+                        setSystemWarnings(d.system.warnings || []);
+                        setSystemDegraded(!!d.system.system_degraded);
+                    }
                     if(d.type === 'PENALTY_BOX_EVENT') {
                         if(d.action === 'ENTER') setPenaltyBox({ persona: d.persona, text: '', avatar: getAvatar(d.persona), history: [] });
                         else if(d.action === 'EXIT') setPenaltyBox(null);
@@ -663,12 +669,48 @@ export default function PlaycallDesk() {
 
                 {/* Feed Panel (Center) */}
                 <div className="vm-panel-glass flex flex-col border border-white/10 overflow-hidden bg-[#0B0E14]">
-                    <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between">
+                    <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between shrink-0">
                         <div className="flex items-center gap-3">
                             <span className="font-['Outfit'] text-[12px] font-black text-white tracking-[0.2em] uppercase">Sovereign Insights</span>
                             <span className="font-mono text-[9px] text-[#8E9CAA] uppercase tracking-widest border border-white/10 px-2 py-0.5 rounded-full">Powered by M.A.R.D.</span>
                         </div>
                     </div>
+
+                    {/* System Warnings Banner */}
+                    {systemDegraded && systemWarnings.length > 0 && (
+                        <div className="px-5 py-4 bg-gradient-to-r from-red-500/20 via-orange-500/20 to-red-500/20 border-b border-red-500/30 flex flex-col gap-3 shrink-0">
+                            <div className="font-['Outfit'] font-black text-red-500 text-xs tracking-[0.25em] uppercase flex items-center gap-2">
+                                <span className="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></span>
+                                SYSTEM OUTAGES / CRITICAL DEGRADATIONS DETECTED ({systemWarnings.length})
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                {systemWarnings.map((warning, idx) => (
+                                    <div 
+                                        key={idx} 
+                                        className="bg-black/45 border border-red-500/40 p-3 rounded-xl flex items-center gap-3 relative overflow-hidden"
+                                    >
+                                        <div className="absolute top-0 right-0 bottom-0 w-[4px] bg-red-500"></div>
+                                        {warning.avatar_url && (
+                                            <img 
+                                                src={warning.avatar_url} 
+                                                alt="Expression Avatar" 
+                                                className="w-12 h-12 rounded-full border border-red-500/50 object-cover shrink-0" 
+                                            />
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-['Outfit'] font-bold text-white text-[13px] uppercase tracking-wider truncate">
+                                                {warning.name}
+                                            </div>
+                                            <div className="font-mono text-[11px] text-red-400 uppercase tracking-widest mt-0.5">
+                                                {warning.operational_status === 3 ? "OFFLINE / FAILED" : "DEGRADED / WARNING"}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
                     <div ref={feedRef} onScroll={handleScroll} className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 custom-scrollbar2">
                         <style>{`
                             .custom-scrollbar2::-webkit-scrollbar { width: 6px; }

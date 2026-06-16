@@ -52,7 +52,21 @@ QUOTE: [Your 1 sentence in-character quote]
     try:
         model = GenerativeModel("gemini-2.5-flash")
         response = model.generate_content(prompt, generation_config={"temperature": 0.7})
-        text = response.text.strip()
+        parts_text = []
+        if response and response.candidates and len(response.candidates) > 0:
+            candidate = response.candidates[0]
+            if candidate.content and candidate.content.parts:
+                for part in candidate.content.parts:
+                    if hasattr(part, "text") and part.text:
+                        parts_text.append(part.text)
+        if parts_text:
+            text = "".join(parts_text)
+        else:
+            try:
+                text = response.text or ""
+            except Exception:
+                text = ""
+        text = text.strip()
         
         update_line = ""
         quote_line = ""

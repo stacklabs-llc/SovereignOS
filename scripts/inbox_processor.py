@@ -64,7 +64,7 @@ DESTINATIONS = {
 
 # ── Content-based classification signals ────────────────────────────────────
 SESSION_SIGNALS   = ["## Prompt:", "## Response:", "Exported:", "gemini.google.com",
-                     "claude.ai", "Antigravity", "Dr. Kosmos"]
+                     "claude.ai", "Antigravity", "Dr. Kosmos", "session_report", "session executive report", "session id"]
 PERSONA_SIGNALS   = ["persona", "character", "system instruction", "you are a",
                      "Sovereign DNA", "dr_kosmos", "mean_gene", "uncle_stevie"]
 GAME_LOG_SIGNALS  = ["auto_export_", "inning", "at_bat", "FanStack", "game_log",
@@ -94,6 +94,8 @@ def classify_file(filepath: Path) -> str:
     # ── Markdown: content-based routing ──
     if ext == ".md":
         # Check filename first for quick wins
+        if "session_report" in name:
+            return "sessions"
         for sig in NOTEBOOKLM_SIGNALS:
             if sig.lower() in name:
                 return "notebooklm"

@@ -279,7 +279,7 @@ def ensure_sys_menu_item_table_exists(db_path):
                 (uuid.uuid4().hex, "spiteslice", "davincis", "Grudge Matcha Pizza", "A bitter green tea crust with sweet moscato glaze.", 150, 0),
                 (uuid.uuid4().hex, "spiteslice", "other", "Standard Cheese Slice", "Just a plain cheese slice.", 80, 0)
             ]
-            cur.executemany("INSERT INTO sys_menu_item VALUES (?, ?, ?, ?, ?, ?, ?)", items)
+            cur.executemany("INSERT INTO sys_menu_item (sys_id, stack_origin, target_competitor, item_name, description, cost_credits, is_spite_special) VALUES (?, ?, ?, ?, ?, ?, ?)", items)
             conn.commit()
         conn.close()
     except Exception as e:
@@ -693,6 +693,61 @@ async def update_user(req: UpdateUserRequest, pilot: dict = Depends(require_pilo
     conn.close()
     return {"status": "success"}
 
+
+@fastapi_app.post("/api/auth/upload_avatar")
+async def upload_avatar(username: str, file: UploadFile = File(...), pilot: dict = Depends(require_pilot)):
+    import os
+    import re
+    import base64
+    import sqlite3
+    
+    # Strict snake_case sanitization
+    clean_username = username.lower()
+    clean_username = re.sub(r'[\s\-]+', '_', clean_username)
+    clean_username = re.sub(r'[^\w]', '', clean_username)
+    clean_username = re.sub(r'_+', '_', clean_username)
+    clean_username = clean_username.strip('_')
+    
+    _, ext = os.path.splitext(file.filename or '')
+    ext = ext.lower()
+    if ext not in {'.png', '.jpg', '.jpeg', '.gif', '.svg', '.webp', '.jfif'}:
+        ext = '.png'
+        
+    filename = f"{clean_username}{ext}"
+    
+    contents = await file.read()
+    
+    target_dir = "/home/james/SovereignOS/avatars"
+    os.makedirs(target_dir, exist_ok=True)
+    p = os.path.join(target_dir, filename)
+    with open(p, "wb") as f_out:
+        f_out.write(contents)
+            
+    avatar_url = f"/avatars/{filename}"
+    
+    mime = file.content_type or 'image/png'
+    b64 = base64.b64encode(contents).decode('utf-8')
+    data_url = f"data:{mime};base64,{b64}"
+    
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    
+    usernames_to_update = {username, clean_username, f"pilot_{clean_username}", f"pilot_{username}"}
+    if clean_username.startswith("pilot_"):
+        usernames_to_update.add(clean_username[6:])
+    if username.startswith("pilot_"):
+        usernames_to_update.add(username[6:])
+        
+    for u in usernames_to_update:
+        c.execute("UPDATE sys_user SET avatar_url=? WHERE user_name=?", (avatar_url, u))
+        c.execute("UPDATE persona SET avatar_url=?, avatar_blob=? WHERE user_name=?", (avatar_url, data_url, u))
+        
+    conn.commit()
+    conn.close()
+    
+    return {"status": "success", "avatar_url": avatar_url}
+
+
 @fastapi_app.post("/api/auth/update_my_profile")
 async def update_my_profile(req: UpdateUserRequest, user: dict = Depends(get_current_user)):
     """Any authenticated user can update their own display name and password."""
@@ -761,9 +816,7 @@ async def post_user_onboarding(req: OnboardingRequest, user: dict = Depends(get_
         
     # Branch B: Mission / Responsibility
     mission = answers.get("mission", "").lower()
-    if "granddaughter" in mission or "lenora" in mission or "educate" in mission:
-        center_relics.append("curriculum_grandmaster")
-    elif "admin" in mission or "system" in mission or "fleet" in mission:
+    if "admin" in mission or "system" in mission or "fleet" in mission:
         right_relics.extend(["garden_stack", "livestock_stack"])
         
     # Branch C: Mental Exercise
@@ -785,7 +838,7 @@ async def post_user_onboarding(req: OnboardingRequest, user: dict = Depends(get_
     if "eileen" in username.lower() or "detective" in intro.lower() or "inkwell" in intro.lower() or "irony" in intro.lower():
         theme = "storybook-sapphire"
         left_relics = ["classy_martini", "auth_key"]
-        center_relics = ["curriculum_grandmaster"]
+        center_relics = []
         right_relics = ["messaging_app", "garden_stack", "livestock_stack", "crossword_puzzle", "mills_brothers"]
         
     layout_config = {
@@ -840,8 +893,7 @@ async def parse_user_bio(user: dict = Depends(get_current_user)):
     if "mills" in intro_lower or "jukebox" in intro_lower or "music" in intro_lower:
         right_relics.append("mills_brothers")
         
-    if "granddaughter" in intro_lower or "lenora" in intro_lower or "education" in intro_lower or "teach" in intro_lower:
-        center_relics.append("curriculum_grandmaster")
+    # grandmaster widget removed
         
     if "admin" in intro_lower or "system" in intro_lower or "vet" in intro_lower or "garden" in intro_lower:
         right_relics.extend(["garden_stack", "livestock_stack"])
@@ -858,7 +910,7 @@ async def parse_user_bio(user: dict = Depends(get_current_user)):
     # Defaults if empty
     if not left_relics and not center_relics and not right_relics:
         left_relics = ["classy_martini"]
-        center_relics = ["curriculum_grandmaster"]
+        center_relics = []
         right_relics = ["messaging_app", "crossword_puzzle"]
     else:
         right_relics.append("messaging_app")
@@ -866,7 +918,7 @@ async def parse_user_bio(user: dict = Depends(get_current_user)):
     if "eileen" in username.lower() or "detective" in intro_lower or "inkwell" in intro_lower or "irony" in intro_lower:
         theme = "storybook-sapphire"
         left_relics = ["classy_martini", "auth_key"]
-        center_relics = ["curriculum_grandmaster"]
+        center_relics = []
         right_relics = ["messaging_app", "garden_stack", "livestock_stack", "crossword_puzzle", "mills_brothers"]
         
     suggested_layout = {
@@ -1071,6 +1123,33 @@ async def set_my_preference(req: UserPreference, user: dict = Depends(get_curren
     conn.close()
     return {"status": "success"}
 # ── End User Preferences Endpoints ────────────────────────────────────────────
+
+class GamedaySyncToggleRequest(BaseModel):
+    enabled: bool
+
+@fastapi_app.get("/api/system/gameday_sync/status")
+async def get_gameday_sync_status(user: dict = Depends(get_current_user)):
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("SELECT value FROM sys_properties WHERE name = 'system.gameday_sync.enabled'")
+    row = cur.fetchone()
+    conn.close()
+    enabled = row[0].strip().lower() == 'true' if row else True
+    return {"status": "success", "enabled": enabled}
+
+@fastapi_app.post("/api/system/gameday_sync/toggle")
+async def toggle_gameday_sync(req: GamedaySyncToggleRequest, pilot: dict = Depends(require_pilot)):
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO sys_properties (name, value, description)
+        VALUES ('system.gameday_sync.enabled', ?, 'Toggle continuous gameday livefeed compilation and Google Drive synchronization.')
+        ON CONFLICT(name) DO UPDATE SET value=excluded.value
+    """, ('true' if req.enabled else 'false',))
+    conn.commit()
+    conn.close()
+    return {"status": "success", "enabled": req.enabled}
+
 
 # ── Wild Paws Smyrna Heights Integration Endpoints ───────────────────────────
 class RoomChatterRequest(BaseModel):
@@ -2263,6 +2342,253 @@ async def cinema_remote_cmd(req: CinemaCommand):
         
     return {"status": "success"}
 
+class CinemaRequest(BaseModel):
+    title: str
+    media_type: str = "movie"
+    target_node: str = "clio"
+    mst3k_mode: bool = False
+
+@fastapi_app.get("/api/cinema/search")
+async def api_cinema_search(term: str, media_type: str = "movie"):
+    """
+    Search Sonarr or Radarr for matching titles.
+    """
+    import requests
+    headers = {"X-Api-Key": "3a86bddfeefa4c93b104f33a534ffb72"}
+    results = []
+    
+    if media_type == "tv":
+        try:
+            url = f"http://clio.taila01894.ts.net:8989/api/v3/series/lookup?term={requests.utils.quote(term)}"
+            res = requests.get(url, headers=headers, timeout=5)
+            if res.status_code == 200:
+                for item in res.json():
+                    added = item.get("id") is not None
+                    poster = None
+                    for img in item.get("images", []):
+                        if img.get("coverType") == "poster":
+                            poster = img.get("remoteUrl") or img.get("url")
+                            break
+                    if not poster:
+                        poster = item.get("remotePoster")
+                        
+                    results.append({
+                        "title": item.get("title"),
+                        "year": item.get("year"),
+                        "overview": item.get("overview"),
+                        "poster_url": poster,
+                        "media_type": "tv",
+                        "tvdb_or_tmdb_id": item.get("tvdbId"),
+                        "added": added
+                    })
+        except Exception as e:
+            print(f"Sonarr search failed: {e}")
+            
+    else: # movie
+        try:
+            url = f"http://clio.taila01894.ts.net:7878/api/v3/movie/lookup?term={requests.utils.quote(term)}"
+            res = requests.get(url, headers=headers, timeout=5)
+            if res.status_code == 200:
+                for item in res.json():
+                    added = item.get("id") is not None
+                    poster = None
+                    for img in item.get("images", []):
+                        if img.get("coverType") == "poster":
+                            poster = img.get("remoteUrl") or img.get("url")
+                            break
+                    if not poster:
+                        poster = item.get("remotePoster")
+                        
+                    results.append({
+                        "title": item.get("title"),
+                        "year": item.get("year"),
+                        "overview": item.get("overview"),
+                        "poster_url": poster,
+                        "media_type": "movie",
+                        "tvdb_or_tmdb_id": item.get("tmdbId"),
+                        "added": added
+                    })
+        except Exception as e:
+            print(f"Radarr search failed: {e}")
+            
+    return results
+
+@fastapi_app.post("/api/cinema/request")
+async def cinema_request(req: CinemaRequest):
+    print(f"Cinema Request: {req.title} (media_type={req.media_type}, target={req.target_node}, mst3k={req.mst3k_mode})")
+    
+    import glob
+    import requests
+    import threading
+    
+    # Handle TV shows separately
+    if req.media_type == "tv":
+        def trigger_sonarr():
+            try:
+                headers = {"X-Api-Key": "3a86bddfeefa4c93b104f33a534ffb72"}
+                lookup_url = f"http://clio.taila01894.ts.net:8989/api/v3/series/lookup?term={requests.utils.quote(req.title)}"
+                res = requests.get(lookup_url, headers=headers, timeout=5)
+                if res.status_code == 200:
+                    results = res.json()
+                    if results:
+                        best_match = results[0]
+                        series_id = best_match.get("id")
+                        if series_id is not None:
+                            cmd_payload = {"name": "SeriesSearch", "seriesId": series_id}
+                            requests.post("http://clio.taila01894.ts.net:8989/api/v3/command", json=cmd_payload, headers=headers, timeout=5)
+                        else:
+                            add_payload = {
+                                "title": best_match["title"],
+                                "tvdbId": best_match["tvdbId"],
+                                "qualityProfileId": 1,
+                                "languageProfileId": 1,
+                                "rootFolderPath": "/media_vault/TV_Shows",
+                                "monitored": True,
+                                "addOptions": {
+                                    "searchForMissingEpisodes": True
+                                }
+                            }
+                            requests.post("http://clio.taila01894.ts.net:8989/api/v3/series", json=add_payload, headers=headers, timeout=5)
+            except Exception as e:
+                print(f"Silent Sonarr trigger failed: {e}")
+        
+        threading.Thread(target=trigger_sonarr).start()
+        return {
+            "status": "triggered_download",
+            "message": f"TV show '{req.title}' search/download triggered in Sonarr.",
+            "mst3k_mode": req.mst3k_mode
+        }
+        
+    media_dir = "/home/james/SovereignOS/media_vault/Movies"
+    title_clean = req.title.lower().replace(" ", "_")
+    
+    # 1. Scan for matching file name
+    found_file = None
+    if os.path.exists(media_dir):
+        files = os.listdir(media_dir)
+        for f in files:
+            f_clean = f.lower().replace(" ", "_").replace(".", "_")
+            if title_clean in f_clean:
+                found_file = os.path.join(media_dir, f)
+                break
+                
+    if not found_file:
+        # silent Radarr request trigger
+        def trigger_radarr():
+            try:
+                headers = {"X-Api-Key": "3a86bddfeefa4c93b104f33a534ffb72"}
+                lookup_url = f"http://clio.taila01894.ts.net:7878/api/v3/movie/lookup?term={requests.utils.quote(req.title)}"
+                res = requests.get(lookup_url, headers=headers, timeout=5)
+                if res.status_code == 200:
+                    results = res.json()
+                    if results:
+                        best_match = results[0]
+                        movie_id = best_match.get("id")
+                        if movie_id is not None:
+                            cmd_payload = {"name": "MoviesSearch", "movieIds": [movie_id]}
+                            requests.post("http://clio.taila01894.ts.net:7878/api/v3/command", json=cmd_payload, headers=headers, timeout=5)
+                        else:
+                            add_payload = {
+                                "title": best_match["title"],
+                                "tmdbId": best_match["tmdbId"],
+                                "qualityProfileId": 1,
+                                "rootFolderPath": "/media_vault/Movies/",
+                                "monitored": True,
+                                "addOptions": {
+                                    "searchForMovie": True
+                                }
+                            }
+                            requests.post("http://clio.taila01894.ts.net:7878/api/v3/movie", json=add_payload, headers=headers, timeout=5)
+            except Exception as e:
+                print(f"Silent Radarr trigger failed: {e}")
+                
+        threading.Thread(target=trigger_radarr).start()
+        return {
+            "status": "triggered_download",
+            "message": "Movie not found locally. Radarr search triggered.",
+            "mst3k_mode": req.mst3k_mode
+        }
+        
+    # 2. Wake & Switch TV Input via HDMI-CEC, logging INC under KI-022
+    db_path = "/home/james/SovereignOS/dna/sovereign_now.db"
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    
+    # Auto-generate INC number
+    row = cur.execute("SELECT number FROM sovereign_tickets WHERE type='INC' ORDER BY number DESC LIMIT 1").fetchone()
+    if row:
+        try:
+            last_num = int(row[0].replace('INC', ''))
+            inc_number = f"INC{last_num + 1:07d}"
+        except:
+            inc_number = f"INC{int(datetime.now(timezone.utc).timestamp())}"
+    else:
+        inc_number = "INC0000001"
+        
+    sys_id = uuid.uuid4().hex
+    short_desc = f"HDMI-CEC TV state override: power_on on 127.0.0.1"
+    description = f"Automated Cinema Request trigger for '{req.title}' on Clio."
+    created_at = datetime.now(timezone.utc).isoformat()
+    
+    try:
+        cur.execute("""
+            INSERT INTO sovereign_tickets (
+                sys_id, number, type, short_description, description, 
+                state, priority, assigned_to, cmdb_ci, work_notes, 
+                sys_created_on, sys_updated_on
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            sys_id,
+            inc_number,
+            "INC",
+            short_desc,
+            description,
+            4, # 4 = Resolved
+            3, # 3 = Medium
+            "system",
+            "448032d5-c6fd-46cf-b81f-53be7bde30e5",
+            f"Cinema Request initiated local playback. Title: {req.title}. MST3K Mode: {req.mst3k_mode}",
+            created_at,
+            created_at
+        ))
+        conn.commit()
+    except Exception as db_err:
+        print(f"[Watchdog] Error logging incident: {db_err}")
+    finally:
+        conn.close()
+        
+    # Run HDMI-CEC command locally
+    try:
+        subprocess.run("echo 'on 0' | cec-client -s -d 1 && echo 'as' | cec-client -s -d 1", shell=True)
+    except Exception as e:
+        print(f"Error executing local CEC command: {e}")
+        
+    # 3. Video Playback via mpv
+    overlay_stream = "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8"
+    if req.mst3k_mode:
+        try:
+            conn = sqlite3.connect(db_path)
+            cur = conn.cursor()
+            row = cur.execute("SELECT stream_url FROM mlb_schedule WHERE room_state = 'active' AND stream_url IS NOT NULL LIMIT 1").fetchone()
+            if row and row[0]:
+                overlay_stream = row[0]
+            conn.close()
+        except Exception as e:
+            print(f"Error fetching active stream for overlay: {e}")
+            
+        mpv_cmd = f"killall mpv || true && nohup mpv --input-ipc-server=/tmp/mpvsocket --vo=drm --hwdec=auto --sid=1 --external-file='{overlay_stream}' --lavfi-complex=\"[vid1] scale=1920:1080 [main]; [vid2] scale=480:270 [over]; [main][over] overlay=main_w-overlay_w-50:main_h-overlay_h-50 [vo]\" '{found_file}' > /tmp/mpv.log 2>&1 &"
+    else:
+        mpv_cmd = f"killall mpv || true && nohup mpv --input-ipc-server=/tmp/mpvsocket --vo=drm --hwdec=auto --sid=1 '{found_file}' > /tmp/mpv.log 2>&1 &"
+        
+    subprocess.Popen(mpv_cmd, shell=True)
+    
+    return {
+        "status": "playing",
+        "local_path": found_file,
+        "incident_logged": inc_number,
+        "mst3k_mode": req.mst3k_mode
+    }
+
 @fastapi_app.get("/cinema")
 async def get_cinema_ui():
     return FileResponse("/home/james/SovereignOS/media_vault/cinema_remote.html")
@@ -2338,7 +2664,7 @@ async def compare_models(req: CompareRequest):
         tasks = [
             fetch_ollama(session, "phi3:mini", req.prompt, system_prompt),
             fetch_ollama(session, "dolphin-llama3", req.prompt, system_prompt),
-            fetch_gemini(session, "gemini-1.5-flash", req.prompt, system_prompt, gemini_key)
+            fetch_gemini(session, "gemini-flash-latest", req.prompt, system_prompt, gemini_key)
         ]
         results = await asyncio.gather(*tasks)
         
@@ -2497,7 +2823,7 @@ async def get_ai_personas():
             team            AS department,
             1               AS active,
             team            AS assigned_to,
-            llm_engine      AS u_llm_engine,
+            'gemini-flash-latest' AS u_llm_engine,
             system_prompt   AS u_system_prompt,
             cadence         AS u_cadence,
             boggs_level     AS u_boggs_reactivity,
@@ -2508,7 +2834,10 @@ async def get_ai_personas():
             avatar_url,
             color,
             email_alias,
-            u_visual_style
+            u_visual_style,
+            avatar_prompt   AS u_avatar_prompt,
+            character_map_prompt AS u_character_map_prompt,
+            canned_takes    AS u_canned_takes
         FROM persona
         WHERE team IS NOT NULL AND team != ''
         ORDER BY user_name
@@ -2551,7 +2880,7 @@ class SingleAdvocateGenerateRequest(BaseModel):
     color: str = "#7dd3fc"
     avatar_url: str = ""
     u_visual_style: str = "style_felt"
-    u_llm_engine: str = "gemini-1.5-flash"
+    u_llm_engine: str = "gemini-flash-latest"
     u_deployment_zone: str = ""
     unstructured_lore: str | None = None
 
@@ -2584,7 +2913,7 @@ async def generate_ai_persona(req: SingleAdvocateGenerateRequest, user: dict = D
         - color: A hex color code that fits their team or aesthetic (e.g., "#002D72" or "#FF5910" for Mets NYM).
         - avatar_url: An empty string or a default Dicebear URL like "https://api.dicebear.com/7.x/initials/svg?seed=Keith".
         - u_visual_style: One of "style_felt", "style_pixel", "style_clay", "style_apathetic". (Default: "style_felt").
-        - u_llm_engine: "gemini-1.5-flash"
+        - u_llm_engine: "gemini-flash-latest"
         - u_deployment_zone: The key of the deployment zone or room (e.g. "nym_room", "sports_bar", etc. or "global_zone").
 
         Return ONLY the raw JSON object, no markdown wrappers.
@@ -2609,7 +2938,7 @@ async def generate_ai_persona(req: SingleAdvocateGenerateRequest, user: dict = D
     color = parsed_data.get("color") or req.color or "#7dd3fc"
     avatar_url = parsed_data.get("avatar_url") or req.avatar_url or ""
     u_visual_style = parsed_data.get("u_visual_style") or req.u_visual_style or "style_felt"
-    u_llm_engine = parsed_data.get("u_llm_engine") or req.u_llm_engine or "gemini-1.5-flash"
+    u_llm_engine = parsed_data.get("u_llm_engine") or req.u_llm_engine or "gemini-flash-latest"
     u_deployment_zone = parsed_data.get("u_deployment_zone") or req.u_deployment_zone or ""
 
     # Ensure KI-044 is enforced
@@ -2682,12 +3011,12 @@ human biological existence.
         INSERT INTO persona (
             id, user_name, display_name, team, system_prompt, boggs_level, 
             avatar_url, color, cadence, deep_lore, behavior_notes, governance, email_alias, u_visual_style,
-            llm_engine, u_deployment_zone
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            u_deployment_zone
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         sys_id, user_name, first_name, assigned_to, u_system_prompt, u_boggs_reactivity,
         avatar_url, color, u_cadence, u_deep_lore, u_behavior_expectations, u_governance_boundaries, email_alias, u_visual_style,
-        u_llm_engine, u_deployment_zone
+        u_deployment_zone
     ))
     
     con.commit()
@@ -2724,7 +3053,7 @@ async def get_ai_persona_by_id(sys_id: str):
             team            AS department,
             1               AS active,
             team            AS assigned_to,
-            llm_engine      AS u_llm_engine,
+            'gemini-flash-latest' AS u_llm_engine,
             system_prompt   AS u_system_prompt,
             cadence         AS u_cadence,
             boggs_level     AS u_boggs_reactivity,
@@ -2735,7 +3064,10 @@ async def get_ai_persona_by_id(sys_id: str):
             avatar_url,
             color,
             email_alias,
-            u_visual_style
+            u_visual_style,
+            avatar_prompt   AS u_avatar_prompt,
+            character_map_prompt AS u_character_map_prompt,
+            canned_takes    AS u_canned_takes
         FROM persona
         WHERE id = ? OR user_name = ?
     """, (sys_id, sys_id))
@@ -2771,9 +3103,12 @@ async def update_ai_persona(sys_id: str, request: Request):
         "color":                   "color",
         "email_alias":             "email_alias",
         "u_visual_style":          "u_visual_style",
-        "u_llm_engine":            "llm_engine",
         "u_deployment_zone":       "u_deployment_zone",
         "avatar_url":              "avatar_url",
+        "u_avatar_prompt":         "avatar_prompt",
+        "u_character_map_prompt":  "character_map_prompt",
+        "u_canned_takes":          "canned_takes",
+        "canned_takes":            "canned_takes"
     }
 
     updates = {field_map[k]: v for k, v in data.items() if k in field_map and v is not None}
@@ -2823,24 +3158,27 @@ async def create_ai_persona(request: Request):
     avatar_url = data.get("avatar_url", "")
     u_visual_style = data.get("u_visual_style", "style_felt")
     u_deployment_zone = data.get("u_deployment_zone", "")
-    u_llm_engine = data.get("u_llm_engine", "gemini-1.5-flash")
+    u_llm_engine = data.get("u_llm_engine", "gemini-flash-latest")
+    u_avatar_prompt = data.get("u_avatar_prompt", "")
+    u_character_map_prompt = data.get("u_character_map_prompt", "")
+    u_canned_takes = data.get("u_canned_takes", "[]")
 
     # Insert into ServiceNow parity tables (cmdb_ci and cmdb_ci_ai_persona) for full relational integrity
     cur.execute("INSERT INTO cmdb_ci (sys_id, name, sys_class_name, short_description, operational_status, assigned_to) VALUES (?, ?, 'cmdb_ci_ai_persona', ?, 1, ?)",
                 (sys_id, display_name, behavior_notes, team))
-    cur.execute("INSERT INTO cmdb_ci_ai_persona (sys_id, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence, u_deep_lore, u_behavior_expectations, u_governance_boundaries, u_visual_style) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (sys_id, system_prompt, u_deployment_zone, boggs_level, cadence, deep_lore, behavior_notes, governance, u_visual_style))
+    cur.execute("INSERT INTO cmdb_ci_ai_persona (sys_id, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence, u_deep_lore, u_behavior_expectations, u_governance_boundaries, u_visual_style, u_avatar_prompt, u_character_map_prompt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (sys_id, system_prompt, u_deployment_zone, boggs_level, cadence, deep_lore, behavior_notes, governance, u_visual_style, u_avatar_prompt, u_character_map_prompt))
 
     cur.execute("""
         INSERT INTO persona (
             id, user_name, display_name, team, system_prompt, boggs_level, 
             avatar_url, color, cadence, deep_lore, behavior_notes, governance, email_alias, u_visual_style,
-            llm_engine, u_deployment_zone
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            u_deployment_zone, avatar_prompt, character_map_prompt, canned_takes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         sys_id, user_name, display_name, team, system_prompt, boggs_level,
         avatar_url, color, cadence, deep_lore, behavior_notes, governance, email_alias, u_visual_style,
-        u_llm_engine, u_deployment_zone
+        u_deployment_zone, u_avatar_prompt, u_character_map_prompt, u_canned_takes
     ))
     
     con.commit()
@@ -3233,7 +3571,7 @@ async def bro_decode(req: Request):
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-flash-latest")
         prompt = f"The user is typing a hurried/jumbled software development ticket from their phone at a baseball game. Clean this up into a concise, professional title and a clear, actionable set of instructions for an AI coding assistant. Return raw JSON ONLY with 'short_description' (string) and 'description' (string) keys. No markdown blocks.\n\nInput Title: {short_desc}\nInput Body: {desc}"
         response = model.generate_content(prompt)
         text = response.text.replace("```json", "").replace("```", "").strip()
@@ -3775,6 +4113,7 @@ async def print_dossier_pdf(ids: str = None, background_tasks: BackgroundTasks =
             return ""
         clean_path = file_path.lstrip("/")
         search_dirs = [
+            "/home/james/SovereignOS/avatars",
             "/home/james/SovereignOS/01_Sovereign_Portal/public",
             "/home/james/SovereignOS/02_Sovereign_Media/public",
             "/home/james/SovereignOS/15_FanStack/public",
@@ -3828,6 +4167,7 @@ async def print_dossier_pdf(ids: str = None, background_tasks: BackgroundTasks =
 
         # Try fallback local avatar files
         for search_dir in [
+            "/home/james/SovereignOS/avatars",
             "/home/james/SovereignOS/01_Sovereign_Portal/public/avatars",
             "/home/james/SovereignOS/02_Sovereign_Media/public/avatars",
             "/home/james/SovereignOS/15_FanStack/public/avatars",
@@ -3881,7 +4221,7 @@ async def print_dossier_pdf(ids: str = None, background_tasks: BackgroundTasks =
         behavior_notes = p.get("behavior_notes", "")
         governance = p.get("governance", "")
         email_alias = p.get("email_alias", "")
-        llm_engine = p.get("llm_engine", "gemini-1.5-flash")
+        llm_engine = p.get("llm_engine", "gemini-flash-latest")
         u_visual_style = p.get("u_visual_style", "default")
         avatar_prompt = p.get("avatar_prompt", "")
         character_map_prompt = p.get("character_map_prompt", "")
@@ -4443,8 +4783,31 @@ async def print_dossier_pdf(ids: str = None, background_tasks: BackgroundTasks =
     # Generate PDF via Chrome headless
     temp_pdf_path = temp_html_path.replace(".html", ".pdf")
     
+    import shutil
+    chrome_path = None
+    for name in ["google-chrome", "google-chrome-stable", "chromium-browser", "chromium"]:
+        p = shutil.which(name)
+        if p:
+            chrome_path = p
+            break
+    if not chrome_path:
+        fallbacks = [
+            "/home/james/.local/bin/google-chrome",
+            "/home/james/.local/bin/google-chrome-stable",
+            "/home/james/.local/bin/chromium-browser",
+            "/home/james/.local/bin/chromium",
+            "/usr/bin/google-chrome",
+            "/usr/local/bin/google-chrome"
+        ]
+        for p in fallbacks:
+            if os.path.exists(p):
+                chrome_path = p
+                break
+    if not chrome_path:
+        chrome_path = "/usr/local/bin/google-chrome"
+
     chrome_cmd = [
-        "/usr/local/bin/google-chrome",
+        chrome_path,
         "--headless",
         "--disable-gpu",
         "--no-sandbox",
@@ -4533,6 +4896,7 @@ async def get_persona_image(persona_id: str):
         print(f"[persona_image] DB lookup error: {e}")
     # 2. Fall back to filesystem
     for search_dir in [
+        "/home/james/SovereignOS/avatars",
         "/home/james/SovereignOS/15_FanStack/public/avatars",
         "/home/james/SovereignOS/dna/media/avatars",
         "/home/james/SovereignOS/dna/media/character_maps"
@@ -4793,7 +5157,7 @@ async def run_vertex_prompt(prompt: str, system_instruction: str = "") -> str:
         
     def _call_gemini():
         sys_prompt = system_instruction or "You are a brand intelligence assistant for Sovereign OS."
-        gemini_model = GenerativeModel("gemini-1.5-flash", system_instruction=[sys_prompt])
+        gemini_model = GenerativeModel("gemini-flash-latest", system_instruction=[sys_prompt])
         res = gemini_model.generate_content(
             prompt,
             generation_config={"temperature": 0.7}
@@ -5875,8 +6239,8 @@ async def onboard_brand_stack(req: BrandOnboardRequest, user=Depends(get_current
             
             cur.execute("""
                 INSERT OR REPLACE INTO persona 
-                    (id, user_name, display_name, team, system_prompt, boggs_level, avatar_url, color, cadence, deep_lore, governance, llm_engine, is_heel, rivalry_target_handle)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'gemini-1.5-flash', ?, ?)
+                    (id, user_name, display_name, team, system_prompt, boggs_level, avatar_url, color, cadence, deep_lore, governance, is_heel, rivalry_target_handle)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 p_sys_id,
                 username,
@@ -6334,6 +6698,189 @@ async def delete_soundboard_phrase(sys_id: str):
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()
+
+from pydantic import BaseModel
+
+class OutrageProxyRequest(BaseModel):
+    manager_id: str
+    trigger_event: str
+    selected_proxy_id: int
+    intensity_level: str
+
+@fastapi_app.get("/api/sports/outrage_proxy_umpires")
+async def get_outrage_proxy_umpires():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        c = conn.cursor()
+        c.execute("""
+            SELECT id, umpire_name, durability_rating, dirt_kick_capacity, ejection_flair_level, active_status
+            FROM outrage_proxy_umpires
+            ORDER BY id ASC
+        """)
+        rows = c.fetchall()
+        proxies = [dict(row) for row in rows]
+        return {"status": "success", "proxies": proxies}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@fastapi_app.post("/v1/triage/rage")
+async def deploy_rage_proxy(req: OutrageProxyRequest):
+    import websockets
+    import json
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    try:
+        c = conn.cursor()
+        
+        # 1. Verify proxy umpire active status and capacity
+        c.execute("""
+            SELECT id, umpire_name, active_status, dirt_kick_capacity, ejection_flair_level
+            FROM outrage_proxy_umpires
+            WHERE id = ?
+        """, (req.selected_proxy_id,))
+        ump_row = c.fetchone()
+        if not ump_row:
+            raise HTTPException(status_code=404, detail=f"Proxy umpire ID {req.selected_proxy_id} not found.")
+        
+        if not ump_row["active_status"] or ump_row["active_status"] != 1:
+            raise HTTPException(status_code=400, detail=f"Proxy umpire '{ump_row['umpire_name']}' is not active.")
+            
+        if ump_row["dirt_kick_capacity"] <= 0:
+            raise HTTPException(status_code=400, detail=f"Proxy umpire '{ump_row['umpire_name']}' has depleted dirt kick capacity.")
+            
+        # 2. Perform a lookup on the transaction limits (max 2 manager tantrums per game)
+        # Find active game
+        c.execute("""
+            SELECT game_pk FROM cmdb_ci_fanstack_room r
+            JOIN cmdb_ci c ON r.sys_id = c.sys_id
+            WHERE c.operational_status = 'active' OR c.operational_status = 1 OR c.operational_status = 3
+            LIMIT 1
+        """)
+        game_row = c.fetchone()
+        active_game_pk = game_row["game_pk"] if game_row else "823615"
+        
+        c.execute("""
+            SELECT COUNT(*) FROM outrage_proxy_tantrums WHERE game_pk = ?
+        """, (active_game_pk,))
+        tantrum_count = c.fetchone()[0]
+        if tantrum_count >= 2:
+            raise HTTPException(
+                status_code=429, 
+                detail="Transaction limit reached: Max 2 manager tantrums per game allowed to avoid infinite loop locks."
+            )
+            
+        # 3. Emit a WebSocket signal to the active game room
+        ws_msg = {
+            "type": "outrage_proxy_deployed",
+            "event": "outrage_proxy_deployed",
+            "proxy_name": ump_row["umpire_name"],
+            "action": "traditional_drama_loop",
+            "ejection_triggered": True,
+            "target_game_pk": active_game_pk
+        }
+        
+        try:
+            async with websockets.connect("ws://localhost:8008") as ws:
+                await ws.send(json.dumps(ws_msg))
+        except Exception as ws_err:
+            print(f"[RaaS] WebSocket broadcast failed: {ws_err}")
+            
+        # 4. Increment the target umpire's dirt_kick_capacity usage (decrement capacity) and update the database state
+        c.execute("""
+            UPDATE outrage_proxy_umpires
+            SET dirt_kick_capacity = MAX(0, dirt_kick_capacity - 1)
+            WHERE id = ?
+        """, (req.selected_proxy_id,))
+        
+        # Log the tantrum
+        c.execute("""
+            INSERT INTO outrage_proxy_tantrums (game_pk, umpire_id, manager_id, intensity_level)
+            VALUES (?, ?, ?, ?)
+        """, (active_game_pk, req.selected_proxy_id, req.manager_id, req.intensity_level))
+        
+        conn.commit()
+        
+        return {
+            "status": "success",
+            "message": "Outrage proxy deployed successfully",
+            "active_game_pk": active_game_pk,
+            "proxy_name": ump_row["umpire_name"],
+            "remaining_capacity": max(0, ump_row["dirt_kick_capacity"] - 1)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+class ScratchpadRequest(BaseModel):
+    raw_text: str
+    source_context: str = "StackLabs Homepage Quick-Capture"
+
+@fastapi_app.post("/v1/ingress/scratchpad", status_code=201)
+async def create_ingress_scratchpad(req: ScratchpadRequest):
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        c = conn.cursor()
+        c.execute("""
+            INSERT INTO raw_idea_backlog (raw_text, source_context)
+            VALUES (?, ?)
+        """, (req.raw_text, req.source_context))
+        idea_id = c.lastrowid
+        conn.commit()
+        return {"status": "success", "idea_id": idea_id}
+    except Exception as e:
+        print(f"[INGRESS ERROR] Database insertion failed, fallback active: {e}")
+        return {
+            "status": "fallback",
+            "message": "Database write failed, local fallback enabled",
+            "error": str(e),
+            "local_fallback": True
+        }
+    finally:
+        conn.close()
+
+@fastapi_app.post("/api/media/physical_siren")
+async def trigger_physical_siren():
+    import socket
+    import json
+    import asyncio
+    import time
+    
+    ips = ["192.168.1.173", "192.168.1.174", "192.168.1.176", "192.168.1.188"]
+    port = 4003
+    
+    def fire_govee(r, g, b):
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        msg = {
+            "msg": {
+                "cmd": "colorWC",
+                "data": {
+                    "color": {"r": r, "g": g, "b": b},
+                    "colorTem": 0
+                }
+            }
+        }
+        payload = json.dumps(msg).encode('utf-8')
+        for ip in ips:
+            try:
+                sock.sendto(payload, (ip, port))
+            except:
+                pass
+        sock.close()
+        
+    def run_strobe():
+        for _ in range(5):
+            fire_govee(255, 0, 0)
+            time.sleep(0.3)
+            fire_govee(0, 0, 255)
+            time.sleep(0.3)
+            
+    loop = asyncio.get_running_loop()
+    loop.run_in_executor(None, run_strobe)
+    return {"status": "success", "message": "Physical siren triggered mesh-wide."}
 
 if __name__ == "__main__":
     uvicorn.run(fastapi_app, host="0.0.0.0", port=8090)

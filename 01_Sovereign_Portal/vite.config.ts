@@ -28,6 +28,16 @@ export default defineConfig(({mode}) => {
         cert: fs.readFileSync('./clio.taila01894.ts.net.crt'),
       },
       proxy: {
+        '/api/personas/print_dossier': {
+          target: 'http://127.0.0.1:8090',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/api/personas': {
+          target: 'http://127.0.0.1:8096',
+          changeOrigin: true,
+          secure: false,
+        },
         '/api/voice': {
           target: 'http://127.0.0.1:8090',
           changeOrigin: true,
@@ -157,7 +167,19 @@ export default defineConfig(({mode}) => {
           target: 'http://127.0.0.1:8085',
           changeOrigin: true,
         },
-        '/api/snipe': {
+         '/api/snipe': {
+          target: 'http://127.0.0.1:5056',
+          changeOrigin: true,
+        },
+        '/api/transcribe': {
+          target: 'http://127.0.0.1:5056',
+          changeOrigin: true,
+        },
+        '/api/summarize': {
+          target: 'http://127.0.0.1:5056',
+          changeOrigin: true,
+        },
+        '/api/analyze_video': {
           target: 'http://127.0.0.1:5056',
           changeOrigin: true,
         },
@@ -202,6 +224,16 @@ export default defineConfig(({mode}) => {
           changeOrigin: true,
         },
         '/api/media/soundboard': {
+          target: 'http://127.0.0.1:8090',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/api/v1/omega-gate': {
+          target: 'http://127.0.0.1:8090',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/api/soundboard': {
           target: 'http://127.0.0.1:8090',
           changeOrigin: true,
           secure: false,

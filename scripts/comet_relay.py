@@ -2,8 +2,8 @@ import asyncio
 import json
 import sqlite3
 import os
-import websockets
 import aiohttp
+from aiohttp import web
 from datetime import datetime
 
 DB_PATH = "/home/james/SovereignOS/dna/sovereign_now.db"
@@ -62,9 +62,9 @@ async def get_initial_state():
             "compiled_at": r["compiled_at"]
         })
 
-    # Fetch active priority alerts
+    # Fetch active priority alerts, including avatar_url
     alert_rows = query_db("""
-        SELECT id, alert_type, status, sys_ticket_id 
+        SELECT id, alert_type, status, sys_ticket_id, avatar_url 
         FROM comet_priority_alerts 
         WHERE status = 'ACTIVE'
     """)
@@ -74,7 +74,8 @@ async def get_initial_state():
             "id": r["id"],
             "alert_type": r["alert_type"],
             "status": r["status"],
-            "sys_ticket_id": r["sys_ticket_id"]
+            "sys_ticket_id": r["sys_ticket_id"],
+            "avatar_url": r["avatar_url"]
         })
 
     return {
@@ -88,7 +89,11 @@ async def broadcast(message):
     if not clients:
         return
     payload = json.dumps(message)
-    await asyncio.gather(*[client.send(payload) for client in clients], return_exceptions=True)
+    for ws in list(clients):
+        try:
+            await ws.send_str(payload)
+        except Exception:
+            clients.discard(ws)
 
 async def create_clio_ticket(alert_type):
     payload = {
@@ -131,128 +136,198 @@ async def resolve_clio_ticket(ticket_id):
     except Exception as e:
         print(f"[CLIO TICKET RESOLVE EXCEPTION] Failed to resolve: {e}")
 
-async def handle_client(websocket):
-    clients.add(websocket)
+async def websocket_handler(request):
+    ws = web.WebSocketResponse()
+    await ws.prepare(request)
+    
+    clients.add(ws)
     print(f"[WS CLIENT CONNECTED] Total clients: {len(clients)}")
+    
     try:
         # Send initial state
         state = await get_initial_state()
-        await websocket.send(json.dumps(state))
+        await ws.send_str(json.dumps(state))
 
-        async for message_str in websocket:
-            try:
-                data = json.loads(message_str)
-            except Exception as e:
-                print(f"[WS JSON ERROR] {e}")
-                continue
+        async for msg in ws:
+            if msg.type == web.WSMsgType.TEXT:
+                try:
+                    data = json.loads(msg.data)
+                except Exception as e:
+                    print(f"[WS JSON ERROR] {e}")
+                    continue
 
-            msg_type = data.get("type")
+                msg_type = data.get("type")
 
-            if msg_type == "chat":
-                sender_id = data.get("sender_id", "Anonymous")
-                message_text = data.get("message_text", "")
-                channel_name = data.get("channel_name", "general")
-                created_at = datetime.now().isoformat()
-                
-                new_id = query_db("""
-                    INSERT INTO comet_messages (sender_id, message_text, channel_name, created_at)
-                    VALUES (?, ?, ?, ?)
-                """, (sender_id, message_text, channel_name, created_at), commit=True)
-                
-                await broadcast({
-                    "type": "chat",
-                    "id": new_id,
-                    "sender_id": sender_id,
-                    "message_text": message_text,
-                    "channel_name": channel_name,
-                    "created_at": created_at
-                })
+                if msg_type == "chat":
+                    sender_id = data.get("sender_id", "Anonymous")
+                    message_text = data.get("message_text", "")
+                    channel_name = data.get("channel_name", "general")
+                    created_at = datetime.now().isoformat()
+                    
+                    new_id = query_db("""
+                        INSERT INTO comet_messages (sender_id, message_text, channel_name, created_at)
+                        VALUES (?, ?, ?, ?)
+                    """, (sender_id, message_text, channel_name, created_at), commit=True)
+                    
+                    await broadcast({
+                        "type": "chat",
+                        "id": new_id,
+                        "sender_id": sender_id,
+                        "message_text": message_text,
+                        "channel_name": channel_name,
+                        "created_at": created_at
+                    })
 
-            elif msg_type == "grocery_add":
-                item_name = data.get("item_name", "")
-                quantity = data.get("quantity", "1")
-                compiled_at = datetime.now().isoformat()
-                
-                new_id = query_db("""
-                    INSERT INTO comet_grocery_lists (item_name, quantity, status, compiled_at)
-                    VALUES (?, ?, 'PENDING', ?)
-                """, (item_name, quantity, compiled_at), commit=True)
-                
-                await broadcast({
-                    "type": "grocery_add",
-                    "id": new_id,
-                    "item_name": item_name,
-                    "quantity": quantity,
-                    "status": "PENDING",
-                    "compiled_at": compiled_at
-                })
+                elif msg_type == "grocery_add":
+                    item_name = data.get("item_name", "")
+                    quantity = data.get("quantity", "1")
+                    compiled_at = datetime.now().isoformat()
+                    
+                    new_id = query_db("""
+                        INSERT INTO comet_grocery_lists (item_name, quantity, status, compiled_at)
+                        VALUES (?, ?, 'PENDING', ?)
+                    """, (item_name, quantity, compiled_at), commit=True)
+                    
+                    await broadcast({
+                        "type": "grocery_add",
+                        "id": new_id,
+                        "item_name": item_name,
+                        "quantity": quantity,
+                        "status": "PENDING",
+                        "compiled_at": compiled_at
+                    })
 
-            elif msg_type == "grocery_toggle":
-                item_id = data.get("id")
-                new_status = data.get("status", "COMPLETED")
-                
-                query_db("""
-                    UPDATE comet_grocery_lists
-                    SET status = ?
-                    WHERE id = ?
-                """, (new_status, item_id), commit=True)
-                
-                await broadcast({
-                    "type": "grocery_toggle",
-                    "id": item_id,
-                    "status": new_status
-                })
+                elif msg_type == "grocery_toggle":
+                    item_id = data.get("id")
+                    new_status = data.get("status", "COMPLETED")
+                    
+                    query_db("""
+                        UPDATE comet_grocery_lists
+                        SET status = ?
+                        WHERE id = ?
+                    """, (new_status, item_id), commit=True)
+                    
+                    await broadcast({
+                        "type": "grocery_toggle",
+                        "id": item_id,
+                        "status": new_status
+                    })
 
-            elif msg_type == "priority_alert":
-                alert_type = data.get("alert_type", "General")
-                
-                # Submit incident ticket to Clio
-                ticket_id = await create_clio_ticket(alert_type)
-                
-                new_id = query_db("""
-                    INSERT INTO comet_priority_alerts (alert_type, status, sys_ticket_id)
-                    VALUES (?, 'ACTIVE', ?)
-                """, (alert_type, ticket_id), commit=True)
-                
-                await broadcast({
-                    "type": "priority_alert",
-                    "id": new_id,
-                    "alert_type": alert_type,
-                    "status": "ACTIVE",
-                    "sys_ticket_id": ticket_id
-                })
+                elif msg_type == "priority_alert":
+                    alert_type = data.get("alert_type", "General")
+                    avatar_url = data.get("avatar_url", "/avatars/mando/mando_warning.png")
+                    
+                    # Submit incident ticket to Clio
+                    ticket_id = await create_clio_ticket(alert_type)
+                    
+                    new_id = query_db("""
+                        INSERT INTO comet_priority_alerts (alert_type, status, sys_ticket_id, avatar_url)
+                        VALUES (?, 'ACTIVE', ?, ?)
+                    """, (alert_type, ticket_id, avatar_url), commit=True)
+                    
+                    await broadcast({
+                        "type": "priority_alert",
+                        "id": new_id,
+                        "alert_type": alert_type,
+                        "status": "ACTIVE",
+                        "sys_ticket_id": ticket_id,
+                        "avatar_url": avatar_url
+                    })
 
-            elif msg_type == "priority_resolve":
-                alert_id = data.get("id")
-                
-                # Fetch ticket ID to close it
-                row = query_db("SELECT sys_ticket_id FROM comet_priority_alerts WHERE id = ?", (alert_id,), one=True)
-                ticket_id = row["sys_ticket_id"] if row else None
-                
-                if ticket_id:
-                    await resolve_clio_ticket(ticket_id)
-                
-                query_db("""
-                    UPDATE comet_priority_alerts
-                    SET status = 'RESOLVED'
-                    WHERE id = ?
-                """, (alert_id,), commit=True)
-                
-                await broadcast({
-                    "type": "priority_resolve",
-                    "id": alert_id,
-                    "status": "RESOLVED"
-                })
-
-    except websockets.exceptions.ConnectionClosed as e:
-        print(f"[WS CLIENT DISCONNECTED] {e}")
+                elif msg_type == "priority_resolve":
+                    alert_id = data.get("id")
+                    
+                    # Fetch ticket ID to close it
+                    row = query_db("SELECT sys_ticket_id FROM comet_priority_alerts WHERE id = ?", (alert_id,), one=True)
+                    ticket_id = row["sys_ticket_id"] if row else None
+                    
+                    if ticket_id:
+                        await resolve_clio_ticket(ticket_id)
+                    
+                    query_db("""
+                        UPDATE comet_priority_alerts
+                        SET status = 'RESOLVED'
+                        WHERE id = ?
+                    """, (alert_id,), commit=True)
+                    
+                    await broadcast({
+                        "type": "priority_resolve",
+                        "id": alert_id,
+                        "status": "RESOLVED"
+                    })
+            elif msg.type == web.WSMsgType.ERROR:
+                print(f"[WS CLIENT DISCONNECTED WITH ERROR] {ws.exception()}")
     finally:
-        clients.remove(websocket)
+        clients.discard(ws)
+        print(f"[WS CLIENT DISCONNECTED] Total clients: {len(clients)}")
+    return ws
+
+async def webhook_alert_handler(request):
+    try:
+        data = await request.json()
+    except Exception as e:
+        return web.json_response({"error": f"Invalid JSON: {e}"}, status=400)
+        
+    alert_type = data.get("alert_type", "General")
+    sys_ticket_id = data.get("sys_ticket_id")
+    avatar_url = data.get("avatar_url", "/avatars/mando/mando_warning.png")
+    
+    # Store in DB
+    new_id = query_db("""
+        INSERT INTO comet_priority_alerts (alert_type, status, sys_ticket_id, avatar_url)
+        VALUES (?, 'ACTIVE', ?, ?)
+    """, (alert_type, sys_ticket_id, avatar_url), commit=True)
+    
+    # Broadcast to websocket clients
+    await broadcast({
+        "type": "priority_alert",
+        "id": new_id,
+        "alert_type": alert_type,
+        "status": "ACTIVE",
+        "sys_ticket_id": sys_ticket_id,
+        "avatar_url": avatar_url
+    })
+    
+    return web.json_response({"status": "dispatched", "id": new_id})
+
+async def webhook_resolve_handler(request):
+    try:
+        data = await request.json()
+    except Exception as e:
+        return web.json_response({"error": f"Invalid JSON: {e}"}, status=400)
+        
+    sys_ticket_id = data.get("sys_ticket_id")
+    if not sys_ticket_id:
+        return web.json_response({"error": "Missing sys_ticket_id"}, status=400)
+        
+    # Find matching active alerts
+    rows = query_db("SELECT id FROM comet_priority_alerts WHERE sys_ticket_id = ? AND status = 'ACTIVE'", (sys_ticket_id,))
+    for row in rows:
+        alert_id = row["id"]
+        query_db("UPDATE comet_priority_alerts SET status = 'RESOLVED' WHERE id = ?", (alert_id,), commit=True)
+        await broadcast({
+            "type": "priority_resolve",
+            "id": alert_id,
+            "status": "RESOLVED"
+        })
+        
+    return web.json_response({"status": "resolved"})
 
 async def main():
-    print(f"📡 Starting Comet Relay WebSockets Server on Port {PORT}...")
-    async with websockets.serve(handle_client, "0.0.0.0", PORT):
-        await asyncio.Future() # run forever
+    app = web.Application()
+    app.router.add_get('/', websocket_handler)
+    app.router.add_post('/webhook/alert', webhook_alert_handler)
+    app.router.add_post('/webhook/resolve', webhook_resolve_handler)
+    
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, '0.0.0.0', PORT)
+    print(f"📡 Starting Comet Relay Server (HTTP + WS) on Port {PORT}...")
+    await site.start()
+    
+    # Keep running forever
+    while True:
+        await asyncio.sleep(3600)
 
 if __name__ == "__main__":
     asyncio.run(main())

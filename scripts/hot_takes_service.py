@@ -13,6 +13,8 @@ import re
 import json
 import sqlite3
 import requests
+import subprocess
+import time
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import Optional
@@ -38,15 +40,20 @@ DB_PATH = "/home/james/SovereignOS/dna/sovereign_now.db"
 def _load_gemini_key() -> str:
     key = os.getenv("GEMINI_API_KEY", "") or os.getenv("VITE_GEMINI_API_KEY", "")
     if not key:
-        env_path = os.path.join(os.path.dirname(__file__), "..", "01_Sovereign_Portal", ".env")
-        try:
-            with open(env_path) as f:
-                for line in f:
-                    m = re.match(r"VITE_GEMINI_API_KEY\s*=\s*[\"']?([^\"'\s]+)[\"']?", line)
-                    if m:
-                        return m.group(1)
-        except Exception:
-            pass
+        env_paths = [
+            os.path.join(os.path.dirname(__file__), "..", "01_Sovereign_Portal", ".env"),
+            os.path.join(os.path.dirname(__file__), "..", ".env"),
+            "/home/james/SovereignOS/.env"
+        ]
+        for env_path in env_paths:
+            try:
+                with open(env_path) as f:
+                    for line in f:
+                        m = re.match(r"(?:VITE_)?GEMINI_API_KEY\s*=\s*[\"']?([^\"'\s]+)[\"']?", line)
+                        if m:
+                            return m.group(1)
+            except Exception:
+                pass
     return key
 
 GEMINI_KEY = _load_gemini_key()
@@ -66,6 +73,16 @@ class HotTakeResponse(BaseModel):
     topic: str
     engine_used: str
     text: str
+
+
+class HotTakeSniperRequest(BaseModel):
+    voice: str
+    prompt: str
+
+
+class HotTakeSniperResponse(BaseModel):
+    text: str
+
 
 
 def _fetch_tweet(url: str) -> str:
@@ -265,39 +282,71 @@ def call_ollama(model_name: str, system: str, prompt: str) -> str:
 
 
 def call_gemini(system: str, prompt: str) -> str:
-    """Direct Gemini 2.5 Flash call via Enterprise Vertex AI Client using legacy SDK and Google Cloud credits."""
+    """Direct Gemini call via Google GenAI SDK using Developer API Key."""
     try:
-        model = GenerativeModel(
-            "gemini-2.5-flash",
-            system_instruction=[system]
-        )
-        response = model.generate_content(
-            prompt,
-            generation_config={"temperature": 0.95, "max_output_tokens": 2048},
+        config = types.GenerateContentConfig(
+            system_instruction=system,
+            temperature=0.95,
+            max_output_tokens=2048,
             safety_settings=[
-                SafetySetting(
-                    category=HarmCategory.HARM_CATEGORY_HARASSMENT,
-                    threshold=HarmBlockThreshold.BLOCK_NONE,
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                    threshold=types.HarmBlockThreshold.BLOCK_NONE,
                 ),
-                SafetySetting(
-                    category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-                    threshold=HarmBlockThreshold.BLOCK_NONE,
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                    threshold=types.HarmBlockThreshold.BLOCK_NONE,
                 ),
-                SafetySetting(
-                    category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-                    threshold=HarmBlockThreshold.BLOCK_NONE,
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                    threshold=types.HarmBlockThreshold.BLOCK_NONE,
                 ),
-                SafetySetting(
-                    category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-                    threshold=HarmBlockThreshold.BLOCK_NONE,
+                types.SafetySetting(
+                    category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                    threshold=types.HarmBlockThreshold.BLOCK_NONE,
                 ),
             ]
         )
-        if response and response.text:
-            return _strip_meta(response.text.strip())
-        raise Exception("Empty response returned from Vertex AI Client.")
+        response = studio_client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=config
+        )
+        parts_text = []
+        if response and response.candidates and len(response.candidates) > 0:
+            candidate = response.candidates[0]
+            if candidate.content and candidate.content.parts:
+                for part in candidate.content.parts:
+                    if hasattr(part, "text") and part.text:
+                        parts_text.append(part.text)
+        if parts_text:
+            txt = "".join(parts_text)
+        else:
+            try:
+                txt = response.text or ""
+            except Exception:
+                txt = ""
+        if txt:
+            return _strip_meta(txt.strip())
+        raise Exception("Empty response returned from Gemini API.")
     except Exception as e:
-        raise HTTPException(status_code=502, detail=f"Vertex AI Gemini error: {str(e)}")
+        print(f"[GEMINI FALLBACK] Gemini call failed, falling back to local Llama: {e}")
+        try:
+            with open("/tmp/ollama_active_lock", "w") as f:
+                f.write("active")
+            subprocess.run(["sudo", "systemctl", "start", "ollama"], check=True)
+            for _ in range(5):
+                try:
+                    r = requests.get("http://127.0.0.1:11434", timeout=1)
+                    if r.status_code == 200 or r.status_code == 404: # Ollama root returns 404/200 depending on exact route
+                        break
+                except Exception:
+                    pass
+                time.sleep(1)
+            return call_ollama("phi3:mini", system, prompt)
+        except Exception as ollama_err:
+            raise HTTPException(status_code=502, detail=f"Gemini API error ({str(e)}) and local Ollama fallback failed ({str(ollama_err)})")
+
 
 
 
@@ -334,9 +383,9 @@ def hot_take(req: HotTakeRequest):
 
     print(f"[HOT TAKES] {req.persona} | engine={engine} | topic={req.topic[:60]}")
 
-    if engine == "gemini-2.5-flash":
+    if engine in ("gemini-1.5-flash", "gemini-flash-latest", "gemini-2.5-flash"):
         text = call_gemini(system, prompt)
-        engine_used = "Gemini 2.5 Flash"
+        engine_used = "gemini-2.5-flash"
     else:
         # Default to dolphin-llama3, fallback to phi3 if llama3 unavailable
         model_name = "dolphin-llama3" if engine == "local_llama3" else "phi3:mini"
@@ -657,5 +706,18 @@ async def run_mailbag():
         "hate_mail_staged": len(hate_mail),
         "recent_hate": hate_mail[-10:] if len(hate_mail) >= 10 else hate_mail
     }
+
+
+@router.post("/api/hot_take_sniper", response_model=HotTakeSniperResponse)
+def hot_take_sniper(req: HotTakeSniperRequest):
+    """
+    Generate a sniper response from YouTube Chat using a system prompt (voice) and user prompt.
+    """
+    try:
+        text = call_gemini(req.voice, req.prompt)
+        return {"text": text}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 

@@ -4,7 +4,7 @@
 # STRY-06072026-LOG-INTEGRATION — Phase 3: The 5-Minute Sync Loop
 # ==============================================================================
 
-GAME_PK="824916"
+GAME_PK="824505"
 OUTPUT_DIR="/home/james/sovereign_inbox/notebook_sync/StackLabs_Internal"
 OUTPUT_FILE="$OUTPUT_DIR/game_log_${GAME_PK}_live.md.txt"
 

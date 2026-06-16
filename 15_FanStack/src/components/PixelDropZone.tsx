@@ -386,7 +386,9 @@ export default function PixelDropZone() {
                           {task.status === 'success' ? (
                             <CheckCircle className="w-3.5 h-3.5 text-green-400 shrink-0" />
                           ) : (
-                            <XCircle className="w-3.5 h-3.5 text-red-400 shrink-0" title={task.errorMsg} />
+                            <span title={task.errorMsg} className="shrink-0">
+                              <XCircle className="w-3.5 h-3.5 text-red-400" />
+                            </span>
                           )}
                         </div>
                       );

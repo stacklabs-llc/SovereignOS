@@ -10,6 +10,13 @@ export default defineConfig({
     strictPort: true,
     host: '127.0.0.1', // Only listen on localhost to avoid binding conflict with Tailscale
     allowedHosts: true,
+    proxy: {
+      '/api/cinema': {
+        target: 'http://127.0.0.1:8090',
+        changeOrigin: true,
+        secure: false,
+      }
+    },
     fs: {
       allow: ['..']
     },

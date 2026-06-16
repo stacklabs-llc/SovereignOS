@@ -8,6 +8,7 @@ from datetime import date, timedelta
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import Response, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 import httpx
 from bs4 import BeautifulSoup
 import re
@@ -36,6 +37,120 @@ def get_db_connection():
 @app.get("/api/health")
 def health_check():
     return {"status": "Sovereign Stream Relay is Active", "port": 8097}
+
+@app.get("/api/sports/telemetry_logs")
+async def get_telemetry_logs(game_pk: str = None, limit: int = 50):
+    """
+    Returns the tail of the background poller's raw statcast telemetry log,
+    optionally filtered by game_pk.
+    """
+    logger.info(f"get_telemetry_logs: game_pk={game_pk}, limit={limit}")
+    log_path = "/home/james/sovereign_inbox/today/statcast_telemetry.log"
+    if not os.path.exists(log_path):
+        return []
+    try:
+        # Resolve game_pk to teams if provided
+        filter_teams = None
+        if game_pk:
+            try:
+                conn = get_db_connection()
+                cursor = conn.cursor()
+                cursor.execute("SELECT home_team, away_team FROM mlb_schedule WHERE game_pk = ?", (game_pk,))
+                row = cursor.fetchone()
+                conn.close()
+                if row:
+                    # e.g., ("BAL", "SD")
+                    filter_teams = (row["home_team"], row["away_team"])
+            except Exception as db_err:
+                logger.error(f"Error querying teams for game_pk {game_pk}: {db_err}")
+
+        with open(log_path, "r") as f:
+            content = f.read()
+        
+        # Split blocks by literal "\n\n" string
+        raw_blocks = content.strip().split("\\n\\n")
+            
+        parsed_blocks = []
+        for raw in raw_blocks:
+            if not raw.strip():
+                continue
+            block_lines = raw.strip().split("\\n")
+            block_data = {
+                "timestamp": "",
+                "state_summary": "",
+                "statcast_info": None,
+                "raw_payload": None
+            }
+            for l in block_lines:
+                l = l.strip()
+                if l.startswith("[") and "] [STATE]" in l:
+                    parts = l.split("] [STATE] ")
+                    block_data["timestamp"] = parts[0][1:]
+                    block_data["state_summary"] = parts[1]
+                elif l.startswith("[") and "STATCAST 📡" in l:
+                    parts = l.split(" STATCAST 📡 ")
+                    if not block_data["timestamp"]:
+                        block_data["timestamp"] = parts[0][1:]
+                    block_data["statcast_info"] = parts[1]
+                elif l.startswith("RAW PAYLOAD: "):
+                    payload_str = l[len("RAW PAYLOAD: "):]
+                    try:
+                        block_data["raw_payload"] = json.loads(payload_str)
+                    except Exception:
+                        block_data["raw_payload"] = payload_str
+            
+            # Filter by teams if game_pk was resolved
+            if filter_teams:
+                payload = block_data["raw_payload"]
+                matches = False
+                if isinstance(payload, dict):
+                    home = payload.get("home_team")
+                    away = payload.get("away_team")
+                    # Check matching teams in either order
+                    if (home == filter_teams[0] and away == filter_teams[1]) or \
+                       (home == filter_teams[1] and away == filter_teams[0]):
+                        matches = True
+                else:
+                    if filter_teams[0] in raw and filter_teams[1] in raw:
+                        matches = True
+                if not matches:
+                    continue
+                    
+            parsed_blocks.append(block_data)
+            
+        return parsed_blocks[-limit:]
+    except Exception as e:
+        logger.error(f"Error parsing telemetry logs: {e}")
+        raise HTTPException(status_code=500, detail="Failed to parse telemetry logs")
+
+
+@app.get("/api/sports/active_games")
+async def get_active_games():
+    """
+    Returns a list of all active game rooms.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT game_pk, home_team, away_team, room_state FROM mlb_schedule WHERE room_state = 'active'"
+        )
+        rows = cursor.fetchall()
+        conn.close()
+        
+        return [
+            {
+                "game_pk": str(r["game_pk"]),
+                "home_team": r["home_team"],
+                "away_team": r["away_team"],
+                "room_state": r["room_state"]
+            }
+            for r in rows
+        ]
+    except Exception as e:
+        logger.error(f"Error fetching active games: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/api/sports/{sport_type}")
 async def get_games(sport_type: str):
@@ -105,19 +220,52 @@ async def get_stream_url(game_id: str):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        cursor.execute("SELECT stream_url FROM mlb_schedule WHERE game_pk = ?", (game_id,))
+        cursor.execute("SELECT stream_url, stream_headers FROM mlb_schedule WHERE game_pk = ?", (game_id,))
         row = cursor.fetchone()
         conn.close()
         
         if row and row["stream_url"]:
-            return {"m3u8_url": row["stream_url"]}
+            headers_json = row["stream_headers"]
+            headers = {}
+            if headers_json:
+                try:
+                    headers = json.loads(headers_json)
+                except Exception:
+                    pass
+            return {"m3u8_url": row["stream_url"], "stream_headers": headers}
     except Exception as e:
         logger.error(f"Error loading stream URL: {e}")
         
     # Active 24/7 Red Bull TV live HLS action sports stream (failsafe fallback)
     return {
-        "m3u8_url": "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8"
+        "m3u8_url": "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8",
+        "stream_headers": {}
     }
+
+class UpdateStreamRequest(BaseModel):
+    stream_url: str
+    stream_source: str = "Manual Override"
+    stream_headers: dict = None
+
+@app.post("/api/stream/{game_id}")
+async def update_stream_url(game_id: str, req: UpdateStreamRequest):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        headers_json = json.dumps(req.stream_headers) if req.stream_headers else None
+        cursor.execute(
+            "UPDATE mlb_schedule SET stream_url = ?, stream_source = ?, stream_headers = ?, stream_resolved_at = datetime('now') WHERE game_pk = ?",
+            (req.stream_url, req.stream_source, headers_json, game_id)
+        )
+        conn.commit()
+        conn.close()
+        logger.info(f"Updated stream URL for game {game_id} to {req.stream_url}")
+        return {"status": "success", "message": f"Updated stream URL for game {game_id}"}
+    except Exception as e:
+        logger.error(f"Error updating stream URL: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 
 @app.get("/api/sports/game_state/{game_id}")
 async def get_game_state(game_id: str):
@@ -133,6 +281,7 @@ async def get_game_state(game_id: str):
             logger.error(f"Error reading game state file {file_path}: {e}")
             raise HTTPException(status_code=500, detail="Failed to parse game state")
     raise HTTPException(status_code=404, detail="Game state not found")
+
 
 if __name__ == "__main__":
     import uvicorn

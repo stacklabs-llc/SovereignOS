@@ -140,8 +140,8 @@ class RestHandler(SimpleHTTPRequestHandler):
                 conn = sqlite3.connect('/home/james/SovereignOS/dna/sovereign_now.db')
                 c = conn.cursor()
                 try:
-                    c.execute('CREATE TABLE IF NOT EXISTS sys_alerts (timestamp TEXT, severity INTEGER, message TEXT)')
-                    c.execute('INSERT INTO sys_alerts VALUES (?, ?, ?)', 
+                    c.execute('CREATE TABLE IF NOT EXISTS sys_alerts (timestamp TEXT, severity INTEGER, message TEXT, sys_created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP, sys_updated_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
+                    c.execute('INSERT INTO sys_alerts (timestamp, severity, message) VALUES (?, ?, ?)', 
                               (datetime.now().isoformat(), 0, '[VIP INGRESS DETECTED] Wardy connected to FanStack Sandbox'))
                     conn.commit()
                 finally:

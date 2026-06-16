@@ -16,7 +16,7 @@ if not key:
     sys.exit(1)
 
 genai.configure(api_key=key)
-model = genai.GenerativeModel('gemini-2.5-flash')
+model = genai.GenerativeModel('gemini-flash-latest')
 sample = genai.upload_file('/home/james/SovereignOS/dna/screenshots/artemis/2026-03-29 16_27_32-.png')
 resp = model.generate_content(['Describe this image. What application is open?', sample])
 print(resp.text)

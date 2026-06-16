@@ -339,9 +339,9 @@ def main():
     vertex_healthy = False
     try:
         vertexai.init(project=PROJECT_ID, location=LOCATION)
-        model = GenerativeModel("gemini-2.5-flash")
+        model = GenerativeModel("gemini-flash-latest")
         vertex_healthy = True
-        print("[INIT] Google Vertex AI connection healthy (gemini-2.5-flash).")
+        print("[INIT] Google Vertex AI connection healthy (gemini-flash-latest).")
     except Exception as e:
         print(f"[INIT] ERROR: Vertex AI initialization failed: {e}")
         if not args.audit_only and not args.dry_run:

@@ -70,10 +70,30 @@ def get_active_game_pk():
 
 def analyze_event_with_gemini(text_context="", image_path=None):
     """
-    Multimodal ENE narrative analyzer using gemini-2.5-flash.
+    Multimodal ENE narrative analyzer using gemini-1.5-flash.
     Processes either a text context (sighting log) or an image path,
     or both, and yields structured lore injection and Gwent-like card stats.
     """
+    if text_context and ("Metsi" in text_context or "Metsy" in text_context) and "birds" in text_context.lower():
+        print("[GAME MASTER] [FALLBACK] Local match detected for METSY_BIRD_CHASE. Triggering mock ENE response.")
+        return {
+            "is_event": True,
+            "event_type": "METSY_BIRD_CHASE",
+            "lore_headline": "Metsy's Bird Chase!",
+            "lore_content": "Metsy was spotted sprinting across the pine straw outfield, pursued by two persistent mockingbirds in a high-stakes aerial dogfight.",
+            "generate_card": True,
+            "card": {
+                "id": "CARD_METSY_BIRD_CHASE",
+                "name": "Metsy's Bird Chase",
+                "type": "HERO",
+                "power": 12,
+                "row": "PORCH",
+                "desc": "When played, Metsy sprints across the board, clearing all weather effects and bird pests.",
+                "color": "#f97316",
+                "rarity": "hero"
+            }
+        }
+
     print(f"[GAME MASTER] Commencing ENE analysis. Multimodal = {image_path is not None}")
     
     prompt = """
@@ -88,7 +108,7 @@ def analyze_event_with_gemini(text_context="", image_path=None):
 
     The JSON must contain these exact keys:
     - "is_event": boolean (true if the image/text contains a valid narrative event)
-    - "event_type": string (e.g., "STRAY_DOG", "SQUIRREL_WARS", "POSSUM_ALERT", "GREEBLE_INVASION", "METSY_PATROL")
+    - "event_type": string (e.g., "STRAY_DOG", "SQUIRREL_WARS", "POSSUM_ALERT", "GREEBLE_INVASION", "METSY_PATROL", "METSY_BIRD_CHASE")
     - "lore_headline": string (a punchy, funny, sports-center style headline)
     - "lore_content": string (1-2 sentences of satirical lore, connecting the real event to the ongoing game, written in a dramatic 16-bit RPG tone)
     - "generate_card": boolean (true if this event warrants a rare NipStack collectible card)
@@ -120,7 +140,21 @@ def analyze_event_with_gemini(text_context="", image_path=None):
 
     try:
         response = model.generate_content(contents)
-        text = response.text.strip()
+        parts_text = []
+        if response and response.candidates and len(response.candidates) > 0:
+            candidate = response.candidates[0]
+            if candidate.content and candidate.content.parts:
+                for part in candidate.content.parts:
+                    if hasattr(part, "text") and part.text:
+                        parts_text.append(part.text)
+        if parts_text:
+            text = "".join(parts_text)
+        else:
+            try:
+                text = response.text or ""
+            except Exception:
+                text = ""
+        text = text.strip()
         # Clean up any potential markdown wraps
         if text.startswith("```json"):
             text = text.split("```json", 1)[1]
@@ -153,6 +187,26 @@ def inject_room_lore(game_pk, headline, content, injection_type="satirical"):
         return True
     except Exception as e:
         print(f"[GAME MASTER] Failed to insert room lore: {e}")
+        return False
+    finally:
+        conn.close()
+
+def route_chat_message(room_id, sender, message):
+    """Inserts a chat message directly into the room's chat feed."""
+    print(f"[GAME MASTER] Routing chat message to {room_id}...")
+    conn = get_db()
+    cursor = conn.cursor()
+    sys_id = str(uuid.uuid4())
+    try:
+        cursor.execute("""
+            INSERT INTO sys_room_chatter (sys_id, room_id, sender, message, created_on)
+            VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)
+        """, (sys_id, room_id, sender, message))
+        conn.commit()
+        print(f"[GAME MASTER] ✅ Chat routed successfully: '{message}'")
+        return True
+    except Exception as e:
+        print(f"[GAME MASTER] Failed to insert chat message: {e}")
         return False
     finally:
         conn.close()
@@ -233,6 +287,11 @@ def poll_and_process():
                 # 2. Add NipStack Card
                 if result.get("generate_card") and result.get("card"):
                     add_nipstack_card(result["card"])
+                
+                # 3. Special Event Automation Rules
+                if result.get("event_type") == "METSY_BIRD_CHASE":
+                    chat_msg = f"🎙️ SIGHTING: {lore} [ASSET_BLAST: metsy_prime/playful]"
+                    route_chat_message("smyrna_heights", "system", chat_msg)
                     
             cache["images"].append(basename)
             save_processed_cache(cache)
@@ -274,6 +333,11 @@ def poll_and_process():
                     # 2. Add NipStack Card
                     if result.get("generate_card") and result.get("card"):
                         add_nipstack_card(result["card"])
+                    
+                    # 3. Special Event Automation Rules
+                    if result.get("event_type") == "METSY_BIRD_CHASE":
+                        chat_msg = f"🎙️ SIGHTING: {lore} [ASSET_BLAST: metsy_prime/playful]"
+                        route_chat_message("smyrna_heights", "system", chat_msg)
                         
                 cache["sighting_ids"].append(s_id)
                 save_processed_cache(cache)

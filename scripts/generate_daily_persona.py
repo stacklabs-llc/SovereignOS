@@ -39,7 +39,7 @@ def main():
     prompt = f"Recent MLB News:\n{context_text}\n\nGenerate the Daily Persona Blueprint."
     
     print("Calling Vertex AI for Persona Blueprint...")
-    model = GenerativeModel("gemini-2.5-flash", system_instruction=[sys_instr])
+    model = GenerativeModel("gemini-flash-latest", system_instruction=[sys_instr])
     
     try:
         response = model.generate_content(prompt, generation_config={"temperature": 0.9})

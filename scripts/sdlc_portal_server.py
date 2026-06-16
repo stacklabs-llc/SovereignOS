@@ -31,6 +31,8 @@ def resolve_attachment_path(filename: str):
         os.path.join(INBOX_PATH, "tickets", filename),
         os.path.join(INBOX_PATH, "reports", filename),
         os.path.join(INBOX_PATH, "dashboards", filename),
+        os.path.join(INBOX_PATH, "walkthroughs", filename),
+        os.path.join(INBOX_PATH, "implementation_plans", filename),
     ]
     for p in paths_to_check:
         if os.path.exists(p):
@@ -161,7 +163,15 @@ async def upload_attachment(ticket_id: str, file: UploadFile = File(...)):
     ext = os.path.splitext(filename)[1]
     sys_id = uuid.uuid4().hex
     new_filename = f"{sys_id}{ext}"
-    filepath = os.path.join(INBOX_PATH, new_filename)
+    
+    tickets_dir = os.path.join(INBOX_PATH, "tickets")
+    if not os.path.exists(tickets_dir):
+        try:
+            os.makedirs(tickets_dir)
+        except:
+            pass
+            
+    filepath = os.path.join(tickets_dir, new_filename)
     
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
@@ -179,20 +189,25 @@ async def upload_attachment(ticket_id: str, file: UploadFile = File(...)):
     conn.commit()
     conn.close()
     
-    # Automate archiving/decluttering of walkthroughs from root inbox to tickets/ subfolder
+    # Automate archiving/decluttering of walkthroughs/plans from root inbox to respective subfolders
     local_source = os.path.join(INBOX_PATH, filename)
     if os.path.exists(local_source) and os.path.isfile(local_source):
-        tickets_dir = os.path.join(INBOX_PATH, "tickets")
-        if not os.path.exists(tickets_dir):
-            try:
-                os.makedirs(tickets_dir)
-            except:
-                pass
-        local_dest = os.path.join(tickets_dir, filename)
+        filename_lower = filename.lower()
+        if "walkthrough" in filename_lower:
+            dest_dir = os.path.join(INBOX_PATH, "walkthroughs")
+        elif "implementation_plan" in filename_lower or "implementationplan" in filename_lower:
+            dest_dir = os.path.join(INBOX_PATH, "implementation_plans")
+        elif "report" in filename_lower:
+            dest_dir = os.path.join(INBOX_PATH, "reports")
+        else:
+            dest_dir = tickets_dir
+            
+        os.makedirs(dest_dir, exist_ok=True)
+        local_dest = os.path.join(dest_dir, filename)
         try:
             shutil.move(local_source, local_dest)
         except Exception as e:
-            print(f"Error moving walkthrough file: {e}")
+            print(f"Error moving file: {e}")
             
     return {"sys_id": sys_id, "file_name": filename, "url": f"/attachments/{new_filename}"}
 
@@ -1118,6 +1133,32 @@ def delete_tmi_anomaly(sys_id: str):
     conn.commit()
     conn.close()
     return {"status": "deleted", "id": sys_id}
+
+@app.get("/api/tmi_event_config")
+def get_tmi_event_config():
+    conn = get_db()
+    row = conn.execute("SELECT value FROM sys_user_preference WHERE user_name = 'james' AND name = 'tmi_configured_events'").fetchone()
+    conn.close()
+    if row:
+        try:
+            return json.loads(row[0])
+        except Exception:
+            pass
+    # Default initial configured events
+    return ['Home Run', 'Injury Delay', 'Manager Challenge', 'Ejection']
+
+@app.post("/api/tmi_event_config")
+async def save_tmi_event_config(request: Request):
+    events = await request.json()
+    conn = get_db()
+    conn.execute(
+        "INSERT OR REPLACE INTO sys_user_preference (sys_id, user_name, name, value) VALUES (hex(randomblob(16)), 'james', 'tmi_configured_events', ?)",
+        (json.dumps(events),)
+    )
+    conn.commit()
+    conn.close()
+    return {"status": "saved"}
+
 @app.get("/rpc/ingest")
 async def rpc_ingest(payload: str = None, token: str = None):
     from dotenv import load_dotenv

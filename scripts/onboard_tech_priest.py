@@ -215,8 +215,8 @@ def onboard_database(data, avatar_base64):
             INSERT INTO persona (
                 id, user_name, display_name, team, system_prompt, boggs_level, 
                 avatar_url, color, cadence, deep_lore, email_alias, avatar_blob,
-                llm_engine, u_visual_style, created_at
-            ) VALUES (?, ?, ?, 'GLOBAL', ?, 2, ?, '#00f2fe', 'pacer', ?, ?, ?, 'gemini-2.0-flash', 'style_felt', datetime('now'))
+                u_visual_style, created_at
+            ) VALUES (?, ?, ?, 'GLOBAL', ?, 2, ?, '#00f2fe', 'pacer', ?, ?, ?, 'style_felt', datetime('now'))
         """, (sys_id, handle, data["display_name"], data["system_prompt"], avatar_url, data["deep_lore"], email, avatar_base64))
 
     # 2. sys_user Table
@@ -303,7 +303,7 @@ def copy_and_stage_blueprint(data):
     # Sync directly to Google Drive 'work_orders > spark > documentation'
     print("📡 Uploading blueprint directly to Google Drive work_orders/spark/documentation...")
     import subprocess
-    gdrive_dest = "sovereign_os:work_orders/spark/documentation/"
+    gdrive_dest = "sovereign_os:SovereignOS_Clio_Sync/work_orders/spark/documentation/"
     cmd = ["rclone", "copy", BLUEPRINT_PATH, gdrive_dest]
     try:
         subprocess.run(cmd, check=True)

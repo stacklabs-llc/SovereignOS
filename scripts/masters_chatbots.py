@@ -16,7 +16,7 @@ try:
 except Exception:
     pass
 
-GAME_TIME_MODEL = "gemini-2.5-flash"
+GAME_TIME_MODEL = "gemini-flash-latest"
 
 def load_golf_fans():
     fans_list = []
@@ -25,7 +25,7 @@ def load_golf_fans():
         conn.row_factory = sqlite3.Row
         c = conn.cursor()
         c.execute('''
-            SELECT c.name, c.short_description, p.u_system_prompt, p.u_llm_engine, p.u_boggs_reactivity, c.operational_status, c.assigned_to, p.u_cadence
+            SELECT c.name, c.short_description, p.u_system_prompt, p.u_boggs_reactivity, c.operational_status, c.assigned_to, p.u_cadence
             FROM cmdb_ci c
             LEFT JOIN cmdb_ci_ai_persona p ON c.sys_id = p.sys_id
             WHERE c.sys_class_name = 'cmdb_ci_ai_persona' AND c.operational_status = 1 AND c.assigned_to = 'golf_room'

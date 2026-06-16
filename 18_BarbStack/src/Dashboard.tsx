@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import SovereignCinemaRequest from './components/SovereignCinemaRequest';
 
 // TypeScript Declarations for Leaflet
 declare const L: any;
@@ -356,6 +357,9 @@ export default function Dashboard() {
           <button onClick={() => setActiveTab('messenger')} className={`px-4 py-2 text-xs font-bold uppercase rounded border transition-all cursor-pointer ${activeTab === 'messenger' ? 'bg-sky-500 border-sky-600 text-stone-900 font-black shadow-lg' : 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700'}`}>
             💬 Messenger HQ
           </button>
+          <button onClick={() => setActiveTab('cinema')} className={`px-4 py-2 text-xs font-bold uppercase rounded border transition-all cursor-pointer ${activeTab === 'cinema' ? 'bg-[#00c878] border-[#00a868] text-stone-900 font-black shadow-lg' : 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700'}`}>
+            🎬 Sovereign Cinema
+          </button>
         </div>
       </header>
 
@@ -437,11 +441,7 @@ export default function Dashboard() {
                       </div>
                       
                       <button onClick={() => {
-                        if (stack.actionTab === 'cinema') {
-                          alert("🎥 REDIRECTING OVER TAILSCALE: Connecting to Sovereign Cinema media portal on https://clio.taila01894.ts.net:3008/cinema-portal/ ...");
-                        } else {
-                          setActiveTab(stack.actionTab);
-                        }
+                        setActiveTab(stack.actionTab);
                       }} className="w-full mt-4 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-bold font-mono py-2 rounded uppercase tracking-wider flex items-center justify-center space-x-1 border border-stone-700 cursor-pointer">
                         <span>Access Stack ↗</span>
                       </button>
@@ -787,6 +787,9 @@ export default function Dashboard() {
               </div>
 
             </div>
+          )}
+          {activeTab === 'cinema' && (
+            <SovereignCinemaRequest />
           )}
 
         </main>

@@ -12,7 +12,7 @@ WHAT IT CAPTURES (per LLM call):
     - Timestamp + game_pk + persona name
     - Full system instruction text (pre-truncation view available via CAPTURE_PRE_TRUNCATION)
     - Full user prompt
-    - Model target (gemini-2.5-flash / local_phi3 / local_llama3)
+    - Model target (gemini-1.5-flash / local_phi3 / local_llama3)
     - Token counts (in/out)
     - Raw model response text
     - Routing path (vertex / ollama / bouncer)

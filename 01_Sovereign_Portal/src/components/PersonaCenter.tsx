@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { User, Bot, Search, Save, X, RefreshCw, AlertTriangle, ChevronDown, Download, FileText, Server, Plus, Award } from "lucide-react";
+import { User, Bot, Search, Save, X, RefreshCw, AlertTriangle, ChevronDown, Download, FileText, Server, Plus, Award, Printer } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import { SortableTable } from "./SortableTable";
 
@@ -75,6 +75,9 @@ interface AiPersona {
   assigned_to?: string;
   u_visual_style?: string;
   u_boggs_reactivity?: number;
+  u_avatar_prompt?: string;
+  u_character_map_prompt?: string;
+  u_canned_takes?: string;
 }
 
 
@@ -286,7 +289,7 @@ export default function PersonaCenter() {
       u_system_prompt: "",
       u_llm_engine: "gemini-2.5-flash",
       u_cadence: "pacer",
-      u_visual_style: "style_felt",
+      u_visual_style: "style_clay",
       u_boggs_reactivity: 5,
     };
     setSelectedRecord(newRecord);
@@ -471,10 +474,17 @@ export default function PersonaCenter() {
   };
 
   const handleExportJSON = () => {
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(getRecordsToExport(), null, 2));
+    const recordsToExport = getRecordsToExport();
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(recordsToExport, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `sovereign_${activeTab}_export.json`);
+    
+    // Conditionally assign the download filename based on selection count
+    const filename = (selectedRecords.size === 1 && recordsToExport.length === 1)
+      ? `${recordsToExport[0].user_name}_export.json`
+      : "sovereign_personas_export.json";
+    downloadAnchorNode.setAttribute("download", filename);
+    
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
@@ -490,23 +500,64 @@ export default function PersonaCenter() {
        
        mdStr += `## ${name}\n\n`;
        mdStr += `![${name} Avatar](${avatarUrl})\n\n`;
-       mdStr += `**Team:** ${record.department || record.assigned_to || "N/A"}\n\n`;
+       mdStr += `**Team / Department:** ${record.department || record.assigned_to || "N/A"}\n\n`;
+       mdStr += `**Email Alias:** ${record.email_alias || "N/A"}\n\n`;
+       mdStr += `**Color:** ${record.color || "N/A"}\n\n`;
        mdStr += `**Cadence:** ${record.u_cadence || "pacer"}\n\n`;
+       mdStr += `**LLM Engine:** ${record.u_llm_engine || "N/A"}\n\n`;
        mdStr += `**Boggs Reactivity:** ${record.u_boggs_reactivity || "N/A"}\n\n`;
+       mdStr += `**Deployment Zone:** ${record.u_deployment_zone || "N/A"}\n\n`;
+       mdStr += `**Visual Theme Class:** ${record.u_visual_style || "N/A"}\n\n`;
+       mdStr += `**Avatar Prompt:**\n\`\`\`\n${record.u_avatar_prompt || "N/A"}\n\`\`\`\n\n`;
+       mdStr += `**Character Map Prompt:**\n\`\`\`\n${record.u_character_map_prompt || "N/A"}\n\`\`\`\n\n`;
        mdStr += `**System Prompt:**\n\`\`\`\n${record.u_system_prompt || "N/A"}\n\`\`\`\n\n`;
        mdStr += `**Behavior Notes:**\n${record.u_behavior_expectations || "N/A"}\n\n`;
        mdStr += `**Deep Lore:**\n${record.u_deep_lore || "N/A"}\n\n`;
        mdStr += `**Governance:**\n${record.u_governance_boundaries || "N/A"}\n\n`;
+       
+       let takesList = "N/A";
+       if (record.u_canned_takes) {
+         try {
+           const parsed = typeof record.u_canned_takes === 'string' ? JSON.parse(record.u_canned_takes) : record.u_canned_takes;
+           if (Array.isArray(parsed) && parsed.length > 0) {
+             takesList = parsed.map((t: any) => `- **[${t.topic || 'LORE'}]** ${t.text || ''}`).join("\n");
+           }
+         } catch (e) {
+           takesList = String(record.u_canned_takes);
+         }
+       }
+       mdStr += `**Canned Injections (Takes):**\n${takesList}\n\n`;
        mdStr += `---\n\n`;
     });
 
     const dataStr = "data:text/markdown;charset=utf-8," + encodeURIComponent(mdStr);
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
-    downloadAnchorNode.setAttribute("download", `sovereign_advocates_export.md`);
+    
+    // Conditionally assign the download filename based on selection count
+    const filename = (selectedRecords.size === 1 && recordsToExport.length === 1)
+      ? `${recordsToExport[0].user_name}_export.md`
+      : "sovereign_personas_export.md";
+    downloadAnchorNode.setAttribute("download", filename);
+    
     document.body.appendChild(downloadAnchorNode);
     downloadAnchorNode.click();
     downloadAnchorNode.remove();
+  };
+
+  const handlePrintDossier = (singleId?: string) => {
+    let idsParam = "";
+    if (singleId) {
+      idsParam = `ids=${singleId}`;
+    } else {
+      const records = getRecordsToExport();
+      if (records.length === 0) {
+        alert("No advocates selected to print.");
+        return;
+      }
+      idsParam = `ids=${records.map(r => r.sys_id).join(",")}`;
+    }
+    window.open(`/api/personas/print_dossier?${idsParam}`, '_blank');
   };
 
   const loadData = useCallback(async () => {
@@ -657,6 +708,47 @@ export default function PersonaCenter() {
               >
                 {isActive ? "Active" : "Inactive"}
               </span>
+            );
+          }
+        },
+        {
+          key: "actions",
+          label: "Actions",
+          sortable: false,
+          render: (record: any) => {
+            return (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handlePrintDossier(record.sys_id);
+                }}
+                title="Print Dossier"
+                style={{
+                  background: "transparent",
+                  border: `1px solid ${VM.border}`,
+                  borderRadius: "4px",
+                  padding: "2px 6px",
+                  color: "#a855f7",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  fontFamily: VM.fontMono,
+                  fontSize: "0.6rem",
+                  transition: "all 0.2s"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.borderColor = "#a855f7";
+                  e.currentTarget.style.background = "rgba(168, 85, 247, 0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.borderColor = VM.border;
+                  e.currentTarget.style.background = "transparent";
+                }}
+              >
+                <Printer size={10} />
+                Print
+              </button>
             );
           }
         }
@@ -905,6 +997,28 @@ export default function PersonaCenter() {
           >
             <FileText size={12} />
             Export MD {selectedRecords.size > 0 ? `(${selectedRecords.size})` : ''}
+          </button>
+          <button
+            onClick={() => handlePrintDossier()}
+            style={{
+              background: "transparent",
+              border: `1px solid ${VM.border}`,
+              borderRadius: "6px",
+              padding: "6px 12px",
+              color: "#a855f7",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              fontFamily: VM.fontMono,
+              fontSize: "0.7rem",
+              transition: "border-color 0.2s",
+            }}
+            onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#a855f7")}
+            onMouseLeave={(e) => (e.currentTarget.style.borderColor = VM.border)}
+          >
+            <Printer size={12} />
+            Print Dossier {selectedRecords.size > 0 ? `(${selectedRecords.size})` : ''}
           </button>
           {selectedRecords.size > 0 && activeTab === "ai_bots" && (
               <>
@@ -1187,6 +1301,45 @@ export default function PersonaCenter() {
                     />
                 </div>
                 
+                {/* Print Dossier overlay */}
+                <div 
+                  style={{ position: "absolute", top: "14px", right: "44px", zIndex: 12 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePrintDossier(record.sys_id);
+                  }}
+                >
+                  <button
+                    title="Print Dossier"
+                    style={{
+                      background: "rgba(0,4,10,0.75)",
+                      border: `1px solid ${VM.border}`,
+                      padding: "4px",
+                      borderRadius: "6px",
+                      color: "#a855f7",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "28px",
+                      height: "28px",
+                      backdropFilter: "blur(6px)",
+                      filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.6))",
+                      transition: "all 0.2s"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.borderColor = "#a855f7";
+                      e.currentTarget.style.color = "#ffffff";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.borderColor = VM.border;
+                      e.currentTarget.style.color = "#a855f7";
+                    }}
+                  >
+                    <Printer size={14} />
+                  </button>
+                </div>
+                
                 {/* Image Section / Fallback gradient */}
                 <div style={{ height: "55%", width: "100%", position: "relative", overflow: "hidden" }}>
                     <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to bottom, transparent 40%, #0d1820 100%)", zIndex: 3 }} />
@@ -1462,7 +1615,55 @@ export default function PersonaCenter() {
                   </div>
                 </div>
               </div>
-              <div style={{ display: "flex", gap: "8px" }}>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                {!editForm.sys_id.startsWith("NEW_") && (
+                  <>
+                    <button
+                      onClick={() => {
+                        const prevSel = new Set(selectedRecords);
+                        const cleanSel = new Set([editForm.sys_id]);
+                        setSelectedRecords(cleanSel);
+                        setTimeout(() => {
+                          handleExportJSON();
+                          setSelectedRecords(prevSel);
+                        }, 50);
+                      }}
+                      title="Export this advocate's dossier to JSON"
+                      style={{ background: "transparent", border: `1px solid ${VM.border}`, borderRadius: "8px", padding: "8px 12px", cursor: "pointer", color: VM.emerald, display: "flex", alignItems: "center", gap: "6px", fontFamily: VM.fontMono, fontSize: "0.8rem", transition: "border-color 0.2s" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = VM.emerald)}
+                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = VM.border)}
+                    >
+                      <Download size={14} /> JSON
+                    </button>
+                    <button
+                      onClick={() => {
+                        const prevSel = new Set(selectedRecords);
+                        const cleanSel = new Set([editForm.sys_id]);
+                        setSelectedRecords(cleanSel);
+                        setTimeout(() => {
+                          handleExportMD();
+                          setSelectedRecords(prevSel);
+                        }, 50);
+                      }}
+                      title="Export this advocate's dossier to Markdown"
+                      style={{ background: "transparent", border: `1px solid ${VM.border}`, borderRadius: "8px", padding: "8px 12px", cursor: "pointer", color: VM.blue, display: "flex", alignItems: "center", gap: "6px", fontFamily: VM.fontMono, fontSize: "0.8rem", transition: "border-color 0.2s" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = VM.blue)}
+                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = VM.border)}
+                    >
+                      <FileText size={14} /> MD
+                    </button>
+                    <button
+                      onClick={() => handlePrintDossier(editForm.sys_id)}
+                      title="Print PDF Dossier"
+                      style={{ background: "transparent", border: `1px solid ${VM.border}`, borderRadius: "8px", padding: "8px 12px", cursor: "pointer", color: "#a855f7", display: "flex", alignItems: "center", gap: "6px", fontFamily: VM.fontMono, fontSize: "0.8rem", transition: "border-color 0.2s" }}
+                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#a855f7")}
+                      onMouseLeave={(e) => (e.currentTarget.style.borderColor = VM.border)}
+                    >
+                      <Printer size={14} /> PDF
+                    </button>
+                    <div style={{ width: "1px", height: "20px", background: VM.border, margin: "0 4px" }} />
+                  </>
+                )}
                 <button
                   onClick={handleSave} disabled={isSaving || !isAuthorized}
                   style={{ background: VM.emerald, border: "none", borderRadius: "8px", padding: "8px 20px", color: "#000", cursor: (isSaving || !isAuthorized) ? "not-allowed" : "pointer", fontFamily: VM.fontMono, fontSize: "0.8rem", fontWeight: "bold", display: "flex", alignItems: "center", gap: "8px", transition: "opacity 0.2s", opacity: isAuthorized ? 1 : 0.5 }}
@@ -1622,7 +1823,8 @@ export default function PersonaCenter() {
                       { key: "title", label: "Title / Role" },
                       { key: "assigned_to", label: "Team", type: "team-select" },
                       { key: "active", label: "Status", type: "status-select" },
-                      { key: "u_llm_engine", label: "LLM Engine" },
+                      { key: "u_llm_engine", label: "LLM Engine", type: "llm-select" },
+                      { key: "u_deployment_zone", label: "Deployment Zone", type: "deployment-select" },
                       { key: "u_cadence", label: "Cadence", type: "cadence-select" },
                       { key: "u_visual_style", label: "Visual Style", type: "style-select" },
                       { key: "u_boggs_reactivity", label: "Brand Entropy Level (1 - 11)", type: "entropy-slider" },
@@ -1643,6 +1845,25 @@ export default function PersonaCenter() {
                             <option value="1">Active</option>
                             <option value="0">Inactive</option>
                           </select>
+                        ) : type === "llm-select" ? (
+                          <select value={String(editForm[key] || "")} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })} disabled={!isAuthorized}
+                            style={{ width: "100%", background: VM.surface, border: `1px solid ${VM.border}`, borderRadius: "6px", color: VM.text, padding: "10px 12px", fontFamily: VM.fontMono, fontSize: "0.82rem", outline: "none" }}
+                            onFocus={(e) => e.target.style.borderColor = VM.emerald} onBlur={(e) => e.target.style.borderColor = VM.border}>
+                            <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite (Active Default)</option>
+                            <option value="gemini-2.0-flash">gemini-2.0-flash (Core Standard)</option>
+                            <option value="gemini-1.5-flash">gemini-1.5-flash (Legacy Fallback)</option>
+                            <option value="local_phi3">local_phi3 (Local Low Resource)</option>
+                            <option value="local_llama3">local_llama3 (Local Uncensored)</option>
+                          </select>
+                        ) : type === "deployment-select" ? (
+                          <select value={String(editForm[key] || "")} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })} disabled={!isAuthorized}
+                            style={{ width: "100%", background: VM.surface, border: `1px solid ${VM.border}`, borderRadius: "6px", color: VM.text, padding: "10px 12px", fontFamily: VM.fontMono, fontSize: "0.82rem", outline: "none" }}
+                            onFocus={(e) => e.target.style.borderColor = VM.emerald} onBlur={(e) => e.target.style.borderColor = VM.border}>
+                            <option value="">Global / Unassigned</option>
+                            <option value="BENCHED">BENCHED</option>
+                            <option value="BULLPEN">BULLPEN</option>
+                            {mlbTeams.map(t => <option key={t} value={t}>{t}</option>)}
+                          </select>
                         ) : type === "cadence-select" ? (
                           <select value={String(editForm[key] || "pacer")} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })} disabled={!isAuthorized}
                             style={{ width: "100%", background: VM.surface, border: `1px solid ${VM.border}`, borderRadius: "6px", color: VM.text, padding: "10px 12px", fontFamily: VM.fontMono, fontSize: "0.82rem", outline: "none" }}
@@ -1653,10 +1874,10 @@ export default function PersonaCenter() {
                             <option value="reactant">Reactant (Event Only)</option>
                           </select>
                         ) : type === "style-select" ? (
-                          <select value={String(editForm[key] || "style_felt")} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })} disabled={!isAuthorized}
+                          <select value={String(editForm[key] || "style_clay")} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })} disabled={!isAuthorized}
                             style={{ width: "100%", background: VM.surface, border: `1px solid ${VM.border}`, borderRadius: "6px", color: VM.text, padding: "10px 12px", fontFamily: VM.fontMono, fontSize: "0.82rem", outline: "none" }}
                             onFocus={(e) => e.target.style.borderColor = VM.emerald} onBlur={(e) => e.target.style.borderColor = VM.border}>
-                            <option value="style_felt">Style A: Traumatized Fuzzy Felt</option>
+                            <option value="style_felt" disabled>Style A: Traumatized Fuzzy Felt (Banned)</option>
                             <option value="style_pixel">Style B: 16-Bit Pixel Grid</option>
                             <option value="style_clay">Style C: Unraveled Claymation</option>
                             <option value="style_apathetic">Style D: Apathetic Claymation</option>
@@ -1702,6 +1923,9 @@ export default function PersonaCenter() {
                       { key: "u_behavior_expectations", label: "Behavior Expectations",  h: "100px" },
                       { key: "u_governance_boundaries", label: "Governance Boundaries",  h: "100px" },
                       { key: "u_deep_lore",             label: "Deep Lore",             h: "160px" },
+                      { key: "u_avatar_prompt",         label: "Avatar Generation Prompt", h: "80px" },
+                      { key: "u_character_map_prompt",  label: "Character Map Prompt", h: "80px" },
+                      { key: "u_canned_takes",          label: "Canned Injections / Takes (JSON Array)", h: "120px" },
                     ].map(({ key, label, h }) => (
                       <div key={key}>
                         <label style={{ display: "block", fontFamily: VM.fontMono, fontSize: "0.65rem", color: VM.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px" }}>{label}</label>

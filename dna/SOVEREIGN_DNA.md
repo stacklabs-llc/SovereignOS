@@ -42,12 +42,16 @@ This document serves as the absolute, non-narrative, declarative architecture bl
 | **`8008`** | M.A.R.D WebSockets | FastAPI / Python | Live real-time WebSocket comment stream and simulated sports chatrooms. |
 | **`8012`** | HoloLink Signaling WS | Python Daemon | WebRTC signaling, queue routing, and presence tracking daemon. |
 | **`8015`** | Comet Relay WS | Python Daemon | Sputnik Comet-90 retro radio relay messaging, provisions, and priority alerts server. |
-| **`8085`** | Sovereign Cinema API | FastAPI / Python | Sovereign Cinema Media Streaming Engine serving media lists and HTTP Range video streaming. |
+| **`8085`** | Sovereign Cinema API | FastAPI / Python | Pipelines media lists and handles HTTP Range video streaming. |
 | **`8095`** | SDLC Ticketing API | FastAPI / Python | Backend engine serving tickets, attachments, and the integrated SDLC Portal. |
+| **`8097`** | Sovereign Stream Relay | FastAPI / Python | Overrides and routes external HLS live stream links (.m3u8) for active watch parties. |
 | **`8090`** | Sovereign Core Monolith | FastAPI / Python | Unified endpoint API monolith exposing prompt decoders, macro matrix, and self-healing voice routers. |
 | **`8088`** | Sovereign Dead Drop | Flask / Python | Air-gapped gateway for media and logs ingestion (Tailscale proxied). |
 | **`5000`** | Sandbox Admin API | Flask / Python | Sandbox Catnip Wars dynamic endpoints and SQLite card image mutations. |
 | **`11434`**| Ollama Local LLM | Ollama Engine | Local LLM host for fallbacks. |
+| **`4001`** | Govee LAN Scan | UDP Broadcast Scan | Temporary port used to scan for local Govee lights. |
+| **`4002`** | Govee Status Receiver | UDP Status Listener | Listens for incoming color and status responses from local Govee devices. |
+| **`4003`** | Govee LAN API | UDP Command Target | Command target port used to send colorWC and status queries to living room lights. |
 
 ---
 
@@ -57,6 +61,7 @@ This document serves as the absolute, non-narrative, declarative architecture bl
 | :--- | :--- |
 | `/home/james/SovereignOS` | **Primary Production Worktree Root** |
 | `/home/james/SovereignOS/18_BarbStack` | **Barb's Stack Workspace** — Standalone React + Tailwind client portal for Barb's Personal Cockpit. |
+| `/home/james/SovereignOS/avatars/` | **Canonical Avatars Directory** — Single location on Clio holding all character and advocate avatar assets, with relative symlinks pointing here from all frontend outposts. |
 | `/home/james/SovereignOS-sandbox` | **Strict Sandbox Environment Worktree Root** |
 | `/home/james/SovereignOS/dna/` | **Master Architectural Ledger Directory** |
 | `/home/james/SovereignOS/dna/sovereign_now.db` | **Singular SQLite Database (Canonical Path - KI-038)** |
@@ -67,6 +72,7 @@ This document serves as the absolute, non-narrative, declarative architecture bl
 | `/home/james/SovereignOS/scripts/generate_universal_advocate.py` | **Universal Advocate Generator ("The Wildcard Forge")** — Decoupled Vertex AI script synthesizing complete advocate JSON profiles. |
 | `/home/james/SovereignOS/scripts/advocate_forge.py` | **Advocate Emote Forge** — Generates tactical visual emotes (avatar, pointing, shrug) in target style. |
 | `/home/james/SovereignOS/scripts/productivity_reporter.py` | **Productivity Reporter** — SQLite and git log analyzer to calculate project velocity comparison. |
+| `/home/james/SovereignOS/scripts/auto_image_generator.py` | **Ghost Pitch Whiff Image Generator** — Draws dark-mode, neon-styled 2D wireframe plots of swing and pitch paths. |
 | `/home/james/sovereign_inbox/` | **Session Inbox and Active Sprint Workspace** |
 | `/home/james/sovereign_inbox/today/` | **Active Operational Date Symlink Folder** |
 | `/home/james/sovereign_inbox/pilot_drops/` | **Pilot Staging Ground** — Central server directory for the Pilot's manual file uploads, downloads, and custom notes before sync processing. |
@@ -98,6 +104,7 @@ The canonical SQLite state database is `/home/james/SovereignOS/dna/sovereign_no
 | **`rpg_factions`** | Sandbox factions mapping the 4 core ideological sockets (Decentralist, Speculator, Nihilist, Catalyst). | **ACTIVE** |
 | **`rpg_world_state`** | Sandbox entity grid locations, active zones, tension levels, and custom image configurations (`custom_image`). | **ACTIVE** |
 | **`rpg_agent_memory`** | Sandbox cognitive memories and ideological alignment weights. | **ACTIVE** |
+| **`catnip_wars_comic_assets`** | Stores character pose assets mapping to cloud-cached CDN edge URLs under V1.0 Asset CDN Protocol. | **ACTIVE** |
 | **`rm_story`** | Legacy ticket storage table. | **DEPRECATED (DO NOT WRITE)** |
 | **`rm_defect`** | Legacy defect storage table. | **DEPRECATED (DO NOT WRITE)** |
 | **`rm_enhancement`** | Legacy enhancement storage table. | **DEPRECATED (DO NOT WRITE)** |
@@ -239,7 +246,32 @@ The canonical SQLite state database is `/home/james/SovereignOS/dna/sovereign_no
     The continuous gameday live feed compilation and Google Drive synchronization daemon (`gameday_continuous_sync.py`) checks `system.gameday_sync.enabled` in the `sys_properties` table. When disabled (`false`), the daemon immediately purges all generated `livefeed_*.md.txt` and `statcast_telemetry.log.txt` files locally, mirrors the deletion to Google Drive via `rclone sync --delete-after`, and bypasses all further processing.
 *   **KI-075: Ban of Felt Puppets & Clay Mandate**  
     The `style_felt` (felt puppet) visual style is strictly banned system-wide from databases (`persona.u_visual_style`, `cmdb_ci_ai_persona.u_visual_style`) and frontend config files. The standardized `style_clay` flat vector illustration must be enforced as the active fallback and preset card style for all AI personas.
-
+*   **KI-076: Ghost Pitch Whiff Telemetry & Inline Visualizer**  
+    The sports telemetry loop in `fanstack_background_poller.py` evaluates StatsAPI closest approach spatial gaps. Swing-and-miss events where the distance exceeds 8.0 inches and vertical alignment is 'OVER' trigger a Ghost Pitch Anomaly, rendering a dark-mode 2D neon wireframe of swing paths and pitch crossings using the Pillow drawing service (`auto_image_generator.py`). Telemetry updates and custom graphic paths are broadcasted as websocket messages to the live game room chat feed and client layout viewports, triggering in-character advocate reactions under target-nodes routing.
+*   **KI-077: Stateful TMI Triggers & Debug Mode**  
+    The sports telemetry loop in `fanstack_background_poller.py` evaluates stateful triggers (Extra Innings: `inning >= 10`, Bases Loaded, and Close Game: margin <= 1 in 8th/9th or <= 2 in extra innings) via `GameStateAccumulator`. Configured events to display raw statcast telemetry are stored in the SQLite database as the user preference `tmi_configured_events` for operator `james`, customizable via the TMI Event Config Modal.
+*   **KI-078: Chindogu Decorum Slider and Silent Mute Invariant**  
+    Toggling the decorum level to 0 in the portal range slider activates flat monospace slate styling (`.industrial-slate`) and globally mocks/intercepts the Web Audio API (`Audio` and `AudioContext`) to enforce silent muting of whistles, chimes, and telepresence alarms.
+*   **KI-079: Dynamic Game Switcher WebSocket Rebind Law**  
+    The FanStack portal header game switcher dropdown binds state hooks `activeGamePk` and `availableGames` to automatically close WebSocket connections, re-establish them for the new match PK, and dynamically re-fetch/hydrate advocate rosters and live stats.
+*   **KI-080: Leaflet Delivery Progress Map Invariant**  
+    The dashboard delivery tracker maps spatial coordinate markers using Leaflet.js, binding progress slider updates to marker coordinates and Spite Flare events to whistle playback and visual shakes.
+*   **KI-081: Pose Variant Diversity Audit & Style Hardening Invariant**  
+    All persona/advocate brand cartridges MUST generate three distinct, non-identical pose variants (avatar, pointing, shrug) in their canonical avatars directory. Compliance is strictly audited by Phase 5 of the QA Gatekeeper (`qa_gatekeeper_service.py`), which calculates and compares MD5 file hashes for all three poses. The audit fails with `status: FAIL` if any pose file is missing or shares an identical hash. Stale photorealistic reference images must be deleted, enforcing flat stylized Presets.
+*   **KI-082: Mobile-First Responsive Drawer Layout & Grid Stacking Invariant**  
+    To prevent layout breaks, vertical clipping, and horizontal scrollbars on mobile viewports (<768px) across decoupled outposts (Portal, Sports, FanStack), sidebars must dynamically transition to fixed drawer overlays toggled by a `.menu-open` class. Main app-container wrappers must dynamically adjust height and scroll overflow (`min-h-screen md:h-screen overflow-y-auto`), and split scoreboard/chat lobbies must collapse to a single linear vertical stack (`width: 100% !important; height: auto !important`).
+*   **KI-083: Govee TMI Local UDP Pipeline Invariant**  
+    The Govee Wi-Fi light integration operates strictly on UDP port 4003 using the JSON command protocol (`"cmd": "colorWC"`, `"colorTem"`). During NY Mets home run events (`event_type === "home_run"` and `batting_team === "NYM"`), the system triggers a non-blocking alternating strobe of Mets Blue `(0, 45, 98)` and Mets Orange `(252, 92, 29)` for 300ms each, repeating exactly 5 times, then restores the cached baseline state queried from port 4002. Network UDP operations must respect the `GOVEE_TMI_ACTIVE` environment toggle in `.env` and run asynchronously to avoid blocking the primary telemetry loops or websocket relay daemons.
+*   **KI-084: Cloud-Cached Edge Asset Ingestion Protocol**  
+    To eliminate local storage overhead and cross-origin resource sharing (CORS) complications, all generated comic and minigame character pose assets must be referenced directly via Google CDN edge cache URLs stored in `catnip_wars_comic_assets` table, rather than downloading files or writing logic for local image delivery.
+*   **KI-085: Canonical Avatars & Symlink Invariant**  
+    All physical avatar and advocate assets MUST reside exclusively under `/home/james/SovereignOS/avatars/` on Clio. Redundant local folders in frontends are banned and replaced with relative symlinks (`public/avatars -> ../../avatars`) pointing to the canonical avatars path. Personas retrieve avatar images from database `avatar_blob` entries or fallback to this canonical directory.
+*   **KI-086: Senga Ghost Protocol Streak Invariant**  
+    The sports telemetry websocket relay tracks Kodai Senga strikeout counts sequentially. When a streak of 3 consecutive strikeouts is reached, it emits `EMIT_CHAT_GHOST_OVERLAY`, triggering a full-screen canvas takeover (orbiting baseballs, violet vignette flash, and custom audio sweeps via the browser Web Audio API).
+*   **KI-087: Precog 50-Second Predictive Video Pipeline Invariant**  
+    A full count (3-2 count) triggers asynchronous staging of outcome videos (strikeout, walk, base hit) under `/tmp/precog_staged/`. Upon outcome delivery, the poller selects the winning video, executes FFMPEG drawing filters to overlay outcome text in <800ms, writes the winning clip to `/videos/precog_winning.mp4` on Port 7300, and caches the remaining staged clips in SQLite `sys_predictive_cache` for future plate appearance reference.
+*   **KI-088: Sovereign Oracle Branding Invariant**  
+    All sports/telemetry frontends and backends are globally rebranded to "Sovereign Oracle". Page titles, sidebar headers (with violet/sky-blue gradient and glowing drop shadow), and logs must reflect this brand identity.
 
 ---
 
@@ -282,12 +314,8 @@ If the entire Sovereign OS environment were destroyed, execute these steps in ex
 
 2. **Directory & Repository Restoration:**
    - Clone the git repository structure into `/home/james/SovereignOS`.
-   - Setup dev and uat worktrees:
-     ```bash
-     git worktree add ../SovereignOS-dev dev
-     git worktree add ../SovereignOS-uat uat
-     ```
-   - Create directories: `/home/james/sovereign_inbox/` and `/tmp/notebook_sync_staging/`.
+   - Set up `/home/james/SovereignOS-sandbox` and `/home/james/SovereignOS_bare` environments.
+   - Create directories: `/home/james/sovereign_inbox/` and `/home/james/sovereign_inbox/notebook_sync/StackLabs_Internal/`.
 
 3. **Database Restoration:**
    - Restore the production SQLite database file directly into the canonical path:
@@ -314,11 +342,14 @@ If the entire Sovereign OS environment were destroyed, execute these steps in ex
 
 7. **System Core Service Startup:**
    - Boot Ollama LLM Engine: `systemctl start ollama`.
-   - Boot Python backend daemons using systemd or background executors:
-     - `sovereign_core_api.py` on port `5051`
-     - `sovereign_auth_api.py` on port `5055`
-     - `sdlc_portal_server.py` on port `8095`
-   - Run frontend dev builds on their mapped ports (3000, 3004, 3008, 3009, 3015, 7300).
+   - Launch all python backends and Vite frontends via the unified startup script:
+     ```bash
+     /home/james/SovereignOS/scripts/restart_stack.sh
+     ```
+   - This script cleans up zombie processes and automatically launches:
+     - **Core Backends:** `sovereign_core_api.py` (8090), `sdlc_portal_server.py` (8095), `sam_tracker_server.py` (8083), and `theater_media_server.py` (8085).
+     - **Vite Frontends:** StackLabs Monolith (3000), Sovereign OS Portal (3016), SamTracker Frontend (3004), Sovereign Media (3008), Sovereign Sports (3010), Aether Vet Telemedicine (3015), Storybook Station (3017), Barb's Stack (3020), and Catnip Wars Sandbox (7300).
+     - **Watchdog Guard:** Launches `mando_watchdog.py` to continuously monitor and self-heal all services.
 
 8. **Tailscale Funnel Configuration:**
    - Enable the secure Tailscale Funnels to allow external access to the Portal and backend interfaces:

@@ -22,7 +22,7 @@ async def scruffys_pub_sim(target_game_pk):
                     api_key = line.strip().split('=', 1)[1]
         
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-2.5-flash', generation_config={"response_mime_type": "application/json", "temperature": 0.9})
+        model = genai.GenerativeModel('gemini-flash-latest', generation_config={"response_mime_type": "application/json", "temperature": 0.9})
         
         prompt = f"""You are directing a highly toxic, dramatic post-game discussion at 'Scruffy's Pub'.
 The Mets just lost their 12th game in a row (actually 13, but they say 12). They blew the lead in the 9th inning to Devin Williams and lost 5-3. 

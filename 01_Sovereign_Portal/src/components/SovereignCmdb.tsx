@@ -540,17 +540,36 @@ export default function SovereignCmdb() {
                   >
                     {/* Glowing outer shadow ring */}
                     {(isSelected || isHovered) && (
-                      <circle cx="0" cy="0" r="14" fill="none" stroke={finalColor} strokeWidth="3" opacity="0.3" className="animate-ping" />
+                      <circle cx="0" cy="0" r="16" fill="none" stroke={finalColor} strokeWidth="3" opacity="0.3" className="animate-ping" />
                     )}
-                    <circle cx="0" cy="0" r="10" fill="#0b1329" stroke={finalColor} strokeWidth={isSelected ? 3.5 : 1.8} className="transition-all duration-200" />
-                    <circle cx="0" cy="0" r="4" fill={finalColor} />
+                    <circle cx="0" cy="0" r="12" fill="#0b1329" stroke={finalColor} strokeWidth={isSelected ? 3.5 : 1.8} className="transition-all duration-200" />
+                    
+                    {node.u_avatar_url ? (
+                      <>
+                        <defs>
+                          <clipPath id={`clip-${node.sys_id}`}>
+                            <circle cx="0" cy="0" r="10.5" />
+                          </clipPath>
+                        </defs>
+                        <image 
+                          href={node.u_avatar_url} 
+                          x="-11" 
+                          y="-11" 
+                          width="22" 
+                          height="22" 
+                          clipPath={`url(#clip-${node.sys_id})`} 
+                        />
+                      </>
+                    ) : (
+                      <circle cx="0" cy="0" r="4" fill={finalColor} />
+                    )}
 
                     {/* Small Status Glow dot inside node */}
-                    <circle cx="6" cy="-6" r="2.5" fill={node.operational_status == 1 ? VM.emerald : node.operational_status == 2 ? VM.orange : VM.danger} />
+                    <circle cx="8" cy="-8" r="3" fill={node.operational_status == 1 ? VM.emerald : node.operational_status == 2 ? VM.orange : VM.danger} />
 
                     {/* Node Text Label */}
                     <text 
-                      x="14" y="4" 
+                      x="16" y="4" 
                       fill={isSelected || isHovered ? "white" : "#cbd5e1"} 
                       className="font-mono text-[9px] select-none uppercase tracking-wider font-bold"
                     >
@@ -652,6 +671,26 @@ export default function SovereignCmdb() {
 
           <div className="p-5 flex flex-col gap-5 flex-1">
             
+            {/* Pop-Culture/Comic Icon Assignment Render */}
+            {selectedRecord.u_avatar_url && (
+              <div className="flex flex-col items-center justify-center p-4 bg-[#111a36]/50 border border-[#1e293b] rounded-xl relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#020617]/80 to-transparent z-10" />
+                <img 
+                  src={selectedRecord.u_avatar_url} 
+                  alt={selectedRecord.name || selectedRecord.user_name} 
+                  className="w-32 h-32 rounded-xl object-cover border-2 border-[#06b6d4] shadow-[0_0_20px_rgba(6,182,212,0.3)] z-0 group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="mt-3 text-center z-10 relative">
+                  <span className="font-mono text-[10px] text-[#06b6d4] uppercase tracking-widest font-bold animate-pulse">
+                    Seeded CI Avatar
+                  </span>
+                  <h4 className="font-mono text-sm font-bold text-white uppercase mt-0.5">
+                    {selectedRecord.name || selectedRecord.user_name}
+                  </h4>
+                </div>
+              </div>
+            )}
+
             {/* Dynamic System Telemetry Simulator Gauges */}
             <div className="bg-[#111a36]/50 border border-[#1e293b] rounded-xl p-4 flex flex-col gap-4">
               <div className="font-mono text-[9px] text-[#64748b] tracking-widest uppercase flex items-center gap-1.5">
@@ -822,6 +861,20 @@ export default function SovereignCmdb() {
                   className="w-full bg-[#020617] border border-[#1e293b] focus:border-[#06b6d4] rounded-lg px-3 py-2 text-xs font-mono text-white outline-none transition-colors"
                 />
               </div>
+
+              {editForm.sys_class_name === "cmdb_ci_hardware" && (
+                <div>
+                  <label className="block font-mono text-[9px] text-[#64748b] uppercase tracking-widest mb-1.5">
+                    Avatar URL Path
+                  </label>
+                  <input 
+                    type="text"
+                    value={editForm.u_avatar_url || ""}
+                    onChange={e => setEditForm({ ...editForm, u_avatar_url: e.target.value })}
+                    className="w-full bg-[#020617] border border-[#1e293b] focus:border-[#06b6d4] rounded-lg px-3 py-2 text-xs font-mono text-white outline-none transition-colors"
+                  />
+                </div>
+              )}
             </div>
 
           </div>

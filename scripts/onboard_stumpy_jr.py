@@ -347,8 +347,8 @@ def process_stumpy_jr(cursor):
             INSERT INTO persona (
                 id, user_name, display_name, team, system_prompt, boggs_level, 
                 avatar_url, color, cadence, deep_lore, email_alias, avatar_blob,
-                llm_engine, u_visual_style, created_at, behavior_notes
-            ) VALUES (?, ?, ?, 'GLOBAL', ?, 3, ?, '#fbbf24', 'pacer', ?, ?, ?, 'gemini-2.0-flash', 'style_felt', datetime('now'), ?)
+                u_visual_style, created_at, behavior_notes
+            ) VALUES (?, ?, ?, 'GLOBAL', ?, 3, ?, '#fbbf24', 'pacer', ?, ?, ?, 'style_felt', datetime('now'), ?)
         """, (sys_id, handle, display_name, system_prompt, avatar_url, deep_lore, email, avatar_base64, bio))
 
     # 2. sys_user table

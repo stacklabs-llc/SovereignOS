@@ -86,7 +86,7 @@ def generate_markdown(active_personas, rooms, tickets, vertex_active, ports_heal
         if name.lower() == 'dot':
             backend = "**Ollama** (`dolphin-llama3`)"
         else:
-            backend = "**Vertex/Gemini** (`gemini-2.5-flash`)" if vertex_active else "**Ollama** (`dolphin-llama3`)"
+            backend = "**Vertex/Gemini** (`gemini-1.5-flash`)" if vertex_active else "**Ollama** (`dolphin-llama3`)"
             
         persona_rows.append(f"| **`{name}`** | {team} | {backend} | {desc} |")
         
@@ -151,7 +151,7 @@ All active personas are managed dynamically through the `persona` table in `sove
 ### Core LLM Routing Rules:
 *   **Dot (The Judge):** Strictly locked to the **Ollama** backend running the **`dolphin-llama3`** (Local Llama-3) node on Port 11434 (`local_llama3`).
 *   **Active Fans (Ambient & Matchup):**
-    *   **Vertex/Gemini Active (`vertex_burn.on` exists):** Personas are routed to **`gemini-2.5-flash`** (Vertex AI cloud endpoint) for high-performance, character-consistent interactions.
+    *   **Vertex/Gemini Active (`vertex_burn.on` exists):** Personas are routed to **`gemini-1.5-flash`** (Vertex AI cloud endpoint) for high-performance, character-consistent interactions.
     *   **Vertex/Gemini Fallback (`vertex_burn.on` deleted):** Personas route to **Ollama** running **`dolphin-llama3`** (`local_phi3`/`local_llama3` mapping).
 
 ### The Sovereign Active Persona Fleet:
@@ -184,7 +184,7 @@ Dot functions as the ultimate automated LLM Judge and moderator inside the FanSt
         | (Score <=2 or >=7)                              | (Score 3-6: Gray Zone)
         v                                                 v
 [ TRUST LOCAL EVAL ]                            [ 2. GEMINI ESCALATION ]
-Skip API costs completely!                      Query gemini-2.5-flash Beta
+Skip API costs completely!                      Query gemini-1.5-flash Beta
         |                                                 |
         +------------------------+------------------------+
                                  v
@@ -201,7 +201,7 @@ Skip API costs completely!                      Query gemini-2.5-flash Beta
         *   `burn_score` (integer 1-10): Severity of the burn (1 = chill banter, 10 = vicious personal demolition).
 2.  **Which Model She Runs (Local-First Escalation):**
     *   **Tier 1 (Free Local Edge):** Dot queries **Ollama** (`dolphin-llama3`) at temperature 0.1 (`_local_bouncer_eval`). Dolphin resolves decisive cases (low burns $\le 2$ or heavy burns $\ge 7$) locally, skipping Gemini completely.
-    *   **Tier 2 (Gemini Escalation):** If Dolphin's output lands in the ambiguous **3-6 gray zone**, or fails JSON validation, the system escalates the prompt to **`gemini-2.5-flash`** for a highly reliable final verdict, containing API costs.
+    *   **Tier 2 (Gemini Escalation):** If Dolphin's output lands in the ambiguous **3-6 gray zone**, or fails JSON validation, the system escalates the prompt to **`gemini-1.5-flash`** for a highly reliable final verdict, containing API costs.
 3.  **How She Fires & Limits Banter:**
     *   Fires **per event (per chat message)** asynchronously via:
         `asyncio.create_task(bouncer_task(user, text, list(recent_chat_history[c_pk])))`

@@ -10,7 +10,7 @@ with open('/home/james/SovereignOS/.env') as f:
             api_key = line.strip().split('=', 1)[1]
 
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-2.5-flash')
+model = genai.GenerativeModel('gemini-flash-latest')
 
 # 1. Simulate the Ghost Trauma Data from CMDB
 # Barf's Persona: A feral, doomer 1990s physical felt muppet. Die-hard Mets fan. Extreme existential dread.

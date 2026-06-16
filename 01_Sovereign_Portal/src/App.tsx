@@ -67,6 +67,7 @@ import GlobalSystemBar from "./components/GlobalSystemBar";
 import DreadnoughtConsole from "./components/DreadnoughtConsole";
 import NewTicketModal from "./components/NewTicketModal";
 import HotTakesConsole from "./components/HotTakesConsole";
+import AdvocateCommandDeck from "./components/advocate-command-deck";
 import ModelArena from "./components/ModelArena";
 import ScruffysTavern from "./components/ScruffysTavern";
 import OpticalIngestConsole from "./components/OpticalIngestConsole";
@@ -353,14 +354,16 @@ export default function App() {
   const [accessLocale, setAccessLocale] = useState<"CIVILIAN" | "COMMAND">(() => (localStorage.getItem('sovereign_locale') as any) || "COMMAND");
   const auth = useAuth();
   const [layoutConfig, setLayoutConfig] = useState<any>(null);
+  const [dashboardWidgetsActive, setDashboardWidgetsActive] = useState(true);
+  const [isWidgetOverlayActive, setIsWidgetOverlayActive] = useState(true);
 
   useEffect(() => {
     const DEFAULT_LAYOUT = {
       theme: "sovereign-home",
       columns: {
         left: ["classy_martini"],
-        center: ["curriculum_grandmaster"],
-        right: ["messaging_app", "crossword_puzzle"]
+        center: [],
+        right: ["messaging_app"]
       }
     };
 
@@ -408,7 +411,26 @@ export default function App() {
     }
   }, [auth?.os_theme]);
 
-  const [activeDomain, _setActiveDomain] = useState<"ROOT" | "PORTAL" | "MLB" | "NBA" | "NFL" | "PGA" | "SKEW" | "HOLODEX" | "GLOBAL" | "ARGUS" | "CMDB">("ROOT");
+  const [activeDomain, _setActiveDomain] = useState<"ROOT" | "PORTAL" | "MLB" | "NBA" | "NFL" | "PGA" | "SKEW" | "HOLODEX" | "GLOBAL" | "ARGUS" | "CMDB">(() => {
+    const params = new URLSearchParams(window.location.search);
+    const domain = params.get('domain');
+    const validDomains = ["ROOT", "PORTAL", "MLB", "NBA", "NFL", "PGA", "SKEW", "HOLODEX", "GLOBAL", "ARGUS", "CMDB"];
+    if (domain && validDomains.includes(domain)) return domain as any;
+    
+    const room = params.get('room');
+    if (room && room !== 'starter') {
+      if (room === 'amen_corner') return 'PGA';
+      if (['edge_dvr', 'stream_sniper', 'highlight_heist', 'sovereign_css', 'sow', 'dreadnought', 'theme_manager', 'model_arena', 'user_management', 'user_mgmt', 'system_config', 'portal_layout', 'sys_rules', 'stack_seeder', 'hate_mail_inbox', 'catnip_wars', 'town_simulation', 'voice', 'persona_center', 'nexus_telemetry', 'prospectus', 'wildseed', 'oracle_guardrails', 'asset_backlog'].includes(room)) return 'GLOBAL';
+      if (room === 'kanban' || room === 'cockpit' || room === 'pixel_dropzone' || room === 'app_directory') return 'ROOT';
+      if (room === 'the_skew' || room === 'hot_takes') return 'SKEW';
+      if (room === 'holodex') return 'HOLODEX';
+      if (room === 'argus_nexus') return 'ARGUS';
+      if (room === 'cmdb') return 'CMDB';
+      if (room === 'savant_query' || room === 'scruffys' || room === 'tmi_news_desk') return 'MLB';
+      return 'MLB';
+    }
+    return "ROOT";
+  });
   const setActiveDomain = (domain: "ROOT" | "PORTAL" | "MLB" | "NBA" | "NFL" | "PGA" | "SKEW" | "HOLODEX" | "GLOBAL" | "ARGUS" | "CMDB") => {
     _setActiveDomain(domain);
   };
@@ -420,6 +442,16 @@ export default function App() {
       window.location.href = SovereignConfig.fanstack;
     }
   }, [isFan]);
+
+  useEffect(() => {
+    if (activeRoom === 'kanban' || (activeRoom as string) === 'sdlc' || activeRoom === 'sow') {
+      setDashboardWidgetsActive(false);
+      setIsWidgetOverlayActive(false);
+    } else {
+      setDashboardWidgetsActive(true);
+      setIsWidgetOverlayActive(true);
+    }
+  }, [activeRoom]);
 
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -1052,6 +1084,27 @@ export default function App() {
                 <AssetBacklog />
               ) : activeRoom === 'stack_seeder' ? (
                 <StackSeeder />
+              ) : activeRoom === 'persona_console' ? (
+                <PersonaConsole />
+              ) : (activeRoom === 'kanban' || (activeRoom as string) === 'sdlc') && !dashboardWidgetsActive ? (
+                <div className="h-[85vh] w-full rounded-xl overflow-hidden shadow-2xl border border-white/5 relative">
+                  <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-4">
+                    <button 
+                      onClick={() => setIsTicketModalOpen(true)}
+                      className="px-4 py-2 bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/50 rounded-lg font-mono text-[10px] uppercase tracking-widest hover:bg-[#38bdf8] hover:text-black transition-colors"
+                    >
+                      New Ticket
+                    </button>
+                    <button 
+                      onClick={() => { setActiveDomain('ROOT'); setActiveRoom('starter'); window.history.pushState({}, '', '/'); }} 
+                      className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg font-mono text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-colors"
+                    >
+                      Close Kanban
+                    </button>
+                  </div>
+                  <LivingKanbanBoard />
+                  <NewTicketModal isOpen={isTicketModalOpen} onClose={() => setIsTicketModalOpen(false)} />
+                </div>
               ) : activeRoom === 'cmdb' || activeDomain === 'CMDB' ? (
                 <SovereignCmdb />
               ) : (
@@ -1127,6 +1180,7 @@ export default function App() {
           else if (domain === 'HOT_TAKES' as any) { setActiveDomain('SKEW'); setActiveRoom('hot_takes'); }
           else if (domain === 'MODEL_ARENA' as any) { setActiveDomain('GLOBAL'); setActiveRoom('model_arena'); }
           else if (domain === 'PROMO_INBOX' as any) { setActiveDomain('GLOBAL'); setActiveRoom('promo_inbox'); }
+          else if (domain === 'TMI_NEWS_DESK' as any) { setActiveDomain('MLB'); setActiveRoom('tmi_news_desk'); }
           else {
             alert(`The ${domain} matrix is currently locked offline. Reverting to MLB Command Center.`);
             setActiveDomain('MLB');
@@ -1610,7 +1664,7 @@ export default function App() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="h-[85vh] w-full rounded-xl overflow-hidden  border border-red-500/30"
             >
-              <HotTakesConsole onClose={() => setActiveRoom('starter')} />
+              <AdvocateCommandDeck />
             </motion.div>
           )}
 

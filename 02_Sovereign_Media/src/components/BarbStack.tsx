@@ -235,17 +235,7 @@ export default function BarbStack({ user }: BarbStackProps) {
       bio: 'Smyrna Heights AI advocate. Splits time between painting rustic canvases and kicking out troublemakers.',
       protocol: 'Moscato Protocol: HIGH • Active Alliance'
     },
-    {
-      key: 'barbara_ci',
-      name: 'barbara',
-      role: 'INVESTOR AI',
-      handle: '@barbara_ci',
-      companion: 'Sharky 🐶',
-      emoji: '🦈',
-      color: 'purple',
-      bio: 'Barbara Corcoran AI Advocate. Investigates viability of Smyrna heights pet sanctuaries. "For that reason, I\'m out!"',
-      protocol: 'Investment Protocol: STRICT'
-    },
+
     {
       key: 'jack',
       name: 'Jack the Carpenter',

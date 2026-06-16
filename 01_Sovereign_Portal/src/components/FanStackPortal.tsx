@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import LogArchiveModal from './LogArchiveModal';
 interface FanStackPortalProps {
-  onSelectDomain: (domain: 'MLB' | 'NBA' | 'NFL' | 'PGA' | 'SKEW' | 'HOLODEX' | 'ARGUS' | 'EDGE_DVR' | 'STREAM_SNIPER' | 'TELEMETRY' | 'VAULT' | 'STORYBOARD' | 'CMDB' | 'SAVANT' | 'VOCAL' | 'SOVEREIGN_CSS' | 'SCRUFFYS' | 'KANBAN' | 'ROLL_CALL' | 'DREADNOUGHT' | 'HOT_TAKES' | 'ROM_GALLERY' | 'OPTICAL_INGEST' | 'PROMO_INBOX' | 'MODEL_ARENA') => void;
+  onSelectDomain: (domain: 'MLB' | 'NBA' | 'NFL' | 'PGA' | 'SKEW' | 'HOLODEX' | 'ARGUS' | 'EDGE_DVR' | 'STREAM_SNIPER' | 'TELEMETRY' | 'VAULT' | 'STORYBOARD' | 'CMDB' | 'SAVANT' | 'VOCAL' | 'SOVEREIGN_CSS' | 'SCRUFFYS' | 'KANBAN' | 'ROLL_CALL' | 'DREADNOUGHT' | 'HOT_TAKES' | 'ROM_GALLERY' | 'OPTICAL_INGEST' | 'PROMO_INBOX' | 'MODEL_ARENA' | 'TMI_NEWS_DESK') => void;
 }
 
 export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) {
@@ -11,7 +11,7 @@ export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) 
     'scruffys', 'the_skew', 'hot_takes', 'stream_sniper',
     'holodex', 'rom_gallery', 'artifact_gallery',
     'persona_center', 'promo_inbox', 'savant_query',
-    'optical_ingest', 'roll_call', 'model_arena'
+    'optical_ingest', 'roll_call', 'model_arena', 'tmi_news_desk'
   ]);
 
   React.useEffect(() => {
@@ -58,7 +58,8 @@ export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) 
   const col2 = [
     { id: 'holodex', domain: 'HOLODEX', title: "✨ Sovereign HoloDex", subtitle: "CINEMATIC VIDEO SYNTHESIS ENGINE", color: "#38bdf8" },
     { id: 'rom_gallery', domain: 'ROM_GALLERY', title: "Sovereign Watch Party", subtitle: "Historic Moments & Video Sync", color: "#ff00ff", subColor: "#E0BC68" },
-    { id: 'artifact_gallery', domain: 'VAULT', title: "Media Vault Matrix", subtitle: "ASSET REVIEW GALLERY", color: "#ffffff", subColor: "#E0BC68" }
+    { id: 'artifact_gallery', domain: 'VAULT', title: "Media Vault Matrix", subtitle: "ASSET REVIEW GALLERY", color: "#ffffff", subColor: "#E0BC68" },
+    { id: 'tmi_news_desk', domain: 'TMI_NEWS_DESK', title: "((•)) TMI News Desk", subtitle: "Broadcast Director Triage Dashboard", color: "#ef4444", borderClass: "border border-red-500/20 bg-red-500/5", subColor: "#8E9CAA" }
   ];
 
   const col3 = [

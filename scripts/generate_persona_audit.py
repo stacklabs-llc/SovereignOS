@@ -50,19 +50,18 @@ def main():
     md.append(f"- **Users without Personas (Orphans):** {total_orphans}")
     md.append("")
     md.append("## Persona Roster")
-    md.append("| Username | Display Name | Role | Active | Boggs Level | LLM Engine | Style | Zone | Email |")
-    md.append("| --- | --- | --- | --- | --- | --- | --- | --- | --- |")
+    md.append("| Username | Display Name | Role | Active | Boggs Level | Style | Zone | Email |")
+    md.append("| --- | --- | --- | --- | --- | --- | --- | --- |")
     
     for p in personas:
         active_str = "✅ Active" if p['user_active'] == 1 else ("❌ Inactive" if p['user_active'] == 0 else "N/A")
         role_str = p['role'] or "N/A"
         zone_str = p['u_deployment_zone'] or "N/A"
         email_str = p['email'] or p['email_alias'] or "N/A"
-        engine_str = p['llm_engine'] or "N/A"
         style_str = p['u_visual_style'] or "N/A"
         boggs_level = p['boggs_level'] if p['boggs_level'] is not None else "N/A"
         
-        md.append(f"| `{p['user_name']}` | **{p['display_name'] or p['user_name']}** | {role_str} | {active_str} | {boggs_level} | {engine_str} | `{style_str}` | `{zone_str}` | {email_str} |")
+        md.append(f"| `{p['user_name']}` | **{p['display_name'] or p['user_name']}** | {role_str} | {active_str} | {boggs_level} | `{style_str}` | `{zone_str}` | {email_str} |")
         
     md.append("")
     md.append("## Detailed Persona Profiles")
@@ -72,7 +71,6 @@ def main():
         md.append(f"- **Role:** {p['role'] or 'N/A'}")
         md.append(f"- **Active:** {'Yes' if p['user_active'] == 1 else 'No'}")
         md.append(f"- **Boggs Level:** {p['boggs_level']}")
-        md.append(f"- **LLM Engine:** {p['llm_engine'] or 'N/A'}")
         md.append(f"- **Visual Style:** `{p['u_visual_style'] or 'N/A'}`")
         md.append(f"- **Deployment Zone:** `{p['u_deployment_zone'] or 'N/A'}`")
         if p['tailscale_ip']:

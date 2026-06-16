@@ -349,8 +349,13 @@ option {
       backdrop-filter: none !important;
   }
   .theme-pixel * {
-      font-family: 'Press Start 2P', monospace !important;
-      letter-spacing: 0px !important;
+      font-family: 'Outfit', 'Inter', sans-serif !important;
+      letter-spacing: normal !important;
+  }
+  .theme-pixel .font-mono,
+  .theme-pixel code,
+  .theme-pixel pre {
+      font-family: 'JetBrains Mono', monospace !important;
   }
   .theme-pixel .text-\[\#38bdf8\], .theme-pixel .text-white, .theme-pixel .text-\[\#8E9CAA\], .theme-pixel .text-white\/50, .theme-pixel .text-\[\#64748b\] {
       color: #00fa1b !important;
@@ -383,8 +388,13 @@ option {
       background-size: 8px 8px !important;
   }
   .theme-nes * {
-      font-family: 'Press Start 2P', monospace !important;
-      letter-spacing: 0px !important;
+      font-family: 'Outfit', 'Inter', sans-serif !important;
+      letter-spacing: normal !important;
+  }
+  .theme-nes .font-mono,
+  .theme-nes code,
+  .theme-nes pre {
+      font-family: 'JetBrains Mono', monospace !important;
   }
   .theme-nes .text-\[\#38bdf8\], .theme-nes .text-\[\#38bdf8\], .theme-nes .text-white {
       color: #ffffff !important;
@@ -406,6 +416,7 @@ option {
       background-size: 100% 4px, 6px 100%;
       pointer-events: none;
       z-index: 9999;
+      opacity: 0.02 !important; /* Fix horizontal cut lines through text */
   }
 
   /* Theme: SNES (16-Bit Super) */
@@ -475,7 +486,12 @@ option {
       background-color: #0c0e12 !important;
   }
   .theme-psx * {
-      font-family: 'Share Tech Mono', monospace !important;
+      font-family: 'Outfit', 'Inter', sans-serif !important;
+  }
+  .theme-psx .font-mono,
+  .theme-psx code,
+  .theme-psx pre {
+      font-family: 'JetBrains Mono', monospace !important;
   }
   .theme-psx .text-\[\#38bdf8\], .theme-psx .text-\[\#38bdf8\], .theme-psx .text-white {
       color: #00ffff !important;

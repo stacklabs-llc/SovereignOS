@@ -19,39 +19,46 @@ const MOCK_ITEMS = Array.from({ length: 15 }, (_, i) => ({
   video_url: `/01_Assets/Video/Inbox/SOVEREIGN_FLOWMERCIAL_FINAL.mp4`
 }));
 
-export default function MediaRibbon({ title, onSelectVideo, isActiveRow, activeColIndex, selectTriggerCount, onFocusItem }: MediaRibbonProps) {
+export default function MediaRibbon({ title, fetchUrl, onSelectVideo, isActiveRow, activeColIndex, selectTriggerCount, onFocusItem }: MediaRibbonProps) {
   const rowRef = useRef<HTMLDivElement>(null);
   const [items, setItems] = useState<any[]>(MOCK_ITEMS);
 
   useEffect(() => {
-    // If we want Sonarr data, fetch from the proxy
-    fetch('/sonarr/api/v3/series?apikey=3a86bddfeefa4c93b104f33a534ffb72')
+    const url = fetchUrl || '/sonarr/api/v3/series?apikey=3a86bddfeefa4c93b104f33a534ffb72';
+    fetch(url)
       .then(res => res.json())
       .then(data => {
         if (data && data.length > 0) {
-            // Map Sonarr series to our format
-            const mapped = data.map((series: any) => {
-              // Find poster
-              const poster = series.images.find((img: any) => img.coverType === 'poster');
-              const banner = series.images.find((img: any) => img.coverType === 'banner' || img.coverType === 'fanart');
-              const addKey = (url: string) => {
-                const apiStr = url.includes('?') ? `&apikey=3a86bddfeefa4c93b104f33a534ffb72` : `?apikey=3a86bddfeefa4c93b104f33a534ffb72`;
-                return url.replace('/sonarr/MediaCover', '/sonarr/api/v3/MediaCover') + apiStr;
-              };
-              return {
-                id: series.id,
-                title: series.title,
-                overview: series.overview,
-                image: poster ? addKey(poster.url) : `/01_Assets/Images/poster_1.png`,
-                bgImage: banner ? addKey(banner.url) : (poster ? addKey(poster.url) : `/01_Assets/Images/poster_1.png`),
-                video_url: `/01_Assets/Video/Inbox/SOVEREIGN_FLOWMERCIAL_FINAL.mp4`
-              };
-            });
-            setItems(mapped);
+            // Check if the returned data is from Sonarr or from our theater_media_server /api/media endpoints
+            if (data[0].images || data[0].tvdbId) {
+                // Map Sonarr series to our format
+                const mapped = data.map((series: any) => {
+                  const poster = series.images?.find((img: any) => img.coverType === 'poster');
+                  const banner = series.images?.find((img: any) => img.coverType === 'banner' || img.coverType === 'fanart');
+                  const addKey = (url: string) => {
+                    const apiStr = url.includes('?') ? `&apikey=3a86bddfeefa4c93b104f33a534ffb72` : `?apikey=3a86bddfeefa4c93b104f33a534ffb72`;
+                    return url.replace('/sonarr/MediaCover', '/sonarr/api/v3/MediaCover') + apiStr;
+                  };
+                  return {
+                    id: series.id,
+                    title: series.title,
+                    overview: series.overview,
+                    image: poster ? addKey(poster.url) : `/01_Assets/Images/poster_1.png`,
+                    bgImage: banner ? addKey(banner.url) : (poster ? addKey(poster.url) : `/01_Assets/Images/poster_1.png`),
+                    video_url: `/01_Assets/Video/Inbox/SOVEREIGN_FLOWMERCIAL_FINAL.mp4`
+                  };
+                });
+                setItems(mapped);
+            } else {
+                // Standard media server endpoint (has id, title, video_url, image)
+                setItems(data);
+            }
+        } else {
+            setItems([]);
         }
       })
       .catch(err => console.error("Failed to fetch media", err));
-  }, []);
+  }, [fetchUrl]);
 
   const scroll = (direction: 'left' | 'right') => {
     if (rowRef.current) {

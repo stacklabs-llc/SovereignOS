@@ -104,7 +104,7 @@ def process_video(video_path, comments_path=None):
             """
             
             juicy_res = client.models.generate_content(
-                model='gemini-2.5-flash',
+                model='gemini-flash-latest',
                 contents=[juicy_prompt]
             )
             

@@ -108,6 +108,43 @@ def execute_artifact_quality_audit(target_dir, brand_name):
                     except Exception as e:
                         pass
 
+    # Phase 5: Pose Variant Diversity Audit
+    import hashlib
+    for row in rows:
+        user_name, _ = row
+        avatar_dir = f"/home/james/SovereignOS/avatars/{user_name}"
+        pose_files = [f"{user_name}_avatar.png", f"{user_name}_pointing.png", f"{user_name}_shrug.png"]
+        
+        hashes = {}
+        for filename in pose_files:
+            file_path = os.path.join(avatar_dir, filename)
+            if not os.path.exists(file_path):
+                return {
+                    "status": "FAIL",
+                    "reason": f"COMPLIANCE FAULT: Pose variant image is missing for advocate @{user_name}: {filename}"
+                }
+            try:
+                with open(file_path, "rb") as f:
+                    file_content = f.read()
+                    h = hashlib.md5(file_content).hexdigest()
+                    hashes[filename] = h
+            except Exception as e:
+                return {
+                    "status": "FAIL",
+                    "reason": f"COMPLIANCE FAULT: Failed to read pose variant image for @{user_name}: {filename} ({str(e)})"
+                }
+                
+        # Compare hashes to check for identical duplicates
+        seen_hashes = {}
+        for filename, h in hashes.items():
+            if h in seen_hashes:
+                other_file = seen_hashes[h]
+                return {
+                    "status": "FAIL",
+                    "reason": f"COMPLIANCE FAULT: Duplicate pose variant detected for @{user_name}. '{filename}' and '{other_file}' are identical copies."
+                }
+            seen_hashes[h] = filename
+
     print("✅ Quality Control Passed: Artifacts are clean, customized, and production-ready.")
     return {"status": "PASS", "inc_ticket": None}
 

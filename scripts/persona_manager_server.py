@@ -528,6 +528,27 @@ async def put_now_table(table: str, sys_id: str, req: Request):
     finally:
         conn.close()
 
+class CinemaProxyRequest(BaseModel):
+    title: str
+    media_type: str = "movie"
+    target_node: str = "clio"
+    mst3k_mode: bool = False
+
+@app.post("/api/cinema/request")
+async def proxy_cinema_request(req: CinemaProxyRequest):
+    import httpx
+    async with httpx.AsyncClient() as client:
+        try:
+            # Forward the request to sovereign_core_api on port 8090
+            response = await client.post(
+                "http://127.0.0.1:8090/api/cinema/request",
+                json=req.dict(),
+                timeout=10.0
+            )
+            return response.json()
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Failed to forward request to core cinema service: {e}")
+
 if __name__ == "__main__":
     print("🚀 Sovereign Persona Foundry Engine initializing on Port 8096...")
     uvicorn.run(app, host="0.0.0.0", port=8096)

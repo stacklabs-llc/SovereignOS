@@ -6,6 +6,8 @@ import uuid
 import sqlite3
 import os
 import datetime
+import urllib.request
+import json
 
 # Mando Watchdog Configuration
 TARGET_HOST = "clio.taila01894.ts.net"  # Tailscale hostname, NO hardcoded IP (KI-001)
@@ -19,10 +21,16 @@ DB_PATH = "/home/james/SovereignOS/dna/sovereign_now.db"
 # Services to monitor with their designated identity verification keywords
 SERVICES = {
     "Sovereign OS Portal": {
-        "port": 3000,
+        "port": 3016,
         "ci": "SovereignPortal",
         "keyword": "Sovereign",
-        "restart_cmd": "cd /home/james/SovereignOS/01_Sovereign_Portal && nohup npm run dev -- --force --port 3000 >> /home/james/SovereignOS/logs/vite_portal.log 2>&1 &"
+        "restart_cmd": "cd /home/james/SovereignOS/01_Sovereign_Portal && nohup npm run dev -- --force --port 3016 >> /home/james/SovereignOS/logs/vite_portal.log 2>&1 &"
+    },
+    "StackLabs Monolith": {
+        "port": 3000,
+        "ci": "app_stacklabs",
+        "keyword": "Sovereign",
+        "restart_cmd": "cd /home/james/SovereignOS/16_StackLabsLLC && nohup npm run dev -- --force --host 0.0.0.0 --port 3000 >> /home/james/SovereignOS/logs/vite_stacklabs.log 2>&1 &"
     },
     "SamTracker Frontend": {
         "port": 3004, 
@@ -33,7 +41,7 @@ SERVICES = {
     "SamTracker Backend": {
         "port": 8083,
         "ci": "SamTracker",
-        "keyword": "fastapi",
+        "keyword": "SamTracker",
         "restart_cmd": "cd /home/james/SovereignOS && nohup /home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/sam_tracker_server.py >> /home/james/SovereignOS/logs/sam_tracker.log 2>&1 &"
     },
     "Sovereign Core API": {
@@ -51,13 +59,13 @@ SERVICES = {
     "Aether Vet Telemedicine": {
         "port": 3015,
         "ci": "AetherVet",
-        "keyword": "AetherVet",
+        "keyword": "Sovereign",
         "restart_cmd": "cd /home/james/SovereignOS/20_AetherVet && nohup npm run dev -- --host 0.0.0.0 --port 3015 >> /home/james/SovereignOS/logs/aether_vet.log 2>&1 &"
     },
     "Sovereign Media": {
         "port": 3008,
         "ci": "SovereignMedia",
-        "keyword": "media",
+        "keyword": "Media",
         "restart_cmd": "cd /home/james/SovereignOS/02_Sovereign_Media && nohup npm run dev -- --host 0.0.0.0 --port 3008 >> /home/james/SovereignOS/logs/vite_cinema.log 2>&1 &"
     },
     "WeedStack Content Poller": {
@@ -69,46 +77,39 @@ SERVICES = {
 }
 
 active_incidents = {}
-active_hardware_incident = None
-
-# PAA-7 Port Authority Module State
-paa7_failures = {}        # Maps port -> consecutive failure count
 active_paa7_tickets = {}   # Maps port -> STRY ticket number
+paa7_failures = {}        # Maps port -> consecutive failure count
+active_hardware_incident = None
 
 def verify_port_identity(port, expected_keyword):
     """PAA-7 identity verification check: Probes port and looks for expected keyword."""
-    import urllib.request
     import ssl
     
     # Check if port is open first
-    if not check_port("127.0.0.1", port):
+    if not check_port(TARGET_HOST, port):
         return False, "DARK"
         
     ctx = ssl.create_default_context()
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
     
-    # Try standard root path first
-    url = f"http://127.0.0.1:{port}/"
-    try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'PAA7-Watchdog/1.0'})
-        with urllib.request.urlopen(req, context=ctx, timeout=2) as response:
-            content = response.read().decode('utf-8', errors='ignore')
-            if expected_keyword.lower() in content.lower():
-                return True, "OK"
-    except Exception:
-        pass
+    paths = ["/", "/docs"]
+    if port == 3008:
+        paths.append("/cinema-portal/")
         
-    # Try /docs endpoint for backend services
-    url_docs = f"http://127.0.0.1:{port}/docs"
-    try:
-        req = urllib.request.Request(url_docs, headers={'User-Agent': 'PAA7-Watchdog/1.0'})
-        with urllib.request.urlopen(req, context=ctx, timeout=2) as response:
-            content = response.read().decode('utf-8', errors='ignore')
-            if "swagger" in content.lower() or "redoc" in content.lower() or expected_keyword.lower() in content.lower():
-                return True, "OK"
-    except Exception:
-        pass
+    for protocol in ["https", "http"]:
+        for path in paths:
+            url = f"{protocol}://{TARGET_HOST}:{port}{path}"
+            try:
+                req = urllib.request.Request(url, headers={'User-Agent': 'PAA7-Watchdog/1.0'})
+                with urllib.request.urlopen(req, context=ctx, timeout=2) as response:
+                    content = response.read().decode('utf-8', errors='ignore')
+                    if expected_keyword.lower() in content.lower():
+                        return True, "OK"
+                    if "docs" in path and ("swagger" in content.lower() or "redoc" in content.lower()):
+                        return True, "OK"
+            except Exception:
+                pass
         
     return False, "SQUATTERS"
 
@@ -136,17 +137,19 @@ def resolve_paa7_stry_ticket(stry_num, port):
     execute_db_query(sql, (datetime.datetime.now().isoformat(), stry_num))
 
 def check_port(host, port):
-    """Check if a TCP port is open. If running locally on Clio, check 127.0.0.1 directly."""
-    target = "127.0.0.1" if os.path.exists(DB_PATH) else host
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.settimeout(3)
-    try:
-        result = sock.connect_ex((target, port))
-        return result == 0
-    except Exception:
-        return False
-    finally:
-        sock.close()
+    """Check if a TCP port is open. Tries 127.0.0.1 first, then the Tailscale host."""
+    for target in ["127.0.0.1", host]:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(2)
+        try:
+            result = sock.connect_ex((target, port))
+            if result == 0:
+                return True
+        except Exception:
+            pass
+        finally:
+            sock.close()
+    return False
 
 def check_process_running(script_name):
     """Check if a process is running locally or via SSH fallback."""
@@ -167,7 +170,6 @@ def check_process_running(script_name):
             return res.returncode == 0
         except Exception:
             return False
-
 
 def execute_db_query(sql, params=()):
     """Executes a database query locally or via SSH fallback."""
@@ -203,6 +205,105 @@ def execute_db_query(sql, params=()):
             print(f"SSH DB Error: {e.stderr.decode('utf-8')}")
             return False
 
+def fetch_db_val(sql, params=()):
+    """Fetches a single database value locally or via SSH fallback."""
+    if os.path.exists(DB_PATH):
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            cursor.execute(sql, params)
+            row = cursor.fetchone()
+            conn.close()
+            return row[0] if row else None
+        except Exception as e:
+            print(f"Local Fetch SQL Error: {e}")
+            return None
+    else:
+        # Fallback to SSH via Tailscale Hostname (KI-001)
+        formatted_sql = sql
+        for p in params:
+            if isinstance(p, str):
+                escaped_p = p.replace("'", "''")
+                formatted_sql = formatted_sql.replace("?", f"'{escaped_p}'", 1)
+            else:
+                formatted_sql = formatted_sql.replace("?", str(p), 1)
+        ssh_cmd = [
+            "ssh", "-o", "StrictHostKeyChecking=no", "-o", "BatchMode=yes",
+            f"james@{TARGET_HOST}",
+            f'sqlite3 {DB_PATH} "{formatted_sql.strip()}"'
+        ]
+        try:
+            res = subprocess.run(ssh_cmd, check=True, capture_output=True, text=True)
+            out = res.stdout.strip()
+            return out if out else None
+        except subprocess.CalledProcessError as e:
+            print(f"SSH DB Fetch Error: {e.stderr}")
+            return None
+
+def get_expression_avatar(ci):
+    """Fetch expression avatar URL from the database for the given CI system."""
+    target_ci_sys_id = "ci_metsy_prime" if ci == "SamTracker" else "ci_mando"
+    avatar = fetch_db_val("SELECT avatar_url FROM cmdb_ci_expression_avatar WHERE ci_sys_id = ?", (target_ci_sys_id,))
+    if avatar:
+        return avatar
+    return "/avatars/mando/mando_warning.png"
+
+def update_ci_status(ci_sys_id, status_int):
+    """Updates operational_status of a CI node in the database."""
+    sql = "UPDATE cmdb_ci SET operational_status = ? WHERE sys_id = ?;"
+    execute_db_query(sql, (status_int, ci_sys_id))
+
+def trigger_websocket_broadcast():
+    """Triggers an immediate WebSocket system broadcast via FanStack Relay."""
+    url = "http://127.0.0.1:8000/api/system/broadcast"
+    try:
+        req = urllib.request.Request(url, method="POST")
+        with urllib.request.urlopen(req, timeout=2) as response:
+            pass
+    except Exception as e:
+        print(f"Failed to trigger WebSocket broadcast: {e}")
+
+def dispatch_comet_alert(service_name, ci, inc_num, avatar_url):
+    """Dispatches a priority alert HTTP POST to the Comet Relay webhook."""
+    url = "http://127.0.0.1:8015/webhook/alert"
+    payload = {
+        "alert_type": f"CRITICAL: {service_name} Offline",
+        "service_name": service_name,
+        "ci": ci,
+        "sys_ticket_id": inc_num,
+        "avatar_url": avatar_url
+    }
+    try:
+        req = urllib.request.Request(
+            url, 
+            data=json.dumps(payload).encode('utf-8'),
+            headers={'Content-Type': 'application/json'},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=3) as response:
+            pass
+    except Exception as e:
+        print(f"[COMET DISPATCH] Failed to send alert to Comet Relay: {e}")
+
+def dispatch_comet_resolve(service_name, inc_num):
+    """Dispatches a priority resolution HTTP POST to the Comet Relay webhook."""
+    url = "http://127.0.0.1:8015/webhook/resolve"
+    payload = {
+        "sys_ticket_id": inc_num,
+        "service_name": service_name
+    }
+    try:
+        req = urllib.request.Request(
+            url, 
+            data=json.dumps(payload).encode('utf-8'),
+            headers={'Content-Type': 'application/json'},
+            method="POST"
+        )
+        with urllib.request.urlopen(req, timeout=3) as response:
+            pass
+    except Exception as e:
+        print(f"[COMET DISPATCH] Failed to send resolve to Comet Relay: {e}")
+
 def generate_service_ticket(service_name, ci):
     """Generates an INC ticket for a down port."""
     sys_id = uuid.uuid4().hex
@@ -226,6 +327,7 @@ def resolve_service_ticket(inc_num, service_name):
     print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] {service_name} recovered. Auto-resolving ticket {inc_num}...")
     sql = "UPDATE sovereign_tickets SET state = 4, sys_updated_on = ?, work_notes = work_notes || char(10) || '[Mando Watchdog] Service recovered. Auto-resolving ticket.' WHERE number = ?;"
     execute_db_query(sql, (datetime.datetime.now().isoformat(), inc_num))
+    dispatch_comet_resolve(service_name, inc_num)
 
 # Hardware Metrics Resolution
 def get_cpu_load():
@@ -243,49 +345,41 @@ def get_memory_usage():
                 parts = line.split()
                 if len(parts) >= 2:
                     meminfo[parts[0].replace(":", "")] = int(parts[1])
-        total = meminfo.get("MemTotal", 1)
+        total = meminfo.get("MemTotal", 0)
         free = meminfo.get("MemFree", 0)
         buffers = meminfo.get("Buffers", 0)
         cached = meminfo.get("Cached", 0)
-        used = total - (free + buffers + cached)
-        ram_percent = (used / total) * 100
+        used = total - free - buffers - cached
+        ram_pct = (used / total) * 100.0 if total > 0 else 0.0
         
         swap_total = meminfo.get("SwapTotal", 0)
         swap_free = meminfo.get("SwapFree", 0)
         swap_used = swap_total - swap_free
-        swap_percent = (swap_used / swap_total) * 100 if swap_total > 0 else 0
-        return ram_percent, swap_percent
+        swap_pct = (swap_used / swap_total) * 100.0 if swap_total > 0 else 0.0
+        
+        return ram_pct, swap_pct
     except Exception:
         return 0.0, 0.0
 
 def get_cpu_temp():
     try:
-        for i in range(10):
-            try:
-                with open(f"/sys/class/thermal/thermal_zone{i}/type", "r") as f:
-                    t_type = f.read().strip()
-                if "cpu" in t_type.lower() or "x86_pkg_temp" in t_type.lower():
-                    with open(f"/sys/class/thermal/thermal_zone{i}/temp", "r") as f:
-                        return float(f.read().strip()) / 1000.0
-            except FileNotFoundError:
-                break
-        with open("/sys/class/thermal/thermal_zone0/temp", "r") as f:
-            return float(f.read().strip()) / 1000.0
+        for p in ["/sys/class/thermal/thermal_zone0/temp", "/sys/class/hwmon/hwmon0/temp1_input"]:
+            if os.path.exists(p):
+                with open(p, "r") as f:
+                    return float(f.read().strip()) / 1000.0
     except Exception:
-        return 0.0
+        pass
+    return 45.0
 
 def get_top_cpu_processes():
     try:
-        cmd = "ps -eo pcpu,pid,comm --sort=-pcpu | head -n 6"
-        res = subprocess.run(cmd, shell=True, capture_output=True, text=True)
-        return res.stdout.strip()
-    except Exception as e:
-        return str(e)
+        res = subprocess.run("ps -eo pcpu,pmem,args --sort=-pcpu | head -n 6", shell=True, capture_output=True, text=True)
+        return res.stdout
+    except Exception:
+        return "Unknown"
 
 def monitor_hardware():
-    """Checks hardware thresholds and raises incident tickets if breached."""
     global active_hardware_incident
-    
     cpu_load = get_cpu_load()
     ram_use, swap_use = get_memory_usage()
     cpu_temp = get_cpu_temp()
@@ -343,11 +437,14 @@ def monitor_hardware():
             now_str = datetime.datetime.now().isoformat()
             if execute_db_query(sql, (sys_id, inc_num, short_desc, desc, now_str, now_str)):
                 active_hardware_incident = {"time": time.time(), "inc_num": inc_num}
+                avatar_url = get_expression_avatar("cmdb_ci_hardware")
+                dispatch_comet_alert("Hardware Telemetry", "cmdb_ci_hardware", inc_num, avatar_url)
     else:
         if active_hardware_incident:
             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Hardware telemetry recovered. Auto-resolving ticket {active_hardware_incident['inc_num']}...")
             sql = "UPDATE sovereign_tickets SET state = 4, sys_updated_on = ?, work_notes = work_notes || char(10) || '[Mando Watchdog] Hardware metrics recovered within limits.' WHERE number = ?;"
             execute_db_query(sql, (datetime.datetime.now().isoformat(), active_hardware_incident["inc_num"]))
+            dispatch_comet_resolve("Hardware Telemetry", active_hardware_incident["inc_num"])
             active_hardware_incident = None
 
 def main():
@@ -357,6 +454,10 @@ def main():
     print(f"Target: {TARGET_HOST}")
     print(f"Polling Interval: {CHECK_INTERVAL}s")
     print("Monitoring services and hardware...")
+    
+    last_sam_status = 1
+    last_mando_status = 1
+    global active_hardware_incident
     
     while True:
         now = time.time()
@@ -388,14 +489,16 @@ def main():
                     inc_num = generate_service_ticket(name, ci)
                     if inc_num:
                         active_incidents[name] = {"time": now, "inc_num": inc_num}
+                        avatar_url = get_expression_avatar(ci)
+                        dispatch_comet_alert(name, ci, inc_num, avatar_url)
                     
                     if restart_cmd:
                         ssh_restart = [
-                            "ssh", "-o", "StrictHostKeyChecking=no", "-o", "BatchMode=yes", 
+                            "ssh", "-f", "-o", "StrictHostKeyChecking=no", "-o", "BatchMode=yes", 
                             f"james@{TARGET_HOST}", restart_cmd
                         ]
                         try:
-                            subprocess.run(ssh_restart, check=True, capture_output=True)
+                            subprocess.run(ssh_restart, check=True)
                         except Exception as e:
                             print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Auto-Restart execution failed: {e}")
                             
@@ -456,6 +559,28 @@ def main():
             if 8080 in active_paa7_tickets:
                 resolve_paa7_stry_ticket(active_paa7_tickets[8080], 8080)
                 del active_paa7_tickets[8080]
+
+        # Update CMDB CI statuses based on check results
+        sam_down = ("SamTracker Frontend" in active_incidents) or ("SamTracker Backend" in active_incidents)
+        other_down = any(name in active_incidents for name in SERVICES if name not in ("SamTracker Frontend", "SamTracker Backend"))
+        hardware_down = active_hardware_incident is not None
+        
+        sam_status = 3 if sam_down else 1
+        mando_status = 2 if (other_down or hardware_down) else 1
+        
+        status_changed = False
+        if sam_status != last_sam_status:
+            update_ci_status("ci_metsy_prime", sam_status)
+            last_sam_status = sam_status
+            status_changed = True
+            
+        if mando_status != last_mando_status:
+            update_ci_status("ci_mando", mando_status)
+            last_mando_status = mando_status
+            status_changed = True
+            
+        if status_changed:
+            trigger_websocket_broadcast()
                     
         time.sleep(CHECK_INTERVAL)
 

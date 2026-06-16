@@ -206,8 +206,8 @@ def append_advocate(args):
         # a. persona table
         cur.execute("""
             INSERT OR REPLACE INTO persona
-            (id, user_name, display_name, team, system_prompt, boggs_level, avatar_url, color, cadence, deep_lore, behavior_notes, governance, llm_engine, u_visual_style, u_deployment_zone)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'gemini-2.5-flash', 'style_felt', ?)
+            (id, user_name, display_name, team, system_prompt, boggs_level, avatar_url, color, cadence, deep_lore, behavior_notes, governance, u_visual_style, u_deployment_zone)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'style_felt', ?)
         """, (
             sys_id, args.handle, args.display_name, args.team, args.system_prompt,
             args.boggs_level, relative_avatar_path, args.color, args.cadence,

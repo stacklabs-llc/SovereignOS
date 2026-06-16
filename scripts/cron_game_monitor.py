@@ -8,7 +8,25 @@ def check_games():
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
-    cursor.execute("SELECT sys_id, room_key, game_pk, room_state FROM cmdb_ci_fanstack_room")
+    # Determine date using Eastern Time to align with schedule
+    try:
+        from zoneinfo import ZoneInfo
+    except ImportError:
+        from backports.zoneinfo import ZoneInfo
+    now_et = datetime.now(ZoneInfo('America/New_York'))
+    if now_et.hour < 10:
+        target_date = (now_et - timedelta(days=1)).strftime('%Y-%m-%d')
+    else:
+        target_date = now_et.strftime('%Y-%m-%d')
+
+    print(f"Game monitor aligning check with target date: {target_date}")
+
+    cursor.execute("""
+        SELECT r.sys_id, r.room_key, r.game_pk, r.room_state 
+        FROM cmdb_ci_fanstack_room r
+        JOIN mlb_schedule s ON r.game_pk = s.game_pk
+        WHERE s.game_date = ? AND (r.is_simulated = 0 OR r.is_simulated IS NULL)
+    """, (target_date,))
     rooms = cursor.fetchall()
     
     now = datetime.now(timezone.utc)
@@ -44,6 +62,7 @@ def check_games():
             if new_state != room_state:
                 print(f"Room {room_key} transitioning from {room_state} to {new_state}")
                 cursor.execute("UPDATE cmdb_ci_fanstack_room SET room_state = ? WHERE sys_id = ?", (new_state, room_sys_id))
+                cursor.execute("UPDATE mlb_schedule SET room_state = ? WHERE game_pk = ?", (new_state, game_pk))
                 
                 # Update users' active status
                 if group:

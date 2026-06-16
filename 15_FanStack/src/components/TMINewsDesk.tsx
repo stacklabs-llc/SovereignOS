@@ -28,7 +28,8 @@ interface TMINewsDeskProps {
 const AVAILABLE_EVENTS = [
   'Home Run', 'Strikeout', 'Double Play', 'Injury Delay', 
   'Manager Challenge', 'Ejection', 'Stolen Base', 'Balk', 
-  'Pitching Substitution', 'Review'
+  'Pitching Substitution', 'Review',
+  'Full-Count Strikeout', 'Bases-Loaded Inning-Ending Jam', 'Late-Inning Comeback Rally'
 ];
 
 export default function TMINewsDesk({ activeGamedayPk }: TMINewsDeskProps) {
@@ -51,7 +52,31 @@ export default function TMINewsDesk({ activeGamedayPk }: TMINewsDeskProps) {
      }
   };
 
+  const saveConfig = async (events: string[]) => {
+     try {
+         await fetch('/api/tmi_event_config', {
+             method: 'POST',
+             headers: { 'Content-Type': 'application/json' },
+             body: JSON.stringify(events)
+         });
+     } catch (e) {
+         console.error("Failed to save event config:", e);
+     }
+  };
+
   React.useEffect(() => {
+     const fetchConfig = async () => {
+        try {
+            const res = await fetch('/api/tmi_event_config');
+            const data = await res.json();
+            if (Array.isArray(data)) {
+                setConfiguredEvents(data);
+            }
+        } catch (e) {
+            console.error("Failed to fetch event config:", e);
+        }
+     };
+     fetchConfig();
      fetchAnomalies();
      const interval = setInterval(fetchAnomalies, 5000); // Poll DB for new anomalies from other nodes
      window.addEventListener('tmi_anomalies_updated', fetchAnomalies);
@@ -261,12 +286,15 @@ export default function TMINewsDesk({ activeGamedayPk }: TMINewsDeskProps) {
                              className="w-4 h-4 accent-[#38bdf8]"
                              checked={isChecked}
                              onChange={(e) => {
-                                if (e.target.checked) {
-                                   setConfiguredEvents([...configuredEvents, evt]);
-                                } else {
-                                   setConfiguredEvents(configuredEvents.filter(e => e !== evt));
-                                }
-                             }}
+                                 let updated: string[];
+                                 if (e.target.checked) {
+                                    updated = [...configuredEvents, evt];
+                                 } else {
+                                    updated = configuredEvents.filter(e => e !== evt);
+                                 }
+                                 setConfiguredEvents(updated);
+                                 saveConfig(updated);
+                              }}
                           />
                           <span className="text-white font-medium">{evt}</span>
                        </label>

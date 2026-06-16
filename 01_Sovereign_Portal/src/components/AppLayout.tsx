@@ -3,7 +3,7 @@ import {
   Sliders, Settings, LogOut, User, LayoutGrid, Wine, Key, 
   BookOpen, MessageSquare, Flower2, Activity, Play, Pause, 
   HelpCircle, Terminal, RefreshCw, ChevronLeft, ChevronRight, Menu,
-  Music, Cpu, Users, Server
+  Music, Cpu, Users, Server, ClipboardList
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import CometMessenger from './CometMessenger';
@@ -29,16 +29,22 @@ export default function AppLayout({
   activeGamedayPk
 }: AppLayoutProps) {
   const auth = useAuth() as any;
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth >= 768;
+    }
+    return true;
+  });
+
+  const handleNavigate = (domain: string, room: string | null) => {
+    onNavigate(domain, room);
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  };
   const [isPlaying, setIsPlaying] = useState(false);
   const [martiniTemp, setMartiniTemp] = useState(-8.0);
-  const [crossword, setCrossword] = useState<string[][]>([
-    ['', '', '', '', ''],
-    ['', '', '', '', ''],
-    ['', '', '', '', ''],
-    ['', '', '', '', ''],
-    ['', '', '', '', '']
-  ]);
+
   const [terminalInput, setTerminalInput] = useState('');
   const [terminalLines, setTerminalLines] = useState<string[]>([
     'Sovereign CLI Operator Shell v0.1.0',
@@ -89,46 +95,40 @@ export default function AppLayout({
     setChatInput('');
   };
 
-  // Crossword answers verification
-  // R1: C L I O S
-  // R2: L O O P S
-  // R3: I R O N Y
-  // R4: O L I V E
-  // R5: S T A C K
-  const crosswordAnswers = [
-    ['C', 'L', 'I', 'O', 'S'],
-    ['L', 'O', 'O', 'P', 'S'],
-    ['I', 'R', 'O', 'N', 'Y'],
-    ['O', 'L', 'I', 'V', 'E'],
-    ['S', 'T', 'A', 'C', 'K']
-  ];
-  
-  const checkCrossword = () => {
-    let correct = true;
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
-        if (crossword[r][c].toUpperCase() !== crosswordAnswers[r][c]) {
-          correct = false;
-        }
-      }
-    }
-    alert(correct ? "🎉 Masterpiece! The grid aligns perfectly." : "❌ Some nodes in the matrix are misaligned.");
-  };
 
   const columns = configuration?.columns || { left: [], center: [], right: [] };
 
   return (
-    <div className="flex-1 flex min-h-0 relative font-sans">
+    <div className="flex-1 flex min-h-0 relative font-sans sovereign-shell-container">
+      {/* Mobile Header Bar */}
+      <div className="md:hidden flex items-center justify-between p-3 bg-[#0B0E14]/95 border-b border-white/5 z-50 h-14 shrink-0 w-full">
+        <button 
+          onClick={() => setSidebarOpen(!sidebarOpen)}
+          className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-white/80 hover:text-white bg-transparent border-0 cursor-pointer"
+        >
+          <Menu size={24} />
+        </button>
+        <span className="font-mono text-xs uppercase tracking-widest text-[#38bdf8] font-bold">Sovereign Portal</span>
+        <div className="w-[44px]"></div>
+      </div>
+
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Dynamic Left Sidebar */}
       <div 
-        className={`${
-          sidebarOpen ? 'w-64' : 'w-16'
+        className={`sovereign-sidebar ${
+          sidebarOpen ? 'w-64 menu-open' : 'w-16'
         } shrink-0 bg-[#0B0E14]/90 border-r border-white/5 flex flex-col transition-all duration-300 backdrop-blur-xl relative z-40`}
       >
         {/* Toggle Button */}
         <button 
           onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="absolute -right-3 top-4 bg-[#0F172A] border border-white/10 rounded-full p-1 text-white/60 hover:text-white"
+          className="absolute -right-3 top-4 bg-[#0F172A] border border-white/10 rounded-full p-1 text-white/60 hover:text-white cursor-pointer"
         >
           {sidebarOpen ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
         </button>
@@ -149,7 +149,7 @@ export default function AppLayout({
         {/* Navigation Section */}
         <div className="flex-1 p-2 flex flex-col gap-1 overflow-y-auto">
           <button 
-            onClick={() => onNavigate('ROOT', 'starter')}
+            onClick={() => handleNavigate('ROOT', 'starter')}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
               activeRoom === 'starter' 
                 ? 'bg-white/10 text-[#38bdf8]' 
@@ -161,7 +161,7 @@ export default function AppLayout({
           </button>
 
           <button 
-            onClick={() => onNavigate('GLOBAL', 'active_stacks')}
+            onClick={() => handleNavigate('GLOBAL', 'active_stacks')}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
               activeRoom === 'active_stacks' 
                 ? 'bg-white/10 text-[#38bdf8]' 
@@ -173,7 +173,7 @@ export default function AppLayout({
           </button>
 
           <button 
-            onClick={() => onNavigate('GLOBAL', 'power_tools')}
+            onClick={() => handleNavigate('GLOBAL', 'power_tools')}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
               activeRoom === 'power_tools' 
                 ? 'bg-white/10 text-[#38bdf8]' 
@@ -186,7 +186,21 @@ export default function AppLayout({
 
           {(auth?.role === 'pilot' || auth?.role === 'creator' || auth?.role === 'admin') && (
             <button 
-              onClick={() => onNavigate('GLOBAL', 'system_config')}
+              onClick={() => handleNavigate('ROOT', 'kanban')}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
+                activeRoom === 'kanban'
+                  ? 'bg-white/10 text-[#38bdf8]' 
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <ClipboardList size={16} />
+              {sidebarOpen && 'Kanban Board'}
+            </button>
+          )}
+
+          {(auth?.role === 'pilot' || auth?.role === 'creator' || auth?.role === 'admin') && (
+            <button 
+              onClick={() => handleNavigate('GLOBAL', 'system_config')}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
                 activeRoom === 'system_config' || activeRoom === 'app_directory'
                   ? 'bg-white/10 text-[#38bdf8]' 
@@ -247,10 +261,7 @@ export default function AppLayout({
 
             {/* RIGHT WORKSPACE: Sidebar Utilities */}
             <div className="flex flex-col gap-6">
-              {/* Retro Advocate Soundboard Card */}
-              <Soundboard activeGamedayPk={activeGamedayPk} />
-
-              {columns.left?.includes('classy_martini') && (
+              {columns.left?.includes('classy_martini') && auth?.role !== 'pilot' && (
                 <div className="bg-[#0f172a]/60 border border-white/10 rounded-2xl p-5 backdrop-blur-xl relative overflow-hidden shadow-xl">
                   <div className="absolute inset-0 bg-[#38bdf8]/5 opacity-20 pointer-events-none" />
                   <h3 className="text-xs uppercase tracking-widest text-[#38bdf8] font-mono font-bold mb-3 flex items-center gap-2">
@@ -308,86 +319,6 @@ export default function AppLayout({
                     <span>SEAL: ENCRYPTED // GOLDEN</span>
                     <span>KEY: PHYSICAL OUTPOST</span>
                   </div>
-                </div>
-              )}
-
-              {columns.center?.includes('curriculum_grandmaster') && (
-                <div className="bg-[#0f172a]/60 border border-white/10 rounded-2xl p-5 backdrop-blur-xl relative overflow-hidden shadow-xl">
-                  <h3 className="text-xs uppercase tracking-widest text-[#38bdf8] font-mono font-bold mb-3 flex items-center gap-2">
-                    <BookOpen size={14} /> Curriculum Grandmaster
-                  </h3>
-                  <p className="text-xs text-white/60 mb-4">
-                    Monitoring Lenora's Kids' Daily Adventures Swarm. Active mentors:
-                  </p>
-                  <div className="space-y-2.5 mb-5">
-                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/5 text-xs font-mono">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-green-400" />
-                        <span>Pip the Clockwork Squirrel</span>
-                      </div>
-                      <span className="text-[#38bdf8]">Active</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2.5 rounded-lg bg-white/5 border border-white/5 text-xs font-mono">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                        <span>Celeste (Mentor Coordinator)</span>
-                      </div>
-                      <span className="text-[#38bdf8]">Idle</span>
-                    </div>
-                  </div>
-                  <div className="space-y-1.5 mb-5">
-                    <div className="flex justify-between text-[10px] font-mono text-white/50">
-                      <span>Adventure Progress</span>
-                      <span>85%</span>
-                    </div>
-                    <div className="w-full bg-white/5 h-2 rounded-full overflow-hidden border border-white/10">
-                      <div className="bg-[#38bdf8] h-full" style={{ width: '85%' }} />
-                    </div>
-                  </div>
-                  <button 
-                    onClick={() => alert("Supervision ping sent to Lenora's swarm.")}
-                    className="w-full py-2.5 rounded-xl bg-[#38bdf8] hover:bg-[#7dd3fc] text-slate-950 font-bold text-xs uppercase tracking-wider transition-all"
-                  >
-                    SUPERVISE SWARM
-                  </button>
-                </div>
-              )}
-
-              {columns.right?.includes('crossword_puzzle') && (
-                <div className="bg-[#0f172a]/60 border border-white/10 rounded-2xl p-5 backdrop-blur-xl relative overflow-hidden shadow-xl">
-                  <h3 className="text-xs uppercase tracking-widest text-[#a855f7] font-mono font-bold mb-3 flex items-center gap-2">
-                    <HelpCircle size={14} /> Crossword Grandmaster
-                  </h3>
-                  <div className="grid grid-cols-5 gap-1 max-w-[200px] mx-auto mb-4">
-                    {crossword.map((row, r) => (
-                      <React.Fragment key={r}>
-                        {row.map((cell, c) => (
-                          <input
-                            key={`${r}-${c}`}
-                            type="text"
-                            maxLength={1}
-                            value={cell}
-                            onChange={e => {
-                              const newGrid = [...crossword];
-                              newGrid[r][c] = e.target.value.substring(0, 1);
-                              setCrossword(newGrid);
-                            }}
-                            className="w-8 h-8 bg-black/50 border border-white/20 rounded text-center text-sm font-bold uppercase outline-none focus:border-[#a855f7] text-[#a855f7]"
-                          />
-                        ))}
-                      </React.Fragment>
-                    ))}
-                  </div>
-                  <div className="text-[10px] font-mono text-white/50 mb-4 space-y-1">
-                    <p>• 1 Across: Local core server (CLIOS)</p>
-                    <p>• 5 Across: Garden/Livestock (STACK)</p>
-                  </div>
-                  <button 
-                    onClick={checkCrossword}
-                    className="w-full py-2 bg-gradient-to-r from-[#a855f7] to-[#38bdf8] text-slate-950 font-bold text-xs uppercase tracking-widest rounded-xl hover:opacity-90 transition-all"
-                  >
-                    Check Alignment
-                  </button>
                 </div>
               )}
 

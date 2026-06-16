@@ -333,11 +333,75 @@ async def generate_response(model, prompt, system_instruction=None, allow_rant=F
                 return response.json().get("response", "").strip().replace('\n', ' ')
             else:
                 print(f"[LLM Error on Clio]: {response.status_code}")
-                return None
-
-        # STRICT GEMINI ONLY (ENTERPRISE VERTEX AI WITH DEVELOPER API KEY & OLLAMA FAILOVER)
+                return         # STRICT GEMINI ONLY (ENTERPRISE VERTEX AI WITH DEVELOPER API KEY & OLLAMA FAILOVER)
         if "gemini" in model:
-            # Thread-safe async double-checked initialization
+            sys_text = system_instruction if system_instruction else "You are an extremely toxic, brief sports fan in a fast live chat. One short sentence only. No quotes, brackets, or greetings. Act human."
+            if not allow_rant:
+                sys_text += " CRITICAL CONSTRAINT: Your response MUST BE UNDER 190 CHARACTERS TOTAL. YouTube chat enforces a strict 200 character limit. Be punchy and concise."
+            sys_text += " ABSOLUTE RULE: Output ONLY the character's spoken words. NEVER include parenthetical notes, meta-commentary, guideline references, or any text like '(Note: ...)' or '[Note: ...]'. Your output is raw chat dialogue — nothing else."
+
+            # Global throttle to prevent Burst Rate Limiting (429)
+            global gemini_lock
+            if 'gemini_lock' not in globals():
+                globals()['gemini_lock'] = asyncio.Semaphore(15)  # Vertex can handle higher concurrency
+
+            if GEMINI_KEY:
+                try:
+                    from google import genai
+                    from google.genai import types
+
+                    async with gemini_lock:
+                        def _call_genai():
+                            client = genai.Client(api_key=GEMINI_KEY)
+                            config = types.GenerateContentConfig(
+                                system_instruction=sys_text,
+                                temperature=0.9,
+                                safety_settings=[
+                                    types.SafetySetting(
+                                        category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+                                        threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                                    ),
+                                    types.SafetySetting(
+                                        category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                                        threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                                    ),
+                                    types.SafetySetting(
+                                        category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                                        threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                                    ),
+                                    types.SafetySetting(
+                                        category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                                        threshold=types.HarmBlockThreshold.BLOCK_NONE,
+                                    ),
+                                ]
+                            )
+                            return client.models.generate_content(
+                                model="gemini-flash-latest",
+                                contents=prompt,
+                                config=config
+                            )
+                        res = await asyncio.to_thread(_call_genai)
+                        parts_text = []
+                        if res.candidates and len(res.candidates) > 0:
+                            candidate = res.candidates[0]
+                            if candidate.content and candidate.content.parts:
+                                for part in candidate.content.parts:
+                                    if hasattr(part, "text") and part.text:
+                                        parts_text.append(part.text)
+                        if parts_text:
+                            txt = "".join(parts_text)
+                        else:
+                            try:
+                                txt = res.text
+                            except Exception:
+                                txt = ""
+                        txt = txt.replace('\n', ' ').strip()
+                        txt = _strip_meta_notes(txt)
+                        return txt
+                except Exception as genai_err:
+                    print(f"[GOOGLE GENAI API KEY ERROR] {genai_err} - falling back to Vertex AI")
+
+            # Try Enterprise Vertex AI first
             global _vertex_initialized, _vertex_lock
             if '_vertex_initialized' not in globals():
                 globals()['_vertex_initialized'] = False
@@ -368,17 +432,6 @@ async def generate_response(model, prompt, system_instruction=None, allow_rant=F
                         await asyncio.to_thread(_sync_init)
                         globals()['_vertex_initialized'] = True
 
-            sys_text = system_instruction if system_instruction else "You are an extremely toxic, brief sports fan in a fast live chat. One short sentence only. No quotes, brackets, or greetings. Act human."
-            if not allow_rant:
-                sys_text += " CRITICAL CONSTRAINT: Your response MUST BE UNDER 190 CHARACTERS TOTAL. YouTube chat enforces a strict 200 character limit. Be punchy and concise."
-            sys_text += " ABSOLUTE RULE: Output ONLY the character's spoken words. NEVER include parenthetical notes, meta-commentary, guideline references, or any text like '(Note: ...)' or '[Note: ...]'. Your output is raw chat dialogue — nothing else."
-
-            # Global throttle to prevent Burst Rate Limiting (429)
-            global gemini_lock
-            if 'gemini_lock' not in globals():
-                globals()['gemini_lock'] = asyncio.Semaphore(15)  # Vertex can handle higher concurrency
-
-            # Try Enterprise Vertex AI first
             async with gemini_lock:
                 try:
                     from vertexai.generative_models import GenerativeModel
@@ -389,7 +442,21 @@ async def generate_response(model, prompt, system_instruction=None, allow_rant=F
                             generation_config={"temperature": 0.9}
                         )
                     res = await asyncio.to_thread(_call_gemini)
-                    txt = res.text.replace('\n', ' ').strip()
+                    parts_text = []
+                    if res.candidates and len(res.candidates) > 0:
+                        candidate = res.candidates[0]
+                        if candidate.content and candidate.content.parts:
+                            for part in candidate.content.parts:
+                                if hasattr(part, "text") and part.text:
+                                    parts_text.append(part.text)
+                    if parts_text:
+                        txt = "".join(parts_text)
+                    else:
+                        try:
+                            txt = res.text
+                        except Exception:
+                            txt = ""
+                    txt = txt.replace('\n', ' ').strip()
                     txt = _strip_meta_notes(txt)
                     return txt
                 except Exception as vertex_err:
@@ -398,7 +465,7 @@ async def generate_response(model, prompt, system_instruction=None, allow_rant=F
                     # Fallback 1: Developer API Key via generativelanguage.googleapis.com
                     if GEMINI_KEY:
                         try:
-                            url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_KEY}"
+                            url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_KEY}"
                             payload = {
                                 "systemInstruction": {"parts": [{"text": sys_text}]},
                                 "contents": [{"role": "user", "parts": [{"text": prompt}]}],
@@ -414,8 +481,9 @@ async def generate_response(model, prompt, system_instruction=None, allow_rant=F
                         except Exception as dev_key_err:
                             print(f"[DEVELOPER API KEY EXCEPTION] {dev_key_err}")
 
-                    # Fallback 2: Local Ollama fall-through
-                    print(f"[GEMINI COMPLETE FAILOVER] Both Enterprise Vertex and Developer API key failed. Falling back to local Ollama.")
+                    # Fallback 2: Block Ollama fallback
+                    print(f"[GEMINI COMPLETE FAILOVER] Both Enterprise Vertex and Developer API key failed. Blocking Ollama fallback.")
+                    return None
                     
         # LOCAL OLLAMA ROUTING
         if model == "local_llama3":
@@ -486,7 +554,7 @@ async def the_bouncer_eval(chat_text, author, recent_history):
     if not GEMINI_KEY:
         return local_result
     
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_KEY}"
     sys_instr = "You are The Bouncer, an LLM Judge. Evaluate the given chat message in the context of recent history. Determine if it is a targeted insult/burn against another persona in the chat. Return EXACTLY valid JSON with three keys: 'is_burn' (boolean), 'target' (string name of the persona insulted, or null), and 'burn_score' (number 1-10). Do not use markdown blocks."
     
     prompt = f"Recent Context: {' | '.join(recent_history)}\nAuthor: {author}\nMessage: {chat_text}"
@@ -597,7 +665,7 @@ async def generate_commentary(model, prompt, user, color, websocket, msg_type="C
             "silas true grit": "silas_truegrit",
             "iron gaze": "iron_gaze",
             "water-barrel wayne": "water_barrel_wayne",
-            "metsy": "metsy_smyrna",
+            "metsy": "metsy_prime",
             "barnaby the cat": "barnaby",
             "buster": "buster",
             "sam": "sam"
@@ -648,7 +716,7 @@ async def generate_commentary(model, prompt, user, color, websocket, msg_type="C
             "text": text,
             "color": color,
             "is_penalty_box": (user.lower() in global_penalty_box),
-            "model_engine": "Ollama (Dolphin)" if model == "dolphin-llama3" else ("Ollama (Phi-3)" if model == "phi3:mini" else "Gemini 1.5 Flash")
+            "model_engine": "Ollama (Dolphin)" if model == "dolphin-llama3" else ("Ollama (Phi-3)" if model == "phi3:mini" else "gemini-flash-latest")
         }
         if room_id:
             msg["target_game_pk"] = room_id
@@ -707,66 +775,227 @@ async def generate_commentary(model, prompt, user, color, websocket, msg_type="C
             except Exception as _e:
                 print(f"[HOT TAKE DB] Save failed: {_e}")
 
-async def govee_fx(fx_type):
-    import socket, json, asyncio
-    ip = "192.168.1.71"
-    port = 40033
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    def send_color(r, g, b):
-        msg = {"msg": {"cmd": "colorwc", "data": {"color": {"r": r, "g": g, "b": b}, "colorTemInKelvin": 0}}}
-        sock.sendto(json.dumps(msg).encode(), (ip, port))
+discovered_govee_ips = None
+
+async def discover_govee_ips():
+    global discovered_govee_ips
+    if discovered_govee_ips is not None:
+        return discovered_govee_ips
+    
+    import socket, json, os
+    from dotenv import load_dotenv
+    load_dotenv("/home/james/SovereignOS/.env")
+    
+    ips = []
+    
+    # Check if there is configured IP in .env
+    env_ips = os.getenv("GOVEE_DEVICE_IP")
+    if env_ips:
+        for ip_part in env_ips.split(","):
+            ip_strip = ip_part.strip()
+            if ip_strip and ip_strip not in ips:
+                ips.append(ip_strip)
+                
+    # Run a quick UDP scan to discover other active devices
+    recv_sock = None
     try:
-        if fx_type == "mets_score":
+        recv_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        recv_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        recv_sock.bind(('0.0.0.0', 4002))
+        recv_sock.settimeout(0.1) # 100ms timeout
+        
+        send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        send_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        msg = {"msg": {"cmd": "scan", "data": {"ip_op": 0}}}
+        payload = json.dumps(msg).encode('utf-8')
+        
+        send_sock.sendto(payload, ('239.255.255.250', 4001))
+        send_sock.sendto(payload, ('255.255.255.255', 4001))
+        send_sock.close()
+        
+        while True:
+            data, addr = recv_sock.recvfrom(1024)
+            resp = json.loads(data.decode('utf-8'))
+            ip = resp.get("msg", {}).get("data", {}).get("ip")
+            if ip and ip not in ips:
+                ips.append(ip)
+    except Exception as e:
+        print(f"[GOVEE DISCOVERY] Dynamic scan done/timed out: {e}")
+    finally:
+        if recv_sock:
+            recv_sock.close()
+            
+    # Default fallback if absolutely nothing was resolved/configured
+    if not ips:
+        ips = ["192.168.1.173", "192.168.1.174", "192.168.1.176", "192.168.1.188"]
+        
+    discovered_govee_ips = ips
+    print(f"[GOVEE DISCOVERY] Target Govee IPs resolved: {discovered_govee_ips}")
+    return discovered_govee_ips
+
+async def get_govee_statuses(ips, port=4003):
+    import socket, json
+    statuses = {}
+    recv_sock = None
+    try:
+        recv_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        recv_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        recv_sock.bind(('0.0.0.0', 4002))
+        recv_sock.settimeout(0.15) # 150ms timeout
+        
+        send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        msg = {"msg": {"cmd": "devStatus", "data": {}}}
+        payload = json.dumps(msg).encode('utf-8')
+        
+        for ip in ips:
+            try:
+                send_sock.sendto(payload, (ip, port))
+            except:
+                pass
+        send_sock.close()
+        
+        while True:
+            data, addr = recv_sock.recvfrom(1024)
+            resp = json.loads(data.decode('utf-8'))
+            device_data = resp.get("msg", {}).get("data", {})
+            color = device_data.get("color")
+            color_tem = device_data.get("colorTem", 0)
+            if color and "r" in color and "g" in color and "b" in color:
+                statuses[addr[0]] = (color, color_tem)
+    except Exception as e:
+        pass
+    finally:
+        if recv_sock:
+            recv_sock.close()
+    return statuses
+
+async def govee_fx(fx_type):
+    import socket, json, asyncio, os
+    from dotenv import load_dotenv
+    load_dotenv("/home/james/SovereignOS/.env")
+    
+    # Check if active
+    tmi_active_str = os.getenv("GOVEE_TMI_ACTIVE", "true").lower()
+    if tmi_active_str == "false":
+        print("[GOVEE FX] Skip Govee UDP commands because GOVEE_TMI_ACTIVE=False")
+        return
+        
+    ips = await discover_govee_ips()
+    port = int(os.getenv("GOVEE_PORT", 4003))
+    
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    
+    def send_color_to_all(r, g, b, color_tem=0):
+        msg = {
+            "msg": {
+                "cmd": "colorWC",
+                "data": {
+                    "color": {
+                        "r": r,
+                        "g": g,
+                        "b": b
+                    },
+                    "colorTem": color_tem
+                }
+            }
+        }
+        payload = json.dumps(msg).encode('utf-8')
+        for ip in ips:
+            try:
+                sock.sendto(payload, (ip, port))
+            except Exception as e:
+                print(f"[GOVEE UDP SEND ERROR] {ip}: {e}")
+
+    try:
+        if fx_type == "homerun_mets":
+            print(f"[GOVEE FX] Mets Home Run alternating strobing celebration on {ips}")
+            prev_statuses = await get_govee_statuses(ips, port)
+            
             for _ in range(5):
-                send_color(255, 85, 0)
+                send_color_to_all(0, 45, 98, 0) # Mets Blue
+                await asyncio.sleep(0.3)
+                send_color_to_all(252, 92, 29, 0) # Mets Orange
+                await asyncio.sleep(0.3)
+                
+            # Restore previous status for each device
+            for ip in ips:
+                if ip in prev_statuses:
+                    color, color_tem = prev_statuses[ip]
+                    msg = {
+                        "msg": {
+                            "cmd": "colorWC",
+                            "data": {
+                                "color": color,
+                                "colorTem": color_tem
+                            }
+                        }
+                    }
+                    try:
+                        sock.sendto(json.dumps(msg).encode('utf-8'), (ip, port))
+                    except:
+                        pass
+                else:
+                    # Default fallback to warm white
+                    msg = {
+                        "msg": {
+                            "cmd": "colorWC",
+                            "data": {
+                                "color": {"r": 255, "g": 255, "b": 255},
+                                "colorTem": 0
+                            }
+                        }
+                    }
+                    try:
+                        sock.sendto(json.dumps(msg).encode('utf-8'), (ip, port))
+                    except:
+                        pass
+                        
+        elif fx_type == "mets_score":
+            for _ in range(5):
+                send_color_to_all(252, 92, 29, 0)
                 await asyncio.sleep(0.5)
-                send_color(0, 0, 255)
+                send_color_to_all(0, 45, 98, 0)
                 await asyncio.sleep(0.5)
-            send_color(255, 255, 255)
+            send_color_to_all(255, 255, 255, 0)
         elif fx_type == "opp_score":
             for _ in range(3):
-                send_color(255, 0, 0)
+                send_color_to_all(255, 0, 0, 0)
                 await asyncio.sleep(0.5)
-                send_color(50, 0, 0)
+                send_color_to_all(50, 0, 0, 0)
                 await asyncio.sleep(0.5)
-            send_color(255, 255, 255)
+            send_color_to_all(255, 255, 255, 0)
         elif fx_type == "strikeout_mets":
             for _ in range(3):
-                send_color(0, 0, 255)
+                send_color_to_all(0, 45, 98, 0)
                 await asyncio.sleep(0.2)
-                send_color(0, 0, 50)
+                send_color_to_all(0, 0, 50, 0)
                 await asyncio.sleep(0.2)
-            send_color(255, 255, 255)
-        elif fx_type == "homerun_mets":
-            colors = [(255,0,0), (255,165,0), (255,255,0), (0,128,0), (0,0,255), (75,0,130), (238,130,238)]
-            for _ in range(7):
-                for r, g, b in colors:
-                    send_color(r, g, b)
-                    await asyncio.sleep(0.2)
-            send_color(255, 255, 255)
+            send_color_to_all(255, 255, 255, 0)
         elif fx_type == "cards_score":
             for _ in range(4):
-                send_color(255, 0, 0)
+                send_color_to_all(255, 0, 0, 0)
                 await asyncio.sleep(0.4)
-                send_color(255, 255, 255)
+                send_color_to_all(255, 255, 255, 0)
                 await asyncio.sleep(0.4)
-            send_color(255, 255, 255)
+            send_color_to_all(255, 255, 255, 0)
         elif fx_type == "tigers_score":
             for _ in range(4):
-                send_color(255, 102, 0)
+                send_color_to_all(252, 92, 29, 0)
                 await asyncio.sleep(0.4)
-                send_color(12, 35, 64)
+                send_color_to_all(12, 35, 64, 0)
                 await asyncio.sleep(0.4)
-            send_color(255, 255, 255)
+            send_color_to_all(255, 255, 255, 0)
         elif fx_type == "game_end_mets_win":
-            colors = [(0, 45, 114), (255, 89, 16)]
+            colors = [(0, 45, 98), (252, 92, 29)]
             for _ in range(60):
                 for r, g, b in colors:
-                    send_color(r, g, b)
+                    send_color_to_all(r, g, b, 0)
                     await asyncio.sleep(0.5)
-            send_color(255, 255, 255)
+            send_color_to_all(255, 255, 255, 0)
     except Exception as e:
         print("Govee Error:", e)
+    finally:
+        sock.close()
 
 
 
@@ -947,7 +1176,7 @@ async def chatbot_loop():
                                 # Force local models for all standard conversational replies to prevent API loops
                                 f_model = "local_phi3"
                                 if engine_override == "local_phi3": f_model = "local_phi3"
-                                elif engine_override == "gemini-2.5-flash": f_model = "gemini-2.5-flash"
+                                elif engine_override in ("gemini-1.5-flash", "gemini-flash-latest"): f_model = "gemini-flash-latest"
                                 elif "llama3" in engine_override: f_model = "local_llama3"
                                 else: f_model = "local_phi3"
                                  
@@ -967,15 +1196,15 @@ async def chatbot_loop():
                             except:
                                 pass
                                 
-                        if not target_nodes and pk_target != "GLOBAL":
-                            target_nodes = [pk_target]
-                        elif not target_nodes:
+                        if not target_nodes:
                             target_nodes = ["ALL"]
                             
                         print(f"[CONTEXT INJECT] {manual_ctx} TARGETING: {target_nodes} / PK: {pk_target}")
                         
                         eligible_context_fans = [f for f in active_fans if "ALL" in target_nodes or "GLOBAL" in target_nodes or "ALL_ACTIVE_YAPPERS" in target_nodes or any(str(n).lower() == f['name'].lower() or str(n).lower() == str(f.get('alias', '')).lower() for n in target_nodes)]
                         # Override specifically for game_pk so we guarantee Dot + Wordy + 4 fans from the room
+                        if pk_target and pk_target != "GLOBAL":
+                            eligible_context_fans = [f for f in eligible_context_fans if str(f.get("room")) == pk_target]
                         
                         unique_eligible_fans = []
                         seen_names = set()
@@ -990,7 +1219,7 @@ async def chatbot_loop():
                             
                             f_model = fan.get('model', 'local_phi3')
                             if engine_override == "local_phi3": f_model = "local_phi3"
-                            elif engine_override == "gemini-2.5-flash": f_model = "gemini-2.5-flash"
+                            elif engine_override in ("gemini-1.5-flash", "gemini-flash-latest"): f_model = "gemini-flash-latest"
                             elif "llama3" in engine_override: f_model = "local_llama3"
                             else: f_model = "local_phi3"
                             
@@ -1009,7 +1238,7 @@ async def chatbot_loop():
                             
                             f_model = fan.get('model', 'local_phi3')
                             if engine_override == "local_phi3": f_model = "local_phi3"
-                            elif engine_override == "gemini-2.5-flash": f_model = "gemini-2.5-flash"
+                            elif engine_override in ("gemini-1.5-flash", "gemini-flash-latest"): f_model = "gemini-flash-latest"
                             elif "llama3" in engine_override: f_model = "local_llama3"
                             else: f_model = "local_phi3"
                             

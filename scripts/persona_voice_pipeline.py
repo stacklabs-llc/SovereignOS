@@ -127,7 +127,7 @@ async def get_persona_response(fan_text: str, persona_name: str,
         system_prompt += f"\n\nCurrent game context: {game_context}"
 
     model = GenerativeModel(
-        "gemini-2.5-flash",
+        "gemini-flash-latest",
         system_instruction=system_prompt,
     )
 

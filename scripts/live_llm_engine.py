@@ -83,7 +83,21 @@ async def generate_next_turn(websocket, prompt="Next speaker in the argument."):
             config=config
         )
         
-        text = response.text.replace("```json", "").replace("```", "").strip()
+        parts_text = []
+        if response and response.candidates and len(response.candidates) > 0:
+            candidate = response.candidates[0]
+            if candidate.content and candidate.content.parts:
+                for part in candidate.content.parts:
+                    if hasattr(part, "text") and part.text:
+                        parts_text.append(part.text)
+        if parts_text:
+            text = "".join(parts_text)
+        else:
+            try:
+                text = response.text or ""
+            except Exception:
+                text = ""
+        text = text.replace("```json", "").replace("```", "").strip()
         data = json.loads(text)
         
         # Add to rolling history

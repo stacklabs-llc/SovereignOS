@@ -3,22 +3,38 @@ import sqlite3
 import uuid
 
 DB_PATH = "/home/james/SovereignOS/dna/sovereign_now.db"
-GAME_ID = "823048" # CIN @ STL
+GAME_ID = "823213" # CHC @ SF on June 13, 2026
+TICKET_ID = "WO-2026-003-CHCSF-PORTAL-HEAL"
 
-# Curated Multi-Tenant Cross-Talk Roster
+# Curated Multi-Tenant Cross-Talk Roster - Eclectic 17
 CROSS_TALK_USERNAMES = [
-    # 1. STL Team Advocate
-    "stadium_phantom_stl",
-    # 2. WeedStack Advocates
-    "couch_lock_carl", "compliance_karen",
-    # 3. Spite Slice Advocates
-    "pizzabot_74", "warden_barb",
-    # 4. Inkwell & Irony Advocates
-    "cary_sterling", "vesper_vance",
-    # 5. Wild Paws Advocates
-    "barb_the_founder", "moscato_sally",
-    # 6. StackLabs LLC Advocates
-    "mando_enforcer", "decision_derby"
+    "wavy",
+    "senora",
+    "barf_prime",
+    "7_train_terry_ci",
+    "420_linda",
+    "pizzabot_74",
+    "warden_barb",
+    "cary_sterling",
+    "vesper_vance",
+    "barb_the_founder",
+    "mando_enforcer",
+    "battery_chucker_ci",
+    "battery_chucker_jr_ci",
+    "gaslamp_goon",
+    "pancho_scholar",
+    "brand_boycott",
+    "isolated_silo"
+]
+
+# Additional game personas for 3v3 matchup and bouncer dot
+ADDITIONAL_GAME_PERSONAS = [
+    "fog_sentinel",
+    "fog_horn_frank",
+    "cubfanragemachine",
+    "CubbieConspiracy",
+    "bleacher_bum_bill",
+    "dot"
 ]
 
 def seed_crosstalk():
@@ -26,7 +42,24 @@ def seed_crosstalk():
     con.execute("PRAGMA busy_timeout = 30000;")
     cur = con.cursor()
     
-    # 1. Promote CIN @ STL room state to active on the dashboard
+    # Register / Sync SDLC Ticketing / CMDB records first
+    print("[*] Syncing SDLC Task and CMDB CI registration...")
+    cur.execute("""
+        INSERT OR REPLACE INTO sys_sdlc_task (task_id, task_type, state, module_target, short_description)
+        VALUES (?, 'story', 'WIP', 'fanstack_core', '⚾ Cubs @ Giants Fan Portal Activation & Stream Resolution')
+    """, (TICKET_ID,))
+    
+    cur.execute("""
+        INSERT OR REPLACE INTO cmdb_ci (sys_id, name, sys_class_name, short_description, operational_status, assigned_to)
+        VALUES ('ci_fan_portal_3010', 'Fan FanStack Portal', 'cmdb_ci_portal', 'Standalone Sports Fan Portal and Scoreboard.', 1, 'antigravity')
+    """)
+    
+    cur.execute("""
+        INSERT OR REPLACE INTO sys_module (id, module_name, display_name, description, icon, active, category, port)
+        VALUES (?, 'fan_portal', 'Fan FanStack Portal', 'Standalone Sports Fan Portal & Scoreboard', '⚾', 1, 'portal', 3010)
+    """, (uuid.uuid4().hex,))
+    
+    # 1. Promote CHC @ SF room state to active on the dashboard
     cur.execute("""
         UPDATE cmdb_ci_fanstack_room 
         SET room_state = 'active', boggs_level = 3 
@@ -68,6 +101,22 @@ def seed_crosstalk():
         """, (gp_id, GAME_ID, adv_id))
         
         print(f"✅ Seated Advocate: @{username} in Faction Room {GAME_ID}")
+
+    # 4. Seat the 3v3 matchup and bouncer dot in game_persona
+    for username in ADDITIONAL_GAME_PERSONAS:
+        cur.execute("SELECT id, display_name FROM persona WHERE user_name = ?", (username,))
+        row = cur.fetchone()
+        if not row:
+            print(f"⚠️ Warning: Matchup Advocate '{username}' is missing from database. Skipping.")
+            continue
+        adv_id, display_name = row
+        
+        gp_id = uuid.uuid4().hex
+        cur.execute("""
+            INSERT OR REPLACE INTO game_persona (id, game_pk, persona_id, seat_state)
+            VALUES (?, ?, ?, 'active')
+        """, (gp_id, GAME_ID, adv_id))
+        print(f"✅ Seated Matchup/Dot: @{username} in game_persona for {GAME_ID}")
         
     con.commit()
     con.close()

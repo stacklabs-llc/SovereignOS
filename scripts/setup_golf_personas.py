@@ -63,8 +63,8 @@ for p in personas:
                  VALUES (?, 'cmdb_ci_ai_persona', ?, ?, 1, 'golf_room')''', 
               (sys_id, p['name'], p['desc']))
     
-    c.execute('''INSERT INTO cmdb_ci_ai_persona (sys_id, u_system_prompt, u_llm_engine, u_boggs_reactivity, u_cadence)
-                 VALUES (?, ?, 'gemini-2.5-flash', 2, ?)''',
+    c.execute('''INSERT INTO cmdb_ci_ai_persona (sys_id, u_system_prompt, u_boggs_reactivity, u_cadence)
+                 VALUES (?, ?, 2, ?)''',
               (sys_id, p['prompt'], p['cadence']))
 
 conn.commit()

@@ -17,6 +17,18 @@ SYNC_DIRS = [
     "/home/james/sovereign_inbox/notebook_sync/StackLabs_Syndicate"
 ]
 
+ROOM_TO_STACK_MAP = {
+    "weedstack": "fanstack",
+    "stacklabs": "stacklabs",
+    "catnip": "catnipwars",
+    "gonzas": "gonzas",
+    "spiteslice": "spite_slice",
+    "eileen": "eileen_stack",
+    "wild_paws": "wild_paws",
+    "samtracker": "samtracker",
+    "aethervet": "aethervet"
+}
+
 RCLONE_TARGETS = [
     ("/home/james/sovereign_inbox/notebook_sync/SovereignOS/", "sovereign_os:SovereignOS_Clio_Sync/NotebookLM_Sync/SovereignOS/"),
     ("/home/james/sovereign_inbox/notebook_sync/SovereignOS_Internal/", "sovereign_os:SovereignOS_Clio_Sync/NotebookLM_Sync/SovereignOS_Internal/"),
@@ -36,9 +48,56 @@ def run_sync(no_rclone=False):
     cursor = conn.cursor()
     
     try:
+        # Check if gameday sync is enabled globally
+        cursor.execute("SELECT value FROM sys_properties WHERE name = 'system.gameday_sync.enabled'")
+        prop_row = cursor.fetchone()
+        sync_enabled = prop_row['value'].strip().lower() == 'true' if prop_row else True
+
+        if not sync_enabled:
+            print("=== Gameday Live Feed Sync is DISABLED via sys_properties ===")
+            # Clean any existing managed livefeed files and raw log files to prevent stale sync files
+            for d in SYNC_DIRS:
+                if os.path.exists(d):
+                    for f in os.listdir(d):
+                        if (f.startswith("livefeed_") and f.endswith(".md.txt")) or f == "statcast_telemetry.log.txt":
+                            try:
+                                os.remove(os.path.join(d, f))
+                                print(f"Cleaned up disabled sync file: {f} in {d}")
+                            except Exception as e:
+                                print(f"Warning: Could not remove old file {f} in {d}: {e}")
+            # Mirror the cleaned staging directories to Google Drive via rclone to propagate deletion
+            if not no_rclone:
+                print("Syncing cleanup to Google Drive remotes...")
+                for local_dir, remote_path in RCLONE_TARGETS:
+                    if os.path.exists(local_dir):
+                        cmd = ["rclone", "sync", local_dir, remote_path, "--delete-after", "--quiet"]
+                        subprocess.run(cmd, check=True)
+                print("🟢 Google Drive sync cleanup completed.")
+            print("=== Gameday Live Feed Sync: Completed cleanup and bypassed ===")
+            return
+
+        # Fetch active modules from sys_module to filter rooms from inactive stacks
+        cursor.execute("SELECT module_name FROM sys_module WHERE active = 1")
+        active_modules = {row['module_name'] for row in cursor.fetchall()}
+
+
         # 1. Fetch active rooms from registry
         cursor.execute("SELECT room_key, game_pk, name FROM cmdb_ci_fanstack_room WHERE room_state = 'active'")
-        active_rooms = [dict(r) for r in cursor.fetchall()]
+        raw_rooms = [dict(r) for r in cursor.fetchall()]
+
+        active_rooms = []
+        for r in raw_rooms:
+            room_key = r['room_key'] or ''
+            lower_key = room_key.lower()
+            room_stack = None
+            for key_sub, module_name in ROOM_TO_STACK_MAP.items():
+                if key_sub in lower_key:
+                    room_stack = module_name
+                    break
+            if room_stack and room_stack not in active_modules:
+                print(f"Skipping sync for room {room_key} as its stack {room_stack} is inactive.")
+                continue
+            active_rooms.append(r)
         
         # Build active keys set to avoid duplicates
         active_keys = set()

@@ -158,8 +158,8 @@ CORE DIRECTIONS:
             INSERT INTO persona (
                 id, user_name, display_name, team, system_prompt, boggs_level, 
                 avatar_url, color, cadence, deep_lore, email_alias, avatar_blob,
-                llm_engine, u_visual_style, created_at
-            ) VALUES (?, ?, ?, ?, ?, 2, ?, ?, 'pacer', ?, ?, ?, 'gemini-2.0-flash', 'style_felt', datetime('now'))
+                u_visual_style, created_at
+            ) VALUES (?, ?, ?, ?, ?, 2, ?, ?, 'pacer', ?, ?, ?, 'style_felt', datetime('now'))
         """, (sys_id, handle, data["display_name"], data["team"], system_prompt, avatar_url, color, data["deep_lore"], data["email"], avatar_base64))
     
     # Split name into first and last

@@ -58,7 +58,7 @@ const INITIAL_ADVOCATES: SmyrnaAdvocate[] = [
     name: "Metsy",
     role: "Sovereign Feline Boss",
     location: "AetherVet Diagnostics",
-    avatarKey: "metsy_smyrna",
+    avatarKey: "metsy_prime",
     cadence: "Yapper",
     status: "Patrolling the Pine Straw clearing",
     bio: "A 14lb biometric security unit operating out of the Smyrna field centroid. Highly trained in lawn surveillance."
@@ -262,7 +262,7 @@ export default function SmyrnaPlaycall() {
   const [cardAgi, setCardAgi] = useState<number>(7);
   const [cardAbility, setCardAbility] = useState<string>('Sour Splash: Deals 3 splash damage to all convenience competitors.');
   const [cardLore, setCardLore] = useState<string>('Forged in the fires of late-night convenience cravings.');
-  const [cardStyle, setCardStyle] = useState<string>('style_felt');
+  const [cardStyle, setCardStyle] = useState<string>('style_clay');
   const [forgedCards, setForgedCards] = useState<CardTemplate[]>(() => {
     const saved = localStorage.getItem('smyrna_forged_cards');
     return saved ? JSON.parse(saved) : [];
@@ -614,7 +614,7 @@ export default function SmyrnaPlaycall() {
           "Iron Gaze": "iron_gaze",
           "The Iron Gaze": "iron_gaze",
           "Water-Barrel Wayne": "water_barrel_wayne",
-          "Metsy": "metsy_smyrna",
+          "Metsy": "metsy_prime",
           "Barnaby the Cat": "barnaby",
           "Buster": "buster",
           "Sam": "sam"

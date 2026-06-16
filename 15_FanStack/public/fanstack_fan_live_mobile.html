@@ -302,6 +302,15 @@
       background: #4B5563; animation: idle-blink 2s ease-in-out infinite;
     }
     @keyframes idle-blink { 0%,100%{opacity:0.3;} 50%{opacity:1;} }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+    .shake {
+      animation: shake 0.5s ease-in-out;
+    }
   </style>
 </head>
 <body>
@@ -652,7 +661,7 @@
         });
     }
 
-    function appendMessage(user, color, text, ts) {
+    function appendMessage(user, color, text, ts, mediaUrl, shake) {
       const displayUser = user.replace(/_\d+$/, '');
       const systemBots = ["okerlund_bouncer", "mlb_telemetry", "mean_gene", "sys_mean_gene", "mean gene", "system"];
       const isSystemMsg = systemBots.includes(displayUser.toLowerCase());
@@ -667,6 +676,14 @@
       }
       const el = document.createElement('div');
       el.className = 'chat-card';
+      if (shake) {
+          el.classList.add('shake');
+      }
+
+      let cleanText = text || '';
+      const rxStr = `^\\[?(?:${user}|${displayUser})\\]?\\s*:?\\s*`;
+      cleanText = cleanText.replace(new RegExp(rxStr, 'i'), '');
+
       if (window.rapBattleMode && window.rapBattlers.map(b => b.replace(/_\d+$/, '')).includes(displayUser.toLowerCase())) {
           el.classList.add('rap-battle-card');
           triggerCypherCell(displayUser, cleanText); // The UI modal natively handles duplicate checks
@@ -676,9 +693,6 @@
       el.dataset.isSystem = isSystemMsg ? "true" : "false";
 
       const avatarSrc = `/api/persona_image/${encodeURIComponent(displayUser).toLowerCase()}?t=${Date.now()}`;
-      let cleanText = text;
-      const rxStr = `^\\[?(?:${user}|${displayUser})\\]?\\s*:?\\s*`;
-      cleanText = cleanText.replace(new RegExp(rxStr, 'i'), '');
 
       el.innerHTML = `
            <img class="chat-avatar" src="${avatarSrc}" onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(displayUser)}&background=random'; this.onerror=null;">
@@ -687,7 +701,8 @@
                    <div class="user-badge">[${displayUser}]</div>
                    <div class="chat-timestamp">${ts}</div>
                </div>
-               <div class="chat-text">${cleanText.replace(/\\n/g,'<br>')}</div>
+               ${cleanText ? `<div class="chat-text">${cleanText.replace(/\\n/g,'<br>')}</div>` : ''}
+               ${mediaUrl ? `<div class="chat-media" style="margin-top:8px;"><img src="${mediaUrl}" style="max-width:100%; max-height:250px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);" /></div>` : ''}
            </div>`;
 
       const isScrolledToBottom = chat.scrollHeight - chat.scrollTop <= chat.clientHeight + 50;
@@ -716,6 +731,46 @@
       }
     }
 
+    document.getElementById('file-upload').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const res = await fetch('/api/chat/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const data = await res.json();
+            if (data.status === 'success' && data.mediaUrl) {
+                const input = document.getElementById('chat-input');
+                const text = input.value.trim() || "";
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: "CHAT_MESSAGE",
+                        user: "You",
+                        color: "#3B82F6",
+                        text: text,
+                        mediaUrl: data.mediaUrl,
+                        target_game_pk: currentGamePk.toString()
+                    }));
+                } else {
+                    appendMessage('You', '#3B82F6', text, null, data.mediaUrl);
+                }
+                input.value = '';
+            } else {
+                console.error("Upload failed:", data);
+                alert("Upload failed: " + (data.detail || "Unknown error"));
+            }
+        } catch (err) {
+            console.error("Error uploading file:", err);
+            alert("Error uploading file");
+        }
+        e.target.value = '';
+    });
+
     function connect() {
       // Derive WS URL from current window protocol+port so the Vite proxy
       // at port 3009 always handles the /ws → ws://127.0.0.1:8008 forward.
@@ -742,7 +797,7 @@
       ws.onmessage = (e) => {
         const msg = JSON.parse(e.data);
         if (msg.type === "CHAT_HISTORY") {
-          msg.messages.forEach(m => appendMessage(m.user, m.color, m.text, m.timestamp));
+          msg.messages.forEach(m => appendMessage(m.user, m.color, m.text, m.timestamp, m.mediaUrl || m.media_url || m.image, m.shake));
           setTimeout(() => {
               const modal = document.getElementById('loading-modal');
               if (modal) modal.classList.remove('active');
@@ -813,7 +868,7 @@
                      }
                  });
           }
-          appendMessage(author, msg.color || "#00f2fe", messageText, msg.timestamp);
+          appendMessage(author, msg.color || "#00f2fe", messageText, msg.timestamp, msg.mediaUrl || msg.media_url || msg.image, msg.shake);
         }
         else if (msg.type === "boggs_level") {
           const bval = document.getElementById('boggs-val');
@@ -960,7 +1015,7 @@
           const author = msg.persona || msg.user  || 'PERSONA';
           const text   = msg.take   || msg.text   || msg.message || '';
           const color  = msg.color  || '#F59E0B';
-          appendMessage(author, color, text, msg.timestamp || null);
+          appendMessage(author, color, text, msg.timestamp || null, msg.mediaUrl || msg.media_url || msg.image, msg.shake);
         }
       };
       ws.onclose = () => setTimeout(connect, 3000);

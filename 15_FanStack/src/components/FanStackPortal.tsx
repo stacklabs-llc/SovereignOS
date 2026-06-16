@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { SovereignConfig } from '../config/SovereignConfig';
 import LogArchiveModal from './LogArchiveModal';
 interface FanStackPortalProps {
-  onSelectDomain: (domain: 'MLB' | 'NBA' | 'NFL' | 'PGA' | 'SKEW' | 'HOLODEX' | 'ARGUS' | 'EDGE_DVR' | 'STREAM_SNIPER' | 'TELEMETRY' | 'VAULT' | 'STORYBOARD' | 'CMDB' | 'SAVANT' | 'VOCAL' | 'SOVEREIGN_CSS' | 'SCRUFFYS' | 'KANBAN' | 'ROLL_CALL' | 'DREADNOUGHT' | 'HOT_TAKES' | 'ROM_GALLERY' | 'OPTICAL_INGEST' | 'PROMO_INBOX' | 'TOKEN_LEDGER') => void;
+  onSelectDomain: (domain: 'MLB' | 'NBA' | 'NFL' | 'PGA' | 'SKEW' | 'HOLODEX' | 'ARGUS' | 'EDGE_DVR' | 'STREAM_SNIPER' | 'TELEMETRY' | 'VAULT' | 'STORYBOARD' | 'CMDB' | 'SAVANT' | 'VOCAL' | 'SOVEREIGN_CSS' | 'SCRUFFYS' | 'KANBAN' | 'ROLL_CALL' | 'DREADNOUGHT' | 'HOT_TAKES' | 'ROM_GALLERY' | 'OPTICAL_INGEST' | 'PROMO_INBOX' | 'TOKEN_LEDGER' | 'TMI_NEWS_DESK') => void;
 }
 
 export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) {
@@ -154,6 +154,10 @@ export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) 
             <button onClick={() => onSelectDomain('STREAM_SNIPER')} className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg">
                <div className="font-['Outfit'] font-bold text-[13px] text-[#38bdf8] group-hover:text-white transition-colors tracking-wide">Stream Sniper</div>
                <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed uppercase">LIVE TARGET ACQUISITION</div>
+            </button>
+            <button onClick={() => onSelectDomain('TMI_NEWS_DESK')} className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg border border-[#ef4444]/20 bg-[#ef4444]/5">
+               <div className="font-['Outfit'] font-bold text-[13px] text-[#ef4444] group-hover:text-white transition-colors tracking-wide flex items-center gap-2">((•)) TMI News Desk</div>
+               <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed uppercase">Broadcast Director Triage Dashboard</div>
             </button>
           </div>
         </div>

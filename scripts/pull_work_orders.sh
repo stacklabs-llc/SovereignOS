@@ -22,7 +22,7 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-GDRIVE_SOURCE="sovereign_os:work_orders"
+GDRIVE_SOURCE="sovereign_os:SovereignOS_Clio_Sync/work_orders"
 LOCAL_INBOX="/home/james/sovereign_inbox"
 SORTING_HAT_SCRIPT="/home/james/SovereignOS/scripts/organize_inbox.py"
 

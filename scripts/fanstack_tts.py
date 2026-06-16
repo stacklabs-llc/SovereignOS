@@ -27,7 +27,7 @@ from pathlib import Path
 # ── Config ─────────────────────────────────────────────────────────────────
 SOVEREIGN_ROOT = Path('/home/james/SovereignOS')
 ENV_FILE       = SOVEREIGN_ROOT / '.env'
-MODEL          = 'gemini-2.5-flash-preview-tts'
+MODEL          = 'gemini-1.5-flash-preview-tts'
 SAMPLE_RATE    = 24000
 OUTPUT_DIR     = SOVEREIGN_ROOT / 'media_vault' / '02_Projects'
 

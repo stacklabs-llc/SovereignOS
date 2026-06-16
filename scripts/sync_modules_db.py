@@ -23,13 +23,16 @@ def run():
 
     # 3. Define all standard apps/stacks/utilities/configs
     apps = [
-        # Active Stacks (6)
+        # Active Stacks (9)
         ('fanstack', 'FanStack', 'Sovereign Portal', 'F', '#38bdf8', 1, 'stack', 3009),
         ('samtracker', 'SamTracker', 'Six Dinner Sam', 'S', '#fbbf24', 1, 'stack', 3004),
         ('catnipwars', 'Catnip Wars', 'Syndicate Sandbox', 'C', '#10b981', 1, 'stack', 7300),
         ('aethervet', 'AetherVet', 'Veterinary Portal', '🩺', '#a78bfa', 1, 'stack', 3015),
         ('anvil_twine', 'Anvil & Twine', 'Hardware & Craftsmanship', '🛠️', '#f59e0b', 1, 'stack', 3022),
         ('gonzas', 'Gonzas Convenience & Cantina', 'Convenience Store & Cantina', '🏪', '#ff007f', 1, 'stack', 3016),
+        ('gardenstack', 'GardenStack', 'Horticulture AI', '🌱', '#10b981', 1, 'stack', 3017),
+        ('sovereign_cinema', 'Sovereign Cinema', 'Streaming Portal', '🎬', '#8b5cf6', 1, 'stack', 3008),
+        ('sovereign_sports', 'Sovereign Sports', 'Live Stream Command', '🛡️', '#00f0ff', 1, 'stack', 3010),
 
         # Inactive / Decommissioned Stacks (5)
         ('wild_paws', 'Wild Paws Rescue', 'Art Rescue Sanctuary', '🐾', '#f59e0b', 0, 'stack', 3008),
@@ -38,10 +41,7 @@ def run():
         ('inkwell_irony', 'Inkwell & Irony', 'Investigations', '🖋️', '#a1a1aa', 0, 'stack', 3018),
         ('stacklabs', 'StackLabs LLC', 'Edge-Native Bare-Metal Software Foundry', '💻', '#00d4ff', 1, 'stack', 3000),
 
-        # Utilities (including converted former Stacks)
-        ('gardenstack', 'GardenStack', 'Horticulture AI', '🌱', '#10b981', 1, 'utility', 3017),
-        ('sovereign_cinema', 'Sovereign Cinema', 'Streaming Portal', '🎬', '#8b5cf6', 1, 'utility', 8085),
-        ('sovereign_sports', 'Sovereign Sports', 'Live Stream Command', '🛡️', '#00f0ff', 1, 'utility', 3010),
+        # Utilities
         ('argus', 'ARGUS Nexus', 'Surveillance Grid', '👁️', '#66fcf1', 1, 'utility', None),
         ('itsm', 'ITSM Operations', 'SDLC & Incidents', '🔧', '#ff0033', 1, 'utility', None),
         ('persona_center', 'Advocate Command Center', 'Deployment & Visuals', '👥', '#059669', 1, 'utility', None),
@@ -61,6 +61,7 @@ def run():
         ('hot_takes', 'Hot Takes', 'High-Intensity Advocate Rants', '🔥', '#ef4444', 1, 'utility', 8000),
         ('stream_sniper', 'Stream Sniper', 'Live Target Acquisition', '🎯', '#f43f5e', 1, 'utility', 5056),
         ('rom_gallery', 'Sovereign Watch Party', 'ROM & Video Archive', '📼', '#fbbf24', 1, 'utility', 3004),
+        ('tmi_news_desk', 'TMI News Desk', 'Broadcast Director Triage Dashboard', '🚨', '#ef4444', 1, 'utility', None),
         ('artifact_gallery', 'Media Vault Matrix', 'Consolidated Artifacts', '📦', '#a855f7', 1, 'utility', None),
         ('promo_inbox', 'The Cosmic Sieve', 'Incoming Brand & Agent Messages', '📬', '#38bdf8', 1, 'utility', None),
         ('optical_ingest', 'Optical Ingest Console', 'Advocate Intake Stream', '📷', '#10b981', 1, 'utility', None),
@@ -72,10 +73,28 @@ def run():
         ('system_config', 'System Config', 'Theme · Telemetry · More', '⚙️', '#ffffff', 1, 'config', None),
         ('env_indicator', 'Active Env', 'Active Environment', '🖥️', '#38bdf8', 1, 'config', None),
         ('stack_seeder', 'Stack Seeder', 'Brand Onboarding', '🌱', '#10b981', 1, 'config', None)
-    ]
+     ]
+
+    # Module to CMDB Appl sys_id mapping to match pre-existing records and keep consistency
+    sys_id_map = {
+        'fanstack': 'app_fanstack',
+        'samtracker': 'app_samtracker',
+        'catnipwars': 'app_catnipwars',
+        'aethervet': 'app_aethervet',
+        'anvil_twine': 'app_anvil_twine',
+        'gonzas': 'app_gonzas_cantina',
+        'wild_paws': 'app_wild_paws',
+        'spite_slice': 'app_spiteslice',
+        'card_turpey': 'app_card_turpey',
+        'inkwell_irony': 'app_inkwell_irony',
+        'stacklabs': 'app_stacklabs',
+        'gardenstack': 'app_gardenstack',
+        'sovereign_cinema': 'app_sovereign_cinema',
+        'sovereign_sports': 'app_sovereign_sports'
+    }
 
     for m_name, d_name, desc, icon, color, active, cat, port in apps:
-        # Check if exists
+        # Check if exists in sys_module
         c.execute("SELECT id FROM sys_module WHERE module_name=?", (m_name,))
         row = c.fetchone()
         if row:
@@ -90,6 +109,34 @@ def run():
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (uuid.uuid4().hex, m_name, d_name, desc, icon, color, active, cat, port))
 
+        # Check if it should be synced to CMDB (all stacks, active or inactive)
+        if cat == 'stack' or m_name in sys_id_map:
+            sys_id = sys_id_map.get(m_name, f"app_{m_name}")
+            
+            # Ensure hardware link node or general parent runs relation (can be dummy or direct)
+            c.execute("SELECT sys_id FROM cmdb_ci WHERE sys_id=?", (sys_id,))
+            if not c.fetchone():
+                c.execute("""
+                    INSERT INTO cmdb_ci (sys_id, name, sys_class_name, operational_status)
+                    VALUES (?, ?, 'cmdb_ci_appl', 1)
+                """, (sys_id, d_name))
+            else:
+                c.execute("UPDATE cmdb_ci SET name=? WHERE sys_id=?", (d_name, sys_id))
+
+            c.execute("SELECT sys_id FROM cmdb_ci_appl WHERE sys_id=?", (sys_id,))
+            port_str = str(port) if port is not None else ""
+            if not c.fetchone():
+                c.execute("""
+                    INSERT INTO cmdb_ci_appl (sys_id, name, port, status, short_description, icon, active)
+                    VALUES (?, ?, ?, 'ONLINE', ?, ?, ?)
+                """, (sys_id, d_name, port_str, desc, icon, active))
+            else:
+                c.execute("""
+                    UPDATE cmdb_ci_appl
+                    SET name=?, port=?, short_description=?, icon=?, active=?
+                    WHERE sys_id=?
+                """, (d_name, port_str, desc, icon, active, sys_id))
+
     # 4. Make sure bistro is deleted
     c.execute("DELETE FROM sys_module WHERE module_name='bistro'")
     c.execute("DELETE FROM cmdb_ci WHERE name LIKE '%bistro%'")
@@ -99,7 +146,8 @@ def run():
         'scruffys', 'the_skew', 'hot_takes', 'stream_sniper',
         'holodex', 'rom_gallery', 'artifact_gallery',
         'persona_center', 'promo_inbox', 'savant_query',
-        'optical_ingest', 'roll_call', 'model_arena'
+        'optical_ingest', 'roll_call', 'model_arena',
+        'tmi_news_desk'
     ]
     for util in fanstack_utilities:
         c.execute("SELECT active FROM m2m_stack_utility WHERE stack_module_name='fanstack' AND utility_module_name=?", (util,))

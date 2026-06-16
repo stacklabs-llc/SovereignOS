@@ -48,7 +48,7 @@ def main():
     
     try:
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-flash-latest',
             contents=[video_file, prompt]
         )
         print("\n--- KINEMATIC ANALYSIS RESULTS ---\n")

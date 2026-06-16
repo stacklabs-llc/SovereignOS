@@ -52,7 +52,7 @@ def get_game_state_str(game_pk):
 
 def evaluate_message_gemini(persona, text):
     """Escalates message to Gemini 2.5 Flash via native REST API."""
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_KEY}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={GEMINI_KEY}"
     
     sys_instr = (
         "You are the FanStack Highlight Watcher. Analyze the following chat message and "

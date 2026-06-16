@@ -76,7 +76,21 @@ def analyze_videos():
         try:
             response = model.generate_content([ready_file, prompt])
             # Parse JSON - assuming the model outputs valid JSON based on strict instructions
-            result_json = response.text.strip()
+            parts_text = []
+            if response and response.candidates and len(response.candidates) > 0:
+                candidate = response.candidates[0]
+                if candidate.content and candidate.content.parts:
+                    for part in candidate.content.parts:
+                        if hasattr(part, "text") and part.text:
+                            parts_text.append(part.text)
+            if parts_text:
+                result_json = "".join(parts_text)
+            else:
+                try:
+                    result_json = response.text or ""
+                except Exception:
+                    result_json = ""
+            result_json = result_json.strip()
             if result_json.startswith("```json"):
                 result_json = result_json[7:-3]
             elif result_json.startswith("```"):

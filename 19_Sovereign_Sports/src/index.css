@@ -201,3 +201,151 @@ body {
   margin-top: 1.5rem;
 }
 
+/* Industrial Slate Theme Override (Decorum Level 0) */
+html.industrial-slate,
+body.industrial-slate,
+.industrial-slate {
+  background-color: #1A1E24 !important;
+  color: #ffffff !important;
+  font-family: monospace !important;
+}
+
+.industrial-slate * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  border-radius: 0px !important;
+  transition: none !important;
+  animation: none !important;
+}
+
+.industrial-slate .app-container,
+.industrial-slate .sidebar,
+.industrial-slate .main-content,
+.industrial-slate .vm-panel-glass,
+.industrial-slate .video-container,
+.industrial-slate .badge-live,
+.industrial-slate select,
+.industrial-slate input,
+.industrial-slate button,
+.industrial-slate .game-card {
+  background: #1A1E24 !important;
+  background-color: #1A1E24 !important;
+  border: 1px solid #334155 !important;
+  color: #ffffff !important;
+  border-radius: 0px !important;
+  box-shadow: none !important;
+}
+
+.industrial-slate .sidebar-header h1 {
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  color: #ffffff !important;
+  text-shadow: none !important;
+}
+
+.industrial-slate .nav-item.active {
+  background-color: #334155 !important;
+  border-left: 3px solid #ffffff !important;
+  color: #ffffff !important;
+}
+
+.industrial-slate .nav-item:hover {
+  background-color: #272c35 !important;
+  color: #ffffff !important;
+}
+
+.industrial-slate .badge-live {
+  background-color: transparent !important;
+  color: #ffffff !important;
+  border: 1px solid #334155 !important;
+}
+
+/* Viewport vibration keyframes to emulate high exit-velocity impact */
+@keyframes intense-spidey-shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-2px, -3px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(0px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(2px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(2px, 2px) rotate(0deg); }
+    100% { transform: translate(0px, 0px) rotate(0deg); }
+}
+
+/* Queens Orange/Blue energy glow overlay class */
+.tmi-window-shatter {
+    animation: intense-spidey-shake 0.4s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(0, 212, 255, 0.8)) drop-shadow(0 0 10px rgba(249, 115, 22, 0.6));
+    transition: all 0.2s ease-in-out;
+}
+
+/* Senga Ghost Fork vibration and purple/violet glow */
+.tmi-ghost-shatter {
+    animation: intense-spidey-shake 0.3s ease-in-out infinite;
+    filter: drop-shadow(0 0 25px rgba(167, 139, 250, 0.9)) drop-shadow(0 0 12px rgba(139, 92, 246, 0.7));
+    transition: all 0.15s ease-in-out;
+}
+
+/* =========================================
+   [ SOVEREIGN SPORTS RESPONSIVE OVERRIDES ]
+   ========================================= */
+
+@media (max-width: 768px) {
+    .app-container {
+        flex-direction: column !important;
+        height: 100dvh !important;
+    }
+    
+    .mobile-header {
+        display: flex !important;
+    }
+    
+    .sovereign-sidebar {
+        position: fixed !important;
+        left: -260px !important;
+        top: 56px !important;
+        width: 260px !important;
+        height: calc(100% - 56px) !important;
+        z-index: 1000 !important;
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    
+    .sovereign-sidebar.menu-open {
+        left: 0 !important;
+        box-shadow: 5px 0 15px rgba(0, 0, 0, 0.5) !important;
+    }
+    
+    .main-content {
+        padding: 1rem !important;
+        height: calc(100% - 56px) !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* Fan Portal Workspace panel stacking */
+    .fan-portal-workspace {
+        flex-direction: column !important;
+        overflow-y: auto !important;
+        gap: 1rem !important;
+        height: auto !important;
+    }
+    
+    .statcast-feed-panel,
+    .lobby-chat-panel {
+        width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        padding-right: 0 !important;
+    }
+}
+
+
+
+

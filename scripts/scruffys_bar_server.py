@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 import re
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 app = Flask(__name__)
 CORS(app) # Allow Vite React app to connect
@@ -20,16 +21,15 @@ try:
 except Exception as e:
     print(f"Warning: Could not load API key: {e}")
 
+client = None
 if api_key:
-    genai.configure(api_key=api_key)
-    # The client pattern is not needed for the old SDK, but we will leave a dummy flag
-    client = True
-else:
-    client = None
+    client = genai.Client(api_key=api_key)
 
 def find_persona_file(tag):
     """Attempt to find a persona file matching the @tag."""
     tag = tag.lower().strip()
+    if tag.endswith('_ci'):
+        tag = tag[:-3]
     possible_files = [
         f"{tag}.md",
         f"{tag}_stan.md",
@@ -110,10 +110,16 @@ A fan just walked up to you in the bar and said:
 Task: Write ONE single, highly punchy, character-accurate response to this fan. Speak directly to them. Do not use hashtags or emojis. Keep it STRICTLY UNDER 250 CHARACTERS. Ensure your response reflects the CURRENT REALITY provided above.
 If the fan asks a statistical or factual question about current events or baseball, USE GOOGLE SEARCH to find the real answer before responding!"""
 
-        model = genai.GenerativeModel('gemini-2.5-flash', tools='google_search_retrieval')
-        res = model.generate_content(
-            prompt,
-            generation_config=genai.types.GenerationConfig(temperature=0.85)
+        if not client:
+            return jsonify({"error": "Gemini API client not initialized"}), 500
+
+        res = client.models.generate_content(
+            model='gemini-2.5-flash-lite',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.85,
+                tools=[types.Tool(google_search=types.GoogleSearch())]
+            )
         )
         
         persona_name = persona_file.replace('.md', '').replace('_', ' ').title()
@@ -196,9 +202,10 @@ def get_room_personas():
         c = conn.cursor()
         
         c.execute("""
-            SELECT persona 
-            FROM m2m_persona_room 
-            WHERE room = ?
+            SELECT COALESCE(u.user_name, m.persona)
+            FROM m2m_persona_room m
+            LEFT JOIN sys_user u ON u.sys_id = m.persona
+            WHERE m.room = ?
         """, (game_pk,))
         rows = c.fetchall()
         conn.close()
@@ -208,6 +215,8 @@ def get_room_personas():
         if rows:
             for r in rows:
                 p_name = r[0]
+                if p_name.endswith('_ci'):
+                    p_name = p_name[:-3]
                 formatted = "@" + p_name
                 if formatted not in personas:
                     personas.append(formatted)

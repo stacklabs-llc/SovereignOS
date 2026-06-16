@@ -3,7 +3,21 @@ import BaseballDiamond from './BaseballDiamond';
 import { getWsUrl } from '../api-host';
 import avatarMapData from '../avatarMap';
 import { useAuth } from '../contexts/AuthContext';
-import { Twitter } from 'lucide-react';
+import { Twitter, Paperclip } from 'lucide-react';
+
+const nymStlRoomOverrides = {
+  room_id: "scruffys_tavern_nym_stl_20260609",
+  host_node: "clio",
+  manual_participants: [
+    { id: "pilot_james", role: "moderator", base_vibe: "satin_mets_jacket" },
+    { id: "barf", team_override: "NYM" },
+    { id: "UncleStevieStan", team_override: "NYM" },
+    { id: "Keith_Fanboy", team_override: "NYM" },
+    { id: "Fredbird_Fiend", team_override: "STL" },
+    { id: "Arch_Madness", team_override: "STL" },
+    { id: "Salsa_Wizard", team_override: "STL" }
+  ]
+};
 
 interface ScruffysTavernProps {
   activeGamedayPk?: string | null;
@@ -23,6 +37,50 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
   const [liveFeed, setLiveFeed] = useState<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/chat/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.status === 'success' && data.mediaUrl) {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({
+            type: "CHAT_MESSAGE",
+            user: auth?.display_name || 'You (Fan)',
+            text: inputValue || "",
+            mediaUrl: data.mediaUrl,
+            target_game_pk: activeGamedayPk || "GLOBAL"
+          }));
+        } else {
+          setMessages(prev => [...prev, {
+            id: Date.now(),
+            user: auth?.display_name || 'You (Fan)',
+            text: inputValue || "",
+            mediaUrl: data.mediaUrl,
+            color: '#fff',
+            isSystem: false
+          }]);
+        }
+        setInputValue('');
+      } else {
+        alert("Upload failed: " + (data.detail || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Error uploading file:", err);
+      alert("Error uploading file");
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const [tweetingMessageId, setTweetingMessageId] = useState<string | null>(null);
   const [tweetSuccessId, setTweetSuccessId] = useState<string | null>(null);
@@ -255,7 +313,7 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
                 id: m.id || (Date.now() + '-' + Math.random()),
                 user: m.user,
                 text: typeof m.text === 'string' ? m.text.replace(/^(Ambient Thought:|Sentence:|Observation:|Complaint:|Game Status Commentary:|Action:)\s*/i, '').replace(/^["']|["']$/g, '').trim() : JSON.stringify(m.text || m.message),
-                mediaUrl: m.mediaUrl || null,
+                mediaUrl: m.mediaUrl || m.media_url || m.image || null,
                 color: m.color || '#a855f7',
                 isSystem: m.user === 'SYSTEM' || m.user.includes('System') || m.user.includes('Bartender'),
                 model_engine: m.model_engine || null,
@@ -273,7 +331,7 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
                 id: data.id || (Date.now() + '-' + Math.random()),
                 user: 'BARTENDER SCRUFFY',
                 text: data.text || '🚨 REMOTE SHAKE RECEIVED! THE BAR IS SHAKING!',
-                mediaUrl: data.mediaUrl || data.gifUrl || null,
+                mediaUrl: data.mediaUrl || data.gifUrl || data.media_url || data.image || null,
                 color: '#FF5910',
                 isSystem: true
               }
@@ -284,7 +342,8 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
             }
             setMessages(prev => {
               const incomingText = data.text || `Precog Broadcast: ${data.event || 'Major Play Event'}`;
-              if (prev.some(m => m.user === data.user && m.text === incomingText && m.mediaUrl === (data.mediaUrl || data.gifUrl))) {
+              const mediaUrl = data.mediaUrl || data.gifUrl || data.media_url || data.image || null;
+              if (prev.some(m => m.user === data.user && m.text === incomingText && m.mediaUrl === mediaUrl)) {
                 return prev;
               }
               return [
@@ -293,7 +352,7 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
                   id: data.id || (Date.now() + '-' + Math.random()),
                   user: data.user || 'PRECOG SEEDING',
                   text: incomingText,
-                  mediaUrl: data.mediaUrl || data.gifUrl || null,
+                  mediaUrl: mediaUrl,
                   color: '#FF5910',
                   isSystem: true
                 }
@@ -309,8 +368,9 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
           } else if (data.type === "CHAT_MESSAGE") {
             setMessages(prev => {
               const incomingText = typeof data.text === 'string' ? data.text.replace(/^(Ambient Thought:|Sentence:|Observation:|Complaint:|Game Status Commentary:|Action:)\s*/i, '').replace(/^["']|["']$/g, '').trim() : JSON.stringify(data.text || data.message);
+              const mediaUrl = data.mediaUrl || data.media_url || data.image || null;
               // Strict Vite HMR Deduplication
-              if (prev.some(m => m.user === data.user && m.text === incomingText && m.mediaUrl === data.mediaUrl)) {
+              if (prev.some(m => m.user === data.user && m.text === incomingText && m.mediaUrl === mediaUrl)) {
                 return prev;
               }
 
@@ -322,7 +382,7 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
                 id: data.id || (Date.now() + '-' + Math.random()),
                 user: data.user,
                 text: incomingText,
-                mediaUrl: data.mediaUrl || null,
+                mediaUrl: mediaUrl,
                 color: data.color || '#a855f7',
                 isSystem: data.user === 'SYSTEM' || data.user.includes('System') || data.user.includes('Bartender'),
                 model_engine: data.model_engine || null,
@@ -381,7 +441,19 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
       try {
         const res = await fetch(`/api/room_personas?gamePk=${activeGamedayPk}`);
         const data = await res.json();
-        if (data.personas) {
+        if (activeGamedayPk === "823620") {
+          setActivePersonas(nymStlRoomOverrides.manual_participants.map(p => '@' + p.id));
+          setActiveRoster(nymStlRoomOverrides.manual_participants.map(p => ({
+            user_name: p.id,
+            team: p.team_override || (p.id === 'pilot_james' ? 'NYM' : ''),
+            color: p.id === 'pilot_james' ? '#FF6B00' : (p.team_override === 'NYM' ? '#FF5910' : '#B47AFF'),
+            gemini_tokens: 0,
+            local_tokens: 0
+          })));
+          setRoomGeminiTokens(data.room_gemini_tokens || 0);
+          setRoomLocalTokens(data.room_local_tokens || 0);
+          setRoomSysTokens(data.room_sys_tokens || 0);
+        } else if (data.personas) {
           setActivePersonas(data.personas);
           setActiveRoster(data.roster || []);
           setRoomGeminiTokens(data.room_gemini_tokens || 0);
@@ -984,7 +1056,7 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
             {messages.map(m => {
               const isUser = m.user === (auth?.display_name || 'You (Fan)') || m.user === 'You (Fan)' || m.user === 'You';
               const rawName = m.user.replace('@', '').toLowerCase();
-              const imgSrc = avatarMap[rawName] || avatarMap[rawName.replace(/_/g, '')];
+              const imgSrc = avatarMap[rawName] || avatarMap[rawName.replace(/_/g, '')] || `/api/persona_image/${encodeURIComponent(rawName)}`;
 
               return (
                 <div key={m.id} className={`max-w-[75%] flex gap-4 ${isUser ? 'self-end flex-row-reverse' : 'self-start'} group`}>
@@ -1110,19 +1182,34 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
             </div>
           )}
 
-          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="mt-4 flex gap-4 w-full">
+          <form onSubmit={(e) => { e.preventDefault(); handleSend(); }} className="mt-4 flex gap-4 w-full items-center">
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+              accept="image/*,video/*" 
+              style={{ display: 'none' }} 
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-white/5 border border-white/10 hover:border-cyan-400 hover:bg-[#38bdf8]/10 text-gray-300 hover:text-[#38bdf8] p-4 rounded-xl flex items-center justify-center transition-all duration-300 active:scale-95 flex-shrink-0"
+              title="Attach media to chat"
+            >
+              <Paperclip size={20} />
+            </button>
             <input
               type="text"
               value={inputValue}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder="Join the Global Conversation... (Use @ to mention)"
-              className="flex-1 bg-black/60 border border-white/10 text-white px-6 py-4 rounded-xl focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all font-mono shadow-inner"
+              className="flex-1 bg-black/60 border border-white/10 text-white px-6 py-4 rounded-xl focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all font-mono shadow-inner min-w-0"
             />
             <button
               type="submit"
               disabled={isTyping}
-              className="bg-cyan-400 hover:bg-cyan-300 text-black font-bold tracking-widest uppercase px-8 py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(34,211,238,0.4)]"
+              className="bg-cyan-400 hover:bg-cyan-300 text-black font-bold tracking-widest uppercase px-8 py-4 rounded-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(34,211,238,0.4)] flex-shrink-0"
             >
               SEND
             </button>

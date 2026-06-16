@@ -2,7 +2,7 @@
 # =============================================================================
 # SOVEREIGN OS — CINEMA & AUTH SURGICAL RESTORATION SCRIPT
 # Version: 1.0
-# Purpose: Surgically restarts Sovereign OS Portal (3000), Core API / Auth (5051),
+# Purpose: Surgically restarts Sovereign OS Portal (3016), Core API / Auth (8090),
 #          Sovereign Cinema (3008), and Theater Media Server (8085).
 # =============================================================================
 
@@ -19,7 +19,7 @@ mkdir -p "${LOG_DIR}"
 echo "[INFO] Commencing surgical restart of Auth, Portal, and Cinema stack..."
 
 # --- PHASE 1: PROCESS CLEANUP ------------------------------------------------
-PORTS=(3000 3008 8090 8085)
+PORTS=(3016 3008 8090 8085)
 echo "[INFO] Cleaning up existing processes on ports: ${PORTS[*]}..."
 
 for PORT in "${PORTS[@]}"; do
@@ -47,9 +47,9 @@ nohup "${VENV_PYTHON}" scripts/theater_media_server.py >> "${LOG_DIR}/theater_me
 echo "[OK] Theater Media Server initiated (PID: $!). Log: ${LOG_DIR}/theater_media_8085.log"
 
 # --- PHASE 3: FRONTEND GATEWAYS -----------------------------------------------
-echo "[INFO] Launching Sovereign OS Portal on Port 3000..."
+echo "[INFO] Launching Sovereign OS Portal on Port 3016..."
 cd "${SOVEREIGN_HOME}/01_Sovereign_Portal"
-nohup npm run dev -- --force --port 3000 >> "${LOG_DIR}/vite_portal.log" 2>&1 &
+nohup npm run dev -- --force --port 3016 >> "${LOG_DIR}/vite_portal.log" 2>&1 &
 echo "[OK] Portal Frontend initiated (PID: $!). Log: ${LOG_DIR}/vite_portal.log"
 
 echo "[INFO] Launching Sovereign Media UI on Port 3008..."

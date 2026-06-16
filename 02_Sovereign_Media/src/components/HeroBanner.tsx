@@ -9,7 +9,7 @@ interface HeroBannerProps {
 
 export default function HeroBanner({ onPlay, title = "THE BOYS", overview = "Superheroes are often as popular as celebrities...", imageUrl = "/01_Assets/Images/poster_1.png" }: HeroBannerProps) {
   return (
-    <div className="relative h-[55vh] w-full shrink-0 rounded-2xl overflow-hidden">
+    <div className="relative h-[55vh] min-h-[480px] w-full shrink-0 rounded-2xl overflow-hidden">
       {/* Background Image / Video Mock */}
       <div className="absolute inset-0 w-full h-full">
         <img 
@@ -23,7 +23,7 @@ export default function HeroBanner({ onPlay, title = "THE BOYS", overview = "Sup
       </div>
 
       {/* Content */}
-      <div className="relative z-10 h-full flex flex-col justify-end pt-24 px-6 md:px-12 pb-6 max-w-4xl">
+      <div className="relative z-10 h-full flex flex-col justify-end pt-36 px-6 md:px-12 pb-6 max-w-4xl">
         <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4 md:mb-6 mix-blend-screen">
           <span className="text-[#38bdf8] font-extrabold tracking-widest md:tracking-[0.4em] text-lg md:text-2xl drop-shadow-[0_0_10px_rgba(56,189,248,0.8)]">S O V E R E I G N</span>
           <span className="text-lg md:text-2xl font-semibold tracking-widest md:tracking-[0.4em] text-white/80">O R I G I N A L</span>

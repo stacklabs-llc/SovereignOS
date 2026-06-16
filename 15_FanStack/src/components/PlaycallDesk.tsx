@@ -8,7 +8,7 @@ const WS_PORT = "8000";
 export default function PlaycallDesk() {
     const [personas, setPersonas] = useState([]);
     const [selectedPersona, setSelectedPersona] = useState('dot');
-    const [messages, setMessages] = useState([{ type: 'system', author: 'SOVEREIGN', text: 'Playcall Desk v2.5 Online. Integrated into FanStack.' }]);
+    const [messages, setMessages] = useState<any[]>([{ type: 'system', author: 'SOVEREIGN', text: 'Playcall Desk v2.5 Online. Integrated into FanStack.', id: Date.now() }]);
     const [boggsLevel, setBoggsLevel] = useState(2);
     const [activeTab, setActiveTab] = useState('events');
     const [games, setGames] = useState<any[]>([]);
@@ -299,6 +299,12 @@ export default function PlaycallDesk() {
             ws.onmessage = (e) => {
                 try {
                     const d = JSON.parse(e.data);
+                    if(d.type === 'GAME_SWITCHED' && d.game_pk) {
+                        if (d.game_pk !== selectedGame) {
+                            setSelectedGame(d.game_pk);
+                            addMsg('system', 'SOVEREIGN', 'Feed synchronized to game ' + d.game_pk);
+                        }
+                    }
                     if(d.type === 'PENALTY_BOX_EVENT') {
                         if(d.action === 'ENTER') setPenaltyBox({ persona: d.persona, text: '', avatar: getAvatar(d.persona), history: [] });
                         else if(d.action === 'EXIT') setPenaltyBox(null);

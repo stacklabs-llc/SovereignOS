@@ -17,31 +17,130 @@ load_dotenv("/home/james/SovereignOS/.env")
 SOVEREIGN_HOME = Path(os.getenv("SOVEREIGN_HOME", "/home/james/SovereignOS"))
 DB_PATH = str(SOVEREIGN_HOME / "dna" / os.getenv("SOVEREIGN_DB_NAME", "sovereign_now.db"))
 
-def fire_govee(r, g, b):
-    # Claude recommended HTTP but Govee LAN API actually only listens on UDP 40033 natively.
-    # Using Unicast UDP avoids the "fragile UDP broadcasts" while ensuring it works "no matter what."
-    import socket, json
+def fire_govee(r, g, b, color_tem=0):
+    import socket, json, os
+    from dotenv import load_dotenv
+    load_dotenv("/home/james/SovereignOS/.env")
+    if os.getenv("GOVEE_TMI_ACTIVE", "true").lower() == "false":
+        return
+    ips = []
+    env_ips = os.getenv("GOVEE_DEVICE_IP")
+    if env_ips:
+        ips = [ip.strip() for ip in env_ips.split(",") if ip.strip()]
+    if not ips:
+        ips = ["192.168.1.173", "192.168.1.174", "192.168.1.176", "192.168.1.188"]
+    port = int(os.getenv("GOVEE_PORT", 4003))
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        msg = {"msg": {"cmd": "colorwc", "data": {"color": {"r": r, "g": g, "b": b}, "colorTemInKelvin": 0}}}
-        sock.sendto(json.dumps(msg).encode('utf-8'), ("192.168.1.71", 40033))
+        msg = {
+            "msg": {
+                "cmd": "colorWC",
+                "data": {
+                    "color": {"r": r, "g": g, "b": b},
+                    "colorTem": color_tem
+                }
+            }
+        }
+        payload = json.dumps(msg).encode('utf-8')
+        for ip in ips:
+            try:
+                sock.sendto(payload, (ip, port))
+            except:
+                pass
+        sock.close()
     except Exception as e:
         print(f"[GOVEE UDP ERROR] {e}")
 
+def get_govee_statuses_sync(ips, port=4003):
+    import socket, json
+    statuses = {}
+    try:
+        recv_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        recv_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        recv_sock.bind(('0.0.0.0', 4002))
+        recv_sock.settimeout(0.15)
+        
+        send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        msg = {"msg": {"cmd": "devStatus", "data": {}}}
+        payload = json.dumps(msg).encode('utf-8')
+        for ip in ips:
+            try:
+                send_sock.sendto(payload, (ip, port))
+            except:
+                pass
+        send_sock.close()
+        
+        while True:
+            data, addr = recv_sock.recvfrom(1024)
+            resp = json.loads(data.decode('utf-8'))
+            device_data = resp.get("msg", {}).get("data", {})
+            color = device_data.get("color")
+            color_tem = device_data.get("colorTem", 0)
+            if color and "r" in color and "g" in color and "b" in color:
+                statuses[addr[0]] = (color, color_tem)
+    except:
+        pass
+    return statuses
+
 def trigger_govee_http_score():
     print("[GOVEE DIRECT OVERRIDE] Mets Score! Changing to Solid Orange.")
-    fire_govee(255, 85, 0)
+    fire_govee(252, 92, 29, 0)
 
 def trigger_govee_http_hr():
+    import os, time, socket, json
+    from dotenv import load_dotenv
+    load_dotenv("/home/james/SovereignOS/.env")
+    if os.getenv("GOVEE_TMI_ACTIVE", "true").lower() == "false":
+        return
+    ips = []
+    env_ips = os.getenv("GOVEE_DEVICE_IP")
+    if env_ips:
+        ips = [ip.strip() for ip in env_ips.split(",") if ip.strip()]
+    if not ips:
+        ips = ["192.168.1.173", "192.168.1.174", "192.168.1.176", "192.168.1.188"]
+    port = int(os.getenv("GOVEE_PORT", 4003))
     print("[GOVEE DIRECT OVERRIDE] Mets Home Run! Flashing Orange and Blue.")
     try:
-        for _ in range(3):
-            fire_govee(255, 85, 0)
-            time.sleep(0.5)
-            fire_govee(0, 45, 114)  # Mets Blue
-            time.sleep(0.5)
-        # Hold Orange
-        fire_govee(255, 85, 0)
+        prev_statuses = get_govee_statuses_sync(ips, port)
+        for _ in range(5):
+            fire_govee(0, 45, 98, 0) # Mets Blue
+            time.sleep(0.3)
+            fire_govee(252, 92, 29, 0) # Mets Orange
+            time.sleep(0.3)
+            
+        # Restore status
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        for ip in ips:
+            if ip in prev_statuses:
+                color, color_tem = prev_statuses[ip]
+                msg = {
+                    "msg": {
+                        "cmd": "colorWC",
+                        "data": {
+                            "color": color,
+                            "colorTem": color_tem
+                        }
+                    }
+                }
+                try:
+                    sock.sendto(json.dumps(msg).encode('utf-8'), (ip, port))
+                except:
+                    pass
+            else:
+                msg = {
+                    "msg": {
+                        "cmd": "colorWC",
+                        "data": {
+                            "color": {"r": 255, "g": 255, "b": 255},
+                            "colorTem": 0
+                        }
+                    }
+                }
+                try:
+                    sock.sendto(json.dumps(msg).encode('utf-8'), (ip, port))
+                except:
+                    pass
+        sock.close()
     except Exception as e:
         print(f"[GOVEE HR ERROR] {e}")
 
@@ -247,7 +346,7 @@ async def handle_client(ws):
                             pass
             
             if data.get("type") == "JOIN_ROOM":
-                pk = str(data.get("target_game_pk", "GLOBAL"))
+                pk = str(data.get("target_game_pk", data.get("room", "GLOBAL")))
                 ws_rooms[ws] = pk
                 global_msgs = list(chat_buffers["GLOBAL"])
                 room_msgs = list(chat_buffers[pk]) if pk != "GLOBAL" else []
@@ -580,14 +679,14 @@ async def api_all_personas():
     con = _sq.connect(DB_PATH)
     c = con.cursor()
     c.execute("""
-        SELECT id as sys_id, user_name, team, deep_lore, system_prompt, behavior_notes, governance
+        SELECT id as sys_id, user_name, team, deep_lore, system_prompt, behavior_notes, governance, color, avatar_url
         FROM persona
         WHERE team IS NOT NULL AND team != '' AND team NOT IN ('golf_room')
         ORDER BY team, user_name
     """)
     rows = c.fetchall()
     con.close()
-    personas = [{"sys_id": r[0], "user_name": r[1], "team": r[2], "deep_lore": r[3], "system_prompt": r[4], "behavior_notes": r[5], "governance": r[6]} for r in rows]
+    personas = [{"sys_id": r[0], "user_name": r[1], "team": r[2], "deep_lore": r[3], "system_prompt": r[4], "behavior_notes": r[5], "governance": r[6], "color": r[7], "avatar_url": r[8]} for r in rows]
     return {"personas": personas}
 
 
@@ -905,7 +1004,7 @@ async def get_cis(sysparm_query: str = ""):
     cur = con.cursor()
     cur.execute('''
         SELECT c.sys_id, c.name, c.sys_class_name, c.short_description, c.operational_status,
-               p.u_llm_engine, p.u_system_prompt, p.u_deployment_zone, p.u_boggs_reactivity, c.assigned_to, p.u_cadence
+               'gemini-flash-latest' AS u_llm_engine, p.u_system_prompt, p.u_deployment_zone, p.u_boggs_reactivity, c.assigned_to, p.u_cadence
         FROM cmdb_ci c
         LEFT JOIN cmdb_ci_ai_persona p ON c.sys_id = p.sys_id
         WHERE c.sys_class_name = 'cmdb_ci_ai_persona'
@@ -928,8 +1027,8 @@ async def create_ci(data: dict):
     sys_id = uuid.uuid4().hex
     cur.execute("INSERT INTO cmdb_ci (sys_id, name, sys_class_name, short_description, operational_status, assigned_to) VALUES (?, ?, ?, ?, ?, ?)",
                 (sys_id, data.get('name', ''), 'cmdb_ci_ai_persona', data.get('short_description', ''), data.get('operational_status', 1), data.get('assigned_to', '')))
-    cur.execute("INSERT INTO cmdb_ci_ai_persona (sys_id, u_llm_engine, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence) VALUES (?, ?, ?, ?, ?, ?)",
-                (sys_id, data.get('u_llm_engine', ''), data.get('u_system_prompt', ''), data.get('u_deployment_zone', ''), data.get('u_boggs_reactivity', ''), data.get('u_cadence', 'pacer')))
+    cur.execute("INSERT INTO cmdb_ci_ai_persona (sys_id, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence) VALUES (?, ?, ?, ?, ?)",
+                (sys_id, data.get('u_system_prompt', ''), data.get('u_deployment_zone', ''), data.get('u_boggs_reactivity', ''), data.get('u_cadence', 'pacer')))
     con.commit()
     con.close()
     return {"result": {"sys_id": sys_id}}
@@ -940,8 +1039,8 @@ async def update_ci(sys_id: str, data: dict):
     cur = con.cursor()
     cur.execute("UPDATE cmdb_ci SET name=?, short_description=?, operational_status=?, assigned_to=? WHERE sys_id=?",
                 (data.get('name', ''), data.get('short_description', ''), data.get('operational_status', 1), data.get('assigned_to', ''), sys_id))
-    cur.execute("UPDATE cmdb_ci_ai_persona SET u_llm_engine=?, u_system_prompt=?, u_deployment_zone=?, u_boggs_reactivity=?, u_cadence=? WHERE sys_id=?",
-                (data.get('u_llm_engine', ''), data.get('u_system_prompt', ''), data.get('u_deployment_zone', ''), data.get('u_boggs_reactivity', ''), data.get('u_cadence', 'pacer'), sys_id))
+    cur.execute("UPDATE cmdb_ci_ai_persona SET u_system_prompt=?, u_deployment_zone=?, u_boggs_reactivity=?, u_cadence=? WHERE sys_id=?",
+                (data.get('u_system_prompt', ''), data.get('u_deployment_zone', ''), data.get('u_boggs_reactivity', ''), data.get('u_cadence', 'pacer'), sys_id))
     con.commit()
     con.close()
     return {"result": {"sys_id": sys_id}}
@@ -973,7 +1072,7 @@ async def get_ai_personas():
             team            AS department,
             1               AS active,
             team            AS assigned_to,
-            llm_engine      AS u_llm_engine,
+            'gemini-flash-latest' AS u_llm_engine,
             system_prompt   AS u_system_prompt,
             cadence         AS u_cadence,
             boggs_level     AS u_boggs_reactivity,
@@ -1029,7 +1128,7 @@ async def get_ai_persona_by_id(sys_id: str):
             team            AS department,
             1               AS active,
             team            AS assigned_to,
-            llm_engine      AS u_llm_engine,
+            'gemini-flash-latest' AS u_llm_engine,
             system_prompt   AS u_system_prompt,
             cadence         AS u_cadence,
             boggs_level     AS u_boggs_reactivity,
@@ -1061,7 +1160,6 @@ async def update_ai_persona(sys_id: str, request: Request):
     # Field map: editForm key -> actual persona column
     field_map = {
         "assigned_to":             "team",
-        "u_llm_engine":            "llm_engine",
         "u_system_prompt":         "system_prompt",
         "u_cadence":               "cadence",
         "u_boggs_reactivity":      "boggs_level",
@@ -1333,15 +1431,25 @@ async def get_persona_image(persona_id: str):
             (persona_id, safe_id)
         ).fetchone()
         con.close()
-        if row and row[0]:
-            blob_data = row[0]
-            if blob_data.startswith('data:'):
-                header, b64 = blob_data.split(',', 1)
-                mime = header.split(':')[1].split(';')[0]
-            else:
-                b64 = blob_data
-                mime = 'image/png'
-            return Response(content=base64.b64decode(b64), media_type=mime)
+        if row:
+            if row[0]:
+                blob_data = row[0]
+                if blob_data.startswith('data:'):
+                    header, b64 = blob_data.split(',', 1)
+                    mime = header.split(':')[1].split(';')[0]
+                else:
+                    b64 = blob_data
+                    mime = 'image/png'
+                return Response(content=base64.b64decode(b64), media_type=mime)
+            if row[1]:
+                filename = row[1]
+                if filename.startswith('/avatars/'):
+                    filename = filename.replace('/avatars/', '', 1)
+                elif filename.startswith('avatars/'):
+                    filename = filename.replace('avatars/', '', 1)
+                local_path = os.path.join("/home/james/SovereignOS/avatars", filename)
+                if os.path.exists(local_path):
+                    return FileResponse(local_path)
     except Exception as e:
         print(f"[persona_image] DB lookup error: {e}")
     # 2. Fall back to filesystem
@@ -1539,7 +1647,7 @@ async def bro_decode(req: Request):
     try:
         import google.generativeai as genai
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.5-flash")
+        model = genai.GenerativeModel("gemini-flash-latest")
         prompt = f"The user is typing a hurried/jumbled software development ticket from their phone at a baseball game. Clean this up into a concise, professional title and a clear, actionable set of instructions for an AI coding assistant. Return raw JSON ONLY with 'short_description' (string) and 'description' (string) keys. No markdown blocks.\n\nInput Title: {short_desc}\nInput Body: {desc}"
         response = model.generate_content(prompt)
         text = response.text.replace("```json", "").replace("```", "").strip()

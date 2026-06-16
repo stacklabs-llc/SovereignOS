@@ -57,21 +57,26 @@ def parse_work_order_file(filepath):
 
     # Fallbacks via regex if tab structure is different
     if not ticket_id:
-        pattern_match = re.search(r'\b((?:STRY|INC|DFCT|ENHC)-[A-Z0-9\-_]+)\b', content, re.IGNORECASE)
+        pattern_match = re.search(r'\b((?:STRY|INC|DFCT|ENHC|WO)-[A-Z0-9\-_]+)\b', content, re.IGNORECASE)
         if pattern_match:
             ticket_id = pattern_match.group(1).upper()
 
     if not ticket_id:
-        id_match = re.search(r'(Ticket ID|Ticket|ID)\s*:?\s*`?([A-Z0-9\-_]+)`?', content, re.IGNORECASE)
+        id_match = re.search(r'\b(Ticket ID|Ticket|ID)\b\s*:?\s*`?([A-Z0-9\-_]+)`?', content, re.IGNORECASE)
         if id_match:
-            ticket_id = id_match.group(2)
+            val = id_match.group(2)
+            val_upper = val.upper()
+            if len(val) >= 4 and val_upper not in ["ENTIFIED", "GETS", "GING", "EO", "S", "EBAR", "ATION", "UAL"]:
+                ticket_id = val
             
     if not ticket_id:
-        # Generate hash-based ID if none found
-        ticket_id = "INC" + str(hash(content) % 10000000)
+        # Generate deterministic md5 hash-based ID if none found
+        import hashlib
+        h = hashlib.md5(content.encode('utf-8', errors='ignore')).hexdigest()
+        ticket_id = "INC" + str(int(h, 16) % 10000000)
 
     # Determine type
-    ticket_type = "STRY" if "STRY" in ticket_id.upper() else "INC"
+    ticket_type = "STRY" if any(x in ticket_id.upper() for x in ["STRY", "WO"]) else "INC"
 
     return {
         "id": ticket_id,
@@ -147,12 +152,18 @@ def main():
             continue
         for entry in os.scandir(scan_dir):
             if entry.is_file() and entry.name.endswith(".md"):
+                # Ignore walkthroughs by filename
+                if "walkthrough" in entry.name.lower():
+                    continue
                 # Avoid duplicates
                 if entry.name not in scanned_files:
                     # Filter for files that contain "ANTIGRAVITY WORK ORDER" or "WORK ORDER"
                     try:
                         with open(entry.path, 'r', encoding='utf-8', errors='ignore') as f:
                             first_few_lines = f.read(500)
+                        # Skip if it is a walkthrough
+                        if "walkthrough" in first_few_lines.lower():
+                            continue
                         if "WORK ORDER" in first_few_lines.upper():
                             scanned_files.append((entry.name, entry.path))
                     except Exception:

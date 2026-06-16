@@ -177,8 +177,8 @@ def main():
                 INSERT INTO persona (
                     id, user_name, display_name, team, system_prompt, boggs_level, 
                     avatar_url, color, cadence, deep_lore, email_alias,
-                    llm_engine, u_visual_style, created_at, u_deployment_zone, behavior_notes
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'gemini-2.0-flash', 'style_felt', datetime('now'), ?, ?)
+                    u_visual_style, created_at, u_deployment_zone, behavior_notes
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'style_felt', datetime('now'), ?, ?)
             """, (sys_id, handle, data["display_name"], data["team"], data["system_prompt"], data["boggs_reactivity"], avatar_url, color, data["cadence"], data["deep_lore"], f"sovereign.fanstack+{handle}@gmail.com", u_deployment_zone, data["bio"]))
 
         # Split name into first and last

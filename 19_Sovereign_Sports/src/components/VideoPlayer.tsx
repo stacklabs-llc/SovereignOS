@@ -4,8 +4,10 @@ import Hls from 'hls.js';
 import axios from 'axios';
 import { 
   ArrowLeft, Play, Pause, Volume2, VolumeX, Radio, Activity, 
-  Phone, PhoneOff, Send, MessageSquare, Users 
+  Phone, PhoneOff, Send, MessageSquare, Paperclip,
+  Terminal, Trash2, RefreshCw, ChevronDown, ChevronRight
 } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 interface InningDetail {
   num: number;
@@ -48,18 +50,78 @@ interface ChatMessage {
   time: string;
   isPersona: boolean;
   color?: string;
+  image?: string;
 }
 
+
 export default function VideoPlayer() {
+  const { decorumLevel, setDecorumLevel } = useTheme();
   const { gameId } = useParams();
   const videoRef = useRef<HTMLVideoElement>(null);
   const navigate = useNavigate();
+  const wsRef = useRef<WebSocket | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const res = await fetch('/api/chat/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+      if (data.status === 'success' && data.mediaUrl) {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({
+            type: "CHAT_MESSAGE",
+            user: 'james (Pilot)',
+            text: inputText || "",
+            mediaUrl: data.mediaUrl,
+            target_game_pk: gameId || "GLOBAL"
+          }));
+        } else {
+          setMessages(prev => [...prev, {
+            id: Date.now().toString(),
+            user: 'james (Pilot)',
+            text: inputText || "",
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            isPersona: false,
+            image: data.mediaUrl
+          }]);
+        }
+        setInputText('');
+      } else {
+        alert("Upload failed: " + (data.detail || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("Error uploading file:", err);
+      alert("Error uploading file");
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
 
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
+  const [streamHeaders, setStreamHeaders] = useState<Record<string, string> | null>(null);
+  const [customStreamInput, setCustomStreamInput] = useState('');
+  const [isUpdatingStream, setIsUpdatingStream] = useState(false);
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isPlaying, setIsPlaying] = useState(true);
   const [wsConnected, setWsConnected] = useState(false);
+
+  // Statcast Telemetry Debug Console states
+  const [debugMode, setDebugMode] = useState(false);
+  const [liveTelemetryLogs, setLiveTelemetryLogs] = useState<any[]>([]);
+  const [historicalTelemetryLogs, setHistoricalTelemetryLogs] = useState<any[]>([]);
+  const [activeDebugTab, setActiveDebugTab] = useState<'live' | 'poller'>('live');
+  const [expandedLogId, setExpandedLogId] = useState<string | null>(null);
+  const [isLoadingHistorical, setIsLoadingHistorical] = useState(false);
+  const [availableGames, setAvailableGames] = useState<any[]>([]);
 
   // Split-Screen & Tavern Chat states
   const [activeTab, setActiveTab] = useState<'feed' | 'chat'>('feed');
@@ -78,6 +140,13 @@ export default function VideoPlayer() {
   const [showMentions, setShowMentions] = useState(false);
   const [filteredPersonas, setFilteredPersonas] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [activeRoster, setActiveRoster] = useState<any[]>([]);
+  const [roomGeminiTokens, setRoomGeminiTokens] = useState<number>(0);
+  const [roomLocalTokens, setRoomLocalTokens] = useState<number>(0);
+  const [roomSysTokens, setRoomSysTokens] = useState<number>(0);
+  const [showRosterHover, setShowRosterHover] = useState(false);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
+  const chatInputRef = useRef<HTMLInputElement>(null);
 
   // HoloLink WebRTC Calling states
   const [activeCall, setActiveCall] = useState(false);
@@ -92,6 +161,11 @@ export default function VideoPlayer() {
       try {
         const response = await axios.get(`/api/stream/${gameId}`);
         setStreamUrl(response.data.m3u8_url);
+        if (response.data.stream_headers) {
+          setStreamHeaders(response.data.stream_headers);
+        } else {
+          setStreamHeaders(null);
+        }
       } catch (err) {
         console.error('Failed to get stream url', err);
       }
@@ -109,8 +183,14 @@ export default function VideoPlayer() {
     const fetchRoomPersonas = async () => {
       try {
         const response = await axios.get(`/api/room_personas?gamePk=${gameId}`);
-        if (response.data && response.data.personas && response.data.personas.length > 0) {
-          setRoomPersonas(response.data.personas);
+        if (response.data) {
+          if (response.data.personas && response.data.personas.length > 0) {
+            setRoomPersonas(response.data.personas);
+          }
+          setActiveRoster(response.data.roster || []);
+          setRoomGeminiTokens(response.data.room_gemini_tokens || 0);
+          setRoomLocalTokens(response.data.room_local_tokens || 0);
+          setRoomSysTokens(response.data.room_sys_tokens || 0);
         }
       } catch (err) {
         console.warn('Failed to load room personas, using defaults');
@@ -121,14 +201,47 @@ export default function VideoPlayer() {
       fetchStream();
       fetchInitialGameState();
       fetchRoomPersonas();
+      const interval = setInterval(fetchRoomPersonas, 10000);
+      return () => clearInterval(interval);
     }
   }, [gameId]);
+
+  useEffect(() => {
+    const fetchActiveGames = async () => {
+      try {
+        const res = await axios.get('/api/sports/active_games');
+        if (res.data && Array.isArray(res.data)) {
+          setAvailableGames(res.data);
+          
+          // Hydration / auto-selection hook
+          if (res.data.length > 0) {
+            if (res.data.length === 1 || !gameId || gameId === 'default') {
+              const defaultGameId = String(res.data[0].game_pk);
+              console.log(`[STATE SYNC] Single or default game auto-load triggered: ${defaultGameId}`);
+              navigate(`/stream/${defaultGameId}`);
+            }
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to load active games:", err);
+      }
+    };
+    fetchActiveGames();
+  }, [gameId, navigate]);
 
   // 2. Video Player Native Setup (HLS.js / Safari native HLS)
   useEffect(() => {
     if (streamUrl && videoRef.current) {
       if (Hls.isSupported()) {
-        const hls = new Hls();
+        const hls = new Hls({
+          xhrSetup: (xhr) => {
+            if (streamHeaders) {
+              Object.entries(streamHeaders).forEach(([key, val]) => {
+                xhr.setRequestHeader(key, val as string);
+              });
+            }
+          }
+        });
         hls.loadSource(streamUrl);
         hls.attachMedia(videoRef.current);
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
@@ -147,7 +260,27 @@ export default function VideoPlayer() {
         });
       }
     }
-  }, [streamUrl]);
+  }, [streamUrl, streamHeaders]);
+
+  // Statcast Telemetry Debug Console helpers
+  const fetchHistoricalLogs = async () => {
+    if (!gameId) return;
+    setIsLoadingHistorical(true);
+    try {
+      const response = await axios.get(`/api/sports/telemetry_logs?game_pk=${gameId}&limit=40`);
+      setHistoricalTelemetryLogs(response.data);
+    } catch (err) {
+      console.warn('Failed to fetch historical telemetry logs:', err);
+    } finally {
+      setIsLoadingHistorical(false);
+    }
+  };
+
+  useEffect(() => {
+    if (debugMode) {
+      fetchHistoricalLogs();
+    }
+  }, [debugMode, gameId]);
 
   // 3. M.A.R.D Telemetry WebSocket (Port 8008 Proxy)
   useEffect(() => {
@@ -159,19 +292,46 @@ export default function VideoPlayer() {
       const wsUrl = `${protocol}//${window.location.host}/ws`;
       console.log(`Connecting to M.A.R.D Telemetry WS: ${wsUrl}`);
       ws = new WebSocket(wsUrl);
+      wsRef.current = ws;
 
       ws.onopen = () => {
         console.log('Connected to M.A.R.D Telemetry WS Relay');
         setWsConnected(true);
-        ws?.send(JSON.stringify({ type: 'JOIN_ROOM', room: gameId }));
+        ws?.send(JSON.stringify({ type: 'JOIN_ROOM', target_game_pk: gameId, room: gameId }));
       };
 
       ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data);
+          
+          // Buffer to live telemetry debug logs
+          const logEntry = {
+            id: Date.now().toString() + Math.random().toString(),
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+            type: msg.type || 'UNKNOWN',
+            raw: msg
+          };
+          setLiveTelemetryLogs(prev => [logEntry, ...prev].slice(0, 50));
+
           if (msg.type === 'STATE_UPDATE' && msg.target_game_pk === gameId && msg.data) {
             console.log('Telemetry state update received:', msg.data);
             setGameState(msg.data);
+          } else if (msg.type === 'CHAT_MESSAGE' && (msg.target_game_pk === gameId || msg.target_game_pk === 'GLOBAL')) {
+            const newMsg: ChatMessage = {
+              id: msg.id || Date.now().toString() + Math.random().toString(),
+              user: msg.user || 'Advocate',
+              text: msg.text || '',
+              time: msg.time || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              isPersona: msg.isPersona ?? true,
+              color: msg.color,
+              image: msg.mediaUrl || msg.media_url || msg.image
+            };
+            setMessages(prev => {
+              if (prev.some(m => m.text === newMsg.text && m.user === newMsg.user && m.image === newMsg.image)) {
+                return prev;
+              }
+              return [...prev, newMsg];
+            });
           }
         } catch (e) {
           console.error('Error parsing M.A.R.D state message', e);
@@ -390,21 +550,58 @@ export default function VideoPlayer() {
     const val = e.target.value;
     setInputText(val);
 
-    const match = val.match(/@(\w*)$/);
-    if (match) {
-      const query = match[1].toLowerCase();
-      const filtered = roomPersonas.filter(p => p.toLowerCase().includes(query));
-      setFilteredPersonas(filtered);
-      setShowMentions(true);
+    const cursorPosition = e.target.selectionStart || 0;
+    const textBeforeCursor = val.slice(0, cursorPosition);
+    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
+    
+    if (mentionMatch) {
+      const searchString = mentionMatch[1].toLowerCase();
+      let matches: string[] = [];
+      if (activeRoster && activeRoster.length > 0) {
+        matches = activeRoster
+          .filter(user => (user.user_name || '').toLowerCase().includes(searchString))
+          .map(user => `@${user.user_name}`);
+      } else {
+        matches = roomPersonas.filter(p => p.toLowerCase().includes(searchString));
+      }
+      setFilteredPersonas(matches);
+      setShowMentions(matches.length > 0);
+      setActiveSuggestionIndex(0);
     } else {
       setShowMentions(false);
     }
   };
 
   const selectMention = (persona: string) => {
-    const updated = inputText.replace(/@\w*$/, `${persona} `);
+    const cleanPersona = persona.startsWith('@') ? persona : `@${persona}`;
+    const updated = inputText.replace(/@\w*$/, `${cleanPersona} `);
     setInputText(updated);
     setShowMentions(false);
+    setTimeout(() => {
+      if (chatInputRef.current) {
+        chatInputRef.current.focus();
+        const len = updated.length;
+        chatInputRef.current.setSelectionRange(len, len);
+      }
+    }, 50);
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (showMentions && filteredPersonas.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setActiveSuggestionIndex(prev => (prev + 1) % filteredPersonas.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setActiveSuggestionIndex(prev => (prev - 1 + filteredPersonas.length) % filteredPersonas.length);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        selectMention(filteredPersonas[activeSuggestionIndex]);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setShowMentions(false);
+      }
+    }
   };
 
   // HoloLink WebRTC Dial Call handlers
@@ -488,6 +685,31 @@ export default function VideoPlayer() {
     return () => cleanupCall();
   }, []);
 
+  const handleApplyStreamOverride = async () => {
+    if (!customStreamInput.trim()) return;
+    setIsUpdatingStream(true);
+    try {
+      const response = await axios.post(`/api/stream/${gameId}`, {
+        stream_url: customStreamInput,
+        stream_source: "Manual Override",
+        stream_headers: {}
+      });
+      if (response.data && response.data.status === 'success') {
+        setStreamUrl(customStreamInput);
+        setStreamHeaders({});
+        setCustomStreamInput('');
+        alert("Live stream override applied successfully!");
+      } else {
+        alert("Failed to update stream URL.");
+      }
+    } catch (err) {
+      console.error("Failed to update stream link:", err);
+      alert("Error updating stream URL. Check console for details.");
+    } finally {
+      setIsUpdatingStream(false);
+    }
+  };
+
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60).toString().padStart(2, '0');
     const s = (secs % 60).toString().padStart(2, '0');
@@ -524,13 +746,45 @@ export default function VideoPlayer() {
               <span style={{ fontSize: '0.65rem', background: '#FF3366', color: '#fff', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 'bold' }}>PROD</span>
             </div>
             <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>
-              Sovereign Sports Decryption Relay
+              Sovereign Oracle Predictive Engine
             </span>
           </div>
         </div>
 
         {/* Global Roster Token usage / Telemetry badges */}
         <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {availableGames.length > 0 && (
+            <select
+              value={gameId}
+              onChange={(e) => {
+                const newPk = e.target.value;
+                console.log(`[STATE SYNC] Swapping game PK to: ${newPk}`);
+                navigate(`/stream/${newPk}`);
+              }}
+              style={{
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: '6px',
+                color: '#fff',
+                fontSize: '0.75rem',
+                padding: '0.4rem 0.8rem',
+                outline: 'none',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontFamily: 'monospace'
+              }}
+            >
+              {availableGames.map((game: any) => (
+                <option 
+                  key={game.game_pk} 
+                  value={game.game_pk}
+                  style={{ background: '#1e293b', color: '#fff' }}
+                >
+                  {game.away_team} @ {game.home_team} ({game.game_pk})
+                </option>
+              ))}
+            </select>
+          )}
           <span 
             className="badge-live" 
             style={{ 
@@ -566,6 +820,38 @@ export default function VideoPlayer() {
             <Radio size={14} />
             {wsConnected ? 'M.A.R.D ONLINE' : 'OFFLINE'}
           </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '0.4rem 0.8rem', borderRadius: '6px' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', fontFamily: 'monospace' }}>DECORUM: {decorumLevel}</span>
+            <input 
+              type="range" 
+              min="0" 
+              max="11" 
+              value={decorumLevel} 
+              onChange={(e) => setDecorumLevel(parseInt(e.target.value))} 
+              style={{ width: '80px', cursor: 'pointer' }}
+            />
+          </div>
+          <button
+            onClick={() => setDebugMode(prev => !prev)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              background: debugMode ? 'rgba(255, 170, 0, 0.15)' : 'rgba(255,255,255,0.03)',
+              color: debugMode ? '#FFAA00' : 'rgba(255,255,255,0.4)',
+              border: debugMode ? '1px solid rgba(255, 170, 0, 0.3)' : '1px solid rgba(255,255,255,0.08)',
+              fontSize: '0.75rem',
+              fontWeight: 'bold',
+              borderRadius: '6px',
+              padding: '0.4rem 0.8rem',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              boxShadow: debugMode ? '0 0 10px rgba(255, 170, 0, 0.1)' : 'none'
+            }}
+          >
+            <Terminal size={14} />
+            {debugMode ? 'DEBUG: ON' : 'TELEMETRY DEBUG'}
+          </button>
         </div>
       </div>
 
@@ -590,7 +876,7 @@ export default function VideoPlayer() {
         className="live-grid-responsive" 
         style={{ 
           display: 'grid', 
-          gridTemplateColumns: '1.6fr 1fr', 
+          gridTemplateColumns: '1fr 1fr', 
           gap: '1.5rem',
           alignItems: 'start'
         }}
@@ -645,6 +931,250 @@ export default function VideoPlayer() {
               </div>
             )}
           </div>
+
+          {/* Custom Stream Override Panel */}
+          <div className="vm-panel-glass" style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)', letterSpacing: '1px', textTransform: 'uppercase' }}>
+                Custom Stream Override
+              </span>
+              {streamUrl && (
+                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', wordBreak: 'break-all', maxWidth: '70%', textAlign: 'right' }}>
+                  Current: {streamUrl.length > 50 ? streamUrl.substring(0, 47) + '...' : streamUrl}
+                </span>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                placeholder="Paste .m3u8 HLS Live Stream URL..."
+                value={customStreamInput}
+                onChange={(e) => setCustomStreamInput(e.target.value)}
+                style={{
+                  flex: 1,
+                  background: 'rgba(0,0,0,0.5)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  borderRadius: '6px',
+                  padding: '0.5rem 0.75rem',
+                  color: '#fff',
+                  fontSize: '0.85rem',
+                  outline: 'none'
+                }}
+              />
+              <button
+                onClick={handleApplyStreamOverride}
+                disabled={isUpdatingStream || !customStreamInput.trim()}
+                style={{
+                  background: 'linear-gradient(135deg, #0A84FF 0%, #0056B3 100%)',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '0.5rem 1rem',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  fontSize: '0.85rem',
+                  cursor: 'pointer',
+                  opacity: (isUpdatingStream || !customStreamInput.trim()) ? 0.5 : 1,
+                  transition: 'all 0.2s ease'
+                }}
+              >
+                {isUpdatingStream ? 'Saving...' : 'Apply'}
+              </button>
+            </div>
+          </div>
+
+          {/* Admin Telemetry Debug Console Panel */}
+          {debugMode && (
+            <div 
+              className="vm-panel-glass" 
+              style={{ 
+                padding: '1.25rem', 
+                background: 'rgba(10, 10, 15, 0.6)', 
+                backdropFilter: 'blur(12px)',
+                border: '1px solid rgba(255, 170, 0, 0.2)', 
+                borderRadius: '12px', 
+                display: 'flex', 
+                flexDirection: 'column', 
+                gap: '1rem',
+                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Terminal size={16} style={{ color: '#FFAA00' }} />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 'bold', color: '#fff', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                    📡 Statcast Telemetry Debugger
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {activeDebugTab === 'poller' && (
+                    <button
+                      onClick={fetchHistoricalLogs}
+                      disabled={isLoadingHistorical}
+                      style={{
+                        background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.08)',
+                        borderRadius: '4px',
+                        padding: '0.25rem 0.5rem',
+                        color: '#fff',
+                        fontSize: '0.7rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.25rem'
+                      }}
+                    >
+                      <RefreshCw 
+                        size={10} 
+                        style={{
+                          animation: isLoadingHistorical ? 'spin 2s linear infinite' : 'none'
+                        }} 
+                      />
+                      {isLoadingHistorical ? 'Syncing...' : 'Sync Log'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      if (activeDebugTab === 'live') {
+                        setLiveTelemetryLogs([]);
+                      } else {
+                        setHistoricalTelemetryLogs([]);
+                      }
+                    }}
+                    style={{
+                      background: 'rgba(255, 51, 102, 0.1)',
+                      border: '1px solid rgba(255, 51, 102, 0.2)',
+                      borderRadius: '4px',
+                      padding: '0.25rem 0.5rem',
+                      color: '#FF3366',
+                      fontSize: '0.7rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.25rem'
+                    }}
+                  >
+                    <Trash2 size={10} />
+                    Clear
+                  </button>
+                </div>
+              </div>
+
+              {/* Debug Console Tabs */}
+              <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)', gap: '1rem' }}>
+                <button
+                  onClick={() => setActiveDebugTab('live')}
+                  style={{
+                    padding: '0.5rem 0.25rem',
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: activeDebugTab === 'live' ? '2px solid #FFAA00' : '2px solid transparent',
+                    color: activeDebugTab === 'live' ? '#FFAA00' : 'rgba(255,255,255,0.4)',
+                    fontWeight: 'bold',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Live Streams ({liveTelemetryLogs.length})
+                </button>
+                <button
+                  onClick={() => setActiveDebugTab('poller')}
+                  style={{
+                    padding: '0.5rem 0.25rem',
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: activeDebugTab === 'poller' ? '2px solid #FFAA00' : '2px solid transparent',
+                    color: activeDebugTab === 'poller' ? '#FFAA00' : 'rgba(255,255,255,0.4)',
+                    fontWeight: 'bold',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Poller File Tail ({historicalTelemetryLogs.length})
+                </button>
+              </div>
+
+              {/* Tab Contents */}
+              <div style={{ maxHeight: '300px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.5rem', paddingRight: '0.25rem' }}>
+                {activeDebugTab === 'live' ? (
+                  liveTelemetryLogs.length === 0 ? (
+                    <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '1.5rem 0' }}>
+                      Awaiting live Statcast events via WebSocket...
+                    </span>
+                  ) : (
+                    liveTelemetryLogs.map(log => {
+                      const isExpanded = expandedLogId === log.id;
+                      const isStateUpdate = log.type === 'STATE_UPDATE';
+                      const isSysLog = log.type === 'SYS_LOG';
+                      const badgeColor = isStateUpdate ? '#00FFCC' : isSysLog ? '#FFAA00' : '#0A84FF';
+                      return (
+                        <div key={log.id} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '6px', overflow: 'hidden' }}>
+                          <div 
+                            onClick={() => setExpandedLogId(isExpanded ? null : log.id)}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', cursor: 'pointer', userSelect: 'none' }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', flex: 1 }}>
+                              {isExpanded ? <ChevronDown size={12} style={{ color: 'rgba(255,255,255,0.4)' }} /> : <ChevronRight size={12} style={{ color: 'rgba(255,255,255,0.4)' }} />}
+                              <span style={{ fontSize: '0.65rem', fontFamily: 'monospace', color: 'rgba(255,255,255,0.3)' }}>[{log.timestamp}]</span>
+                              <span style={{ fontSize: '0.65rem', padding: '0.1rem 0.3rem', borderRadius: '3px', background: `${badgeColor}22`, color: badgeColor, fontWeight: 'bold' }}>{log.type}</span>
+                              <span style={{ fontSize: '0.75rem', color: '#eee', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                                {isStateUpdate ? `${log.raw.data?.away_team} ${log.raw.data?.away_score} - ${log.raw.data?.home_score} ${log.raw.data?.home_team} | ${log.raw.data?.status_msg}` : log.raw.text || log.raw.message || ''}
+                              </span>
+                            </div>
+                          </div>
+                          {isExpanded && (
+                            <div style={{ padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                              <pre style={{ margin: 0, fontSize: '0.7rem', color: '#00FFCC', fontFamily: 'monospace', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                                {JSON.stringify(log.raw, null, 2)}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )
+                ) : (
+                  historicalTelemetryLogs.length === 0 ? (
+                    <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)', textAlign: 'center', padding: '1.5rem 0' }}>
+                      No historical logs found for this game.
+                    </span>
+                  ) : (
+                    historicalTelemetryLogs.map((log, idx) => {
+                      const logId = `hist-${idx}`;
+                      const isExpanded = expandedLogId === logId;
+                      return (
+                        <div key={logId} style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '6px', overflow: 'hidden' }}>
+                          <div 
+                            onClick={() => setExpandedLogId(isExpanded ? null : logId)}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0.75rem', cursor: 'pointer', userSelect: 'none' }}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', overflow: 'hidden', flex: 1 }}>
+                              {isExpanded ? <ChevronDown size={12} style={{ color: 'rgba(255,255,255,0.4)' }} /> : <ChevronRight size={12} style={{ color: 'rgba(255,255,255,0.4)' }} />}
+                              <span style={{ fontSize: '0.65rem', fontFamily: 'monospace', color: 'rgba(255,255,255,0.3)' }}>[{log.timestamp}]</span>
+                              <span style={{ fontSize: '0.75rem', color: '#eee', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                                {log.state_summary}
+                              </span>
+                            </div>
+                          </div>
+                          {isExpanded && (
+                            <div style={{ padding: '0.75rem', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                              {log.statcast_info && (
+                                <div style={{ fontSize: '0.7rem', color: '#FFAA00', fontFamily: 'monospace', paddingBottom: '0.25rem', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                  📡 {log.statcast_info}
+                                </div>
+                              )}
+                              <pre style={{ margin: 0, fontSize: '0.7rem', color: '#00FFCC', fontFamily: 'monospace', overflowX: 'auto', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                                {JSON.stringify(log.raw_payload, null, 2)}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })
+                  )
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Glass Scoreboard */}
           <div className="vm-panel-glass" style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px' }}>
@@ -890,39 +1420,256 @@ export default function VideoPlayer() {
             </button>
           </div>
 
-          {/* Scruffy's Chat Roster bubble */}
-          <div className="vm-panel-glass" style={{ padding: '1rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>
-              <Users size={14} />
-              <span>ACTIVE FANS IN TAVERN ({roomPersonas.length})</span>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem' }}>
-              {roomPersonas.map((p, idx) => (
-                <span 
-                  key={idx}
-                  style={{
-                    fontSize: '0.75rem',
-                    background: 'rgba(255,255,255,0.04)',
-                    border: '1px solid rgba(255,255,255,0.08)',
-                    padding: '0.2rem 0.5rem',
-                    borderRadius: '4px',
-                    color: p === '@barf' ? '#FF5910' : p === '@dot' ? '#00FFCC' : 'rgba(255,255,255,0.7)',
-                    fontWeight: p === '@barf' || p === '@dot' ? 'bold' : 'normal'
-                  }}
-                >
-                  {p}
-                </span>
-              ))}
-            </div>
-          </div>
-
           {/* Embedded chat list panel */}
           <div className="vm-panel-glass" style={{ flex: 1, minHeight: '380px', display: 'flex', flexDirection: 'column', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', overflow: 'hidden' }}>
             
             {/* Header */}
-            <div style={{ padding: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <MessageSquare size={16} style={{ color: '#00FFCC' }} />
-              <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 'bold' }}>Scruffy's Tavern Chat</h3>
+            <div style={{ 
+              padding: '1rem', 
+              borderBottom: '1px solid rgba(255,255,255,0.06)', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between', 
+              position: 'relative' 
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <MessageSquare size={16} style={{ color: '#00FFCC' }} />
+                <h3 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 'bold' }}>Scruffy's Tavern Chat</h3>
+              </div>
+              
+              <div 
+                onMouseEnter={() => setShowRosterHover(true)}
+                onMouseLeave={() => setShowRosterHover(false)}
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '0.5rem', 
+                  position: 'relative',
+                  cursor: 'pointer'
+                }}
+              >
+                <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', fontFamily: 'monospace' }}>
+                  {roomPersonas.length + 1} ACTIVE
+                </span>
+                <div style={{ display: 'flex', marginLeft: '0.2rem' }}>
+                  {[...roomPersonas.slice(0, 3), "You"].map((p, i) => {
+                    const rawName = p.replace('@', '').toLowerCase().trim();
+                    const isUser = p === 'You';
+                    const imgSrc = `/api/persona_image/${rawName.replace(/[\s-]/g, '_')}`;
+                    const rosterItem = activeRoster.find(r => r.user_name.toLowerCase() === rawName);
+                    const color = rosterItem?.color || '#38bdf8';
+                    const initial = (rosterItem?.user_name || rawName || '?').charAt(0).toUpperCase();
+
+                    return (
+                      <div 
+                        key={i} 
+                        style={{
+                          width: '24px',
+                          height: '24px',
+                          borderRadius: '50%',
+                          border: '1.5px solid #111827',
+                          marginLeft: i > 0 ? '-8px' : '0',
+                          backgroundColor: isUser ? '#38bdf8' : color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '10px',
+                          fontWeight: 'bold',
+                          color: '#fff',
+                          overflow: 'hidden',
+                          flexShrink: 0,
+                          position: 'relative',
+                          zIndex: 4 - i
+                        }}
+                      >
+                        {isUser ? (
+                          'Y'
+                        ) : (
+                          <img 
+                            src={imgSrc} 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            alt={p} 
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              const fallbackText = document.createTextNode(initial);
+                              e.currentTarget.parentElement?.appendChild(fallbackText);
+                            }}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                  {roomPersonas.length > 3 && (
+                    <div 
+                      style={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '50%',
+                        border: '1.5px solid #111827',
+                        marginLeft: '-8px',
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                        backdropFilter: 'blur(4px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '9px',
+                        fontWeight: 'bold',
+                        color: 'rgba(255,255,255,0.7)',
+                        flexShrink: 0,
+                        position: 'relative',
+                        zIndex: 0
+                      }}
+                    >
+                      +{roomPersonas.length - 3}
+                    </div>
+                  )}
+                </div>
+
+                {/* Hover Popover */}
+                {showRosterHover && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: '0.5rem',
+                    zIndex: 100,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '0.25rem',
+                    background: 'rgba(10, 12, 16, 0.98)',
+                    backdropFilter: 'blur(16px)',
+                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    borderRadius: '8px',
+                    padding: '0.5rem',
+                    boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.5)',
+                    minWidth: '200px'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '0.25rem',
+                      padding: '0 0.25rem 0.25rem 0.25rem',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
+                      gap: '0.5rem'
+                    }}>
+                      <span style={{ fontSize: '8px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>In The Bar</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span style={{ fontSize: '8px', fontFamily: 'monospace', color: '#22c55e' }}>🦙 {roomLocalTokens.toLocaleString()}</span>
+                        <span style={{ fontSize: '8px', fontFamily: 'monospace', color: '#f59e0b' }}>⚡ {roomGeminiTokens.toLocaleString()}</span>
+                        <span style={{ fontSize: '8px', fontFamily: 'monospace', color: '#38bdf8' }}>🤖 {roomSysTokens.toLocaleString()}</span>
+                      </div>
+                    </div>
+                    
+                    {activeRoster.length > 0 ? (
+                      activeRoster.map((p, idx) => {
+                        const rawName = p.user_name.toLowerCase();
+                        const imgSrc = `/api/persona_image/${rawName.replace(/[\s-]/g, '_')}`;
+                        const color = p.color || '#38bdf8';
+                        const initial = (p.user_name || '?').charAt(0).toUpperCase();
+
+                        return (
+                          <div 
+                            key={idx} 
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              padding: '0.25rem',
+                              borderRadius: '4px',
+                              transition: 'background-color 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.05)'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                          >
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                              <div style={{
+                                width: '16px',
+                                height: '16px',
+                                borderRadius: '50%',
+                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                backgroundColor: color,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '8px',
+                                fontWeight: 'bold',
+                                color: '#fff',
+                                overflow: 'hidden',
+                                flexShrink: 0
+                              }}>
+                                <img 
+                                  src={imgSrc} 
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                  alt={rawName}
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const fallbackText = document.createTextNode(initial);
+                                    e.currentTarget.parentElement?.appendChild(fallbackText);
+                                  }}
+                                />
+                              </div>
+                              <span style={{ fontSize: '10px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                {rawName}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })
+                    ) : (
+                      [...roomPersonas, 'you'].map((p, idx) => {
+                        const rawName = p.replace('@', '').toLowerCase();
+                        const imgSrc = `/api/persona_image/${rawName.replace(/[\s-]/g, '_')}`;
+                        const color = '#38bdf8';
+                        const initial = (rawName || '?').charAt(0).toUpperCase();
+
+                        return (
+                          <div 
+                            key={idx} 
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.5rem',
+                              padding: '0.25rem',
+                              borderRadius: '4px'
+                            }}
+                          >
+                            <div style={{
+                              width: '16px',
+                              height: '16px',
+                              borderRadius: '50%',
+                              border: '1px solid rgba(255, 255, 255, 0.2)',
+                              backgroundColor: color,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '8px',
+                              fontWeight: 'bold',
+                              color: '#fff',
+                              overflow: 'hidden',
+                              flexShrink: 0
+                            }}>
+                              <img 
+                                  src={imgSrc} 
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                                  alt={rawName}
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                    const fallbackText = document.createTextNode(initial);
+                                    e.currentTarget.parentElement?.appendChild(fallbackText);
+                                  }}
+                              />
+                            </div>
+                            <span style={{ fontSize: '10px', fontFamily: 'monospace', color: 'rgba(255,255,255,0.8)' }}>
+                              {rawName === 'you' ? '👤 you' : rawName}
+                            </span>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Message Area */}
@@ -953,6 +1700,26 @@ export default function VideoPlayer() {
                     }}
                   >
                     {m.text}
+                    {m.image && (
+                      <div style={{ marginTop: '0.5rem', overflow: 'hidden', borderRadius: '6px' }}>
+                        {m.image.endsWith('.mp4') ? (
+                          <video 
+                            src={m.image} 
+                            controls 
+                            autoPlay 
+                            loop 
+                            muted
+                            style={{ maxWidth: '100%', height: 'auto', border: '1px solid rgba(255,255,255,0.1)' }} 
+                          />
+                        ) : (
+                          <img 
+                            src={m.image} 
+                            alt="Play Replay" 
+                            style={{ maxWidth: '100%', height: 'auto', border: '1px solid rgba(255,255,255,0.1)' }} 
+                          />
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -985,10 +1752,12 @@ export default function VideoPlayer() {
                         cursor: 'pointer',
                         fontSize: '0.8rem',
                         color: '#fff',
+                        background: idx === activeSuggestionIndex ? 'rgba(0, 255, 204, 0.15)' : 'transparent',
                         borderBottom: idx < filteredPersonas.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none'
                       }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      onMouseEnter={() => {
+                        setActiveSuggestionIndex(idx);
+                      }}
                     >
                       {p}
                     </div>
@@ -996,11 +1765,49 @@ export default function VideoPlayer() {
                 </div>
               )}
 
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  onChange={handleFileChange} 
+                  accept="image/*,video/*" 
+                  style={{ display: 'none' }} 
+                />
+                <button 
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: '8px',
+                    width: '38px',
+                    height: '38px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer',
+                    color: 'rgba(255,255,255,0.7)',
+                    transition: 'all 0.2s',
+                    flexShrink: 0
+                  }}
+                  title="Attach media"
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.08)';
+                    e.currentTarget.style.color = '#fff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                    e.currentTarget.style.color = 'rgba(255,255,255,0.7)';
+                  }}
+                >
+                  <Paperclip size={16} />
+                </button>
                 <input 
                   type="text"
+                  ref={chatInputRef}
                   value={inputText}
                   onChange={handleInputChange}
+                  onKeyDown={handleInputKeyDown}
                   placeholder="Type @ to mention a fan..."
                   style={{
                     flex: 1,
@@ -1010,7 +1817,8 @@ export default function VideoPlayer() {
                     padding: '0.6rem 0.8rem',
                     color: '#fff',
                     outline: 'none',
-                    fontSize: '0.85rem'
+                    fontSize: '0.85rem',
+                    minWidth: 0
                   }}
                 />
                 <button 

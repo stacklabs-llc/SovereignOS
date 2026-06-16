@@ -42,7 +42,7 @@ def _load_gemini_key() -> str:
     return key
 
 GEMINI_KEY = _load_gemini_key()
-GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={GEMINI_KEY}"
+GEMINI_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={GEMINI_KEY}"
 
 # ── Character Map Prompt ──────────────────────────────────────────────────────
 SYSTEM = """You are the Creative Director for FanStack — an AI sports content platform.

@@ -54,7 +54,7 @@ def main():
         "Do not include any pleasantries or introductory text. Output ONLY the raw contextual data designed to be ingested directly into the Wardy Desk Hive Mind."
     )
 
-    model = genai.GenerativeModel('gemini-2.5-flash')
+    model = genai.GenerativeModel('gemini-flash-latest')
     response = model.generate_content([video_file, prompt])
 
     # Save output

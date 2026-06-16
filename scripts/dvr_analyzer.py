@@ -41,7 +41,7 @@ def main():
         print("\n[!] Video processing failed on Gemini servers.")
         sys.exit(1)
         
-    print("\n[*] Video processed. Running 'Director Mode' Analysis via gemini-2.5-flash...")
+    print("\n[*] Video processed. Running 'Director Mode' Analysis via gemini-flash-latest...")
     
     prompt = f"""
     Act as a viral YouTube Shorts scriptwriter in 'Director Mode'. 
@@ -59,7 +59,7 @@ def main():
     
     try:
         response = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-flash-latest',
             contents=[video_file, prompt]
         )
         analysis_text = response.text

@@ -1,7 +1,7 @@
 import sqlite3
 
 db_path = '/home/james/SovereignOS/dna/sovereign_now.db'
-export_path = '/home/james/sovereign_inbox/daily_05112026/sovereign_personas_export.md'
+export_path = '/home/james/sovereign_inbox/today/sovereign_personas_export.md'
 
 conn = sqlite3.connect(db_path)
 cursor = conn.cursor()

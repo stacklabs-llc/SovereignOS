@@ -24,7 +24,7 @@ ZIP_PATH    = "/home/james/sovereign_inbox/today/sovereign_uat_full.zip"
 CREDS_PATH  = "/home/james/SovereignOS/config/vertex_sa.json"
 PROJECT_ID  = "gen-lang-client-0840454416"
 LOCATION    = "us-central1"
-MODEL_NAME  = "gemini-2.5-flash"
+MODEL_NAME  = "gemini-flash-latest"
 MAX_PAGES   = 15   # Safety cap — raise if needed
 
 AUTH_USER = "james"

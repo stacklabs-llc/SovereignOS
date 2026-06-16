@@ -140,7 +140,7 @@ Behavior notes: {notes}
     api_key = get_api_key()
     url = (
         f"https://generativelanguage.googleapis.com/v1beta/models/"
-        f"gemini-2.5-flash:generateContent?key={api_key}"
+        f"gemini-1.5-flash:generateContent?key={api_key}"
     )
     payload = {
         "system_instruction": {

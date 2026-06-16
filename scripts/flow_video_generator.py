@@ -13,7 +13,7 @@ if not api_key:
     exit(1)
 
 genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-2.5-flash')
+model = genai.GenerativeModel('gemini-flash-latest')
 
 PROMPT_TEMPLATE = """
 You are Vanguard, the elite AI Video Production Assistant for the Sovereign FanStack Broadcast Engine.

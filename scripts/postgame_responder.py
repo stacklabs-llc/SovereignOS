@@ -236,7 +236,7 @@ def generate():
         return jsonify({"error": f"Could not load persona lore: {e}"}), 500
 
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash', generation_config={"temperature": 0.8})
+        model = genai.GenerativeModel('gemini-flash-latest', generation_config={"temperature": 0.8})
         
         prompt = f"""You are acting as the persona described below. 
         

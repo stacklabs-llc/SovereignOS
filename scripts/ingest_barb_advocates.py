@@ -181,8 +181,8 @@ Tier: Standard
                 INSERT INTO persona (
                     id, user_name, display_name, team, system_prompt, boggs_level, 
                     avatar_url, color, cadence, deep_lore, email_alias,
-                    llm_engine, u_visual_style, created_at, u_deployment_zone, behavior_notes, governance
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, '#0d9488', ?, ?, ?, 'gemini-2.0-flash', 'style_felt', datetime('now'), ?, ?, ?)
+                    u_visual_style, created_at, u_deployment_zone, behavior_notes, governance
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, '#0d9488', ?, ?, ?, 'style_felt', datetime('now'), ?, ?, ?)
             """, (sys_id, handle, display_name, team, system_prompt, boggs_reactivity, avatar_url, cadence, deep_lore, email_alias, u_deployment_zone, behavior_notes, governance))
 
         # Split name into first and last

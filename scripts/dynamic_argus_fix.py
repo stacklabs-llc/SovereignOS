@@ -102,6 +102,7 @@ def init_cameras():
 
 def generate_frames(cam_id):
     """Yield the most recent frame aggressively to any connected client."""
+    import time
     while True:
         with locks.get(cam_id, threading.Lock()):
             frame = latest_frames.get(cam_id, None)
@@ -109,6 +110,7 @@ def generate_frames(cam_id):
         if frame:
             yield (b'--frame\r\n'
                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+        time.sleep(0.033)  # limit yield rate to ~30 fps to reduce CPU and network buffer bloat
 
 @app.route('/cam/<int:cam_id>')
 def video_feed(cam_id):

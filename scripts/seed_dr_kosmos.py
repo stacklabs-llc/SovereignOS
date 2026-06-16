@@ -47,15 +47,15 @@ Response Format:
         c.execute("""
             UPDATE persona SET 
                 display_name = ?, team = ?, system_prompt = ?, color = ?, 
-                deep_lore = ?, avatar_url = ?, llm_engine = 'gemini-2.0-flash'
+                deep_lore = ?, avatar_url = ?
             WHERE id = ?
         """, (display_name, team, system_prompt, color, deep_lore, avatar_url, sys_id))
         print("Updated existing Dr. Kosmos persona.")
     else:
         c.execute("""
             INSERT INTO persona (
-                id, user_name, display_name, team, system_prompt, color, deep_lore, avatar_url, llm_engine, cadence, u_visual_style
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'gemini-2.0-flash', 'pacer', 'style_felt')
+                id, user_name, display_name, team, system_prompt, color, deep_lore, avatar_url, cadence, u_visual_style
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pacer', 'style_felt')
         """, (sys_id, user_name, display_name, team, system_prompt, color, deep_lore, avatar_url))
         print("Inserted new Dr. Kosmos persona.")
         

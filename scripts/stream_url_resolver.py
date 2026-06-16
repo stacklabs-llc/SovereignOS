@@ -39,9 +39,22 @@ def main():
         print(f"Database not found at {DB_PATH}")
         sys.exit(1)
         
+    # Determine date using Eastern Time to align with schedule
+    try:
+        from zoneinfo import ZoneInfo
+    except ImportError:
+        from backports.zoneinfo import ZoneInfo
+    now_et = datetime.datetime.now(ZoneInfo('America/New_York'))
+    if now_et.hour < 10:
+        target_date = (now_et - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+    else:
+        target_date = now_et.strftime('%Y-%m-%d')
+
+    print(f"[RESOLVER] Aligning stream URL resolution with date: {target_date}")
+        
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    cursor.execute("SELECT game_pk, home_team, away_team, game_time FROM mlb_schedule")
+    cursor.execute("SELECT game_pk, home_team, away_team, game_time FROM mlb_schedule WHERE game_date = ?", (target_date,))
     games = cursor.fetchall()
     conn.close()
     

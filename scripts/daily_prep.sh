@@ -26,7 +26,8 @@ echo "[2/8] Sweeping Gmail for Promos..."
 "${VENV_PYTHON}" "${SOVEREIGN_HOME}/scripts/gmail_promo_sweeper.py"
 
 echo "[3/8] Fetching MLB Schedule for Today..."
-bash "${SOVEREIGN_HOME}/scripts/fanstack_mlb.sh" today
+"${VENV_PYTHON}" "${SOVEREIGN_HOME}/scripts/sync_mlb_schedule.py"
+"${VENV_PYTHON}" "${SOVEREIGN_HOME}/scripts/stream_url_resolver.py"
 
 echo "[4/8] Performing Vertex Persona Audit..."
 "${VENV_PYTHON}" "${SOVEREIGN_HOME}/scripts/vertex_persona_audit.py"

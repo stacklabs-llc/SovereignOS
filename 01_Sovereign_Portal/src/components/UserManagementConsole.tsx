@@ -121,6 +121,7 @@ export default function UserManagementConsole() {
 
   // Avatar Selector Overlay
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // New user form
   const [newUsername, setNewUsername] = useState('');
@@ -174,6 +175,38 @@ export default function UserManagementConsole() {
         }
       }
     } finally { setLoading(false); }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0 || !selected) return;
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setUploadingAvatar(true);
+    try {
+      const res = await fetch(`/api/auth/upload_avatar?username=${selected.user_name}`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`
+        },
+        body: formData
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.avatar_url) {
+          setEditAvatarUrl(data.avatar_url);
+          flash(setPanelStatus, 'success', 'Avatar uploaded successfully');
+        }
+      } else {
+        const err = await res.json();
+        flash(setPanelStatus, 'error', err.detail || 'Upload failed');
+      }
+    } catch (err: any) {
+      flash(setPanelStatus, 'error', err.message || 'Upload error');
+    } finally {
+      setUploadingAvatar(false);
+    }
   };
 
   const fetchTasks = async () => {
@@ -1342,6 +1375,20 @@ export default function UserManagementConsole() {
                                   <span className="text-[8px] font-mono truncate w-full text-center text-slate-400">{av.name}</span>
                                 </button>
                               ))}
+                            </div>
+                            {/* File Upload Selector */}
+                            <div className="flex flex-col gap-1 border-t border-white/5 pt-2">
+                              <label className="text-[8px] text-slate-500 uppercase tracking-widest font-mono">Upload New Portrait</label>
+                              <div className="relative flex items-center justify-between bg-[#03060c] border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-slate-400 focus-within:border-[#38bdf8]/60 transition-all font-mono">
+                                <span className="truncate pr-2">{uploadingAvatar ? 'Uploading...' : 'Choose File...'}</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  disabled={uploadingAvatar}
+                                  onChange={handleAvatarUpload}
+                                  className="absolute inset-0 opacity-0 cursor-pointer w-full"
+                                />
+                              </div>
                             </div>
                             {/* Custom URL text box */}
                             <div className="flex flex-col gap-1 border-t border-white/5 pt-2">

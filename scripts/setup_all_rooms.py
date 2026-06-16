@@ -68,6 +68,14 @@ async def setup_game_room(game, data, candidates, dot, wordy):
                     assigned = mlb_teams[assigned].lower()
                 if team_abbr.lower() in assigned.split('-'):
                     matching.append(p)
+            
+            if team_abbr.upper() == 'NYM':
+                metsfan = next((p for p in matching if p['user_name'] == 'metsfan_86'), None)
+                if metsfan:
+                    matching.remove(metsfan)
+                    random.shuffle(matching)
+                    return [metsfan] + matching[:2]
+
             random.shuffle(matching)
             return matching[:3]
 
@@ -137,7 +145,7 @@ async def setup_game_room(game, data, candidates, dot, wordy):
                 try:
                     client = genai.Client(api_key=api_key)
                     res = client.models.generate_content(
-                        model='gemini-2.5-flash',
+                        model='gemini-flash-latest',
                         contents=prompt,
                         config={"response_mime_type": "application/json"}
                     )
@@ -153,7 +161,7 @@ async def setup_game_room(game, data, candidates, dot, wordy):
                     LOCATION = "us-central1"
                     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = CREDENTIALS_PATH
                     vertexai.init(project=PROJECT_ID, location=LOCATION)
-                    model = GenerativeModel("gemini-2.5-flash")
+                    model = GenerativeModel("gemini-flash-latest")
                     res = model.generate_content(prompt)
                     text = res.text
                 except Exception as e:
@@ -206,12 +214,15 @@ def main():
     """)
     data = [dict(row) for row in cursor.fetchall()]
     
-    # Ensure no None types for text processing and filter out cloned game_pk personas
+    # Ensure no None types for text processing and filter out cloned game_pk and _ci personas
     valid_data = []
     for p in data:
         if not p.get('user_name'):
             continue
-        if not re.search(r'_\d+$', p['user_name']):
+        is_clone = bool(re.search(r'_\d{6}$', p['user_name']) or p['user_name'].endswith('_ci'))
+        if p['user_name'] == 'metsfan_86':
+            is_clone = False
+        if not is_clone:
             valid_data.append(p)
     data = valid_data
 
@@ -238,6 +249,19 @@ def main():
             target_date = now_et.strftime('%Y-%m-%d')
 
     print(f"Aligning daily room setup with game slate date: {target_date}")
+
+    # Deactivate past rooms to prevent stale entries from polluting the switcher dropdown
+    try:
+        cleanup_conn = sqlite3.connect(db_path, timeout=60.0)
+        cleanup_conn.execute("PRAGMA busy_timeout = 30000;")
+        cleanup_cursor = cleanup_conn.cursor()
+        cleanup_cursor.execute("UPDATE mlb_schedule SET room_state = 'staged' WHERE game_date < ?", (target_date,))
+        cleanup_cursor.execute("UPDATE cmdb_ci_fanstack_room SET room_state = 'staged' WHERE game_pk IN (SELECT game_pk FROM mlb_schedule WHERE game_date < ?)", (target_date,))
+        cleanup_conn.commit()
+        cleanup_conn.close()
+        print(f"🧹 Past game rooms (prior to {target_date}) deactivated.")
+    except Exception as e:
+        print("Error during past room cleanup:", e)
 
     # Get today's schedule explicitly passing the date to bypass MLB's 11 AM roll-over
     try:

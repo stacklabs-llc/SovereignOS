@@ -93,7 +93,7 @@ def summarize_transcript(job_id, filepath, model='gemini'):
             f"Transcript:\n{content}"
         )
 
-        if model == 'gemini':
+        if model in ('gemini', 'gemini-2.5-flash'):
             try:
                 import os
                 import vertexai
@@ -114,7 +114,21 @@ def summarize_transcript(job_id, filepath, model='gemini'):
                 
                 gemini_model = GenerativeModel("gemini-2.5-flash", system_instruction=[sys_text])
                 res = gemini_model.generate_content(prompt)
-                result_text = res.text.strip()
+                parts_text = []
+                if res.candidates and len(res.candidates) > 0:
+                    candidate = res.candidates[0]
+                    if candidate.content and candidate.content.parts:
+                        for part in candidate.content.parts:
+                            if hasattr(part, "text") and part.text:
+                                parts_text.append(part.text)
+                if parts_text:
+                    result_text = "".join(parts_text)
+                else:
+                    try:
+                        result_text = res.text
+                    except Exception:
+                        result_text = ""
+                result_text = result_text.strip()
                 
                 output_md = filepath.rsplit('_transcript.md', 1)[0] + "_summary.md"
                 with open(output_md, "w", encoding="utf-8") as f:
@@ -128,6 +142,7 @@ def summarize_transcript(job_id, filepath, model='gemini'):
                 return
             except Exception as gemini_err:
                 print(f"[VERTEX FALLBACK] Vertex AI failed, falling back to local Llama 3: {gemini_err}")
+                model = "llama3:latest"
 
         # Create sentinel lock file and start local Ollama service
         with open("/tmp/ollama_active_lock", "w") as f:
@@ -145,10 +160,11 @@ def summarize_transcript(job_id, filepath, model='gemini'):
             time.sleep(1)
 
         # Pipe the request to the local Ollama instance on Node .183 (Dreadnought)
+        ollama_model = model if model not in ('gemini', 'gemini-2.5-flash') else 'llama3:latest'
         response = requests.post(
             "http://clio.taila01894.ts.net:11434/api/generate",
             json={
-                "model": "llama3",
+                "model": ollama_model,
                 "prompt": prompt,
                 "stream": False
             },
@@ -159,7 +175,7 @@ def summarize_transcript(job_id, filepath, model='gemini'):
 
         output_md = filepath.rsplit('_transcript.md', 1)[0] + "_summary.md"
         with open(output_md, "w", encoding="utf-8") as f:
-            f.write(f"# Sovereign Dreadnought TL;DR (Llama 3)\n\n{result_text.strip()}")
+            f.write(f"# Sovereign Dreadnought TL;DR ({ollama_model})\n\n{result_text.strip()}")
 
         jobs[job_id] = {
             "status": "complete",

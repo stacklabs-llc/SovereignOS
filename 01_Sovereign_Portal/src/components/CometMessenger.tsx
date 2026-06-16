@@ -22,6 +22,7 @@ interface PriorityAlert {
   alert_type: string;
   status: string;
   sys_ticket_id: string;
+  avatar_url?: string;
 }
 
 export default function CometMessenger() {
@@ -377,18 +378,27 @@ export default function CometMessenger() {
                   {alerts.map((alert) => (
                     <div 
                       key={alert.id}
-                      className="p-3 bg-red-50 border-2 border-[#e54b4b] rounded-xl flex items-center justify-between shadow-[2px_2px_0px_0px_rgba(229,75,75,0.2)] animate-pulse"
+                      className="p-3 bg-red-50 border-2 border-[#e54b4b] rounded-xl flex items-center justify-between gap-3 shadow-[2px_2px_0px_0px_rgba(229,75,75,0.2)] animate-pulse"
                     >
-                      <div className="space-y-1">
-                        <span className="text-xs font-bold text-slate-800 uppercase">
-                          ⚠️ {alert.alert_type}
-                        </span>
-                        {alert.sys_ticket_id && (
-                          <div className="flex items-center gap-1 text-[10px] text-slate-500 font-bold uppercase">
-                            <Clock size={10} />
-                            CLIO REF: {alert.sys_ticket_id}
-                          </div>
+                      <div className="flex items-center gap-3">
+                        {alert.avatar_url && (
+                          <img 
+                            src={alert.avatar_url} 
+                            alt="Expression Avatar" 
+                            className="w-10 h-10 rounded-full border-2 border-slate-900 object-cover" 
+                          />
                         )}
+                        <div className="space-y-1">
+                          <span className="text-xs font-bold text-slate-800 uppercase">
+                            ⚠️ {alert.alert_type}
+                          </span>
+                          {alert.sys_ticket_id && (
+                            <div className="flex items-center gap-1 text-[10px] text-slate-500 font-bold uppercase">
+                              <Clock size={10} />
+                              CLIO REF: {alert.sys_ticket_id}
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <button
                         onClick={() => resolvePriorityAlert(alert.id)}

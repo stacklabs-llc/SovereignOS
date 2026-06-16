@@ -95,11 +95,11 @@ if [[ -L "${SYMLINK_PATH}" ]]; then
     if [[ "${CURRENT_TARGET}" == "${EXPECTED_TARGET}" ]]; then
         log_ok "Symlink 'today' is already correctly mapped → ${TODAY_FOLDER}"
     else
-        # Atomically advance the symlink via tmp + mv to prevent a broken-link window
+        # Atomically advance the symlink via tmp + mv -T to prevent directory nesting
         CURRENT_NAME=$(basename "${CURRENT_TARGET}" 2>/dev/null || echo "unknown")
         log_warn "Advancing symlink: ${CURRENT_NAME} → ${TODAY_FOLDER}"
         ln -sfn "${TARGET_DIR}" "${SYMLINK_PATH}.tmp"
-        mv -f "${SYMLINK_PATH}.tmp" "${SYMLINK_PATH}"
+        mv -fT "${SYMLINK_PATH}.tmp" "${SYMLINK_PATH}"
         log_ok "Symlink advanced → ${TODAY_FOLDER}"
     fi
 else
@@ -135,6 +135,7 @@ _pkill_daemon() {
 _pkill_daemon "fanstack_background_poller" "fanstack_background_poller.py"
 _pkill_daemon "fanstack_chatbots"          "fanstack_chatbots.py"
 _pkill_daemon "statcast_sentinel"          "statcast_sentinel.py"
+_pkill_daemon "tmi_daemon"                 "tmi_daemon.py"
 
 # Preservation rule: Do not kill port 8000/8008 (fanstack_relay) if it is already healthy,
 # to avoid dropping active live streaming WebSockets for other parallel sessions.
@@ -150,6 +151,14 @@ _pkill_daemon "stream_sniper_daemon"       "stream_sniper_daemon.py"
 _pkill_daemon "dvr_controller_v2"          "dvr_controller_v2.py"
 _pkill_daemon "cmdb_server"               "cmdb_server.py"
 _pkill_daemon "gameday_continuous_sync"    "gameday_continuous_sync.py"
+_pkill_daemon "cron_game_monitor"          "cron_game_monitor.py"
+
+# Also send SIGTERM to the other core backends and watchdog
+_pkill_daemon "sovereign_core_api"          "sovereign_core_api.py"
+_pkill_daemon "sdlc_portal_server"         "sdlc_portal_server.py"
+_pkill_daemon "sam_tracker_server"         "sam_tracker_server.py"
+_pkill_daemon "theater_media_server"       "theater_media_server.py"
+_pkill_daemon "mando_watchdog"              "mando_watchdog.py"
 
 # --- Grace period: allow asyncio loops to exit cleanly before SIGKILL ---
 log_info "Grace period (3s) for asyncio loops to drain..."
@@ -166,6 +175,7 @@ _pkill9_daemon() {
 _pkill9_daemon "fanstack_background_poller" "fanstack_background_poller.py"
 _pkill9_daemon "fanstack_chatbots"          "fanstack_chatbots.py"
 _pkill9_daemon "statcast_sentinel"          "statcast_sentinel.py"
+_pkill9_daemon "tmi_daemon"                 "tmi_daemon.py"
 
 if ss -tlnp 2>/dev/null | grep -q ':8000'; then
     log_info "Preserving healthy fanstack_relay (Port 8000 is active). Skipping relay SIGKILL."
@@ -175,12 +185,22 @@ fi
 
 _pkill9_daemon "fanstack_admin_api"         "fanstack_admin_api.py"
 _pkill9_daemon "gameday_continuous_sync"    "gameday_continuous_sync.py"
+_pkill9_daemon "cron_game_monitor"          "cron_game_monitor.py"
 
-# Release FanStack Vite port binding if still held by a zombie npm process
-if fuser 3009/tcp &>/dev/null; then
-    log_warn "Port 3009 still bound. Releasing..."
-    fuser -k 3009/tcp 2>/dev/null || true
-fi
+_pkill9_daemon "sovereign_core_api"          "sovereign_core_api.py"
+_pkill9_daemon "sdlc_portal_server"         "sdlc_portal_server.py"
+_pkill9_daemon "sam_tracker_server"         "sam_tracker_server.py"
+_pkill9_daemon "theater_media_server"       "theater_media_server.py"
+_pkill9_daemon "mando_watchdog"              "mando_watchdog.py"
+
+# Release all Vite/React frontend port bindings if held
+log_info "Releasing frontend port bindings..."
+for port in 3000 3004 3006 3008 3009 3010 3015 3016 3017 3020 7300; do
+    if fuser ${port}/tcp &>/dev/null; then
+        log_warn "Port ${port} still bound. Releasing..."
+        fuser -k ${port}/tcp 2>/dev/null || true
+    fi
+done
 
 log_ok "Process cleanup complete."
 sleep 1
@@ -246,6 +266,11 @@ nohup "${VENV_PYTHON}" -u "${SCRIPTS_DIR}/fanstack_background_poller.py" \
     >> "${LOG_DIR}/fanstack_poller.log" 2>&1 &
 log_ok "fanstack_background_poller.py → PID $! → ${LOG_DIR}/fanstack_poller.log"
 
+log_info "Launching tmi_daemon.py..."
+nohup "${VENV_PYTHON}" -u "${SCRIPTS_DIR}/tmi_daemon.py" \
+    >> "${LOG_DIR}/tmi_daemon.log" 2>&1 &
+log_ok "tmi_daemon.py → PID $! → ${LOG_DIR}/tmi_daemon.log"
+
 log_info "Launching statcast_sentinel.py (via venv — pybaseball/sqlalchemy deps)..."
 nohup "${VENV_PYTHON}" -u "${SCRIPTS_DIR}/statcast_sentinel.py" \
     >> "${LOG_DIR}/statcast_sentinel.log" 2>&1 &
@@ -255,6 +280,11 @@ log_ok "statcast_sentinel.py → PID $! → ${LOG_DIR}/statcast_sentinel.log"
 # PHASE 5: AUXILIARY DAEMONS
 # =============================================================================
 log_phase "PHASE 5: AUXILIARY DAEMONS"
+
+log_info "Launching cmdb_server.py (Port 8082)..."
+nohup "${VENV_PYTHON}" -u "${SCRIPTS_DIR}/cmdb_server.py" \
+    >> "${LOG_DIR}/cmdb.log" 2>&1 &
+log_ok "cmdb_server.py → PID $! → ${LOG_DIR}/cmdb.log"
 
 log_info "Launching stream_sniper_daemon.py (Port 5056)..."
 nohup "${VENV_PYTHON}" -u "${SCRIPTS_DIR}/stream_sniper_daemon.py" \
@@ -271,6 +301,12 @@ nohup "${VENV_PYTHON}" -u "${SCRIPTS_DIR}/gameday_continuous_sync.py" --daemon -
     >> "${LOG_DIR}/gameday_sync.log" 2>&1 &
 log_ok "gameday_continuous_sync.py → PID $! → ${LOG_DIR}/gameday_sync.log"
 
+log_info "Launching cron_game_monitor.py..."
+nohup "${VENV_PYTHON}" -u "${SCRIPTS_DIR}/cron_game_monitor.py" \
+    >> "${LOG_DIR}/cron_game_monitor.log" 2>&1 &
+log_ok "cron_game_monitor.py → PID $! → ${LOG_DIR}/cron_game_monitor.log"
+
+
 # =============================================================================
 # PHASE 6: FANSTACK VITE FRONTEND (Port 3009)
 # =============================================================================
@@ -284,13 +320,78 @@ log_ok "Vite dev server → PID $! → ${LOG_DIR}/vite.log"
 cd "${SOVEREIGN_HOME}"
 
 # =============================================================================
+# PHASE 6.1: CORE BACKEND DAEMONS
+# =============================================================================
+log_phase "PHASE 6.1: CORE BACKEND DAEMONS"
+
+log_info "Launching Sovereign Core API & Auth on Port 8090..."
+nohup "${VENV_PYTHON}" "${SCRIPTS_DIR}/sovereign_core_api.py" >> "${LOG_DIR}/sovereign_core_8090.log" 2>&1 &
+log_ok "Sovereign Core API → PID $! → ${LOG_DIR}/sovereign_core_8090.log"
+
+log_info "Launching SDLC Ticketing Server on Port 8095..."
+nohup "${VENV_PYTHON}" "${SCRIPTS_DIR}/sdlc_portal_server.py" >> "${LOG_DIR}/sdlc_portal_server.log" 2>&1 &
+log_ok "SDLC Ticketing Server → PID $! → ${LOG_DIR}/sdlc_portal_server.log"
+
+log_info "Launching SamTracker Backend on Port 8083..."
+nohup "${VENV_PYTHON}" "${SCRIPTS_DIR}/sam_tracker_server.py" >> "${LOG_DIR}/sam_tracker.log" 2>&1 &
+log_ok "SamTracker Backend → PID $! → ${LOG_DIR}/sam_tracker.log"
+
+log_info "Launching Theater Media Server on Port 8085..."
+nohup "${VENV_PYTHON}" "${SCRIPTS_DIR}/theater_media_server.py" >> "${LOG_DIR}/theater_media_8085.log" 2>&1 &
+log_ok "Theater Media Server → PID $! → ${LOG_DIR}/theater_media_8085.log"
+
+# =============================================================================
+# PHASE 6.2: DYNAMIC FRONTEND STACK
+# =============================================================================
+log_phase "PHASE 6.2: DYNAMIC FRONTEND STACK"
+
+_launch_vite() {
+    local label="$1"
+    local dir="$2"
+    local port="$3"
+    local extra_args="${4:-}"
+    local logfile="${5:-vite_$(echo "${label}" | tr ' ' '_' | tr 'A-Z' 'a-z').log}"
+
+    if [[ -d "${dir}" ]]; then
+        log_info "Launching ${label} (Port ${port})..."
+        cd "${dir}"
+        nohup npm run dev -- --force --port "${port}" ${extra_args} >> "${LOG_DIR}/${logfile}" 2>&1 &
+        disown $!
+        log_ok "${label} Vite dev server → PID $! → ${LOG_DIR}/${logfile}"
+        cd "${SOVEREIGN_HOME}"
+        sleep 0.5
+    else
+        log_warn "Directory ${dir} not found. Skipping ${label}."
+    fi
+}
+
+_launch_vite "StackLabs Monolith" "${SOVEREIGN_HOME}/16_StackLabsLLC" "3000" "--host 0.0.0.0" "vite_stacklabs.log"
+_launch_vite "Sovereign OS Portal" "${SOVEREIGN_HOME}/01_Sovereign_Portal" "3016" "--host 0.0.0.0" "vite_portal.log"
+_launch_vite "SamTracker Frontend" "${SOVEREIGN_HOME}/14_SamTracker" "3004" "" "vite_sam.log"
+_launch_vite "Sovereign Media" "${SOVEREIGN_HOME}/02_Sovereign_Media" "3008" "--host 0.0.0.0" "vite_cinema.log"
+_launch_vite "Sovereign Sports" "${SOVEREIGN_HOME}/19_Sovereign_Sports" "3010" "--host 0.0.0.0" "vite_sports.log"
+_launch_vite "Aether Vet Telemedicine" "${SOVEREIGN_HOME}/20_AetherVet" "3015" "--host 0.0.0.0" "aether_vet.log"
+_launch_vite "Storybook Station" "${SOVEREIGN_HOME}/23_EileenStack" "3017" "" "vite_garden.log"
+_launch_vite "Barb's Stack" "${SOVEREIGN_HOME}/18_BarbStack" "3020" "" "vite_barb.log"
+_launch_vite "Catnip Wars Sandbox" "/home/james/SovereignOS-sandbox/catnip-wars" "7300" "" "vite_catnip_wars.log"
+_launch_vite "BistroPortal" "${SOVEREIGN_HOME}/16_BistroPortal" "3006" "" "vite_bistro.log"
+
+# =============================================================================
+# PHASE 6.3: MANDO WATCHDOG DAEMON
+# =============================================================================
+log_phase "PHASE 6.3: MANDO WATCHDOG DAEMON"
+log_info "Launching mando_watchdog.py..."
+nohup python3 "${SCRIPTS_DIR}/mando_watchdog.py" >> "${LOG_DIR}/mando_watchdog.log" 2>&1 &
+log_ok "mando_watchdog.py → PID $! → ${LOG_DIR}/mando_watchdog.log"
+
+# =============================================================================
 # PHASE 7: POST-LAUNCH VERIFICATION
 # =============================================================================
 log_phase "PHASE 7: POST-LAUNCH VERIFICATION"
 
-# Allow all daemons 5s to initialize before status check
-log_info "Waiting 5s for daemon initialization..."
-sleep 5
+# Allow all daemons 8s to initialize before status check
+log_info "Waiting 8s for daemon initialization..."
+sleep 8
 
 echo ""
 echo -e "${BLD}  PROCESS STATUS${RST}"
@@ -312,15 +413,23 @@ _check_proc "fanstack_relay.py"             "fanstack_relay.py"
 _check_proc "fanstack_admin_api.py"         "fanstack_admin_api.py"
 _check_proc "fanstack_chatbots.py"          "fanstack_chatbots.py"
 _check_proc "fanstack_background_poller.py" "fanstack_background_poller.py"
+_check_proc "tmi_daemon.py"                 "tmi_daemon.py"
+_check_proc "cmdb_server.py"                "cmdb_server.py"
 _check_proc "statcast_sentinel.py"          "statcast_sentinel.py"
 _check_proc "stream_sniper_daemon.py"       "stream_sniper_daemon.py"
 _check_proc "dvr_controller_v2.py"          "dvr_controller_v2.py"
 _check_proc "gameday_continuous_sync.py"    "gameday_continuous_sync.py"
+_check_proc "cron_game_monitor.py"          "cron_game_monitor.py"
+_check_proc "sovereign_core_api.py"         "sovereign_core_api.py"
+_check_proc "sdlc_portal_server.py"         "sdlc_portal_server.py"
+_check_proc "sam_tracker_server.py"         "sam_tracker_server.py"
+_check_proc "theater_media_server.py"       "theater_media_server.py"
+_check_proc "mando_watchdog.py"             "mando_watchdog.py"
 
 echo ""
 echo -e "${BLD}  PORT BINDINGS${RST}"
 echo -e "  ─────────────────────────────────────────────────"
-for port in 8008 3009; do
+for port in 8008 3009 8082 8090 8095 8083 8085 3000 3016 3004 3008 3010 3015 3017 3020 7300; do
     if ss -tlnp 2>/dev/null | grep -q ":${port}"; then
         echo -e "  ${GRN}✓${RST} Port ${port} is bound"
     else
@@ -344,11 +453,14 @@ _tail_log() {
 }
 
 _tail_log "relay"    "${LOG_DIR}/fanstack_relay.log"
+_tail_log "tmi_daemon" "${LOG_DIR}/tmi_daemon.log"
 _tail_log "chatbots" "${LOG_DIR}/fanstack_chatbots.log"
 _tail_log "poller"   "${LOG_DIR}/fanstack_poller.log"
+_tail_log "cmdb"     "${LOG_DIR}/cmdb.log"
 _tail_log "sentinel" "${LOG_DIR}/statcast_sentinel.log"
 _tail_log "vite"     "${LOG_DIR}/vite.log"
 _tail_log "sync"     "${LOG_DIR}/gameday_sync.log"
+_tail_log "monitor"  "${LOG_DIR}/cron_game_monitor.log"
 
 echo ""
 echo -e "${BLD}  INBOX SYMLINK${RST}"

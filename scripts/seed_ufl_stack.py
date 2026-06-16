@@ -173,8 +173,8 @@ BEHAVIORAL RULES:
             # Seed persona
             cur.execute("""
                 INSERT OR REPLACE INTO persona 
-                    (id, user_name, display_name, team, system_prompt, boggs_level, avatar_url, avatar_blob, color, cadence, deep_lore, behavior_notes, llm_engine)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'gemini-2.5-flash')
+                    (id, user_name, display_name, team, system_prompt, boggs_level, avatar_url, avatar_blob, color, cadence, deep_lore, behavior_notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 c["id"],
                 c["username"],

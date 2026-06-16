@@ -12,7 +12,7 @@ if os.path.exists(env_path):
                 os.environ["GEMINI_API_KEY"] = line.strip().split("=", 1)[1]
 
 genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-2.5-flash')
+model = genai.GenerativeModel('gemini-flash-latest')
 
 KANBAN_FILE = "/home/james/SovereignOS/01_Sovereign_Portal/public/agent_kanban.json"
 

@@ -23,6 +23,7 @@ def close_ticket(number, work_notes, walkthrough_path=None):
         return False
         
     # 2. POST walkthrough.md as attachment to /api/tickets/{number}/attachments
+    success = False
     if walkthrough_path and os.path.exists(walkthrough_path):
         url_att = f"http://localhost:8095/api/tickets/{number}/attachments"
         files = {
@@ -32,16 +33,32 @@ def close_ticket(number, work_notes, walkthrough_path=None):
             r_att = requests.post(url_att, files=files, timeout=10)
             print(f"Step 2: POST Attachment status code: {r_att.status_code}")
             print(f"Response: {r_att.json()}")
-            return True
+            success = True
         except Exception as e:
             print(f"❌ Step 2 FAILED: {e}")
-            return False
+            success = False
     else:
         if walkthrough_path:
             print(f"❌ Walkthrough not found at: {walkthrough_path}")
         else:
             print("ℹ️ No walkthrough path provided/found. Resolving without attachment.")
-        return True
+        success = True
+
+    if success:
+        # 3. Trigger cloud sync to Google Drive for NotebookLM ingestion
+        print("\n🔄 Triggering targeted cloud synchronization to Google Drive...")
+        import subprocess
+        try:
+            res = subprocess.run(["/home/james/SovereignOS/scripts/sync_to_gdrive.sh"], capture_output=True, text=True)
+            if res.returncode == 0:
+                print("🟢 Cloud synchronization completed successfully.")
+            else:
+                print(f"⚠️ Cloud synchronization exited with status code {res.returncode}")
+                print(res.stderr)
+        except Exception as e:
+            print(f"❌ Failed to run sync_to_gdrive.sh: {e}")
+
+    return success
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Sovereign OS Ticket Closure CLI Tool")
@@ -56,6 +73,9 @@ if __name__ == "__main__":
         if not w_path:
             # Check default locations in sovereign_inbox
             candidates = [
+                f"/home/james/sovereign_inbox/walkthroughs/walkthrough_{ticket}.md",
+                f"/home/james/sovereign_inbox/walkthroughs/walkthrough_{ticket.lower()}.md",
+                f"/home/james/sovereign_inbox/walkthroughs/walkthrough_{ticket.upper()}.md",
                 f"/home/james/sovereign_inbox/tickets/walkthrough_{ticket}.md",
                 f"/home/james/sovereign_inbox/tickets/walkthrough_{ticket.lower()}.md",
                 f"/home/james/sovereign_inbox/tickets/walkthrough_{ticket.upper()}.md",

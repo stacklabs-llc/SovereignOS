@@ -42,7 +42,7 @@ export default function GlobalSystemBar({
       auth.logout();
     } else {
       localStorage.removeItem(TOKEN_KEY_EXPORT);
-      document.cookie = `${TOKEN_KEY_EXPORT}=; path=/; domain=clio.taila01894.ts.net; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+      document.cookie = `${TOKEN_KEY_EXPORT}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
     }
     window.location.reload();
   };

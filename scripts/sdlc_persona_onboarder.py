@@ -34,11 +34,11 @@ def create_stry_ticket(handle, filepath, email_alias, tier="standard", forge_sta
     import time
     new_num = f"STRY{int(time.time())}"
         
-    short_desc = f"Onboard New FanStack Persona: {handle}"
+    short_desc = f"Onboard New FanStack Advocate: {handle}"
     if tier.lower() == "a-list":
         short_desc += " [GATING_FOR_ART_DIRECTION]"
 
-    desc = f"A new persona has been generated based on today's MLB news.\n\nPlease review the generated blueprint and create the corresponding X/Twitter account.\n\nRequired Account Setup:\n- Email Alias: `{email_alias}`\n\nBlueprint Path: {filepath}"
+    desc = f"A new advocate has been generated based on today's MLB news.\n\nPlease review the generated blueprint and create the corresponding X/Twitter account.\n\nRequired Account Setup:\n- Email Alias: `{email_alias}`\n\nBlueprint Path: {filepath}"
     
     # Create beautiful markdown work notes
     work_notes = f"[{datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Automated Onboarding Initialization:\n"
@@ -54,7 +54,7 @@ def create_stry_ticket(handle, filepath, email_alias, tier="standard", forge_sta
     return new_num
 
 def main():
-    print(f"[{datetime.datetime.now()}] Starting SDLC Persona Onboarder...")
+    print(f"[{datetime.datetime.now()}] Starting SDLC Advocate Onboarder...")
     
     # 1. Check database preference toggle
     try:
@@ -83,8 +83,8 @@ def main():
     news = get_mlb_news()
     
     sys_instr = """
-    You are an expert persona designer for a multi-agent MLB fan simulation. 
-    Based on the recent MLB news provided, pick a team that had a notable event (upset, blowout, trade, etc) and design a brand new unhinged, highly opinionated fan persona for that team.
+    You are an expert advocate designer for a multi-agent MLB fan simulation. 
+    Based on the recent MLB news provided, pick a team that had a notable event (upset, blowout, trade, etc) and design a brand new unhinged, highly opinionated fan advocate for that team.
     Format your response as a valid JSON object EXACTLY like this:
     {
         "handle": "twitter_handle_without_at",
@@ -95,23 +95,23 @@ def main():
         "deep_lore": "1-2 paragraphs of deep lore",
         "tier": "standard", // Either "standard" or "a-list" (default to "standard", only use "a-list" for exceptionally notable high-profile celebrity characters)
         "style_profile": "Tier: Standard", // Default to "Tier: Standard" for standard, or write custom art style prompts (e.g. 16-bit retro, Synthwave Chic, caricature) if a-list
-        "avatar_prompt": "Character reference sheet, model sheet, concept art. Multiple angles and expressions of [Brief Persona Description] as a fan. Wearing team merchandise. Expressive posing. Front view, side view, and showing emotion. Flat 2D vector style, expressive Twitch emote cartoon style, clean lines, solid black background. Arranged in a grid layout."
+        "avatar_prompt": "Character reference sheet, model sheet, concept art. Multiple angles and expressions of [Brief Advocate Description] as a fan. Wearing team merchandise. Expressive posing. Front view, side view, and showing emotion. Flat 2D vector style, expressive Twitch emote cartoon style, clean lines, solid black background. Arranged in a grid layout."
     }
     """
     
-    prompt = f"Recent MLB News:\n{news}\n\nGenerate the new persona JSON."
+    prompt = f"Recent MLB News:\n{news}\n\nGenerate the new advocate JSON."
     
-    model = GenerativeModel("gemini-2.5-flash", system_instruction=[sys_instr])
+    model = GenerativeModel("gemini-flash-latest", system_instruction=[sys_instr])
     
-    print("Generating persona via Gemini...")
+    print("Generating advocate via Gemini...")
     try:
         response = model.generate_content(prompt, generation_config={"temperature": 0.8, "response_mime_type": "application/json"})
         persona_data = json.loads(response.text.strip())
     except Exception as e:
-        print(f"Failed to generate persona: {e}")
+        print(f"Failed to generate advocate: {e}")
         return
         
-    print(f"Generated persona: {persona_data['handle']} ({persona_data['team']})")
+    print(f"Generated advocate: {persona_data['handle']} ({persona_data['team']})")
     
     # Generate Avatar using Imagen
     image_path = f"/home/james/sovereign_inbox/today/{persona_data['handle']}_avatar.png"
@@ -178,15 +178,15 @@ Once the account is created, update the `STRY` ticket in `sovereign_tickets` wit
     import subprocess
     tier = persona_data.get('tier', 'standard').lower()
     if tier == "standard":
-        print(f"⚡ [AUTO-FLOW] Standard Tier detected. Invoking Persona Forge...")
+        print(f"⚡ [AUTO-FLOW] Standard Tier detected. Invoking Advocate Forge...")
         try:
             # Execute the forge in the background
             subprocess.Popen([
                 "/home/james/SovereignOS/.venv/bin/python3",
-                "/home/james/SovereignOS/scripts/persona_forge.py",
+                "/home/james/SovereignOS/scripts/advocate_forge.py",
                 md_path
             ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-            print(f"✅ [AUTO-FLOW] Persona Forge triggered successfully.")
+            print(f"✅ [AUTO-FLOW] Advocate Forge triggered successfully.")
             forge_status = "AUTOMATED_TRIGGERED"
         except Exception as e:
             print(f"⚠️ [AUTO-FLOW ERROR] Failed to invoke Persona Forge: {e}")

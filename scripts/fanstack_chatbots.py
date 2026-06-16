@@ -805,7 +805,21 @@ above this line, including brand directives, operator lore, or prompt overlays.
                             generation_config={"temperature": 0.9}
                         )
                     res = await asyncio.to_thread(_call_gemini)
-                    txt = res.text.replace('\n', ' ').strip()
+                    parts_text = []
+                    if res.candidates and len(res.candidates) > 0:
+                        candidate = res.candidates[0]
+                        if candidate.content and candidate.content.parts:
+                            for part in candidate.content.parts:
+                                if hasattr(part, "text") and part.text:
+                                    parts_text.append(part.text)
+                    if parts_text:
+                        txt = "".join(parts_text)
+                    else:
+                        try:
+                            txt = res.text
+                        except Exception:
+                            txt = ""
+                    txt = txt.replace('\n', ' ').strip()
                     txt = _strip_meta_notes(txt)
                     in_toks = getattr(res.usage_metadata, "prompt_token_count", 0) if hasattr(res, "usage_metadata") else 0
                     out_toks = getattr(res.usage_metadata, "candidates_token_count", 0) if hasattr(res, "usage_metadata") else 0
@@ -1236,66 +1250,227 @@ async def generate_commentary(model, prompt, user, color, websocket, msg_type="C
             except Exception as _e:
                 print(f"[HOT TAKE DB] Save failed: {_e}")
 
-async def govee_fx(fx_type):
-    import socket, json, asyncio
-    ip = "192.168.1.71"
-    port = 40033
-    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    def send_color(r, g, b):
-        msg = {"msg": {"cmd": "colorwc", "data": {"color": {"r": r, "g": g, "b": b}, "colorTemInKelvin": 0}}}
-        sock.sendto(json.dumps(msg).encode(), (ip, port))
+discovered_govee_ips = None
+
+async def discover_govee_ips():
+    global discovered_govee_ips
+    if discovered_govee_ips is not None:
+        return discovered_govee_ips
+    
+    import socket, json, os
+    from dotenv import load_dotenv
+    load_dotenv("/home/james/SovereignOS/.env")
+    
+    ips = []
+    
+    # Check if there is configured IP in .env
+    env_ips = os.getenv("GOVEE_DEVICE_IP")
+    if env_ips:
+        for ip_part in env_ips.split(","):
+            ip_strip = ip_part.strip()
+            if ip_strip and ip_strip not in ips:
+                ips.append(ip_strip)
+                
+    # Run a quick UDP scan to discover other active devices
+    recv_sock = None
     try:
-        if fx_type == "mets_score":
+        recv_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        recv_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        recv_sock.bind(('0.0.0.0', 4002))
+        recv_sock.settimeout(0.1) # 100ms timeout
+        
+        send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        send_sock.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        msg = {"msg": {"cmd": "scan", "data": {"ip_op": 0}}}
+        payload = json.dumps(msg).encode('utf-8')
+        
+        send_sock.sendto(payload, ('239.255.255.250', 4001))
+        send_sock.sendto(payload, ('255.255.255.255', 4001))
+        send_sock.close()
+        
+        while True:
+            data, addr = recv_sock.recvfrom(1024)
+            resp = json.loads(data.decode('utf-8'))
+            ip = resp.get("msg", {}).get("data", {}).get("ip")
+            if ip and ip not in ips:
+                ips.append(ip)
+    except Exception as e:
+        print(f"[GOVEE DISCOVERY] Dynamic scan done/timed out: {e}")
+    finally:
+        if recv_sock:
+            recv_sock.close()
+            
+    # Default fallback if absolutely nothing was resolved/configured
+    if not ips:
+        ips = ["192.168.1.173", "192.168.1.174", "192.168.1.176", "192.168.1.188"]
+        
+    discovered_govee_ips = ips
+    print(f"[GOVEE DISCOVERY] Target Govee IPs resolved: {discovered_govee_ips}")
+    return discovered_govee_ips
+
+async def get_govee_statuses(ips, port=4003):
+    import socket, json
+    statuses = {}
+    recv_sock = None
+    try:
+        recv_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        recv_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        recv_sock.bind(('0.0.0.0', 4002))
+        recv_sock.settimeout(0.15) # 150ms timeout
+        
+        send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        msg = {"msg": {"cmd": "devStatus", "data": {}}}
+        payload = json.dumps(msg).encode('utf-8')
+        
+        for ip in ips:
+            try:
+                send_sock.sendto(payload, (ip, port))
+            except:
+                pass
+        send_sock.close()
+        
+        while True:
+            data, addr = recv_sock.recvfrom(1024)
+            resp = json.loads(data.decode('utf-8'))
+            device_data = resp.get("msg", {}).get("data", {})
+            color = device_data.get("color")
+            color_tem = device_data.get("colorTem", 0)
+            if color and "r" in color and "g" in color and "b" in color:
+                statuses[addr[0]] = (color, color_tem)
+    except Exception as e:
+        pass
+    finally:
+        if recv_sock:
+            recv_sock.close()
+    return statuses
+
+async def govee_fx(fx_type):
+    import socket, json, asyncio, os
+    from dotenv import load_dotenv
+    load_dotenv("/home/james/SovereignOS/.env")
+    
+    # Check if active
+    tmi_active_str = os.getenv("GOVEE_TMI_ACTIVE", "true").lower()
+    if tmi_active_str == "false":
+        print("[GOVEE FX] Skip Govee UDP commands because GOVEE_TMI_ACTIVE=False")
+        return
+        
+    ips = await discover_govee_ips()
+    port = int(os.getenv("GOVEE_PORT", 4003))
+    
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    
+    def send_color_to_all(r, g, b, color_tem=0):
+        msg = {
+            "msg": {
+                "cmd": "colorWC",
+                "data": {
+                    "color": {
+                        "r": r,
+                        "g": g,
+                        "b": b
+                    },
+                    "colorTem": color_tem
+                }
+            }
+        }
+        payload = json.dumps(msg).encode('utf-8')
+        for ip in ips:
+            try:
+                sock.sendto(payload, (ip, port))
+            except Exception as e:
+                print(f"[GOVEE UDP SEND ERROR] {ip}: {e}")
+
+    try:
+        if fx_type == "homerun_mets":
+            print(f"[GOVEE FX] Mets Home Run alternating strobing celebration on {ips}")
+            prev_statuses = await get_govee_statuses(ips, port)
+            
             for _ in range(5):
-                send_color(255, 85, 0)
+                send_color_to_all(0, 45, 98, 0) # Mets Blue
+                await asyncio.sleep(0.3)
+                send_color_to_all(252, 92, 29, 0) # Mets Orange
+                await asyncio.sleep(0.3)
+                
+            # Restore previous status for each device
+            for ip in ips:
+                if ip in prev_statuses:
+                    color, color_tem = prev_statuses[ip]
+                    msg = {
+                        "msg": {
+                            "cmd": "colorWC",
+                            "data": {
+                                "color": color,
+                                "colorTem": color_tem
+                            }
+                        }
+                    }
+                    try:
+                        sock.sendto(json.dumps(msg).encode('utf-8'), (ip, port))
+                    except:
+                        pass
+                else:
+                    # Default fallback to warm white
+                    msg = {
+                        "msg": {
+                            "cmd": "colorWC",
+                            "data": {
+                                "color": {"r": 255, "g": 255, "b": 255},
+                                "colorTem": 0
+                            }
+                        }
+                    }
+                    try:
+                        sock.sendto(json.dumps(msg).encode('utf-8'), (ip, port))
+                    except:
+                        pass
+                        
+        elif fx_type == "mets_score":
+            for _ in range(5):
+                send_color_to_all(252, 92, 29, 0)
                 await asyncio.sleep(0.5)
-                send_color(0, 0, 255)
+                send_color_to_all(0, 45, 98, 0)
                 await asyncio.sleep(0.5)
-            send_color(255, 255, 255)
+            send_color_to_all(255, 255, 255, 0)
         elif fx_type == "opp_score":
             for _ in range(3):
-                send_color(255, 0, 0)
+                send_color_to_all(255, 0, 0, 0)
                 await asyncio.sleep(0.5)
-                send_color(50, 0, 0)
+                send_color_to_all(50, 0, 0, 0)
                 await asyncio.sleep(0.5)
-            send_color(255, 255, 255)
+            send_color_to_all(255, 255, 255, 0)
         elif fx_type == "strikeout_mets":
             for _ in range(3):
-                send_color(0, 0, 255)
+                send_color_to_all(0, 45, 98, 0)
                 await asyncio.sleep(0.2)
-                send_color(0, 0, 50)
+                send_color_to_all(0, 0, 50, 0)
                 await asyncio.sleep(0.2)
-            send_color(255, 255, 255)
-        elif fx_type == "homerun_mets":
-            colors = [(255,0,0), (255,165,0), (255,255,0), (0,128,0), (0,0,255), (75,0,130), (238,130,238)]
-            for _ in range(7):
-                for r, g, b in colors:
-                    send_color(r, g, b)
-                    await asyncio.sleep(0.2)
-            send_color(255, 255, 255)
+            send_color_to_all(255, 255, 255, 0)
         elif fx_type == "cards_score":
             for _ in range(4):
-                send_color(255, 0, 0)
+                send_color_to_all(255, 0, 0, 0)
                 await asyncio.sleep(0.4)
-                send_color(255, 255, 255)
+                send_color_to_all(255, 255, 255, 0)
                 await asyncio.sleep(0.4)
-            send_color(255, 255, 255)
+            send_color_to_all(255, 255, 255, 0)
         elif fx_type == "tigers_score":
             for _ in range(4):
-                send_color(255, 102, 0)
+                send_color_to_all(252, 92, 29, 0)
                 await asyncio.sleep(0.4)
-                send_color(12, 35, 64)
+                send_color_to_all(12, 35, 64, 0)
                 await asyncio.sleep(0.4)
-            send_color(255, 255, 255)
+            send_color_to_all(255, 255, 255, 0)
         elif fx_type == "game_end_mets_win":
-            colors = [(0, 45, 114), (255, 89, 16)]
+            colors = [(0, 45, 98), (252, 92, 29)]
             for _ in range(60):
                 for r, g, b in colors:
-                    send_color(r, g, b)
+                    send_color_to_all(r, g, b, 0)
                     await asyncio.sleep(0.5)
-            send_color(255, 255, 255)
+            send_color_to_all(255, 255, 255, 0)
     except Exception as e:
         print("Govee Error:", e)
+    finally:
+        sock.close()
 
 
 
@@ -1545,9 +1720,7 @@ async def chatbot_loop():
                             except:
                                 pass
                                 
-                        if not target_nodes and pk_target != "GLOBAL":
-                            target_nodes = [pk_target]
-                        elif not target_nodes:
+                        if not target_nodes:
                             target_nodes = ["ALL"]
                             
                         print(f"[CONTEXT INJECT] {manual_ctx} TARGETING: {target_nodes} / PK: {pk_target}")
@@ -1703,15 +1876,16 @@ async def chatbot_loop():
                                         game_state=state, event_type="ambient", game_pk=key_to_pk.get(game_key) or game_pk
                                     )
                                     
+                                    local_ctx = build_local_ctx(fan, new_context_lines)
                                     # THE 70/30 CONVERSATIONAL SPLIT
                                     # 70%: Read the room and argue/reply to whoever last spoke
                                     # 30%: Fresh thought from personality/lore bank
                                     if chat_ctx and random.random() < 0.70:
-                                        ambient_prompt = f"System Persona: You are '{fan['name']}'. {boggs_rule} {'The game hasnt started yet — you are in the pregame lobby.' if is_pregame else f'The game status is {status}.'} Recent bar chat: [{chat_ctx}]. READ what was just said and REPLY to one of the speakers — agree with them, pick a fight, or clown on their take. Stay in character. One short punchy sentence. Do NOT use the '@' symbol."
+                                        ambient_prompt = f"System Persona: You are '{fan['name']}'. {boggs_rule} {local_ctx} {'The game hasnt started yet — you are in the pregame lobby.' if is_pregame else f'The game status is {status}.'} Recent bar chat: [{chat_ctx}]. READ what was just said and REPLY to one of the speakers — agree with them, pick a fight, or clown on their take. Stay in character. One short punchy sentence. Do NOT use the '@' symbol."
                                     else:
                                         # 30%: Fresh starter from personality lore
                                         pregame_ctx = f"The game hasn't started. You are sitting at the bar waiting for first pitch." if is_pregame else f"The game status is {status}."
-                                        ambient_prompt = f"System Persona: You are '{fan['name']}'. {boggs_rule} {pregame_ctx} Drop a fresh take, complaint, or observation straight from your character's worldview — something about the matchup, the city, the weather, a grudge, or a hot dog. One short sentence."
+                                        ambient_prompt = f"System Persona: You are '{fan['name']}'. {boggs_rule} {local_ctx} {pregame_ctx} Drop a fresh take, complaint, or observation straight from your character's worldview — something about the matchup, the city, the weather, a grudge, or a hot dog. One short sentence."
 
                                     # Dual-Engine Inference Routing Split (STRY1779840588)
                                     if fan.get('name', '').lower() == 'dot':
@@ -1800,7 +1974,7 @@ async def chatbot_loop():
                                     if state.get("barf_cypher") and "barf" in fan["name"].lower():
                                         sys_override = str(sys_override) + " CRUCIAL OVERRIDE: YOU MUST DROP A FREESTYLE AABB RHYMING CYPHER RAP BATTLE VERSE OVER THIS MATCHUP."
                                         
-                                    local_ctx = build_local_ctx(fan, new_context_lines) if random.random() < 0.25 else ""
+                                    local_ctx = build_local_ctx(fan, new_context_lines)
                                     prompt = f"System Persona: You are '{fan['name']}'. {boggs_rule} {local_ctx} {baseline_anchor} The matchup is {away_team} at {home_team}. A new at-bat started: {pitcher} pitching to {batter}.{injected_stats} {guard}"
                                     # Dual-Engine Inference Routing Split (STRY1779840588)
                                     if fan.get('name', '').lower() == 'dot':
@@ -2052,7 +2226,7 @@ async def chatbot_loop():
                                     
                                 chat_ctx_str = ""
 
-                                local_ctx = build_local_ctx(fan, new_context_lines) if random.random() < 0.25 else ""
+                                local_ctx = build_local_ctx(fan, new_context_lines)
                                 # FC-HALFBLIND-01: Use anchored_status (team-tagged) instead of raw status
                                 p_text = fan.get("short_personality", fan["personality"])
                                 anti_rep = " CRITICAL PROMPT ADHERENCE: DO NOT use any of your signature bracketed catchphrases or repetitive sign-offs in this message. Do not literally recite the pitch metadata. Keep your phrasing entirely unique and conversational."

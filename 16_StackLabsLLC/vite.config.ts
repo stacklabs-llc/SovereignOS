@@ -10,12 +10,18 @@ export default defineConfig({
     port: 3000, // Assign explicit decoupled port boundary away from root hub
     host: '0.0.0.0',
     strictPort: true,
+    allowedHosts: ['clio.taila01894.ts.net'],
     https: {
       key: fs.readFileSync('../01_Sovereign_Portal/clio.taila01894.ts.net.key'),
       cert: fs.readFileSync('../01_Sovereign_Portal/clio.taila01894.ts.net.crt'),
     },
     proxy: {
       '/api': {
+        target: 'http://127.0.0.1:8090',
+        changeOrigin: true,
+        secure: false
+      },
+      '/v1': {
         target: 'http://127.0.0.1:8090',
         changeOrigin: true,
         secure: false

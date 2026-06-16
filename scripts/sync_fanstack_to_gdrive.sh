@@ -12,19 +12,19 @@ fi
 
 # 1. Sync Game Room Chat Exports
 echo "✅ Syncing Game Room chat exports..."
-rclone sync /home/james/SovereignOS/data/logs gdrive:SovereignOS_Clio_Sync/SovereignOS/data/logs --progress
+rclone sync /home/james/SovereignOS/data/logs sovereign_os:SovereignOS_Clio_Sync/SovereignOS/data/logs --progress
 
 # 2. Sync FanStack Daemon Logs
 echo "✅ Syncing FanStack daemon logs..."
-rclone sync /home/james/SovereignOS/logs gdrive:SovereignOS_Clio_Sync/SovereignOS/logs --progress
+rclone sync /home/james/SovereignOS/logs sovereign_os:SovereignOS_Clio_Sync/SovereignOS/logs --progress
 
 # 3. Sync Game Cache States
 echo "✅ Syncing live game states cache..."
-rclone sync /home/james/SovereignOS/game_states gdrive:SovereignOS_Clio_Sync/SovereignOS/game_states --progress
+rclone sync /home/james/SovereignOS/game_states sovereign_os:SovereignOS_Clio_Sync/SovereignOS/game_states --progress
 
 # 4. Sync Frontend Codebase (excluding node_modules/dist)
 echo "✅ Syncing FanStack frontend source code..."
-rclone sync /home/james/SovereignOS/15_FanStack gdrive:SovereignOS_Clio_Sync/SovereignOS/15_FanStack \
+rclone sync /home/james/SovereignOS/15_FanStack sovereign_os:SovereignOS_Clio_Sync/SovereignOS/15_FanStack \
   --exclude "node_modules/**" \
   --exclude "dist/**" \
   --progress

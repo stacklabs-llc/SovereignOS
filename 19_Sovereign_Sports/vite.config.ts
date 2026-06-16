@@ -20,7 +20,10 @@ export default defineConfig({
       '/api/hot_take': 'http://127.0.0.1:8000',
       '/api/all_personas': 'http://127.0.0.1:8000',
       '/api/save_room_personas': 'http://127.0.0.1:8000',
+      '/api/chat/upload': 'http://127.0.0.1:8000',
       '/api/chat': 'http://127.0.0.1:8000',
+      '/api/media': 'http://127.0.0.1:8090',
+      '/images': 'http://127.0.0.1:8000',
       '/api/persona-call': {
         target: 'http://127.0.0.1:8090',
         changeOrigin: true,
@@ -44,6 +47,12 @@ export default defineConfig({
       },
       '/ws': {
         target: 'ws://127.0.0.1:8008',
+        ws: true,
+        secure: false,
+        changeOrigin: true,
+      },
+      '/mesh-ws': {
+        target: 'ws://127.0.0.1:8000',
         ws: true,
         secure: false,
         changeOrigin: true,

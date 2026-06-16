@@ -43,6 +43,91 @@ export default function App() {
     uptime: '99.98%'
   });
 
+  const [scratchpadInput, setScratchpadInput] = useState('');
+  const [isDumping, setIsDumping] = useState(false);
+  const [dumpStatus, setDumpStatus] = useState<'idle' | 'success' | 'fallback_success' | 'error'>('idle');
+  const [statusMessage, setStatusMessage] = useState('');
+  const scratchpadRef = React.useRef<HTMLTextAreaElement>(null);
+
+  const handleLocalFallback = (text: string, reason: string) => {
+    try {
+      const existing = localStorage.getItem('stacklabs_scratchpad_fallback');
+      const list = existing ? JSON.parse(existing) : [];
+      list.push({
+        raw_text: text,
+        source_context: 'StackLabs Homepage Local Fallback',
+        created_at: new Date().toISOString(),
+        error_reason: reason
+      });
+      localStorage.setItem('stacklabs_scratchpad_fallback', JSON.stringify(list));
+      
+      setScratchpadInput('');
+      setDumpStatus('fallback_success');
+      setStatusMessage('Stored in Local Cache (Offline Fallback)');
+      
+      if (navigator.vibrate) {
+        navigator.vibrate(100);
+      }
+    } catch (localErr) {
+      console.error("Local storage fallback also failed:", localErr);
+      setDumpStatus('error');
+      setStatusMessage('Fatal Ingress Failure');
+    }
+  };
+
+  const handleDumpToStack = async () => {
+    if (!scratchpadInput.trim()) return;
+    setIsDumping(true);
+    setDumpStatus('idle');
+    setStatusMessage('');
+
+    const ideaText = scratchpadInput;
+    
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+
+    try {
+      const res = await fetch('/v1/ingress/scratchpad', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          raw_text: ideaText,
+          source_context: 'StackLabs Homepage Quick-Capture'
+        })
+      });
+      
+      const data = await res.json();
+      
+      if (res.status === 201 && data.status === 'success') {
+        setScratchpadInput('');
+        setDumpStatus('success');
+        setStatusMessage(`Ingested successfully (ID: ${data.idea_id})`);
+        
+        if (navigator.vibrate) {
+          navigator.vibrate([40, 40, 40]);
+        }
+      } else if (data.status === 'fallback' || data.local_fallback) {
+        handleLocalFallback(ideaText, data.message || 'Database write failed');
+      } else {
+        handleLocalFallback(ideaText, 'Unexpected backend response');
+      }
+    } catch (err: any) {
+      console.warn("[SCRATCHPAD FALLBACK] API call exception caught, falling back to localStorage:", err);
+      handleLocalFallback(ideaText, err.message || 'API connection offline');
+    } finally {
+      setIsDumping(false);
+      setTimeout(() => {
+        scratchpadRef.current?.focus();
+      }, 100);
+      
+      setTimeout(() => {
+        setDumpStatus('idle');
+        setStatusMessage('');
+      }, 4000);
+    }
+  };
+
   useEffect(() => {
     // 1. Fetch user identity based on Tailscale IP
     fetch('/api/public/identify')
@@ -193,6 +278,42 @@ export default function App() {
           >
             [ ACCESS SOVEREIGN OS ]
           </button>
+        </div>
+
+        {/* Quick-Capture Scratchpad Card */}
+        <div className="w-full max-w-2xl bg-[#0b0e14]/75 border border-[#00d4ff]/20 rounded-2xl p-5 mb-8 backdrop-blur-md relative overflow-hidden text-left flex flex-col gap-3">
+          <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-[#00d4ff]/20 to-transparent"></div>
+          
+          <div className="flex justify-between items-center text-[10px] uppercase font-bold tracking-widest text-[#00d4ff]">
+            <span className="flex items-center gap-1.5"><Terminal size={12} /> Quick-Capture Scratchpad</span>
+            <span className="text-slate-500 font-mono text-[9px]">status: {dumpStatus === 'idle' ? 'Armed' : dumpStatus.toUpperCase()}</span>
+          </div>
+          
+          <textarea
+            ref={scratchpadRef}
+            value={scratchpadInput}
+            onChange={(e) => setScratchpadInput(e.target.value)}
+            placeholder="Capture feature request, system design idea, or operational thought..."
+            className="w-full bg-[#05070a]/90 border border-[#00d4ff]/10 focus:border-[#00d4ff]/40 rounded-xl p-3 text-xs text-slate-200 font-mono focus:outline-none resize-none h-[120px] leading-relaxed transition-all duration-300 placeholder-slate-600"
+            disabled={isDumping}
+          />
+          
+          <div className="flex justify-between items-center">
+            <span className={`text-[10px] font-mono leading-none ${
+              dumpStatus === 'success' ? 'text-green-400' :
+              dumpStatus === 'fallback_success' ? 'text-yellow-400 font-semibold' :
+              dumpStatus === 'error' ? 'text-red-400 font-bold' : 'text-slate-500'
+            }`}>
+              {statusMessage || 'Awaiting input...'}
+            </span>
+            <button
+              onClick={handleDumpToStack}
+              disabled={isDumping || !scratchpadInput.trim()}
+              className="bg-[#00d4ff]/15 hover:bg-[#00d4ff]/30 disabled:opacity-40 disabled:hover:bg-[#00d4ff]/15 border border-[#00d4ff]/30 hover:border-[#00d4ff]/60 disabled:hover:border-[#00d4ff]/30 text-[#00d4ff] hover:text-white text-[10px] font-bold uppercase tracking-widest py-2.5 px-5 rounded-lg transition-all duration-200 cursor-pointer"
+            >
+              {isDumping ? 'INGESTING...' : 'Dump to Stack'}
+            </button>
+          </div>
         </div>
 
         {/* Dynamic Personalization Display Panel */}

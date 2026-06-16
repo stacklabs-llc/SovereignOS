@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Palette, Server, Database, Shield, Sliders, Monitor, BookOpen, Layers, Settings, Puzzle, Plus } from 'lucide-react';
+import { Palette, Server, Database, Shield, Sliders, Monitor, BookOpen, Layers, Settings, Puzzle, Plus, RefreshCw } from 'lucide-react';
 import { PORTAL_APPS } from '../config/PortalApps';
 
 interface SystemConfigHubProps {
@@ -108,6 +108,9 @@ export default function SystemConfigHub({ initialTab = 'config', onNavigate }: S
   const [submitting, setSubmitting] = useState(false);
   const [provisioningError, setProvisioningError] = useState<string | null>(null);
 
+  const [gamedaySyncEnabled, setGamedaySyncEnabled] = useState(true);
+  const [togglingSync, setTogglingSync] = useState(false);
+
   const fetchActiveModules = () => {
     fetch('/api/now/table/sys_module')
       .then(res => res.json())
@@ -119,9 +122,47 @@ export default function SystemConfigHub({ initialTab = 'config', onNavigate }: S
       .catch(err => console.error('Error fetching modules:', err));
   };
 
+  const fetchGamedaySyncStatus = () => {
+    const token = localStorage.getItem('sovereign_session_token');
+    const headers: any = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    fetch('/api/system/gameday_sync/status', { headers })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === 'success') {
+          setGamedaySyncEnabled(data.enabled);
+        }
+      })
+      .catch(err => console.error('Error fetching gameday sync status:', err));
+  };
+
+  const handleToggleGamedaySync = () => {
+    setTogglingSync(true);
+    const token = localStorage.getItem('sovereign_session_token');
+    const headers: any = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    
+    const nextState = !gamedaySyncEnabled;
+    fetch('/api/system/gameday_sync/toggle', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ enabled: nextState })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.status === 'success') {
+        setGamedaySyncEnabled(data.enabled);
+      }
+    })
+    .catch(err => console.error('Error toggling gameday sync:', err))
+    .finally(() => setTogglingSync(false));
+  };
+
   useEffect(() => {
     fetchActiveModules();
+    fetchGamedaySyncStatus();
   }, []);
+
 
   const handleOpenProvisioning = (stackApp: any) => {
     setProvisioningStack(stackApp);
@@ -404,6 +445,45 @@ export default function SystemConfigHub({ initialTab = 'config', onNavigate }: S
         <div className="space-y-10 mt-4">
           {renderCategoryGroup("Active Stacks & Services", "🚀", "#38bdf8", stacks)}
           {renderCategoryGroup("Utilities & Power Tools", "🛠️", "#a855f7", utilities)}
+        </div>
+      )}
+
+      {/* Global Infrastructure Switches */}
+      {activeTab === 'config' && (
+        <div className="mt-10 space-y-4">
+          <div className="border-b border-white/5 pb-2 text-left">
+            <h2 className="text-sm font-display font-bold uppercase tracking-widest text-white/75">Global Infrastructure Switches</h2>
+          </div>
+          <div className="bg-[#0B0E14] border border-white/10 rounded-2xl p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-xl bg-[#38bdf8]/10 border border-[#38bdf8]/30 flex items-center justify-center text-[#38bdf8] shrink-0">
+                <RefreshCw size={22} className={gamedaySyncEnabled ? "animate-spin" : ""} style={{ animationDuration: '8s' }} />
+              </div>
+              <div className="text-left">
+                <h3 className="font-display font-bold text-white uppercase tracking-wider text-base">Gameday Sync Daemon</h3>
+                <p className="text-xs text-white/50 mt-1 max-w-xl">
+                  Continuously compiles and stages live MLB game play-by-plays, simulated chats, and telemetry logs to Google Drive remotes. Disable to pause all automatic background uploads.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 font-mono text-xs shrink-0">
+              <span className={gamedaySyncEnabled ? "text-[#22c55e] font-bold" : "text-white/40"}>
+                {gamedaySyncEnabled ? "ACTIVE (SYNCING)" : "MUTED (PAUSED)"}
+              </span>
+              <button
+                type="button"
+                onClick={handleToggleGamedaySync}
+                disabled={togglingSync}
+                className={`px-5 py-2.5 rounded-xl font-bold uppercase tracking-wider transition-all border ${
+                  gamedaySyncEnabled 
+                    ? "bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20" 
+                    : "bg-[#38bdf8]/10 border-[#38bdf8]/30 text-[#38bdf8] hover:bg-[#38bdf8]/20"
+                } cursor-pointer disabled:opacity-50`}
+              >
+                {togglingSync ? "Updating..." : gamedaySyncEnabled ? "Disable Sync" : "Enable Sync"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -50,10 +50,20 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
     selectedGamePkRef.current = activeGamedayPk;
   }, [activeGamedayPk]);
 
+  const nymStlRoomOverrides = [
+    { user_name: 'pilot_james', display_name: 'James Carroll', color: '#ff7700', gemini_tokens: 0, local_tokens: 0 },
+    { user_name: 'barf', display_name: 'Barf', color: '#FF5733', gemini_tokens: 0, local_tokens: 0 },
+    { user_name: 'UncleStevieStan', display_name: 'Uncle Stevie', color: '#22C55E', gemini_tokens: 0, local_tokens: 0 },
+    { user_name: 'Keith_Fanboy', display_name: 'Keith Fanboy', color: '#1D4ED8', gemini_tokens: 0, local_tokens: 0 },
+    { user_name: 'Fredbird_Fiend', display_name: 'Fredbird Fiend', color: '#ef4444', gemini_tokens: 0, local_tokens: 0 },
+    { user_name: 'Arch_Madness', display_name: 'Arch Madness', color: '#a855f7', gemini_tokens: 0, local_tokens: 0 },
+    { user_name: 'Salsa_Wizard', display_name: 'Salsa Wizard', color: '#eab308', gemini_tokens: 0, local_tokens: 0 },
+  ];
+
   // Mention Autocomplete State
   const [mentionState, setMentionState] = useState({ active: false, filter: '', cursorIndex: -1, selectedIndex: 0 });
-  const [activePersonas, setActivePersonas] = useState<string[]>(['@dot', '@coach_shrubbs']);
-  const [activeRoster, setActiveRoster] = useState<any[]>([]);
+  const [activePersonas, setActivePersonas] = useState<string[]>(nymStlRoomOverrides.map(p => `@${p.user_name}`));
+  const [activeRoster, setActiveRoster] = useState<any[]>(nymStlRoomOverrides);
   const [roomGeminiTokens, setRoomGeminiTokens] = useState<number>(0);
   const [roomLocalTokens, setRoomLocalTokens] = useState<number>(0);
   const [roomSysTokens, setRoomSysTokens] = useState<number>(0);
@@ -230,15 +240,20 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
       try {
         const res = await fetch(`/api/room_personas?gamePk=${activeGamedayPk}`);
         const data = await res.json();
-        if (data.personas) {
+        if (data.personas && data.personas.length > 0) {
           setActivePersonas(data.personas);
           setActiveRoster(data.roster || []);
           setRoomGeminiTokens(data.room_gemini_tokens || 0);
           setRoomLocalTokens(data.room_local_tokens || 0);
           setRoomSysTokens(data.room_sys_tokens || 0);
+        } else {
+          setActivePersonas(nymStlRoomOverrides.map(p => `@${p.user_name}`));
+          setActiveRoster(nymStlRoomOverrides);
         }
       } catch (e) {
         console.error("Personas fetch error:", e);
+        setActivePersonas(nymStlRoomOverrides.map(p => `@${p.user_name}`));
+        setActiveRoster(nymStlRoomOverrides);
       }
     };
 
@@ -808,7 +823,7 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
       {isRoomBuilderOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-6">
           <div className="bg-[#0a0c10] border border-[#38bdf8]/30  rounded-3xl w-full max-w-4xl flex flex-col overflow-hidden max-h-[85vh]">
-            <div className="flex justify-between items-center p-6 border-b border-white/10">
+            <div className="flex justify-between items-center p-6 border-b border-white/10 shrink-0">
               <div>
                 <h2 className="text-2xl font-bold text-white tracking-widest uppercase flex items-center gap-3 font-display">
                   Room Builder
@@ -820,7 +835,7 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
               </button>
             </div>
 
-            <div className="p-4 border-b border-white/5 bg-white/[0.02]">
+            <div className="p-4 border-b border-white/5 bg-white/[0.02] shrink-0">
               <div className="flex items-center gap-3 bg-black/40 border border-white/10 rounded-xl px-4 py-3">
                 <span className="text-gray-400">🔍</span>
                 <input
@@ -833,7 +848,7 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-[#050608]">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-[#050608] min-h-0">
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {allPersonas
                   .filter(p => p.user_name.toLowerCase().includes(builderFilter.toLowerCase()) || (p.team || '').toLowerCase().includes(builderFilter.toLowerCase()))
@@ -881,7 +896,7 @@ export default function ScruffysTavern({ activeGamedayPk }: ScruffysTavernProps)
               </div>
             </div>
             
-            <div className="p-6 border-t border-white/10 bg-[#0a0c10] flex justify-end gap-4">
+            <div className="p-6 border-t border-white/10 bg-[#0a0c10] flex justify-end gap-4 shrink-0">
                <button onClick={() => setIsRoomBuilderOpen(false)} className="px-6 py-2 rounded-lg text-white/70 font-bold uppercase tracking-widest text-xs hover:bg-white/10 font-mono">Cancel</button>
                <button onClick={saveRoomPersonas} className="px-6 py-2 rounded-lg bg-[#38bdf8] text-black font-bold uppercase tracking-widest text-xs hover:bg-[#0ea5e9]  font-mono">Save & Re-provision Room</button>
             </div>

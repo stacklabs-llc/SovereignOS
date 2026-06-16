@@ -40,13 +40,13 @@ if ! sudo ss -tulpn | grep -q ":5007 "; then
     nohup python3 scripts/scruffys_bar_server.py > /tmp/scruffys_bar.log 2>&1 &
 fi
 
-if ! sudo ss -tulpn | grep -q ":3007 "; then
-    echo "Starting Eileens Portal on 3007..."
-    cd /home/james/SovereignOS/17_EileensPortal && nohup npm run dev -- --host --port 3007 > /tmp/eileens_portal.log 2>&1 &
+if ! sudo ss -tulpn | grep -q "127.0.0.1:3017 "; then
+    echo "Starting Eileen's Stack on 3017..."
+    cd /home/james/SovereignOS/23_EileenStack && nohup npm run dev -- --host 127.0.0.1 --port 3017 > /tmp/eileens_portal.log 2>&1 &
     cd /home/james/SovereignOS
 fi
 
-if ! sudo ss -tulpn | grep -q ":3020 "; then
+if ! sudo ss -tulpn | grep -q "127.0.0.1:3020 "; then
     echo "Starting Barbs Portal on 3020..."
     cd /home/james/SovereignOS/18_BarbStack && nohup npm run dev -- --host 127.0.0.1 --port 3020 > /tmp/barbs_portal.log 2>&1 &
     cd /home/james/SovereignOS

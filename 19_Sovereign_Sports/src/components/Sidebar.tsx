@@ -1,18 +1,18 @@
 import { NavLink } from 'react-router-dom';
-import { Gamepad2, Trophy, Navigation } from 'lucide-react';
+import { Gamepad2, Trophy, Navigation, Sliders } from 'lucide-react';
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }: { isOpen?: boolean, onClose?: () => void }) {
   return (
-    <div className="sidebar">
+    <div className={`sidebar sovereign-sidebar ${isOpen ? 'menu-open' : ''}`}>
       <div className="sidebar-header" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', padding: '2rem 1rem', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
         <img 
           src="/logo.png" 
-          alt="Sovereign Sports" 
+          alt="Sovereign Oracle" 
           style={{ 
             width: '130px', 
             height: '130px', 
             objectFit: 'contain', 
-            filter: 'drop-shadow(0 0 20px rgba(10, 132, 255, 0.45))',
+            filter: 'drop-shadow(0 0 20px rgba(139, 92, 246, 0.45))',
             borderRadius: '16px',
             background: 'rgba(0, 0, 0, 0.2)',
             padding: '5px'
@@ -24,24 +24,37 @@ export default function Sidebar() {
           fontWeight: 700, 
           letterSpacing: '1px',
           textTransform: 'uppercase',
-          background: 'linear-gradient(90deg, #0A84FF, #00FFCC)',
+          background: 'linear-gradient(90deg, #A78BFA, #38BDF8)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
-          textShadow: '0 0 30px rgba(10, 132, 255, 0.3)'
-        }}>Sovereign Sports</h1>
+          textShadow: '0 0 30px rgba(139, 92, 246, 0.3)'
+        }}>Sovereign Oracle</h1>
       </div>
       <div className="sidebar-nav">
         <NavLink 
           to="/mlb" 
           className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          onClick={onClose}
         >
           <Gamepad2 size={20} />
           <span>MLB Streams</span>
         </NavLink>
-        <div className="nav-item disabled" title="Coming Soon">
+        <NavLink 
+          to="/fan-portal" 
+          className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          onClick={onClose}
+        >
           <Trophy size={20} />
-          <span>NFL Streams</span>
-        </div>
+          <span>Fan Portal</span>
+        </NavLink>
+        <NavLink 
+          to="/playcall-desk" 
+          className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
+          onClick={onClose}
+        >
+          <Sliders size={20} />
+          <span>Playcall Desk</span>
+        </NavLink>
         <div className="nav-item disabled" title="Coming Soon">
           <Navigation size={20} />
           <span>NBA Streams</span>

@@ -40,6 +40,9 @@ export default function ActiveStacksGrid() {
     if (normalized.includes('spite')) return '#f43f5e'; // Retro Magenta
     if (normalized.includes('anvil')) return '#d97706'; // Rusted Bronze
     if (normalized.includes('gonzas')) return '#f43f5e'; // Orange/Magenta
+    if (normalized.includes('sports')) return '#00f0ff'; // Neon Cyan
+    if (normalized.includes('cinema')) return '#8b5cf6'; // Theater Violet
+    if (normalized.includes('garden')) return '#10b981'; // Horticulture Green
     return '#38bdf8';
   };
 

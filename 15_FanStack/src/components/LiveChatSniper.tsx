@@ -52,9 +52,9 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
   // Load full persona system prompts from DB on mount
   useEffect(() => {
     fetch('/api/all_personas').then(r => r.json()).then(d => {
-      const map: Record<string, {system_prompt: string, deep_lore: string}> = {};
+      const map: Record<string, {system_prompt: string, deep_lore: string, behavior_notes: string}> = {};
       (d.personas || []).forEach((p: any) => {
-        map[p.user_name] = { system_prompt: p.system_prompt || '', deep_lore: p.deep_lore || '', behavior_notes: p.behavior_notes || '' };
+        map[p.user_name.toLowerCase()] = { system_prompt: p.system_prompt || '', deep_lore: p.deep_lore || '', behavior_notes: p.behavior_notes || '' };
       });
       setPersonaData(map);
     }).catch(() => {});
@@ -96,8 +96,7 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
     const isHTTPS = window.location.protocol === "https:";
     const wsProtocol = isHTTPS ? "wss://" : "ws://";
     const wsHost = isHTTPS ? window.location.host : `${window.location.hostname}:8000`;
-    // We try the relay first, fall back to ws
-    const wsUrl = isHTTPS ? `${wsProtocol}${wsHost}/ws-relay` : `${wsProtocol}${wsHost}/ws`;
+    const wsUrl = `${wsProtocol}${wsHost}/ws`;
     
     const socket = new WebSocket(wsUrl);
     wsRef.current = socket;
@@ -399,9 +398,7 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
                    {panelists.map((panelist) => {
                        const isSpeaking = activeSpeaker === panelist.id;
                        const avatarKeyRaw = panelist.name.toLowerCase();
-                       const avatarKeyStripped = avatarKeyRaw.replace(/[\s_]/g, '');
-                       //@ts-ignore
-                       const avatarUrl = avatarMap[avatarKeyRaw] || avatarMap[avatarKeyStripped] || `/api/persona_image/${avatarKeyRaw}`;
+                       const avatarUrl = `/api/persona_image/${avatarKeyRaw}`;
                        
                        return (
                            <motion.div 
@@ -490,13 +487,10 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
                    <div ref={chatContainerRef} className="flex-1 p-4 overflow-y-auto custom-scrollbar flex flex-col gap-4">
                        {messages.map((msg) => {
                            const isPanelist = panelists.some(p => p.id === msg.author || p.name === msg.author);
-                           const avatarKeyRaw = msg.author.toLowerCase();
-                           const avatarKeyStripped = avatarKeyRaw.replace(/[\s_]/g, '');
-                           //@ts-ignore
-                           let avatarUrl = avatarMap[avatarKeyRaw] || avatarMap[avatarKeyStripped];
-                           if (!avatarUrl) {
-                               avatarUrl = isPanelist ? `/api/persona_image/${avatarKeyRaw}` : `https://api.dicebear.com/7.x/initials/svg?seed=${msg.author}&backgroundColor=0f172a&textColor=ffffff`;
-                           }
+                           const isRegistered = isPanelist || personaData[msg.author.toLowerCase()] !== undefined;
+                           const avatarUrl = isRegistered 
+                               ? `/api/persona_image/${msg.author.toLowerCase()}` 
+                               : `https://api.dicebear.com/7.x/initials/svg?seed=${encodeURIComponent(msg.author)}&backgroundColor=0f172a&textColor=ffffff`;
                            
                            return (
                                <motion.div 
@@ -554,9 +548,7 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
                                <div className="flex flex-wrap gap-2 mt-1">
                                    {panelists.map(p => {
                                        const avatarKeyRaw = p.name.toLowerCase();
-                                       const avatarKeyStripped = avatarKeyRaw.replace(/[\s_]/g, '');
-                                       //@ts-ignore
-                                       let avatarUrl = avatarMap[avatarKeyRaw] || avatarMap[avatarKeyStripped] || `https://api.dicebear.com/7.x/initials/svg?seed=${p.name}&backgroundColor=0f172a&textColor=ffffff`;
+                                       let avatarUrl = `/api/persona_image/${avatarKeyRaw}`;
                                        return (
                                            <button 
                                                key={p.id}
@@ -572,20 +564,17 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
                                                     setShotModal({ persona: p.alias, text: '', loading: true });
                                                     setReplyTarget(null);
                                                     setUserChatInput('');
-
                                                     try {
-                                                        const key = (import.meta as any).env?.VITE_GEMINI_API_KEY || '';
-                                                        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${key}`, {
+                                                        const res = await fetch('/api/hot_take_sniper', {
                                                             method: 'POST',
                                                             headers: { 'Content-Type': 'application/json' },
                                                             body: JSON.stringify({
-                                                                systemInstruction: { parts: [{ text: voice }] },
-                                                                contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                                                                generationConfig: { temperature: 0.9 }
+                                                                voice: voice,
+                                                                prompt: prompt
                                                             })
                                                         });
                                                         const data = await res.json();
-                                                        let text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || 'No response generated.';
+                                                        let text = data?.text?.trim() || 'No response generated.';
                                                         if (text !== 'No response generated.') {
                                                             // Strip any @ the model already prepended, then add exactly one
                                                             text = text.replace(/^@+/, '');
@@ -595,13 +584,13 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
                                                         setShotModal({ persona: p.alias, text, loading: false });
                                                         // WS broadcast removed: persona responses are copy/paste only, not auto-posted to chat
                                                     } catch (err) {
-                                                        setShotModal({ persona: p.alias, text: 'Error calling Gemini. Check API key.', loading: false });
+                                                        setShotModal({ persona: p.alias, text: 'Error calling backend sniper proxy.', loading: false });
                                                     }
                                                 }}
                                                className="flex items-center gap-2 bg-black/40 hover:bg-blue-600/50 border border-white/10 hover:border-blue-400 rounded-full pr-3 pl-1 py-1 transition-all"
                                                title={`Command ${p.alias} to reply. Add optional instructions in the chat box first.`}
                                            >
-                                               <img src={avatarUrl} className="w-5 h-5 rounded-full object-cover" onError={(e) => { e.currentTarget.src = `/api/persona_image/${p.name.toLowerCase()}`; }} />
+                                               <img src={avatarUrl} className="w-5 h-5 rounded-full object-cover" onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${p.name}&backgroundColor=0f172a&textColor=ffffff`; }} />
                                                <span className="text-[9px] font-bold uppercase tracking-widest">{p.alias}</span>
                                            </button>
                                        )

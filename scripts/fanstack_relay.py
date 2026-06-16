@@ -17,35 +17,135 @@ load_dotenv("/home/james/SovereignOS/.env")
 SOVEREIGN_HOME = Path(os.getenv("SOVEREIGN_HOME", "/home/james/SovereignOS"))
 DB_PATH = str(SOVEREIGN_HOME / "dna" / os.getenv("SOVEREIGN_DB_NAME", "sovereign_now.db"))
 
-def fire_govee(r, g, b):
-    # Claude recommended HTTP but Govee LAN API actually only listens on UDP 40033 natively.
-    # Using Unicast UDP avoids the "fragile UDP broadcasts" while ensuring it works "no matter what."
-    import socket, json
+def fire_govee(r, g, b, color_tem=0):
+    import socket, json, os
+    from dotenv import load_dotenv
+    load_dotenv("/home/james/SovereignOS/.env")
+    if os.getenv("GOVEE_TMI_ACTIVE", "true").lower() == "false":
+        return
+    ips = []
+    env_ips = os.getenv("GOVEE_DEVICE_IP")
+    if env_ips:
+        ips = [ip.strip() for ip in env_ips.split(",") if ip.strip()]
+    if not ips:
+        ips = ["192.168.1.173", "192.168.1.174", "192.168.1.176", "192.168.1.188"]
+    port = int(os.getenv("GOVEE_PORT", 4003))
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        msg = {"msg": {"cmd": "colorwc", "data": {"color": {"r": r, "g": g, "b": b}, "colorTemInKelvin": 0}}}
-        sock.sendto(json.dumps(msg).encode('utf-8'), ("192.168.1.71", 40033))
+        msg = {
+            "msg": {
+                "cmd": "colorWC",
+                "data": {
+                    "color": {"r": r, "g": g, "b": b},
+                    "colorTem": color_tem
+                }
+            }
+        }
+        payload = json.dumps(msg).encode('utf-8')
+        for ip in ips:
+            try:
+                sock.sendto(payload, (ip, port))
+            except:
+                pass
+        sock.close()
     except Exception as e:
         print(f"[GOVEE UDP ERROR] {e}")
 
+def get_govee_statuses_sync(ips, port=4003):
+    import socket, json
+    statuses = {}
+    try:
+        recv_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        recv_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        recv_sock.bind(('0.0.0.0', 4002))
+        recv_sock.settimeout(0.15)
+        
+        send_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        msg = {"msg": {"cmd": "devStatus", "data": {}}}
+        payload = json.dumps(msg).encode('utf-8')
+        for ip in ips:
+            try:
+                send_sock.sendto(payload, (ip, port))
+            except:
+                pass
+        send_sock.close()
+        
+        while True:
+            data, addr = recv_sock.recvfrom(1024)
+            resp = json.loads(data.decode('utf-8'))
+            device_data = resp.get("msg", {}).get("data", {})
+            color = device_data.get("color")
+            color_tem = device_data.get("colorTem", 0)
+            if color and "r" in color and "g" in color and "b" in color:
+                statuses[addr[0]] = (color, color_tem)
+    except:
+        pass
+    return statuses
+
 def trigger_govee_http_score():
     print("[GOVEE DIRECT OVERRIDE] Mets Score! Changing to Solid Orange.")
-    fire_govee(255, 85, 0)
+    fire_govee(252, 92, 29, 0)
 
 def trigger_govee_http_hr():
+    import os, time, socket, json
+    from dotenv import load_dotenv
+    load_dotenv("/home/james/SovereignOS/.env")
+    if os.getenv("GOVEE_TMI_ACTIVE", "true").lower() == "false":
+        return
+    ips = []
+    env_ips = os.getenv("GOVEE_DEVICE_IP")
+    if env_ips:
+        ips = [ip.strip() for ip in env_ips.split(",") if ip.strip()]
+    if not ips:
+        ips = ["192.168.1.173", "192.168.1.174", "192.168.1.176", "192.168.1.188"]
+    port = int(os.getenv("GOVEE_PORT", 4003))
     print("[GOVEE DIRECT OVERRIDE] Mets Home Run! Flashing Orange and Blue.")
     try:
-        for _ in range(3):
-            fire_govee(255, 85, 0)
-            time.sleep(0.5)
-            fire_govee(0, 45, 114)  # Mets Blue
-            time.sleep(0.5)
-        # Hold Orange
-        fire_govee(255, 85, 0)
+        prev_statuses = get_govee_statuses_sync(ips, port)
+        for _ in range(5):
+            fire_govee(0, 45, 98, 0) # Mets Blue
+            time.sleep(0.3)
+            fire_govee(252, 92, 29, 0) # Mets Orange
+            time.sleep(0.3)
+            
+        # Restore status
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        for ip in ips:
+            if ip in prev_statuses:
+                color, color_tem = prev_statuses[ip]
+                msg = {
+                    "msg": {
+                        "cmd": "colorWC",
+                        "data": {
+                            "color": color,
+                            "colorTem": color_tem
+                        }
+                    }
+                }
+                try:
+                    sock.sendto(json.dumps(msg).encode('utf-8'), (ip, port))
+                except:
+                    pass
+            else:
+                msg = {
+                    "msg": {
+                        "cmd": "colorWC",
+                        "data": {
+                            "color": {"r": 255, "g": 255, "b": 255},
+                            "colorTem": 0
+                        }
+                    }
+                }
+                try:
+                    sock.sendto(json.dumps(msg).encode('utf-8'), (ip, port))
+                except:
+                    pass
+        sock.close()
     except Exception as e:
         print(f"[GOVEE HR ERROR] {e}")
 
 clients = set()
+senga_strikeout_streak = {}
 
 game_states = __import__('collections').defaultdict(lambda: {
     "away_team": "AWY", "home_team": "HME",
@@ -56,7 +156,10 @@ game_states = __import__('collections').defaultdict(lambda: {
     "pitch_name": "---", "pitch_speed": "---",
     "onFirst": False, "onSecond": False, "onThird": False,
     "balls": 0, "strikes": 0, "pitchCount": "-",
-    "batter": "", "pitcher": ""
+    "batter": "", "pitcher": "",
+    "hit_speed": "---", "hit_distance": "---",
+    "launch_angle": "---", "event_type": "pitch",
+    "batting_team": ""
 })
 
 global_system_state = {
@@ -125,8 +228,39 @@ async def run_simulation(game_pk, speed):
         print(f"Simulation of game_pk {game_pk} was cancelled.")
         raise
 
+def get_active_system_warnings():
+    warnings = []
+    try:
+        conn = sqlite3.connect("/home/james/SovereignOS/dna/sovereign_now.db")
+        conn.row_factory = sqlite3.Row
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT ea.ci_sys_id, ea.expression_name, ea.avatar_url, c.name, c.operational_status
+            FROM cmdb_ci_expression_avatar ea
+            JOIN cmdb_ci c ON ea.ci_sys_id = c.sys_id
+            WHERE c.operational_status IN (2, 3)
+        """)
+        rows = cur.fetchall()
+        for r in rows:
+            warnings.append({
+                "ci_sys_id": r["ci_sys_id"],
+                "name": r["name"],
+                "operational_status": r["operational_status"],
+                "expression_name": r["expression_name"],
+                "avatar_url": r["avatar_url"]
+            })
+        conn.close()
+    except Exception as e:
+        print(f"Error querying active warnings: {e}")
+    return warnings
+
 async def broadcast_state(target_pk=None, force_global=False):
     if not clients: return
+    
+    # Dynamically inject system warnings and degraded state
+    warnings = get_active_system_warnings()
+    global_system_state["warnings"] = warnings
+    global_system_state["system_degraded"] = len(warnings) > 0
     
     if target_pk and target_pk in game_states:
         msg = json.dumps({"type": "STATE_UPDATE", "data": game_states[target_pk], "system": global_system_state, "force_global": force_global, "target_game_pk": target_pk})
@@ -173,6 +307,46 @@ async def handle_client(ws):
     try:
         async for message in ws:
             data = json.loads(message)
+            
+            if data.get("event") == "webslinger_trigger":
+                room_id = str(data.get("room_id", "GLOBAL"))
+                out_msg = json.dumps({
+                    "type": "webslinger_trigger",
+                    "event_name": data.get("event_name"),
+                    "data": data.get("data"),
+                    "room_id": room_id
+                })
+                event_data = data.get("data") or {}
+                if event_data.get("type") == "hardware":
+                    params = event_data.get("params", {})
+                    command = event_data.get("command")
+                    if command == "color_strobe":
+                        r1 = params.get("r1", 0)
+                        g1 = params.get("g1", 45)
+                        b1 = params.get("b1", 98)
+                        r2 = params.get("r2", 252)
+                        g2 = params.get("g2", 92)
+                        b2 = params.get("b2", 29)
+                        cycles = params.get("cycles", 5)
+                        interval_ms = params.get("interval_ms", 300)
+                        
+                        def run_strobe():
+                            for _ in range(cycles):
+                                fire_govee(r1, g1, b1)
+                                time.sleep(interval_ms / 1000.0)
+                                fire_govee(r2, g2, b2)
+                                time.sleep(interval_ms / 1000.0)
+                        
+                        loop = asyncio.get_running_loop()
+                        loop.run_in_executor(None, run_strobe)
+                
+                for c in list(clients):
+                    if ws_rooms.get(c, "GLOBAL") == room_id or room_id == "GLOBAL" or ws_rooms.get(c, "GLOBAL") == "GLOBAL":
+                        try:
+                            await c.send(out_msg)
+                        except:
+                            pass
+                continue
             
             # Global Chat Relay for WardyStack and Fans
             if data.get("type") in ["CHAT_MESSAGE", "SYS_LOG", "YOUTUBE_CHAT"]:
@@ -229,7 +403,9 @@ async def handle_client(ws):
                     "timestamp": time.strftime("%H:%M:%S"),
                     "model_engine": data.get("model_engine"),
                     "is_penalty_box": data.get("is_penalty_box", False),
-                    "channel": channel
+                    "channel": channel,
+                    "mediaUrl": data.get("mediaUrl") or data.get("media_url") or data.get("image"),
+                    "shake": data.get("shake", False)
                 }
                 out_msg = json.dumps(chat_msg)
                 
@@ -271,7 +447,7 @@ async def handle_client(ws):
                             pass
             
             if data.get("type") == "JOIN_ROOM":
-                pk = str(data.get("target_game_pk", "GLOBAL"))
+                pk = str(data.get("target_game_pk", data.get("room", "GLOBAL")))
                 ws_rooms[ws] = pk
                 global_msgs = list(chat_buffers["GLOBAL"])
                 room_msgs = list(chat_buffers[pk]) if pk != "GLOBAL" else []
@@ -313,7 +489,7 @@ async def handle_client(ws):
                 # NOTEBOOK-LM LOGGING FOR TELEMETRY
                 if pk != "GLOBAL" and sync_data.get("status_msg") and sync_data.get("status_msg") != game_states.get(pk, {}).get("status_msg"):
                     try:
-                        import os, datetime
+                        import datetime
                         today_dir = datetime.datetime.now().strftime('daily_%d%m%Y')
                         export_dir = f"/home/james/SovereignOS/data/logs/{today_dir}"
                         os.makedirs(export_dir, exist_ok=True)
@@ -346,10 +522,52 @@ async def handle_client(ws):
                 gs["pitch_speed"] = sync_data.get("pitch_speed", gs.get("pitch_speed", "---"))
                 gs["hit_speed"] = sync_data.get("hit_speed", gs.get("hit_speed", "---"))
                 gs["hit_distance"] = sync_data.get("hit_distance", gs.get("hit_distance", "---"))
+                gs["launch_angle"] = sync_data.get("launch_angle", gs.get("launch_angle", "---"))
+                gs["event_type"] = sync_data.get("event_type", gs.get("event_type", "pitch"))
+                gs["batting_team"] = sync_data.get("batting_team", gs.get("batting_team", ""))
                 gs["onFirst"] = sync_data.get("onFirst", gs.get("onFirst", False))
                 gs["onSecond"] = sync_data.get("onSecond", gs.get("onSecond", False))
                 gs["onThird"] = sync_data.get("onThird", gs.get("onThird", False))
                 gs["pitchCount"] = sync_data.get("pitchCount", gs.get("pitchCount", "-"))
+
+                # Senga Ghost Protocol Easter Egg detection
+                status_msg = sync_data.get("status_msg", "")
+                pitcher_name = sync_data.get("pitcher", "")
+                is_senga = "senga" in pitcher_name.lower() or "senga" in status_msg.lower()
+                
+                if is_senga and status_msg:
+                    status_lower = status_msg.lower()
+                    is_strikeout = "strikes out" in status_lower or "strikeout" in status_lower or "called out on strikes" in status_lower
+                    is_other_outcome = any(x in status_lower for x in [
+                        "singles", "doubles", "triples", "homers", "home run", "walks", "base hit",
+                        "ground out", "flies out", "lines out", "pops out", "sac", "hit by pitch", "hbp",
+                        "reached on", "fielder's choice", "double play", "triple play", "lineout", "flyout", "groundout"
+                    ])
+                    
+                    old_msg = game_states.get(pk, {}).get("status_msg", "")
+                    if status_msg != old_msg:
+                        if is_strikeout:
+                            streak_count = senga_strikeout_streak.get(pk, 0) + 1
+                            senga_strikeout_streak[pk] = streak_count
+                            print(f"[GHOST PROTOCOL] Kodai Senga strikeout detected! Streak for game {pk}: {streak_count}")
+                            if streak_count >= 3:
+                                print(f"[GHOST PROTOCOL] STREAK AT {streak_count}! Triggering Ghost Protocol Easter Egg!")
+                                ghost_payload = {
+                                    "type": "webslinger_trigger",
+                                    "event_name": "EMIT_CHAT_GHOST_OVERLAY",
+                                    "data": {"trigger": "EMIT_CHAT_GHOST_OVERLAY"},
+                                    "room_id": pk
+                                }
+                                out_msg = json.dumps(ghost_payload)
+                                for c in list(clients):
+                                    try:
+                                        await c.send(out_msg)
+                                    except:
+                                        pass
+                        elif is_other_outcome:
+                            senga_strikeout_streak[pk] = 0
+                            print(f"[GHOST PROTOCOL] Pitcher outcome reset Senga streak for game {pk} to 0. (Play: {status_msg})")
+
                 await broadcast_state(pk, force_global=force_global)
 
             # Keeping the manual trigger for testing / Chindogu Overrides
@@ -398,6 +616,13 @@ async def handle_client(ws):
                         ws_rooms[ws] = str(pk)
                         try: await ws.send(hist_msg)
                         except: pass
+                    
+                    # Broadcast room switch event to sync dropdown UI states
+                    switch_msg = json.dumps({"type": "GAME_SWITCHED", "game_pk": str(pk)})
+                    for c in list(clients):
+                        try: await c.send(switch_msg)
+                        except: pass
+
                     await broadcast_state(str(pk))
                     
                     if str(pk) != "GLOBAL":
@@ -454,7 +679,7 @@ async def handle_client(ws):
                 await broadcast_state(force_global=True)
                     
             # Pass all new Claude Wardy v2 UI events and WebRTC signaling transparently to backend bots/clients
-            if data.get("type") in ["persona_config", "persona_strike", "custom_prompt", "boggs_level", "sim_speed", "trigger_event", "switch_game", "update_context", "TMI_ANOMALY", "hot_take_rant", "HOLOLINK_REQUEST", "WEBRTC_OFFER", "WEBRTC_ANSWER", "WEBRTC_ICE_CANDIDATE", "HOLOLINK_END"]:
+            if data.get("type") in ["persona_config", "persona_strike", "custom_prompt", "boggs_level", "sim_speed", "trigger_event", "switch_game", "update_context", "TMI_ANOMALY", "hot_take_rant", "HOLOLINK_REQUEST", "WEBRTC_OFFER", "WEBRTC_ANSWER", "WEBRTC_ICE_CANDIDATE", "HOLOLINK_END", "outrage_proxy_deployed"]:
                 out_msg = json.dumps(data)
                 for c in list(clients):
                     try: 
@@ -702,6 +927,224 @@ async def toggle_vertex():
             f.write("ON")
         return {"status": "success", "vertex_burn_enabled": True, "message": "Vertex Burn Mode Enabled"}
 
+@fastapi_app.get("/api/webslinger_events")
+async def get_webslinger_events():
+    """Retrieve all active webslinger templates from sys_webslinger_event."""
+    import sqlite3 as _sq
+    try:
+        con = _sq.connect(DB_PATH)
+        con.row_factory = _sq.Row
+        c = con.cursor()
+        c.execute("""
+            SELECT id, event_name, payload_template, default_duration_ms, active_status
+            FROM sys_webslinger_event
+            WHERE active_status = 1
+        """)
+        rows = [dict(r) for r in c.fetchall()]
+        con.close()
+        return {"status": "success", "events": rows}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "events": []}
+
+class TelemetryRuleCreate(BaseModel):
+    trigger_rule_name: str
+    statcast_event_type: str
+    telemetry_field: str
+    operator_comparison: str
+    comparison_value: str
+    batting_team_filter: str = "NYM"
+    target_webslinger_event_id: int
+    is_automated_ingress: int = 1
+    active_status: int = 1
+
+class TelemetryRuleUpdate(BaseModel):
+    trigger_rule_name: str = None
+    statcast_event_type: str = None
+    telemetry_field: str = None
+    operator_comparison: str = None
+    comparison_value: str = None
+    batting_team_filter: str = None
+    target_webslinger_event_id: int = None
+    is_automated_ingress: int = None
+    active_status: int = None
+
+@fastapi_app.get("/api/tmi_telemetry_map")
+async def get_tmi_telemetry_map():
+    """Retrieve all telemetry rules from sys_tmi_telemetry_map."""
+    import sqlite3 as _sq
+    try:
+        con = _sq.connect(DB_PATH)
+        con.row_factory = _sq.Row
+        c = con.cursor()
+        c.execute("""
+            SELECT id, trigger_rule_name, statcast_event_type, telemetry_field, 
+                   operator_comparison, comparison_value, batting_team_filter, 
+                   target_webslinger_event_id, is_automated_ingress, active_status
+            FROM sys_tmi_telemetry_map
+        """)
+        rows = [dict(r) for r in c.fetchall()]
+        con.close()
+        return {"status": "success", "rules": rows}
+    except Exception as e:
+        return {"status": "error", "message": str(e), "rules": []}
+
+@fastapi_app.post("/api/tmi_telemetry_map")
+async def create_tmi_telemetry_rule(rule: TelemetryRuleCreate):
+    """Create a new telemetry mapping rule."""
+    import sqlite3 as _sq
+    try:
+        con = _sq.connect(DB_PATH)
+        c = con.cursor()
+        c.execute("""
+            INSERT INTO sys_tmi_telemetry_map (
+                trigger_rule_name, statcast_event_type, telemetry_field, 
+                operator_comparison, comparison_value, batting_team_filter, 
+                target_webslinger_event_id, is_automated_ingress, active_status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            rule.trigger_rule_name, rule.statcast_event_type, rule.telemetry_field,
+            rule.operator_comparison, rule.comparison_value, rule.batting_team_filter,
+            rule.target_webslinger_event_id, rule.is_automated_ingress, rule.active_status
+        ))
+        con.commit()
+        new_id = c.lastrowid
+        con.close()
+        return {"status": "success", "id": new_id}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@fastapi_app.put("/api/tmi_telemetry_map/{rule_id}")
+async def update_tmi_telemetry_rule(rule_id: int, rule: TelemetryRuleUpdate):
+    """Update an existing telemetry mapping rule."""
+    import sqlite3 as _sq
+    try:
+        con = _sq.connect(DB_PATH)
+        c = con.cursor()
+        
+        fields = []
+        params = []
+        for key, val in rule.dict(exclude_unset=True).items():
+            fields.append(f"{key} = ?")
+            params.append(val)
+            
+        if not fields:
+            con.close()
+            return {"status": "error", "message": "No fields to update"}
+            
+        params.append(rule_id)
+        query = f"UPDATE sys_tmi_telemetry_map SET {', '.join(fields)} WHERE id = ?"
+        c.execute(query, params)
+        con.commit()
+        con.close()
+        return {"status": "success"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@fastapi_app.delete("/api/tmi_telemetry_map/{rule_id}")
+async def delete_tmi_telemetry_rule(rule_id: int):
+    """Delete a telemetry mapping rule."""
+    import sqlite3 as _sq
+    try:
+        con = _sq.connect(DB_PATH)
+        c = con.cursor()
+        c.execute("DELETE FROM sys_tmi_telemetry_map WHERE id = ?", (rule_id,))
+        con.commit()
+        con.close()
+        return {"status": "success"}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@fastapi_app.post("/api/tmi_telemetry_map/toggle_all")
+async def toggle_all_tmi_telemetry_rules(enabled: bool):
+    """Master toggle to enable/disable automated ingress database-wide."""
+    import sqlite3 as _sq
+    try:
+        con = _sq.connect(DB_PATH)
+        c = con.cursor()
+        val = 1 if enabled else 0
+        c.execute("UPDATE sys_tmi_telemetry_map SET is_automated_ingress = ?", (val,))
+        con.commit()
+        con.close()
+        return {"status": "success", "is_automated_ingress": val}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+@fastapi_app.post("/api/media/inject")
+async def inject_media(file: UploadFile = File(...), room_id: str = "GLOBAL"):
+    """Accept drag-and-drop SVG file uploads, save to temporary folder, write manifest.json, run ingest_media_assets.py as a subprocess, and broadcast media_injection WS."""
+    import uuid as _uuid
+    import shutil
+    import subprocess
+    import json
+    import os
+    
+    if not file.filename.endswith(".svg"):
+        raise HTTPException(status_code=400, detail="Only SVG files are supported.")
+        
+    try:
+        temp_dir = f"/tmp/media_inject_{_uuid.uuid4().hex}"
+        os.makedirs(temp_dir, exist_ok=True)
+        
+        file_path = os.path.join(temp_dir, file.filename)
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+            
+        with open(file_path, "r", encoding="utf-8") as f:
+            svg_data = f.read()
+            
+        manifest = {
+            "scenarios": [
+                {
+                    "num": 1,
+                    "name": file.filename,
+                    "raw_file": file.filename,
+                    "processed_file": file.filename,
+                    "expression_key": "injected_svg",
+                    "expression_reference": "injected_svg",
+                    "vibe": "playcall_desk"
+                }
+            ]
+        }
+        with open(os.path.join(temp_dir, "manifest.json"), "w") as f:
+            json.dump(manifest, f)
+            
+        cmd = [
+            "python3",
+            "/home/james/SovereignOS/scripts/ingest_media_assets.py",
+            "--dir", temp_dir,
+            "--ticket", "STRY-06152026-PLAYCALL-DESK",
+            "--advocate", "playcall",
+            "--category", "Playcall Injections"
+        ]
+        
+        proc = subprocess.run(cmd, capture_output=True, text=True)
+        if proc.returncode != 0:
+            print(f"[MEDIA INJECT ERROR] Ingestion failed: {proc.stderr}")
+            raise HTTPException(status_code=500, detail=f"Asset ingestion failed: {proc.stderr}")
+            
+        ws_msg = json.dumps({
+            "type": "media_injection",
+            "svg_data": svg_data,
+            "filename": file.filename,
+            "room_id": room_id
+        })
+        for c in list(clients):
+            if ws_rooms.get(c, "GLOBAL") == room_id or room_id == "GLOBAL" or ws_rooms.get(c, "GLOBAL") == "GLOBAL":
+                try:
+                    await c.send(ws_msg)
+                except:
+                    pass
+                    
+        try:
+            shutil.rmtree(temp_dir)
+        except Exception as e:
+            print(f"[MEDIA INJECT WARNING] Failed to cleanup temp dir {temp_dir}: {e}")
+            
+        return {"status": "success", "message": "SVG Injected successfully"}
+    except Exception as e:
+        print(f"[MEDIA INJECT ERROR] {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 # ═══════════════════════════════════════════════════════════════
 # FLOW LIVE INTEGRATION NODE (sys_media_asset tables)
 # ═══════════════════════════════════════════════════════════════
@@ -803,14 +1246,14 @@ async def api_all_personas():
     con = _sq.connect(DB_PATH)
     c = con.cursor()
     c.execute("""
-        SELECT id as sys_id, user_name, team, deep_lore, system_prompt, behavior_notes, governance, color
+        SELECT id as sys_id, user_name, team, deep_lore, system_prompt, behavior_notes, governance, color, avatar_url
         FROM persona
         WHERE team IS NOT NULL AND team != '' AND team NOT IN ('golf_room')
         ORDER BY team, user_name
     """)
     rows = c.fetchall()
     con.close()
-    personas = [{"sys_id": r[0], "user_name": r[1], "team": r[2], "deep_lore": r[3], "system_prompt": r[4], "behavior_notes": r[5], "governance": r[6], "color": r[7]} for r in rows]
+    personas = [{"sys_id": r[0], "user_name": r[1], "team": r[2], "deep_lore": r[3], "system_prompt": r[4], "behavior_notes": r[5], "governance": r[6], "color": r[7], "avatar_url": r[8]} for r in rows]
     return {"personas": personas}
 
 
@@ -1012,7 +1455,11 @@ async def api_deactivate_room(request: Request):
     con.close()
     return {"status": "success", "game_pk": game_pk, "room_state": "staged"}
 
-
+@fastapi_app.post("/api/system/broadcast")
+async def api_system_broadcast():
+    """Trigger an immediate websocket state broadcast for system/warning updates."""
+    await broadcast_state(force_global=True)
+    return {"status": "success", "message": "System broadcast triggered"}
 
 def _et_game_date() -> str:
     """Return the active game-slate date in Eastern time.
@@ -1049,7 +1496,9 @@ async def api_inject_chat(request: Request):
         "timestamp": time.strftime("%H:%M:%S"),
         "model_engine": "GOD_MODE_INJECTOR",
         "is_penalty_box": False,
-        "channel": channel
+        "channel": channel,
+        "mediaUrl": data.get("mediaUrl") or data.get("media_url") or data.get("image"),
+        "shake": data.get("shake", False)
     }
     chat_buffers[target_room].append(chat_msg)
     
@@ -1217,26 +1666,51 @@ async def get_persona_image(persona_id: str):
     import base64, sqlite3 as _sq, glob
     from fastapi.responses import Response, FileResponse
     safe_id = persona_id.lower().replace(" ", "_")
-    # 1. Try DB blob first (canonical source of truth)
+
+    # Map name variations / aliases
+    if "james" in safe_id:
+        safe_id = "pilot_james"
+    elif "barb" in safe_id:
+        if "warden" in safe_id:
+            safe_id = "warden_barb"
+        else:
+            safe_id = "barb_the_founder"
+
+    # 1. Try DB first (canonical source of truth)
     try:
         con = _sq.connect(DB_PATH)
         row = con.execute(
             "SELECT avatar_blob, avatar_url FROM persona WHERE user_name = ? OR user_name = ?",
-            (persona_id, safe_id)
+            (safe_id, safe_id)
         ).fetchone()
         con.close()
-        if row and row[0]:
-            blob_data = row[0]
-            if blob_data.startswith('data:'):
-                header, b64 = blob_data.split(',', 1)
-                mime = header.split(':')[1].split(';')[0]
-            else:
-                b64 = blob_data
-                mime = 'image/png'
-            return Response(content=base64.b64decode(b64), media_type=mime)
+        
+        if row:
+            # A. Serve from DB blob if populated
+            if row[0]:
+                blob_data = row[0]
+                if blob_data.startswith('data:'):
+                    header, b64 = blob_data.split(',', 1)
+                    mime = header.split(':')[1].split(';')[0]
+                else:
+                    b64 = blob_data
+                    mime = 'image/png'
+                return Response(content=base64.b64decode(b64), media_type=mime)
+            
+            # B. Serve from local filesystem path defined in avatar_url if populated
+            if row[1]:
+                filename = row[1]
+                if filename.startswith('/avatars/'):
+                    filename = filename.replace('/avatars/', '', 1)
+                elif filename.startswith('avatars/'):
+                    filename = filename.replace('avatars/', '', 1)
+                local_path = os.path.join("/home/james/SovereignOS/avatars", filename)
+                if os.path.exists(local_path):
+                    return FileResponse(local_path)
     except Exception as e:
         print(f"[persona_image] DB lookup error: {e}")
-    # 2. Fall back to filesystem
+
+    # 2. Fall back to direct filesystem search
     for search_dir in [
         "/home/james/SovereignOS/15_FanStack/public/avatars",
         "/home/james/SovereignOS/dna/media/avatars",
@@ -1245,6 +1719,13 @@ async def get_persona_image(persona_id: str):
         for f in glob.glob(os.path.join(search_dir, f"{safe_id}.*")):
             if f.lower().endswith(('.jpg','.jpeg','.png','.jfif','.webp')):
                 return FileResponse(f)
+        # Also check inside a subdirectory matching safe_id
+        sub_dir = os.path.join(search_dir, safe_id)
+        if os.path.isdir(sub_dir):
+            for f in glob.glob(os.path.join(sub_dir, "*")):
+                if f.lower().endswith(('.jpg','.jpeg','.png','.jfif','.webp')) and "avatar" in f.lower():
+                    return FileResponse(f)
+
     raise HTTPException(status_code=404, detail="Image not found")
 
 
@@ -1267,6 +1748,27 @@ async def upload_persona_image_blob(persona_id: str, file: UploadFile = File(...
     if updated == 0:
         raise HTTPException(status_code=404, detail=f"Persona '{persona_id}' not found")
     return {"status": "success", "user_name": safe_id, "avatar_url": f"/api/persona_image/{safe_id}"}
+
+
+@fastapi_app.post("/api/chat/upload")
+async def upload_chat_image(file: UploadFile = File(...)):
+    """Upload a general chat image to public/images and return its web-accessible path."""
+    import uuid
+    images_dir = "/home/james/SovereignOS/15_FanStack/public/images"
+    os.makedirs(images_dir, exist_ok=True)
+    
+    ext = os.path.splitext(file.filename or "")[1] or ".png"
+    filename = f"chat_upload_{uuid.uuid4().hex}{ext}"
+    dest_path = os.path.join(images_dir, filename)
+    
+    try:
+        content = await file.read()
+        with open(dest_path, "wb") as f:
+            f.write(content)
+        return {"status": "success", "mediaUrl": f"/images/{filename}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+
 
 @fastapi_app.get("/api/storyboards/projects")
 async def get_storyboard_projects():
@@ -1389,6 +1891,7 @@ async def get_mlb_boxscore(game_pk: str):
     except Exception as e:
         return {"error": str(e)}
 
+fastapi_app.mount("/images", StaticFiles(directory="/home/james/SovereignOS/15_FanStack/public/images"), name="images")
 fastapi_app.mount("/", StaticFiles(directory="/home/james/SovereignOS", html=True), name="static")
 
 async def main():

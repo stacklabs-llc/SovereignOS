@@ -36,11 +36,17 @@ const ADVOCATE_CONFIG: Record<string, { label: string; username: string; color: 
     color: '#1D4ED8',
     hoverColor: 'rgba(29, 78, 216, 0.2)',
   },
+  fredbird_fiend: {
+    label: '@birds_on_bat',
+    username: 'birds_on_bat',
+    color: '#EF4444',
+    hoverColor: 'rgba(239, 68, 68, 0.2)',
+  },
 };
 
 export default function Soundboard({ activeGamedayPk }: SoundboardProps) {
   const auth = useAuth();
-  const [activeAdvocate, setActiveAdvocate] = useState<'barf' | 'compliance_karen' | 'keith_fanboy'>('barf');
+  const [activeAdvocate, setActiveAdvocate] = useState<'barf' | 'compliance_karen' | 'keith_fanboy' | 'fredbird_fiend'>('barf');
   const [phrases, setPhrases] = useState<Phrase[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -54,17 +60,22 @@ export default function Soundboard({ activeGamedayPk }: SoundboardProps) {
   // WebSocket Ref
   const wsRef = useRef<WebSocket | null>(null);
   const selectedGamePkRef = useRef(activeGamedayPk);
+  const activeAdvocateRef = useRef(activeAdvocate);
 
   useEffect(() => {
     selectedGamePkRef.current = activeGamedayPk;
   }, [activeGamedayPk]);
+
+  useEffect(() => {
+    activeAdvocateRef.current = activeAdvocate;
+  }, [activeAdvocate]);
 
   // Fetch Phrases
   const fetchPhrases = async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/media/soundboard?advocate=${activeAdvocate}`);
+      const res = await fetch(`/api/media/soundboard?advocate=${ADVOCATE_CONFIG[activeAdvocate].username.replace('@', '')}`);
       if (!res.ok) throw new Error('Failed to load soundboard phrases');
       const data = await res.json();
       if (data.status === 'success') {
@@ -91,7 +102,8 @@ export default function Soundboard({ activeGamedayPk }: SoundboardProps) {
 
       socket.onopen = () => {
         console.log("Soundboard connected to M.A.R.D. Relay");
-        socket.send(JSON.stringify({ type: "JOIN_ROOM", target_game_pk: selectedGamePkRef.current || "GLOBAL" }));
+        const room = activeAdvocateRef.current === 'fredbird_fiend' ? '823620' : (selectedGamePkRef.current || "GLOBAL");
+        socket.send(JSON.stringify({ type: "JOIN_ROOM", target_game_pk: room }));
       };
 
       socket.onclose = () => {
@@ -113,12 +125,13 @@ export default function Soundboard({ activeGamedayPk }: SoundboardProps) {
     };
   }, []);
 
-  // Update room when gamePk changes
+  // Update room when gamePk or active advocate changes
   useEffect(() => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      wsRef.current.send(JSON.stringify({ type: "JOIN_ROOM", target_game_pk: activeGamedayPk || "GLOBAL" }));
+      const room = activeAdvocate === 'fredbird_fiend' ? '823620' : (activeGamedayPk || "GLOBAL");
+      wsRef.current.send(JSON.stringify({ type: "JOIN_ROOM", target_game_pk: room }));
     }
-  }, [activeGamedayPk]);
+  }, [activeGamedayPk, activeAdvocate]);
 
   // Handle Play/Send phrase
   const handlePlayPhrase = (phrase: Phrase) => {
@@ -128,12 +141,13 @@ export default function Soundboard({ activeGamedayPk }: SoundboardProps) {
     }
 
     const config = ADVOCATE_CONFIG[activeAdvocate];
+    const room = activeAdvocate === 'fredbird_fiend' ? '823620' : (activeGamedayPk || "GLOBAL");
     wsRef.current.send(JSON.stringify({
       type: "CHAT_MESSAGE",
       user: config.username,
       color: config.color,
       text: phrase.text_payload,
-      target_game_pk: activeGamedayPk || "GLOBAL"
+      target_game_pk: room
     }));
   };
 
@@ -190,7 +204,7 @@ export default function Soundboard({ activeGamedayPk }: SoundboardProps) {
 
   const currentAdvocate = ADVOCATE_CONFIG[activeAdvocate];
   const avatarMap: Record<string, string> = avatarMapData || {};
-  const avatarSrc = avatarMap[activeAdvocate] || avatarMap[activeAdvocate.replace(/_/g, '')];
+  const avatarSrc = avatarMap[currentAdvocate.username.replace('@', '')] || avatarMap[activeAdvocate] || avatarMap[activeAdvocate.replace(/_/g, '')];
 
   return (
     <div className="relative flex flex-col w-full bg-[#0a0c10]/90 border border-white/10 rounded-2xl overflow-hidden shadow-2xl p-4">
@@ -216,7 +230,7 @@ export default function Soundboard({ activeGamedayPk }: SoundboardProps) {
 
         {/* ADVOCATE SELECTOR */}
         <div className="flex gap-1 bg-black/40 border border-white/5 rounded-lg p-0.5">
-          {(['barf', 'compliance_karen', 'keith_fanboy'] as const).map((adv) => {
+          {(['barf', 'compliance_karen', 'keith_fanboy', 'fredbird_fiend'] as const).map((adv) => {
             const isActive = activeAdvocate === adv;
             const config = ADVOCATE_CONFIG[adv];
             return (
@@ -233,7 +247,7 @@ export default function Soundboard({ activeGamedayPk }: SoundboardProps) {
                 }`}
                 style={isActive ? { borderBottom: `2px solid ${config.color}` } : {}}
               >
-                {adv === 'compliance_karen' ? 'KAREN' : adv === 'keith_fanboy' ? 'KEITH' : 'BARF'}
+                {adv === 'compliance_karen' ? 'KAREN' : adv === 'keith_fanboy' ? 'KEITH' : adv === 'fredbird_fiend' ? 'FREDBIRD' : 'BARF'}
               </button>
             );
           })}

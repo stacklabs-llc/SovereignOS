@@ -208,21 +208,36 @@ export default function RollCallDashboard() {
                                         </div>
                                     )}
                                 </div>
-                                
-                                <button 
-                                    onClick={() => toggleRoom(room.game_pk, room.room_state || 'staged')}
-                                    className={`w-full py-2 flex items-center justify-center gap-2 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all ${
-                                        isActive 
-                                        ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30' 
-                                        : 'bg-[#00FF88]/10 hover:bg-[#00FF88]/20 text-[#00FF88] border border-[#00FF88]/30'
-                                    }`}
-                                >
-                                    {isActive ? (
-                                        <><Square size={12} className="fill-current" /> Bench Room</>
-                                    ) : (
-                                        <><Play size={12} className="fill-current" /> Deploy Room</>
-                                    )}
-                                </button>
+                                                                <div className="flex gap-2.5">
+                                    <button 
+                                        onClick={() => toggleRoom(room.game_pk, room.room_state || 'staged')}
+                                        className={`flex-1 py-2 flex items-center justify-center gap-2 rounded-lg font-bold text-[10px] uppercase tracking-widest transition-all ${
+                                            isActive 
+                                            ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30' 
+                                            : 'bg-[#00FF88]/10 hover:bg-[#00FF88]/20 text-[#00FF88] border border-[#00FF88]/30'
+                                        }`}
+                                    >
+                                        {isActive ? (
+                                            <><Square size={12} className="fill-current" /> Bench</>
+                                        ) : (
+                                            <><Play size={12} className="fill-current" /> Deploy</>
+                                        )}
+                                    </button>
+                                    <button 
+                                        onClick={() => {
+                                            const params = new URLSearchParams(window.location.search);
+                                            params.set('domain', 'GLOBAL');
+                                            params.set('room', 'room_builder');
+                                            params.set('_game_room', room.game_pk);
+                                            window.history.pushState({}, '', '?' + params.toString());
+                                            window.dispatchEvent(new PopStateEvent('popstate'));
+                                        }}
+                                        className="px-3.5 py-2 rounded-lg bg-[#38bdf8]/10 hover:bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/30 font-bold text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-1.5"
+                                        title="Configure Room Seating Roster"
+                                    >
+                                        👑 Build Room
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     );

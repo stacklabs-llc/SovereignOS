@@ -48,6 +48,28 @@ class DecisionDerbyHandler(FileSystemEventHandler):
             except Exception as e:
                 print(f"[DECISION-DERBY] Error running organize_inbox: {e}")
 
+class WireFrameHandler(FileSystemEventHandler):
+    def __init__(self):
+        super().__init__()
+        self.last_triggered = 0
+        self.cooldown = 1.5
+
+    def on_any_event(self, event):
+        if event.is_directory:
+            return
+        filename = os.path.basename(event.src_path)
+        if filename.startswith('.'):
+            return
+        now = time.time()
+        if now - self.last_triggered > self.cooldown:
+            self.last_triggered = now
+            print(f"[DECISION-DERBY] Wireframe change detected: {filename}. Running sweep...")
+            time.sleep(1.0)
+            try:
+                organize_inbox()
+            except Exception as e:
+                print(f"[DECISION-DERBY] Error running organize_inbox: {e}")
+
 if __name__ == "__main__":
     print(f"[DECISION-DERBY] Starting Decision Derby Daemon. Watching {INBOX_DIR}")
     
@@ -60,6 +82,12 @@ if __name__ == "__main__":
     event_handler = DecisionDerbyHandler()
     observer = Observer()
     observer.schedule(event_handler, INBOX_DIR, recursive=False)
+    
+    wire_frames_dir = "/home/james/sovereign_inbox/tickets/wire_frames"
+    os.makedirs(wire_frames_dir, exist_ok=True)
+    wf_handler = WireFrameHandler()
+    observer.schedule(wf_handler, wire_frames_dir, recursive=True)
+    
     observer.start()
 
     try:

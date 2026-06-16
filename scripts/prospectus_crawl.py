@@ -52,7 +52,19 @@ If you find an issue, explicitly say "ISSUE FOUND:" followed by the details.
 If the page looks like a normal, healthy UI without obvious connection or loading errors, say "STATUS: OK" and give a 1-sentence summary of what the page is.
 """
         response = model.generate_content([image_part, prompt])
-        return response.text
+        parts_text = []
+        if response and response.candidates and len(response.candidates) > 0:
+            candidate = response.candidates[0]
+            if candidate.content and candidate.content.parts:
+                for part in candidate.content.parts:
+                    if hasattr(part, "text") and part.text:
+                        parts_text.append(part.text)
+        if parts_text:
+            return "".join(parts_text)
+        try:
+            return response.text
+        except Exception:
+            return "Empty response from Vertex AI"
     except Exception as e:
         return f"Error analyzing {url}: {e}"
 

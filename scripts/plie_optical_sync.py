@@ -16,7 +16,7 @@ if os.path.exists(env_path):
                 api_key = line.strip().split("=", 1)[1].strip()
                 genai.configure(api_key=api_key)
 
-model = genai.GenerativeModel("gemini-2.5-flash")
+model = genai.GenerativeModel("gemini-flash-latest")
 
 class ArgusOpticalSync:
     def __init__(self):

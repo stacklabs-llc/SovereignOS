@@ -42,7 +42,7 @@ export default function GlobalSystemBar({
       auth.logout();
     } else {
       localStorage.removeItem(TOKEN_KEY_EXPORT);
-      document.cookie = `${TOKEN_KEY_EXPORT}=; path=/; domain=clio.taila01894.ts.net; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+      document.cookie = `${TOKEN_KEY_EXPORT}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
     }
     window.location.reload();
   };
@@ -76,6 +76,7 @@ export default function GlobalSystemBar({
 
       {/* Sovereign Oracle Toggle */}
       {auth?.role === 'pilot' || auth?.role === 'creator' ? (
+      <>
       <button
         onClick={() => setIsVocalMatrixOpen(!isVocalMatrixOpen)}
         className={`px-3 py-1.5 border rounded transition-colors font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-[0_2px_5px_rgba(0,0,0,0.5)] ${isVocalMatrixOpen
@@ -85,6 +86,19 @@ export default function GlobalSystemBar({
       >
         🎙️ Sovereign Oracle
       </button>
+      <button
+        onClick={() => {
+          const params = new URLSearchParams(window.location.search);
+          params.set('domain', 'GLOBAL');
+          params.set('room', 'room_builder');
+          window.history.pushState({}, '', '?' + params.toString());
+          window.dispatchEvent(new PopStateEvent('popstate'));
+        }}
+        className="px-3 py-1.5 border border-[#38bdf8]/50 bg-[#38bdf8]/15 text-[#38bdf8] hover:bg-[#38bdf8] hover:text-white rounded transition-colors font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-[0_2px_5px_rgba(0,0,0,0.5)]"
+      >
+        👑 Room Builder
+      </button>
+      </>
       ) : null}
 
       {/* Cast Controls */}
