@@ -21,7 +21,10 @@ PORT_MAPPING = {
     "SAMTRACKER 2.0": 3004,
     "FANSTACK": 3009,
     "AETHER VET": 3015,
-    "GARDENSTACK": 3016
+    "GARDENSTACK": 3016,
+    "SPORTS": 3010,
+    "SOVEREIGN SPORTS": 3010,
+    "PGA": 3010
 }
 
 def authenticate_gcp():
@@ -51,21 +54,21 @@ def query_target_port(conn, ticket_id, cmdb_ci, description, title):
     return 3004
 
 def perform_endpoint_validation(port):
-    url = f"http://localhost:{port}/"
-    print(f"[Vertex UAT] Testing endpoint URL: {url}")
-    try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Vertex-UAT-Agent/1.0'})
-        with urllib.request.urlopen(req, timeout=5) as response:
-            status_code = response.getcode()
-            if status_code == 200:
-                print(f"[Vertex UAT] Endpoint verification SUCCESS (Code 200 OK)")
-                return True
-            else:
-                print(f"[Vertex UAT] Endpoint verification FAILED (Code {status_code})")
-                return False
-    except Exception as e:
-        print(f"[Vertex UAT] Endpoint verification FAILED with error: {e}")
-        return False
+    import ssl
+    urls = [f"http://localhost:{port}/", f"https://localhost:{port}/"]
+    for url in urls:
+        print(f"[Vertex UAT] Testing endpoint URL: {url}")
+        try:
+            req = urllib.request.Request(url, headers={'User-Agent': 'Vertex-UAT-Agent/1.0'})
+            ctx = ssl._create_unverified_context()
+            with urllib.request.urlopen(req, context=ctx, timeout=5) as response:
+                status_code = response.getcode()
+                if status_code == 200:
+                    print(f"[Vertex UAT] Endpoint verification SUCCESS (Code 200 OK) for {url}")
+                    return True
+        except Exception as e:
+            print(f"[Vertex UAT] Endpoint verification FAILED for {url} with error: {e}")
+    return False
 
 def process_uat_ticket(ticket):
     sys_id, number, title, description, cmdb_ci = ticket

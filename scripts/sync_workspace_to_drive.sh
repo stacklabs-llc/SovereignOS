@@ -22,7 +22,8 @@ rclone sync "$SOURCE_DIR" "$TARGET_REMOTE" \
     --checkers 16 \
     --transfers 8 \
     --fast-list \
-    --progress
+    --progress \
+    --max-age 24h
 
 echo "🟢 SUCCESS: Workspace structure cleanly mirrored to Cloud Drive."
 echo "➡️ Staged and ready for manual selection via Spark Folder Uploader."

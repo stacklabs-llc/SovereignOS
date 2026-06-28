@@ -6,6 +6,7 @@ import SeriesDetailView from './components/SeriesDetailView'
 import BarbStack from './components/BarbStack'
 import { HoloLinkProvider } from './contexts/HoloLinkContext'
 import HololinkHub from './components/HololinkHub'
+import { SovereignCinemaTvRequest } from './components/SovereignCinemaTvRequest'
 
 const getCookie = (name: string): string | null => {
   const match = document.cookie.match(new RegExp('(^| )' + name + '=([^;]*)'));
@@ -13,7 +14,7 @@ const getCookie = (name: string): string | null => {
 };
 
 function App() {
-  const [activeTab, setActiveTab] = useState<'home' | 'movies' | 'shows' | 'search' | 'player' | 'series_view'>('home')
+  const [activeTab, setActiveTab] = useState<'home' | 'movies' | 'shows' | 'search' | 'player' | 'series_view' | 'request'>('home')
   const [selectedVideoUrl, setSelectedVideoUrl] = useState<string | null>(null)
   const [activeMedia, setActiveMedia] = useState<any>(null)
   const [user, setUser] = useState<any>(null)
@@ -187,6 +188,12 @@ function App() {
               >
                 TV Shows
               </button>
+              <button 
+                onClick={() => setActiveTab('request')}
+                className={`hover:text-white transition-colors ${activeTab === 'request' ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : ''}`}
+              >
+                Request & Ingress
+              </button>
             </div>
           </div>
           <div className="absolute right-4 md:right-8 top-4 md:top-6">
@@ -201,6 +208,8 @@ function App() {
             <VideoPlayer videoUrl={selectedVideoUrl || '/01_Assets/Video/Inbox/SOVEREIGN_FLOWMERCIAL_FINAL.mp4'} onBack={() => setActiveTab('series_view')} />
           ) : activeTab === 'series_view' && activeMedia ? (
             <SeriesDetailView series={activeMedia} onPlayVideo={handleSelectVideo} />
+          ) : activeTab === 'request' ? (
+            <SovereignCinemaTvRequest />
           ) : (
             <>
               <HeroBanner 

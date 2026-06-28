@@ -22,6 +22,9 @@ from google import genai
 from google.genai import types
 import vertexai
 from vertexai.generative_models import GenerativeModel, SafetySetting, HarmCategory, HarmBlockThreshold
+import logging
+
+logger = logging.getLogger("hot_takes_service")
 
 router = APIRouter()
 
@@ -64,7 +67,7 @@ studio_client = genai.Client(api_key=GEMINI_KEY)
 class HotTakeRequest(BaseModel):
     persona: str                                    # user_name of the persona
     topic: str                                      # what to rant about
-    engine: Optional[str] = "local_llama3"          # local_llama3 | gemini-2.5-flash
+    engine: Optional[str] = "gemini-2.5-flash"      # local_llama3 | gemini-2.5-flash
     short_mode: Optional[bool] = False
     reply_mode: Optional[bool] = False
 
@@ -330,22 +333,11 @@ def call_gemini(system: str, prompt: str) -> str:
             return _strip_meta(txt.strip())
         raise Exception("Empty response returned from Gemini API.")
     except Exception as e:
-        print(f"[GEMINI FALLBACK] Gemini call failed, falling back to local Llama: {e}")
-        try:
-            with open("/tmp/ollama_active_lock", "w") as f:
-                f.write("active")
-            subprocess.run(["sudo", "systemctl", "start", "ollama"], check=True)
-            for _ in range(5):
-                try:
-                    r = requests.get("http://127.0.0.1:11434", timeout=1)
-                    if r.status_code == 200 or r.status_code == 404: # Ollama root returns 404/200 depending on exact route
-                        break
-                except Exception:
-                    pass
-                time.sleep(1)
-            return call_ollama("phi3:mini", system, prompt)
-        except Exception as ollama_err:
-            raise HTTPException(status_code=502, detail=f"Gemini API error ({str(e)}) and local Ollama fallback failed ({str(ollama_err)})")
+        print(f"[GEMINI ERROR] Gemini call failed: {e}")
+        raise HTTPException(
+            status_code=502,
+            detail=f"Gemini API error: {str(e)}"
+        )
 
 
 
@@ -379,7 +371,7 @@ def hot_take(req: HotTakeRequest):
 
     system, prompt = build_prompt(persona, req.topic, req.short_mode, reply_mode, tweet_text)
 
-    engine = req.engine or "local_llama3"
+    engine = req.engine or "gemini-2.5-flash"
 
     print(f"[HOT TAKES] {req.persona} | engine={engine} | topic={req.topic[:60]}")
 
@@ -713,10 +705,15 @@ def hot_take_sniper(req: HotTakeSniperRequest):
     """
     Generate a sniper response from YouTube Chat using a system prompt (voice) and user prompt.
     """
+    logger.info("=== Hot Take Sniper Request Inbound ===")
+    logger.info(f"Voice (System Instruction):\n{req.voice}")
+    logger.info(f"User Prompt:\n{req.prompt}")
     try:
         text = call_gemini(req.voice, req.prompt)
+        logger.info(f"Generated Hot Take response successfully: {text[:120]}...")
         return {"text": text}
     except Exception as e:
+        logger.exception(f"Error in hot_take_sniper: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

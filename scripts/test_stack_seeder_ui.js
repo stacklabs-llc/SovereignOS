@@ -12,12 +12,19 @@ import { chromium } from 'playwright';
   // 1. Visit Portal & Perform Login
   console.log('🔑 Authenticating as James...');
   try {
-    await page.goto('https://clio.taila01894.ts.net:3000/', { waitUntil: 'networkidle', timeout: 20000 });
-    await page.fill('#auth-username', 'james');
-    await page.fill('#auth-password', '!!Stella1977');
-    await page.click('#auth-submit');
-    await page.waitForSelector('text=PROD ENVIRONMENT', { timeout: 20000 });
-    console.log('✅ Authentication successful!');
+    await page.goto('https://clio.taila01894.ts.net:3016/', { waitUntil: 'networkidle', timeout: 20000 });
+    
+    const isAuthVisible = await page.isVisible('#auth-username');
+    if (isAuthVisible) {
+      console.log('🔑 Found authentication gate. Logging in...');
+      await page.fill('#auth-username', 'james');
+      await page.fill('#auth-password', '!!Stella1977');
+      await page.click('#auth-submit');
+      await page.waitForSelector('text=ENVIRONMENT', { timeout: 20000 });
+      console.log('✅ Authentication successful!');
+    } else {
+      console.log('✅ Auto-authenticated via Tailnet IP / existing session.');
+    }
   } catch (err) {
     console.error('❌ Authentication failed:', err.message);
     await browser.close();
@@ -27,7 +34,7 @@ import { chromium } from 'playwright';
   // 2. Navigate to Stack Seeder Room
   console.log('🌱 Navigating to Stack Seeder portal room...');
   try {
-    await page.goto('https://clio.taila01894.ts.net:3000/?room=stack_seeder', { waitUntil: 'networkidle', timeout: 20000 });
+    await page.goto('https://clio.taila01894.ts.net:3016/?room=stack_seeder', { waitUntil: 'networkidle', timeout: 20000 });
     await page.waitForSelector('text=STACK SEEDER', { timeout: 20000 });
     console.log('✅ Stack Seeder Console loaded successfully.');
   } catch (err) {

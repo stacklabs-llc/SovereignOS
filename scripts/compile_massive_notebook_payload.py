@@ -265,12 +265,50 @@ def compile_payload():
     # Write out the massive package
     print(f"Writing monolithic document to: {OUTPUT_PATH}...")
     try:
+        monolith_content = "\n".join(package)
         with open(OUTPUT_PATH, "w", encoding="utf-8") as out:
-            out.write("\n".join(package))
+            out.write(monolith_content)
         file_size_kb = os.path.getsize(OUTPUT_PATH) / 1024
         print(f"✅ ULTRAPREMIUM NotebookLM Package written successfully! Size: {file_size_kb:.2f} KB")
+        
+        # Write out split parts of at most 450,000 characters to prevent NotebookLM limit issues
+        chunk_size_limit = 450000
+        out_dir = os.path.dirname(OUTPUT_PATH)
+        
+        # Remove any existing parts first
+        for old_part in glob.glob(os.path.join(out_dir, "SOVEREIGN_OS_INTERNAL_MASSIVE_DATA_TRANSFER_PACKAGE_PART_*.txt")):
+            try:
+                os.remove(old_part)
+            except Exception:
+                pass
+                
+        # Split content by lines, keeping track of current chunk characters
+        chunks = []
+        current_chunk = []
+        current_len = 0
+        
+        for line in monolith_content.splitlines():
+            line_len = len(line) + 1 # +1 for newline character
+            if current_len + line_len > chunk_size_limit and current_chunk:
+                chunks.append("\n".join(current_chunk))
+                current_chunk = [line]
+                current_len = line_len
+            else:
+                current_chunk.append(line)
+                current_len += line_len
+                
+        if current_chunk:
+            chunks.append("\n".join(current_chunk))
+            
+        # Write out chunks
+        for i, chunk_content in enumerate(chunks, 1):
+            part_path = os.path.join(out_dir, f"SOVEREIGN_OS_INTERNAL_MASSIVE_DATA_TRANSFER_PACKAGE_PART_{i}.txt")
+            with open(part_path, "w", encoding="utf-8") as pf:
+                pf.write(chunk_content)
+            print(f"✅ Chunk {i} written to {part_path} (characters: {len(chunk_content)})")
+            
     except Exception as e:
-        print(f"❌ Failed to write transfer package: {e}")
+        print(f"❌ Failed to write transfer packages: {e}")
 
 if __name__ == "__main__":
     compile_payload()

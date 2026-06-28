@@ -22,7 +22,7 @@ const DEFAULT_USERS: PresenceUser[] = [
 const SYSTEM_QUEUES = [
   { id: 'aether_vet', name: '🏥 Aether Vet Clinic', desc: 'Veterinary Remote Waiting Stream' },
   { id: 'fanstack', name: '🎙️ FanStack Studio', desc: 'Sovereign Roster Broadcast Hub' },
-  { id: 'gardenstack', name: '🌿 GardenStack AI', desc: 'Horticulture Telepresence Feed' },
+  { id: 'gardenstack', name: "🌿 Eileen's Stack", desc: 'Horticulture Telepresence Feed' },
 ];
 
 export default function PresenceDashboard() {

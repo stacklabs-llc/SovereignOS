@@ -3,10 +3,29 @@ import os
 import re
 import sqlite3
 import uuid
+import shutil
+import paramiko
 
 DB_PATH = "/home/james/SovereignOS/dna/sovereign_now.db"
 INBOX_TICKETS_DIR = "/home/james/sovereign_inbox/tickets"
 INBOX_DIR = "/home/james/sovereign_inbox"
+
+def execute_on_argo(work_order_id):
+    print(f"  [ArgoSSH] Connecting to argo.taila01894.ts.net via SSH...")
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        ssh.connect("argo.taila01894.ts.net", username="james")
+        print(f"  [ArgoSSH] Running: antigravity --run {work_order_id}")
+        stdin, stdout, stderr = ssh.exec_command(f"antigravity --run {work_order_id}")
+        output = stdout.read().decode("utf-8")
+        errors = stderr.read().decode("utf-8")
+        return {"status": "success", "output": output, "errors": errors}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+    finally:
+        ssh.close()
+
 
 def parse_work_order_file(filepath):
     filename = os.path.basename(filepath)
@@ -92,14 +111,42 @@ def stage_ticket_in_db(ticket):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     
-    num_state = 1  # STAGED
-    sdlc_state = 'STAGED'
+    # Check if ticket already exists by number
+    cursor.execute("SELECT sys_id, state FROM sovereign_tickets WHERE number = ?", (ticket["id"],))
+    row = cursor.fetchone()
+    
+    existing_sys_id = row[0] if row else None
+    existing_state = row[1] if row else None
+
+    # Check if a state/status is specified in content
+    state_match = re.search(r'\b(State|Status)\s*:\s*`?([A-Za-z_ ]+)`?', ticket['content'], re.IGNORECASE)
+    file_state = state_match.group(2).strip() if state_match else None
+
+    if file_state:
+        if file_state.lower() in ["wip", "work in progress", "open"]:
+            num_state = 2
+            sdlc_state = 'WIP'
+        elif file_state.lower() in ["resolved", "closed", "complete"]:
+            num_state = 4
+            sdlc_state = 'RESOLVED'
+        else:
+            num_state = 1
+            sdlc_state = 'STAGED'
+    elif existing_state is not None:
+        num_state = existing_state
+        if num_state == 2:
+            sdlc_state = 'WIP'
+        elif num_state in [4, 5]:
+            sdlc_state = 'RESOLVED'
+        else:
+            sdlc_state = 'STAGED'
+    else:
+        num_state = 1
+        sdlc_state = 'STAGED'
+
     description_text = f"Google Drive Work Order Sync automatically pulled and staged this file.\n\n- File Name: {ticket['filename']}\n- Source: {INBOX_TICKETS_DIR}/{ticket['filename']}"
 
     # 1. Update/Insert into sovereign_tickets
-    cursor.execute("SELECT sys_id FROM sovereign_tickets WHERE number = ?", (ticket["id"],))
-    row = cursor.fetchone()
-    
     if row:
         sys_id = row[0]
         print(f"  [sovereign_tickets] Updating ticket {ticket['id']}...")
@@ -170,10 +217,41 @@ def main():
                         pass
                         
     staged_count = 0
+    executed_dir = os.path.join(INBOX_DIR, "executed")
+    os.makedirs(executed_dir, exist_ok=True)
     for filename, filepath in scanned_files:
         try:
             ticket = parse_work_order_file(filepath)
             stage_ticket_in_db(ticket)
+            
+            # Check if this is an Emergency Change (Priority 1)
+            if ticket["priority"] == 1:
+                print(f"  [⚡] Emergency Change detected for ticket {ticket['id']}. Initiating SSH execution on Argo...")
+                res = execute_on_argo(ticket["id"])
+                
+                # Update ticket state to RESOLVED (4) and save output in DB
+                conn = sqlite3.connect(DB_PATH)
+                cursor = conn.cursor()
+                if res.get("status") == "success":
+                    status_note = f"Executed on Argo. Output: {res.get('output', '')[:500]}"
+                    cursor.execute("UPDATE sovereign_tickets SET state = 4, work_notes = ?, sys_updated_on = CURRENT_TIMESTAMP WHERE number = ?", (status_note, ticket["id"]))
+                    cursor.execute("UPDATE sys_sdlc_task SET state = 'RESOLVED' WHERE task_id = ?", (ticket["id"],))
+                    print(f"  [✔] SSH execution succeeded.")
+                else:
+                    error_note = f"Argo SSH execution failed: {res.get('message', '')[:500]}"
+                    cursor.execute("UPDATE sovereign_tickets SET state = 1, work_notes = ?, sys_updated_on = CURRENT_TIMESTAMP WHERE number = ?", (error_note, ticket["id"]))
+                    cursor.execute("UPDATE sys_sdlc_task SET state = 'STAGED' WHERE task_id = ?", (ticket["id"],))
+                    print(f"  [❌] SSH execution failed: {res.get('message')}")
+                conn.commit()
+                conn.close()
+            else:
+                print(f"  [i] Normal change staged. Remaining in STAGED/WIP state.")
+
+            # Physically move the source file to executed/ to prevent duplicate processing
+            dest_path = os.path.join(executed_dir, filename)
+            shutil.move(filepath, dest_path)
+            print(f"Moved ingested file: {filename} -> executed/")
+            
             staged_count += 1
         except Exception as e:
             print(f"❌ Error processing {filename}: {e}")

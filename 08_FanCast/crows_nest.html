@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Crow's Nest - Amateur Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --red-alert: #ff003c;
+            --red-alert-dark: #30000a;
+            --red-alert-glow: rgba(255, 0, 60, 0.45);
+            --bg-void: #060103;
+            --card-glass: rgba(26, 8, 12, 0.55);
+            --border-glass: rgba(255, 0, 60, 0.25);
+            --text-main: #ffe3e7;
+            --text-muted: #a38a8e;
+            --green-stimp: #00ff66;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Share Tech Mono', monospace;
+            background-color: var(--bg-void);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 50% 10%, var(--red-alert-dark) 0%, var(--bg-void) 90%);
+        }
+
+        /* Frantic red-pulsing ambient glow */
+        @keyframes frantic-pulse {
+            0%, 100% { 
+                opacity: 0.15;
+                box-shadow: inset 0 0 40px rgba(255, 0, 60, 0.1);
+            }
+            50% { 
+                opacity: 0.35;
+                box-shadow: inset 0 0 100px rgba(255, 0, 60, 0.35);
+            }
+        }
+        .frantic-ambient {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+            animation: frantic-pulse 4s ease-in-out infinite;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border-glass);
+            background: rgba(48, 0, 10, 0.6);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-logo svg {
+            fill: var(--red-alert);
+            width: 24px;
+            height: 24px;
+            animation: pulse-icon 1.5s infinite;
+        }
+
+        @keyframes pulse-icon {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px var(--red-alert)); }
+            50% { transform: scale(1.15); filter: drop-shadow(0 0 10px var(--red-alert)); }
+        }
+
+        .header-logo h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: var(--red-alert);
+            text-transform: uppercase;
+        }
+
+        .status-badge {
+            border: 1px solid var(--border-glass);
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .alert-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--red-alert);
+            border-radius: 50%;
+            display: inline-block;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0; }
+        }
+
+        .main-layout {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            padding: 1.5rem;
+            gap: 1.5rem;
+            z-index: 10;
+            height: calc(100vh - 70px);
+            overflow: hidden;
+        }
+
+        /* LEFT SIDE: The Drifter telemetry and cut-line monitoring */
+        .telemetry-panel {
+            background: var(--card-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            backdrop-filter: blur(15px);
+        }
+
+        .section-title {
+            color: var(--red-alert);
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border-bottom: 1px solid var(--border-glass);
+            padding-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .drifter-hero {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drifter-hero::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 3px;
+            height: 100%;
+            background: var(--red-alert);
+            box-shadow: 0 0 10px var(--red-alert);
+        }
+
+        .hero-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 8px rgba(255, 0, 60, 0.6);
+        }
+
+        .hero-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .stat-box {
+            background: rgba(255, 0, 60, 0.05);
+            border: 1px solid rgba(255, 0, 60, 0.15);
+            padding: 0.75rem;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .cut-line-visualizer {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .cut-line-bar-container {
+            position: relative;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin: 1.5rem 0;
+            overflow: hidden;
+        }
+
+        .cut-line-marker {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: var(--red-alert);
+            box-shadow: 0 0 10px var(--red-alert);
+            z-index: 2;
+        }
+
+        .cut-line-label {
+            position: absolute;
+            top: -20px;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            color: var(--red-alert);
+            white-space: nowrap;
+        }
+
+        .drifter-marker {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            background-color: rgba(255, 0, 60, 0.2);
+            border-right: 2px solid #fff;
+            z-index: 1;
+            transition: width 1s ease-in-out;
+        }
+
+        .drifter-label {
+            position: absolute;
+            bottom: -20px;
+            transform: translateX(-50%);
+            font-size: 0.7rem;
+            color: #fff;
+            white-space: nowrap;
+        }
+
+        .drifter-details {
+            font-size: 0.9rem;
+            line-height: 1.4;
+            color: var(--text-muted);
+            background: rgba(0,0,0,0.2);
+            padding: 0.75rem;
+            border-radius: 4px;
+            border: 1px dashed rgba(255,0,60,0.15);
+        }
+
+        /* RIGHT SIDE: Chat discourse feed */
+        .chat-panel {
+            background: var(--card-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+            backdrop-filter: blur(15px);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 1.25rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Custom Scrollbar */
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-messages::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(255, 0, 60, 0.25);
+            border-radius: 99px;
+        }
+
+        .chat-card {
+            background: rgba(25, 5, 8, 0.4);
+            border: 1px solid rgba(255, 0, 60, 0.1);
+            padding: 0.85rem;
+            border-radius: 6px;
+            animation: slide-up 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .chat-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.3rem;
+            font-size: 0.75rem;
+        }
+
+        .chat-user {
+            font-weight: 700;
+        }
+
+        .chat-time {
+            color: var(--text-muted);
+        }
+
+        .chat-text {
+            font-size: 0.95rem;
+            line-height: 1.4;
+            color: #ffdce2;
+            word-wrap: break-word;
+        }
+
+        .chat-input-bar {
+            padding: 1rem;
+            background: rgba(0,0,0,0.4);
+            border-top: 1px solid var(--border-glass);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input-bar input {
+            flex: 1;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid var(--border-glass);
+            padding: 0.6rem 0.8rem;
+            border-radius: 4px;
+            color: #fff;
+            outline: none;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .chat-input-bar input:focus {
+            border-color: var(--red-alert);
+        }
+
+        .chat-input-bar button {
+            background: var(--red-alert);
+            color: #fff;
+            border: none;
+            padding: 0 1.25rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Share Tech Mono', monospace;
+            font-weight: 700;
+        }
+
+        .chat-input-bar button:hover {
+            background: #ff3c62;
+        }
+    </style>
+</head>
+<body>
+    <div class="frantic-ambient"></div>
+
+    <header>
+        <div class="header-logo">
+            <!-- Alert/Target Pulsing SVG icon -->
+            <svg viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="none"/>
+                <circle cx="12" cy="12" r="6" stroke="currentColor" stroke-width="2" fill="none"/>
+                <circle cx="12" cy="12" r="2" fill="currentColor"/>
+            </svg>
+            <h1>The Crow's Nest</h1>
+        </div>
+        <div class="status-badge">
+            <span class="alert-dot"></span>
+            <span id="tracker-status">TRACKING AMATEUR DEFIANCE...</span>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <!-- LEFT: Telemetry -->
+        <div class="telemetry-panel">
+            <div class="section-title">
+                <span>R. McAvoy (The Scrambler) Telemetry</span>
+                <span style="color: var(--green-stimp)">LIVE STIMPACT</span>
+            </div>
+
+            <div class="drifter-hero">
+                <div class="hero-title" id="drifter-title">The Scrambler (+4)</div>
+                <p style="font-size: 0.8rem; color: var(--text-muted)">Amateur Exemption Slot #1</p>
+                
+                <div class="hero-stats">
+                    <div class="stat-box">
+                        <span class="stat-label">Score</span>
+                        <span class="stat-value" id="drifter-score">+4</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Hole</span>
+                        <span class="stat-value" id="drifter-thru">Thru 9</span>
+                    </div>
+                    <div class="stat-box">
+                        <span class="stat-label">Cut Line</span>
+                        <span class="stat-value" style="color: var(--red-alert)">+2 Est.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cut-line-visualizer">
+                <div>
+                    <span class="stat-label" style="text-align: left;">Distance to Cut Line</span>
+                    <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem;">
+                        Must reach top 50 and ties (+2) to make the weekend.
+                    </p>
+                </div>
+
+                <div class="cut-line-bar-container">
+                    <!-- Cut Line Marker -->
+                    <div class="cut-line-marker" style="left: 60%;">
+                        <div class="cut-line-label">CUT LINE (+2)</div>
+                    </div>
+                    
+                    <!-- Drifter fill bar representing his score deviation -->
+                    <!-- 100% is +10, 0% is -4. Let's make it look dynamic -->
+                    <div class="drifter-marker" id="drifter-progress-bar" style="width: 80%;">
+                        <div class="drifter-label" id="drifter-progress-label">THE SCRAMBLER (+4)</div>
+                    </div>
+                </div>
+
+                <div class="drifter-details" id="drifter-details">
+                    Awaiting shot coordinates from the Sentinel array...
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT: Discourse Feed -->
+        <div class="chat-panel">
+            <div class="section-title" style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-glass)">
+                <span>Crows Nest Room Reaction Stream</span>
+                <span id="active-personas">BOGGS GAIN: MAX</span>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <!-- Chat messages will stream here -->
+            </div>
+            <form class="chat-input-bar" id="chat-form">
+                <input type="text" id="chat-input" placeholder="Inject trigger command..." autocomplete="off">
+                <button type="submit">SEND</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const wsUrl = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + "/ws";
+        let ws;
+        const messagesContainer = document.getElementById("chat-messages");
+
+        function appendMessage(user, text, color, timestamp) {
+            const card = document.createElement("div");
+            card.className = "chat-card";
+            if (color) {
+                card.style.borderLeft = `2px solid ${color}`;
+            }
+
+            const meta = document.createElement("div");
+            meta.className = "chat-meta";
+
+            const userSpan = document.createElement("span");
+            userSpan.className = "chat-user";
+            userSpan.style.color = color || "var(--red-alert)";
+            userSpan.innerText = user;
+
+            const timeSpan = document.createElement("span");
+            timeSpan.className = "chat-time";
+            timeSpan.innerText = timestamp || new Date().toLocaleTimeString().substring(0, 5);
+
+            meta.appendChild(userSpan);
+            meta.appendChild(timeSpan);
+
+            const textDiv = document.createElement("div");
+            textDiv.className = "chat-text";
+            textDiv.innerText = text;
+
+            card.appendChild(meta);
+            card.appendChild(textDiv);
+
+            messagesContainer.appendChild(card);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function updateState(data) {
+            if (data.status_msg) {
+                document.getElementById("tracker-status").innerText = data.status_msg.toUpperCase();
+                
+                // If it is a Drifter details message
+                if (data.event_status && (data.event_status.includes("The Scrambler") || data.event_status.includes("PLAY HALTED"))) {
+                    document.getElementById("drifter-details").innerText = data.event_status;
+                }
+            }
+
+            if (data.leaderboard && data.leaderboard.length > 0) {
+                // Find The Scrambler in the leaderboard list
+                // e.g., "The Scrambler (+3) Thru 10"
+                const scramblerStr = data.leaderboard.find(p => p.includes("The Scrambler"));
+                if (scramblerStr) {
+                    const match = scramblerStr.match(/The Scrambler \((E|[+-]\d+)\) Thru (\d+|F)/);
+                    if (match) {
+                        const score = match[1];
+                        const thru = match[2];
+                        
+                        document.getElementById("drifter-title").innerText = `The Scrambler (${score})`;
+                        document.getElementById("drifter-score").innerText = score;
+                        document.getElementById("drifter-thru").innerText = thru === "F" ? "Finished" : `Thru ${thru}`;
+                        
+                        // Recalculate progress bar
+                        // Let's parse score to numeric
+                        let scoreNum = 0;
+                        if (score !== "E") {
+                            scoreNum = parseInt(score);
+                        }
+                        
+                        // Cut line is +2. If score is +4, it is 2 strokes worse.
+                        // Map scoreNum to a percentage (e.g. +10 is 100%, +2 is 50%, -4 is 0%)
+                        let pct = Math.round(((scoreNum + 4) / 14) * 100);
+                        pct = Math.min(Math.max(pct, 5), 95);
+                        
+                        document.getElementById("drifter-progress-bar").style.width = pct + "%";
+                        document.getElementById("drifter-progress-label").innerText = `THE SCRAMBLER (${score})`;
+                    }
+                }
+            }
+        }
+
+        function connect() {
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = function() {
+                console.log("Tracker connected to Masters Relay.");
+                document.querySelector(".alert-dot").style.backgroundColor = "var(--red-alert)";
+            };
+
+            ws.onmessage = function(event) {
+                const payload = JSON.parse(event.data);
+
+                if (payload.type === "STATE_UPDATE") {
+                    updateState(payload.data);
+                } else if (payload.type === "CHAT_MESSAGE") {
+                    appendMessage(payload.user, payload.text, payload.color, payload.timestamp);
+                } else if (payload.type === "CHAT_HISTORY") {
+                    messagesContainer.innerHTML = "";
+                    payload.messages.forEach(msg => {
+                        appendMessage(msg.user, msg.text, msg.color, msg.timestamp);
+                    });
+                }
+            };
+
+            ws.onclose = function() {
+                console.log("Relay connection lost, retrying...");
+                document.querySelector(".alert-dot").style.backgroundColor = "#555";
+                setTimeout(connect, 3000);
+            };
+        }
+
+        document.getElementById("chat-form").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const input = document.getElementById("chat-input");
+            if (!input.value.trim()) return;
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const msg = {
+                    type: "CHAT_MESSAGE",
+                    user: "Pilot James",
+                    color: "var(--text-main)",
+                    text: input.value
+                };
+                ws.send(JSON.stringify(msg));
+                input.value = "";
+            }
+        });
+
+        connect();
+    </script>
+</body>
+</html>

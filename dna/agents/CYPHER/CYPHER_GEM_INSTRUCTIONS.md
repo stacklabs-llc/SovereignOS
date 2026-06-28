@@ -48,6 +48,25 @@ Sovereign OS is a premium, decentralized, decoupled micro-frontend architecture.
 
 ---
 
+## 📝 Work Order Construction Protocol (Sorting Hat Parity)
+
+When creating or drafting new work orders (SOW, configuration, or ticketed tasks) to be placed in the `/home/james/sovereign_inbox/` directory:
+
+1. **Mandatory Ticket ID Header:** Every work order draft MUST explicitly specify a structured ticket ID block in its first 5 lines. Do NOT omit it. Format it exactly as:
+   ```markdown
+   Ticket ID: STRY{HASH_OR_NUMBER}
+   Type: STRY
+   State: STAGED
+   Short Description: [Clear, concise title of the work]
+   ```
+   *Note:* Use a random or hash-derived 7-digit number (e.g., `STRY8790999`) for new stories to prevent collision and ensure the `organize_inbox.py` sorting hat reads the ticket correctly as a Story (`STRY`) rather than defaulting to an Incident (`INC`).
+
+2. **File Naming Standard:** Always name work order files using the generated ticket ID as a prefix (e.g., `STRY8790999_bring_the_gang_along.md` or `STRY8790999_work_order.md`). Never use generic names like `WORK ORDER.md` or `patch.md`.
+
+3. **Structured Content Layout:** Ensure work orders contain a clear "System Context", "Roster & Configuration Table" (if onboarding/seeding), and "Local Agent Ingestion Steps" to enable immediate programmatic parsing by the Antigravity daemon.
+
+---
+
 ## ⚡ Operational Rules (Non-Negotiable)
 
 * **James does not touch the metal.** Never give James terminal commands to run directly. All execution goes through Antigravity work orders.

@@ -143,6 +143,10 @@ export default defineConfig(({mode}) => {
           target: 'http://127.0.0.1:8000',
           changeOrigin: true,
         },
+        '/api/prompt': {
+          target: 'http://127.0.0.1:8000',
+          changeOrigin: true,
+        },
         '/api/roll_call': {
           target: 'http://127.0.0.1:8000',
           changeOrigin: true,
@@ -242,6 +246,14 @@ export default defineConfig(({mode}) => {
           target: 'http://127.0.0.1:8095',
           changeOrigin: true,
         },
+        '/api/studio': {
+          target: 'http://127.0.0.1:8097',
+          changeOrigin: true,
+        },
+        '/api/properties': {
+          target: 'http://127.0.0.1:8097',
+          changeOrigin: true,
+        },
         '/api/tickets': {
           target: 'http://127.0.0.1:8095',
           changeOrigin: true,
@@ -267,6 +279,10 @@ export default defineConfig(({mode}) => {
           target: 'http://127.0.0.1:8090',
           changeOrigin: true,
           secure: false,
+        },
+        '/images': {
+          target: 'http://127.0.0.1:8000',
+          changeOrigin: true,
         },
         // ── Catch-all (Scruffy's Tavern relay, port 8000) ────────────────────
         '/api': {
@@ -343,6 +359,12 @@ export default defineConfig(({mode}) => {
           target: 'http://127.0.0.1:3008',
           changeOrigin: true,
           secure: false
+        },
+        '/tesseract-stack': {
+          target: 'http://127.0.0.1:3026',
+          changeOrigin: true,
+          secure: false,
+          ws: true,
         },
         '/ws-comet': {
           target: 'ws://127.0.0.1:8015',

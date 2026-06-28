@@ -56,6 +56,10 @@ export default defineConfig({
         target: 'http://127.0.0.1:8090',
         changeOrigin: true,
       },
+      '/api/cinema': {
+        target: 'http://127.0.0.1:8090',
+        changeOrigin: true,
+      },
       '/api/auth': {
         target: 'http://127.0.0.1:8090',
         changeOrigin: true,

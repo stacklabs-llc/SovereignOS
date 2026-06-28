@@ -46,6 +46,17 @@ export default function MobileRemote() {
                     </span>
                 </div>
 
+                {/* Mobile Asset Ingestion (Pixel Drop Zone) */}
+                <div className="flex flex-col gap-3">
+                    <h2 className="text-[10px] text-white/40 uppercase tracking-[0.2em] mb-2 px-2">📷 Direct Mobile Uploads</h2>
+                    <a
+                        href="/?domain=ROOT&room=pixel_dropzone"
+                        className="bg-gradient-to-r from-[#00d4ff]/20 to-[#e879f9]/20 border border-[#00d4ff]/40 py-5 rounded-2xl font-sans font-bold uppercase tracking-[0.2em] text-center text-[#00d4ff] hover:from-[#00d4ff]/30 hover:to-[#e879f9]/30 hover:border-[#00d4ff] transition-all duration-300 active:scale-95 flex items-center justify-center gap-3 shadow-[0_0_20px_rgba(0,212,255,0.1)]"
+                    >
+                        💧 Open Pixel Drop Zone
+                    </a>
+                </div>
+
                 {/* Matrix Payload Selector */}
                 <div className="flex flex-col gap-3">
                     <h2 className="text-[10px] text-white/40 uppercase tracking-[0.2em] mb-2 px-2">1. Select Matrix Payload</h2>

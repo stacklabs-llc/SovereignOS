@@ -36,6 +36,24 @@ export default function PlaycallDesk() {
     const [editForm, setEditForm] = useState<any>({});
     const [penaltyBox, setPenaltyBox] = useState<{persona: string, text: string, avatar: string|null, history: string[]} | null>(null);
 
+    // Quantum Multiverse Visualizer states
+    const [gameState, setGameState] = useState<any>({ balls: 0, strikes: 0, outs: 0 });
+    const [multiverseActive, setMultiverseActive] = useState(false);
+    const [winningVideoUrl, setWinningVideoUrl] = useState<string | null>(null);
+    const [multiversePlayDesc, setMultiversePlayDesc] = useState<string | null>(null);
+    const [multiversePrepData, setMultiversePrepData] = useState<{
+        batter: string;
+        pitcher: string;
+        batter_id?: string | number;
+    } | null>(null);
+
+    // Auto-trigger tab to multiverse on 3-2 count
+    useEffect(() => {
+        if (gameState && gameState.balls === 3 && gameState.strikes === 2) {
+            setActiveTab('multiverse');
+        }
+    }, [gameState?.balls, gameState?.strikes]);
+
     const openEditModal = (p?: any) => {
         if (p) setEditForm({ ...p });
         else setEditForm({ name: '', desc: '', team: 'GLOBAL', room: 'GLOBAL', engine: 'gemini-flash', boggs: 'medium', cadence: 'pacer', prompt: '' });
@@ -52,7 +70,6 @@ export default function PlaycallDesk() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             title: editForm.desc,
-                            department: editForm.engine,
                             introduction: editForm.prompt
                         })
                     });
@@ -63,7 +80,6 @@ export default function PlaycallDesk() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         deployment_zone: editForm.room,
-                        llm_engine: editForm.engine,
                         system_prompt: editForm.prompt
                     })
                 });
@@ -76,7 +92,6 @@ export default function PlaycallDesk() {
                         name: editForm.name,
                         team: editForm.team || 'GLOBAL',
                         deployment_zone: editForm.room || 'GLOBAL',
-                        llm_engine: editForm.engine || 'gemini-flash',
                         boggs_reactivity: editForm.boggs || 'medium',
                         cadence: editForm.cadence || 'pacer',
                         system_prompt: editForm.prompt || editForm.desc,
@@ -166,7 +181,6 @@ export default function PlaycallDesk() {
                         desc: r.team || '',
                         team: r.team,
                         room: r.deployment_zone || 'BENCHED',
-                        engine: r.llm_engine,
                         boggs: r.boggs_reactivity,
                         prompt: r.system_prompt,
                         cadence: r.cadence,
@@ -193,7 +207,6 @@ export default function PlaycallDesk() {
                     desc: r.title,
                     team: r.department,
                     room: 'GLOBAL', 
-                    engine: 'gemini-flash',
                     boggs: 'medium',
                     prompt: r.introduction,
                     cadence: 'pacer',
@@ -260,6 +273,47 @@ export default function PlaycallDesk() {
             ws.onmessage = (e) => {
                 try {
                     const d = JSON.parse(e.data);
+
+                    // Handle MULTIVERSE_PREP
+                    if (d.type === 'MULTIVERSE_PREP') {
+                        console.log("[PRECOG DESK] MULTIVERSE_PREP received", d);
+                        setMultiverseActive(true);
+                        setWinningVideoUrl(null);
+                        setMultiversePlayDesc(null);
+                        setMultiversePrepData({
+                            batter: d.batter || "Batter",
+                            pitcher: d.pitcher || "Pitcher",
+                            batter_id: d.batter_id
+                        });
+                        setActiveTab('multiverse');
+                        return;
+                    }
+
+                    // Handle MULTIVERSE_SETTLE
+                    if (d.type === 'MULTIVERSE_SETTLE') {
+                        console.log("[PRECOG DESK] MULTIVERSE_SETTLE received", d);
+                        setMultiverseActive(false);
+                        setWinningVideoUrl(`/videos/precog_winning.mp4?t=${Date.now()}`);
+                        setMultiversePlayDesc(d.play_desc || '');
+                        
+                        // Auto-hide the winning video after 15 seconds
+                        setTimeout(() => {
+                            setWinningVideoUrl(null);
+                            setMultiversePlayDesc(null);
+                        }, 15000);
+                        return;
+                    }
+
+                    // Handle STATE_UPDATE for game state syncing
+                    if (d.type === 'STATE_UPDATE' && d.data) {
+                        if (!selectedGame || String(d.target_game_pk || d.data?.game_pk) === String(selectedGame)) {
+                            setGameState(prev => ({
+                                ...prev,
+                                ...d.data
+                            }));
+                        }
+                    }
+
                     if (d.system) {
                         setSystemWarnings(d.system.warnings || []);
                         setSystemDegraded(!!d.system.system_degraded);
@@ -784,7 +838,7 @@ export default function PlaycallDesk() {
                 {/* Controls Panel (Right) */}
                 <div className="vm-panel-glass flex flex-col border border-white/10 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
                     <div className="flex border-b border-white/10 bg-black/20 shrink-0">
-                        {['EVENTS','BOARD','OVERRIDES','TAKES','SYSTEM'].map(tab => (
+                        {['EVENTS','MULTIVERSE','BOARD','OVERRIDES','TAKES','SYSTEM'].map(tab => (
                             <button 
                                 key={tab} 
                                 onClick={() => setActiveTab(tab.toLowerCase())}
@@ -853,6 +907,152 @@ export default function PlaycallDesk() {
                                     <button onClick={() => setBoggs(5)} className="flex-1 font-['Outfit'] text-[15px] font-bold p-2.5 rounded-xl border border-[#ef4444]/40 text-[#ef4444] bg-white/[0.02] hover:bg-[#ef4444] hover:text-white  transition-all">MAX</button>
                                 </div>
                             </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'multiverse' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-2 p-5 w-full flex-1 flex flex-col overflow-hidden" style={{ minHeight: '420px' }}>
+                            <div className="mb-4 border-b border-white/10 pb-3 flex items-center justify-between">
+                                <div className="flex flex-col">
+                                    <div className="font-['Outfit'] text-[15px] font-bold tracking-[0.15em] text-[#64748b] uppercase">Quantum Multiverse Sensor</div>
+                                    <div className="font-mono text-[10px] text-cyan-400 uppercase tracking-wider mt-0.5">Wave Function Precog Monitor</div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className={`w-2 h-2 rounded-full ${wsConnected ? 'bg-cyan-500 animate-pulse' : 'bg-red-500'}`}></span>
+                                    <span className="font-mono text-[9px] text-[#8e9caa]">{wsConnected ? 'LIVE TELEMETRY' : 'DISCONNECTED'}</span>
+                                </div>
+                            </div>
+
+                            {/* 1. Settled State (Video Player) */}
+                            {winningVideoUrl ? (
+                                <div className="flex-1 flex flex-col items-center justify-center bg-black/40 border border-[#FF00FF]/40 rounded-2xl p-4 shadow-[0_0_25px_rgba(255,0,255,0.15)] relative overflow-hidden animate-in zoom-in-95 duration-300">
+                                    <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-[#FF00FF] to-transparent animate-pulse"></div>
+                                    <div className="w-full aspect-video bg-black rounded-xl border border-white/10 overflow-hidden relative shadow-inner">
+                                        <video
+                                            src={winningVideoUrl}
+                                            autoPlay
+                                            muted
+                                            loop
+                                            playsInline
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/30 pointer-events-none"></div>
+                                        <div className="absolute top-3 left-3 bg-[#FF00FF]/20 border border-[#FF00FF]/50 text-[#FF00FF] text-[9px] font-mono font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+                                            Timeline Resolved
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 text-center w-full">
+                                        <div className="font-['Outfit'] text-[11px] font-black tracking-[0.2em] text-[#FF00FF] uppercase mb-1">Decisive Reality Selected</div>
+                                        <div className="font-['Inter'] text-[14px] text-white/90 font-medium bg-white/[0.02] border border-white/5 p-3 rounded-xl">
+                                            {multiversePlayDesc || "Reality stabilized. Wave function collapse complete."}
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : multiverseActive && multiversePrepData ? (
+                                /* 2. Pre-rendering State (2x2 Alternate Timeline Grid) */
+                                <div className="flex-1 flex flex-col gap-4 animate-in fade-in duration-300">
+                                    <div className="bg-cyan-500/10 border border-cyan-500/30 p-3 rounded-xl flex items-center justify-between">
+                                        <div className="flex flex-col">
+                                            <span className="font-mono text-[9px] text-cyan-400 uppercase tracking-widest">Active Precog Wavefront</span>
+                                            <span className="font-['Outfit'] text-sm font-bold text-white mt-0.5">
+                                                {multiversePrepData.pitcher} vs {multiversePrepData.batter}
+                                            </span>
+                                        </div>
+                                        <div className="font-mono text-[10px] text-cyan-400 font-bold bg-cyan-500/20 px-2.5 py-1 rounded border border-cyan-500/40 animate-pulse">
+                                            RESOLVING...
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 flex-1 min-h-[250px]">
+                                        {[
+                                            { title: 'STRIKEOUT', timeline: 'Timeline Alpha', prob: '35%', color: '#ef4444', desc: 'Fastball high and tight. Batter swings and misses.' },
+                                            { title: 'WALK', timeline: 'Timeline Beta', prob: '18%', color: '#10b981', desc: 'Slider misses low and away. Batter takes ball four.' },
+                                            { title: 'IN-PLAY OUT', timeline: 'Timeline Gamma', prob: '28%', color: '#f59e0b', desc: 'Changeup induced ground ball to shortstop.' },
+                                            { title: 'IN-PLAY HIT', timeline: 'Timeline Delta', prob: '19%', color: '#38bdf8', desc: 'Cutter hung middle-in. Batter drives it to deep left-center.' }
+                                        ].map((t, i) => (
+                                            <div key={i} className="bg-black/30 border border-white/5 hover:border-white/10 p-3 rounded-xl flex flex-col justify-between relative overflow-hidden transition-all duration-300">
+                                                <div className="absolute top-0 left-0 bottom-0 w-[3px]" style={{ backgroundColor: t.color }}></div>
+                                                <div>
+                                                    <div className="flex items-center justify-between mb-1.5">
+                                                        <span className="font-['Outfit'] text-[11px] font-black tracking-wider uppercase text-white" style={{ color: t.color }}>
+                                                            {t.title}
+                                                        </span>
+                                                        <span className="font-mono text-[10px] text-[#64748b]">{t.timeline}</span>
+                                                    </div>
+                                                    <div className="font-['Inter'] text-[11px] text-white/60 leading-relaxed mb-3">
+                                                        {t.desc}
+                                                    </div>
+                                                </div>
+                                                <div>
+                                                    <div className="flex justify-between items-center mb-1">
+                                                        <span className="font-mono text-[9px] text-[#8e9caa] uppercase">Probability</span>
+                                                        <span className="font-mono text-[11px] font-bold text-white" style={{ color: t.color }}>{t.prob}</span>
+                                                    </div>
+                                                    <div className="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                                                        <div className="h-full rounded-full animate-pulse" style={{ backgroundColor: t.color, width: t.prob }}></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : (
+                                /* 3. Standby State (conic-gradient radar sweep and live sensor telemetry) */
+                                <div className="flex-1 flex flex-col items-center justify-center bg-[#07090E]/60 border border-white/5 rounded-2xl p-6 relative overflow-hidden min-h-[300px]">
+                                    {/* Holographic grid & scan lines */}
+                                    <div className="absolute inset-0 bg-[linear-gradient(rgba(18,24,38,0)_97%,rgba(18,24,38,0.4)_97%),linear-gradient(90deg,rgba(18,24,38,0)_97%,rgba(18,24,38,0.4)_97%)] bg-[size:16px_16px] opacity-30 pointer-events-none"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-cyan-500/2 to-transparent animate-[scan_6s_linear_infinite] pointer-events-none"></div>
+
+                                    {/* Radar Container */}
+                                    <div className="relative w-40 h-40 rounded-full border border-cyan-500/10 flex items-center justify-center mb-6 shadow-[0_0_30px_rgba(6,182,212,0.05)]">
+                                        {/* Outer rings */}
+                                        <div className="absolute inset-2 rounded-full border border-cyan-500/10"></div>
+                                        <div className="absolute inset-8 rounded-full border border-cyan-500/10"></div>
+                                        <div className="absolute inset-16 rounded-full border border-cyan-500/10"></div>
+                                        
+                                        {/* Axis lines */}
+                                        <div className="absolute w-full h-[1px] bg-cyan-500/10"></div>
+                                        <div className="absolute h-full w-[1px] bg-cyan-500/10"></div>
+                                        
+                                        {/* Rotating sweep */}
+                                        <div className="absolute inset-0 rounded-full animate-[spin_4s_linear_infinite] pointer-events-none" style={{
+                                            background: 'conic-gradient(from 0deg, rgba(6, 182, 212, 0.15) 0deg, rgba(6, 182, 212, 0) 90deg, transparent 360deg)'
+                                        }}></div>
+
+                                        {/* Pulse core */}
+                                        <div className="w-2.5 h-2.5 bg-cyan-500 rounded-full shadow-[0_0_12px_#06b6d4] animate-ping"></div>
+                                        <div className="absolute w-2 h-2 bg-cyan-400 rounded-full shadow-[0_0_8px_#06b6d4]"></div>
+                                    </div>
+
+                                    {/* Telemetry Readings */}
+                                    <div className="w-full grid grid-cols-2 gap-3 mt-2 font-mono">
+                                        <div className="bg-black/30 border border-white/5 p-2.5 rounded-xl flex items-center justify-between">
+                                            <span className="text-[9px] text-[#8e9caa] uppercase">Sensor Coherence</span>
+                                            <span className="text-[11px] font-bold text-cyan-400 animate-pulse">99.84%</span>
+                                        </div>
+                                        <div className="bg-black/30 border border-white/5 p-2.5 rounded-xl flex items-center justify-between">
+                                            <span className="text-[9px] text-[#8e9caa] uppercase">Timeline Density</span>
+                                            <span className="text-[11px] font-bold text-white">4 Main wavefronts</span>
+                                        </div>
+                                        <div className="bg-black/30 border border-white/5 p-2.5 rounded-xl flex items-center justify-between">
+                                            <span className="text-[9px] text-[#8e9caa] uppercase">JIT Sync Delta</span>
+                                            <span className="text-[11px] font-bold text-emerald-400">0.00ms (Optimum)</span>
+                                        </div>
+                                        <div className="bg-black/30 border border-white/5 p-2.5 rounded-xl flex items-center justify-between">
+                                            <span className="text-[9px] text-[#8e9caa] uppercase">Sensor Status</span>
+                                            <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider animate-pulse">MONITORING</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Global scan & spin animations */}
+                            <style>{`
+                                @keyframes scan {
+                                    0% { transform: translateY(-100%); }
+                                    100% { transform: translateY(100%); }
+                                }
+                            `}</style>
                         </div>
                     )}
 
@@ -1067,23 +1267,13 @@ export default function PlaycallDesk() {
                                 <label className="font-['Outfit'] text-[15px] font-bold tracking-[0.15em] text-[#64748b] uppercase mb-2 block">Short Description</label>
                                 <input value={editForm.desc || ''} onChange={e => setEditForm({...editForm, desc: e.target.value})} className="w-full bg-black/30 border border-white/10 text-white font-['Inter'] text-[16px] p-3 rounded-xl outline-none focus:border-[#38bdf8]" />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="font-['Outfit'] text-[15px] font-bold tracking-[0.15em] text-[#64748b] uppercase mb-2 block">Engine</label>
-                                    <select value={editForm.engine || ''} onChange={e => setEditForm({...editForm, engine: e.target.value})} className="w-full bg-black/30 border border-white/10 text-white font-['Inter'] text-[16px] p-3 rounded-xl outline-none focus:border-[#38bdf8] appearance-none">
-                                        <option value="gemini-2.5-flash" className="bg-[#111827] text-white">Gemini Flash</option>
-                                        <option value="gemini-2.5-pro" className="bg-[#111827] text-white">Gemini Pro</option>
-                                        <option value="mistral:latest" className="bg-[#111827] text-white">Mistral (Local)</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="font-['Outfit'] text-[15px] font-bold tracking-[0.15em] text-[#64748b] uppercase mb-2 block">Room (Game PK or GLOBAL)</label>
-                                    <select value={editForm.room || 'BENCHED'} onChange={e => setEditForm({...editForm, room: e.target.value})} className="w-full bg-black/30 border border-white/10 text-white font-['Inter'] text-[16px] p-3 rounded-xl outline-none focus:border-[#38bdf8] appearance-none">
-                                        <option value="GLOBAL" className="bg-[#111827] text-white">GLOBAL</option>
-                                        <option value="BENCHED" className="bg-[#111827] text-gray-500">BENCHED (Inactive)</option>
-                                        {games.map(g => <option key={g.id} value={g.id} className="bg-[#111827] text-white">{g.text.replace(' (Live)', '')}</option>)}
-                                    </select>
-                                </div>
+                            <div>
+                                <label className="font-['Outfit'] text-[15px] font-bold tracking-[0.15em] text-[#64748b] uppercase mb-2 block">Room (Game PK or GLOBAL)</label>
+                                <select value={editForm.room || 'BENCHED'} onChange={e => setEditForm({...editForm, room: e.target.value})} className="w-full bg-black/30 border border-white/10 text-white font-['Inter'] text-[16px] p-3 rounded-xl outline-none focus:border-[#38bdf8] appearance-none">
+                                    <option value="GLOBAL" className="bg-[#111827] text-white">GLOBAL</option>
+                                    <option value="BENCHED" className="bg-[#111827] text-gray-500">BENCHED (Inactive)</option>
+                                    {games.map(g => <option key={g.id} value={g.id} className="bg-[#111827] text-white">{g.text.replace(' (Live)', '')}</option>)}
+                                </select>
                             </div>
                             <div>
                                 <label className="font-['Outfit'] text-[15px] font-bold tracking-[0.15em] text-[#64748b] uppercase mb-2 block">Deep Lore / Advanced Prompt</label>

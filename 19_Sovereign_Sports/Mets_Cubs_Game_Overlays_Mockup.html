@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign Sports // Mets-Cubs Live Overlays Mockup</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --color-bg: #000000;
+            --color-surface: #0a0a0c;
+            --color-border: #1f2937;
+            --color-border-hover: #374151;
+            --color-orange: #F97316;
+            --color-blue: #0EA5E9;
+            --color-text: #e5e7eb;
+            --color-text-muted: #9ca3af;
+            --glow-orange: 0 0 15px rgba(249, 115, 22, 0.4);
+            --glow-blue: 0 0 15px rgba(14, 165, 233, 0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--color-bg);
+            color: var(--color-text);
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--color-surface);
+            border-bottom: 1px solid var(--color-border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, var(--color-orange), var(--color-blue));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-badge {
+            background-color: rgba(249, 115, 22, 0.1);
+            border: 1px solid var(--color-orange);
+            color: var(--color-orange);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            box-shadow: var(--glow-orange);
+        }
+
+        .main-container {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr;
+            gap: 1.5rem;
+            padding: 1.5rem;
+            flex: 1;
+            max-width: 1600px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* Video Feed & Canvas Overlay Column */
+        .feed-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .feed-container {
+            position: relative;
+            background-color: #000;
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            aspect-ratio: 16/9;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+
+        /* Simulated Video Feed */
+        .video-feed {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background: radial-gradient(circle at center, #111827 0%, #030712 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .baseball-diamond {
+            width: 70%;
+            height: 70%;
+            border: 2px dashed rgba(255,255,255,0.05);
+            transform: rotate(45deg);
+            position: absolute;
+        }
+
+        .pitcher-mound {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: rgba(255,255,255,0.15);
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .live-tag {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background-color: #ef4444;
+            color: #fff;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            border-radius: 4px;
+            letter-spacing: 1px;
+            animation: pulse 1.5s infinite;
+            z-index: 10;
+        }
+
+        .scoreboard-overlay {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            background-color: rgba(0, 0, 0, 0.85);
+            border: 1px solid var(--color-border);
+            padding: 8px 12px;
+            font-family: 'JetBrains Mono', monospace;
+            border-radius: 4px;
+            z-index: 10;
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+        }
+
+        /* Dynamic Visual Overlays */
+        .visual-overlay-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 20;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        /* Govee lightbar indicator representation */
+        .govee-indicator {
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            padding: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .lightbar-visual {
+            width: 120px;
+            height: 16px;
+            border-radius: 8px;
+            background: #27272a;
+            border: 1px solid #3f3f46;
+            transition: all 0.4s ease;
+        }
+
+        /* Chat & Log Box */
+        .log-container {
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            max-height: 250px;
+        }
+
+        .log-header {
+            background-color: rgba(255,255,255,0.02);
+            padding: 0.5rem 1rem;
+            border-bottom: 1px solid var(--color-border);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .log-body {
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            flex: 1;
+        }
+
+        .chat-line {
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+        }
+
+        .chat-user {
+            font-weight: 700;
+            color: var(--color-orange);
+            white-space: nowrap;
+        }
+
+        /* Actuator Grid Column */
+        .actuator-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            overflow-y: auto;
+            max-height: calc(100vh - 120px);
+            padding-right: 5px;
+        }
+
+        .group-card {
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .group-card:hover {
+            border-color: var(--color-border-hover);
+        }
+
+        .group-title {
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--color-blue);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 0.35rem;
+        }
+
+        .buttons-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .actuator-btn {
+            background-color: rgba(255,255,255,0.02);
+            border: 1px solid var(--color-border);
+            color: var(--color-text-muted);
+            padding: 0.6rem 0.8rem;
+            border-radius: 6px;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .actuator-btn:hover {
+            background-color: rgba(249, 115, 22, 0.05);
+            border-color: var(--color-orange);
+            color: #fff;
+            box-shadow: var(--glow-orange);
+        }
+
+        .btn-num {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: rgba(255,255,255,0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            color: var(--color-orange);
+        }
+
+        /* Dynamic Animations & Overlays CSS */
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .receipt-container {
+            width: 250px;
+            background-color: #fff;
+            color: #000;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 15px;
+            border-radius: 2px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            font-size: 0.75rem;
+            transform: translateY(-100%);
+            animation: slideReceipt 3s forwards ease-in-out;
+            position: absolute;
+            right: 20px;
+            top: 20px;
+        }
+
+        @keyframes slideReceipt {
+            0% { transform: translateY(-120%); }
+            20%, 80% { transform: translateY(0); }
+            100% { transform: translateY(-120%); }
+        }
+
+        .robbery-banner {
+            background: linear-gradient(45deg, #ef4444, #3b82f6);
+            border: 4px solid #fff;
+            color: #fff;
+            font-weight: 800;
+            font-size: 1.5rem;
+            padding: 1rem 2rem;
+            text-align: center;
+            letter-spacing: 2px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            animation: bounceIn 2.5s forwards cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-transform: uppercase;
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            20%, 80% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0.3); opacity: 0; }
+        }
+
+        .ex-factor-siren {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(234, 179, 8, 0.2);
+            animation: flashSiren 0.5s infinite alternate;
+        }
+
+        @keyframes flashSiren {
+            0% { opacity: 0.2; }
+            100% { opacity: 0.6; }
+        }
+
+        .echo-3030 {
+            color: #fff;
+            font-weight: 800;
+            font-size: 2rem;
+            text-shadow: 0 0 10px #0EA5E9, 0 0 20px #0EA5E9;
+            animation: flash3030 2s forwards ease;
+        }
+
+        @keyframes flash3030 {
+            0% { opacity: 0; transform: scale(0.5); }
+            10%, 90% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(1.5); }
+        }
+
+        .sigh-meter-box {
+            background-color: rgba(0,0,0,0.9);
+            border: 2px solid var(--color-border);
+            padding: 15px;
+            border-radius: 8px;
+            width: 250px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            animation: fadeInOut 3s forwards;
+        }
+
+        .sigh-bar-container {
+            height: 15px;
+            background-color: #27272a;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .sigh-bar {
+            height: 100%;
+            width: 90%;
+            background-color: #ef4444;
+            animation: dropBar 3s ease-out;
+        }
+
+        @keyframes dropBar {
+            0% { width: 0%; }
+            50% { width: 95%; }
+            100% { width: 75%; }
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: scale(0.9); }
+            10%, 90% { opacity: 1; transform: scale(1); }
+            100% { opacity: 0; transform: scale(0.9); }
+        }
+
+        .crosshair-container {
+            position: absolute;
+            width: 150px;
+            height: 150px;
+            border: 2px dashed #22c55e;
+            border-radius: 50%;
+            animation: spin 4s infinite linear, fadeInOut 3s forwards;
+        }
+
+        .crosshair-target {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 10px;
+            height: 10px;
+            background-color: #22c55e;
+            border-radius: 50%;
+        }
+
+        .pastrami-img {
+            position: absolute;
+            top: -60px;
+            left: 25px;
+            font-size: 2.5rem;
+            animation: bob 1s infinite alternate;
+        }
+
+        @keyframes spin {
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes bob {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-10px); }
+        }
+
+        .purple-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(124, 58, 237, 0.4);
+            animation: purpleFlash 0.3s infinite alternate;
+        }
+
+        @keyframes purpleFlash {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.8; }
+        }
+
+        .delay-ticker {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #f59e0b;
+            color: #000;
+            font-weight: 700;
+            font-size: 0.8rem;
+            padding: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        .delay-ticker-text {
+            display: inline-block;
+            padding-left: 100%;
+            animation: ticker 12s linear infinite;
+        }
+
+        @keyframes ticker {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-100%, 0, 0); }
+        }
+
+        .stevie-ticker {
+            background-color: #059669;
+            color: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            animation: fadeInOut 3s forwards;
+            border: 1px solid #10b981;
+        }
+
+        .ghost-path {
+            width: 120px;
+            height: 120px;
+            border: 3px solid rgba(255,255,255,0.4);
+            border-radius: 50%;
+            position: absolute;
+            transform: scale(0.1);
+            opacity: 0;
+            animation: ghostPitch 1.5s forwards cubic-bezier(0.1, 0.8, 0.3, 1);
+        }
+
+        @keyframes ghostPitch {
+            0% { transform: scale(0.1) translate(-200px, 0); opacity: 0; }
+            50% { opacity: 1; border-color: var(--color-blue); }
+            100% { transform: scale(1.5) translate(200px, 0); opacity: 0; }
+        }
+
+        .white-strobe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #fff;
+            animation: strobeFlash 0.8s forwards;
+        }
+
+        @keyframes strobeFlash {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .heart-pulse {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 50px rgba(239, 68, 68, 0.6);
+            animation: heartbeat 1s infinite alternate;
+        }
+
+        @keyframes heartbeat {
+            0% { box-shadow: inset 0 0 30px rgba(239, 68, 68, 0.4); }
+            100% { box-shadow: inset 0 0 70px rgba(239, 68, 68, 0.9); }
+        }
+
+        .shake-layout {
+            animation: shake 0.3s infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-4px, 4px); }
+            40% { transform: translate(4px, -4px); }
+            60% { transform: translate(-4px, -4px); }
+            80% { transform: translate(4px, 4px); }
+        }
+
+        .trajectory-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 5;
+        }
+
+        .spidey-web {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, transparent 20%, rgba(14, 165, 233, 0.15) 80%);
+            border: 8px double var(--color-blue);
+            animation: fadeInOut 2.5s forwards;
+        }
+
+        .ivy-infestation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 15px solid #15803d;
+            box-shadow: inset 0 0 20px rgba(21, 128, 61, 0.5);
+            animation: fadeInOut 3s forwards;
+        }
+
+        .pizza-discrepancy {
+            background-color: #b45309;
+            border: 2px solid #ea580c;
+            color: #fff;
+            font-weight: 800;
+            padding: 10px;
+            font-size: 1rem;
+            text-align: center;
+            border-radius: 4px;
+            animation: fadeInOut 3s forwards;
+        }
+
+        .shota-shades-takeover {
+            font-size: 5rem;
+            animation: dropShades 1.5s forwards ease-out;
+            position: absolute;
+        }
+
+        @keyframes dropShades {
+            0% { transform: translateY(-300px) rotate(45deg); }
+            60% { transform: translateY(20px) rotate(0deg); }
+            100% { transform: translateY(0); }
+        }
+
+        .windows-error {
+            background-color: #c0c0c0;
+            border: 2px solid #dfdfdf;
+            border-bottom: 2px solid #808080;
+            border-right: 2px solid #808080;
+            color: #000;
+            font-family: 'Inter', sans-serif;
+            font-size: 0.8rem;
+            width: 300px;
+            padding: 15px;
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.5);
+            animation: fadeInOut 3.5s forwards;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .windows-title {
+            background-color: #000080;
+            color: #fff;
+            padding: 2px 6px;
+            font-weight: 700;
+        }
+
+        .windows-btn {
+            background-color: #c0c0c0;
+            border: 1px solid #fff;
+            border-bottom: 1px solid #000;
+            border-right: 1px solid #000;
+            padding: 2px 15px;
+            cursor: pointer;
+            align-self: center;
+        }
+
+        .sam-breach {
+            position: absolute;
+            font-size: 3rem;
+            animation: walkCat 4s forwards linear;
+        }
+
+        @keyframes walkCat {
+            0% { transform: translateX(-350px); }
+            100% { transform: translateX(350px); }
+        }
+
+        .win-cardiac {
+            text-shadow: 0 0 10px var(--color-orange);
+            color: #fff;
+            font-weight: 800;
+            font-size: 2rem;
+            animation: bounceIn 3s forwards;
+        }
+
+        .cow-wink-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            animation: fadeInOut 4s forwards;
+            background-color: rgba(180, 83, 9, 0.1);
+            border: 1px solid #ea580c;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .cow-wink {
+            font-size: 5rem;
+            animation: wink 1s infinite alternate;
+        }
+
+        @keyframes wink {
+            0% { opacity: 0.8; }
+            100% { opacity: 1; }
+        }
+
+        .ember-effect {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            box-shadow: inset 0 0 30px rgba(234, 88, 12, 0.4);
+            animation: burn 0.5s infinite alternate;
+        }
+
+        @keyframes burn {
+            0% { box-shadow: inset 0 0 30px rgba(234, 88, 12, 0.4); }
+            100% { box-shadow: inset 0 0 50px rgba(234, 88, 12, 0.7); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🏟️ Sovereign Sports // Match Center UAT</h1>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <div class="status-badge" id="govee-status">Govee Status: Normal (Stadium Green)</div>
+            <div class="status-badge" style="border-color: var(--color-blue); color: var(--color-blue); background-color: rgba(14, 165, 233, 0.1);">Mets-Cubs Watch Party</div>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Visual & Telemetry Log Screen Column -->
+        <div class="feed-column">
+            <!-- Simulated Video Broadcast Viewport -->
+            <div class="feed-container" id="broadcast-viewport">
+                <div class="live-tag">LIVE FEED</div>
+                
+                <div class="video-feed">
+                    <div class="baseball-diamond"></div>
+                    <div class="pitcher-mound"></div>
+                    
+                    <!-- Dynamic Layer Target for overlays -->
+                    <div class="visual-overlay-layer" id="overlay-layer">
+                        <div style="color: rgba(255,255,255,0.15); font-weight: 800; font-size: 1.5rem; text-transform: uppercase;">Simulated Live Stream</div>
+                    </div>
+                </div>
+
+                <div class="scoreboard-overlay">
+                    <span>CHC: <strong id="score-chc">0</strong></span>
+                    <span>NYM: <strong id="score-nym">0</strong></span>
+                    <span>INN: <strong id="score-inn">1st</strong></span>
+                    <span>OUTS: <strong>0</strong></span>
+                </div>
+            </div>
+
+            <!-- Govee Lightbar Feedback Module -->
+            <div class="govee-indicator">
+                <span style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--color-text-muted);">Simulated Govee LED Lightbar (Port 4003)</span>
+                <div class="lightbar-visual" id="lightbar-visual" style="background-color: #15803d; box-shadow: 0 0 10px #15803d;"></div>
+            </div>
+
+            <!-- Active Watch Party Chat & Log Ticker -->
+            <div class="log-container">
+                <div class="log-header">
+                    <span>💬 Crosstalk Watch Party Lobby</span>
+                    <span style="color: var(--color-orange);">Channel Active</span>
+                </div>
+                <div class="log-body" id="chat-box">
+                    <div class="chat-line">
+                        <span class="chat-user" style="color: var(--color-blue);">[SYSTEM]</span>
+                        <span>Watch party initiated. 15 nodes seated in general general.</span>
+                    </div>
+                    <div class="chat-line">
+                        <span class="chat-user">@barf</span>
+                        <span>Alright let's go! Senga on the bump tonight, we gotta lock this down!</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TMI Event Actuator Panel Column -->
+        <div class="actuator-column">
+            <!-- Roster Summary -->
+            <div class="group-card" style="border-color: rgba(255,255,255,0.05);">
+                <div class="group-title" style="color: var(--color-orange);">Seeded Watch Party Roster</div>
+                <div style="font-size: 0.75rem; color: var(--color-text-muted); line-height: 1.4;">
+                    <strong>Mets Advocates (4):</strong> barf, UncleStevieStan, keith_fanboy, 7_train_terry<br>
+                    <strong>Cubs Fans (3):</strong> wrigley_wanderer, deepdish_dan, shota_shades<br>
+                    <strong>Chaos Agents (8):</strong> grimace_leftovers, parachute_guy, smyrnaheights_sam, meatball_manager, statcast_savant, doomer_dave, comiskey_spy, bleacher_bum_bailout
+                </div>
+            </div>
+
+            <!-- Group A -->
+            <div class="group-card">
+                <div class="group-title">⚾ Part A: Pete Crow-Armstrong (PCA) Revenge Vault</div>
+                <div class="buttons-grid">
+                    <button class="actuator-btn" onclick="fireRule(1)">
+                        <span>1. The "Baez Receipt" Trigger</span>
+                        <span class="btn-num">Rule 1</span>
+                    </button>
+                    <button class="actuator-btn" onclick="fireRule(2)">
+                        <span>2. Gold Glove Highway Robbery</span>
+                        <span class="btn-num">Rule 2</span>
+                    </button>
+                    <button class="actuator-btn" onclick="fireRule(3)">
+                        <span>3. The Ex-Factor Warning Siren</span>
+                        <span class="btn-num">Rule 3</span>
+                    </button>
+                    <button class="actuator-btn" onclick="fireRule(4)">
+                        <span>4. The 30-30 Echo</span>
+                        <span class="btn-num">Rule 4</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Group B -->
+            <div class="group-card">
+                <div class="group-title">🏟️ Part B: Citi Field Lore & Broadcasts</div>
+                <div class="buttons-grid">
+                    <button class="actuator-btn" onclick="fireRule(5)">
+                        <span>5. The Keith Hernandez Sigh Meter</span>
+                        <span class="btn-num">Rule 5</span>
+                    </button>
+                    <button class="actuator-btn" onclick="fireRule(6)">
+                        <span>6. The Pastrami Target Index</span>
+                        <span class="btn-num">Rule 6</span>
+                    </button>
+                    <button class="actuator-btn" onclick="fireRule(7)">
+                        <span>7. The Grimace Purge Protocol</span>
+                        <span class="btn-num">Rule 7</span>
+                    </button>
+                    <button class="actuator-btn" onclick="fireRule(8)">
+                        <span>8. The 7 Train Delay Simulation</span>
+                        <span class="btn-num">Rule 8</span>
+                    </button>
+                    <button class="actuator-btn" onclick="fireRule(9)">
+                        <span>9. The Uncle Stevie Capital Check</span>
+                        <span class="btn-num">Rule 9</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Group C -->
+            <div class="group-card">
+                <div class="group-title">⚡ Part C: Telemetry-Driven Chaos & Hardware</div>
+                <div class="buttons-grid">
+                    <button class="actuator-btn" onclick="fireRule(10)">
+                        <span>10. The Ghost Fork Blackout</span>
+                        <span class="btn-num">Rule 10</span>
+                    </button>
+                    <button class="actuator-btn" onclick="fireRule(11)">
+                        <span>11. The Heart Attack 9th Pulse</span>
+                        <span class="btn-num">Rule 11</span>
+                    </button>
+                    <button class="actuator-btn" onclick="fireRule(12)">
+                        <span>12. The Benge Rocket Tracker</span>
+                        <span class="btn-num">Rule 12</span>
+                    </button>
+                    <button class="actuator-btn" onclick="fireRule(13)">
+                        <span>13. Alvarez Moonshot Matrix</span>
+                        <span class="btn-num">Rule 13</span>
+                    </button>
+                    <button class="actuator-btn" onclick="fireRule(14)">
+                        <span>14. The Doomer Dampener</span>
+                        <span class="btn-num">Rule 14</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Group D -->
+            <div class="group-card">
+                <div class="group-title">🐻 Part D: Cubs Fan Trolling & watch Party</div>
+                <div class="buttons-grid">
+                    <button class="actuator-btn" onclick="fireRule(15)">
+                        <span>15. Ivy Infestation Alert</span>
+                        <span class="btn-num">Rule 15</span>
+                    </button>
+                    <button class="actuator-btn" onclick="fireRule(16)">
+                        <span>16. Deep Dish Discrepancy</span>
+                        <span class="btn-num">Rule 16</span>
+                    </button>
+                    <button class="actuator-btn" onclick="fireRule(17)">
+                        <span>17. The Shota Shades Dimmer</span>
+                        <span class="btn-num">Rule 17</span>
+                    </button>
+                    <button class="actuator-btn" onclick="fireRule(18)">
+                        <span>18. The Bleacher Bum Eviction</span>
+                        <span class="btn-num">Rule 18</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Group E -->
+            <div class="group-card">
+                <div class="group-title">🐱 Part E: Catnap & Neighborhood Cameos</div>
+                <div class="buttons-grid">
+                    <button class="actuator-btn" onclick="fireRule(19)">
+                        <span>19. Smyrna Heights Security Breach</span>
+                        <span class="btn-num">Rule 19</span>
+                    </button>
+                    <button class="actuator-btn" onclick="fireRule(20)">
+                        <span>20. The Sovereign Cozy Outro</span>
+                        <span class="btn-num">Rule 20</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Group F -->
+            <div class="group-card">
+                <div class="group-title">🐮 Part F: O'Leary Barn Burner</div>
+                <div class="buttons-grid">
+                    <button class="actuator-btn" onclick="fireRule(21)">
+                        <span>21. Mrs. O'Leary's Revenge (Cow Retribution)</span>
+                        <span class="btn-num">Rule 21</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Web Audio & Overlay Scripts -->
+    <script>
+        const chatBox = document.getElementById('chat-box');
+        const overlayLayer = document.getElementById('overlay-layer');
+        const lightbar = document.getElementById('lightbar-visual');
+        const goveeStatus = document.getElementById('govee-status');
+        const viewport = document.getElementById('broadcast-viewport');
+
+        const scoreCubs = document.getElementById('score-chc');
+        const scoreMets = document.getElementById('score-nym');
+        const scoreInn = document.getElementById('score-inn');
+
+        // Text-To-Speech Synthesis helper
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                // Cancel active speeches
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Helper to append lines to chat
+        function addChatLine(user, message, color = '#F97316') {
+            const line = document.createElement('div');
+            line.className = 'chat-line';
+            line.innerHTML = `<span class="chat-user" style="color: ${color}">@${user}</span> <span>${message}</span>`;
+            chatBox.appendChild(line);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Reset visual overlays and layout statuses
+        function resetViewportEffects() {
+            overlayLayer.innerHTML = '';
+            viewport.className = 'feed-container';
+            lightbar.style.backgroundColor = '#15803d';
+            lightbar.style.boxShadow = '0 0 10px #15803d';
+            goveeStatus.innerText = 'Govee Status: Normal (Stadium Green)';
+            goveeStatus.style.borderColor = 'var(--color-orange)';
+            goveeStatus.style.color = 'var(--color-orange)';
+        }
+
+        // TMI Actuator Core Logic
+        function fireRule(ruleNum) {
+            resetViewportEffects();
+            
+            switch (ruleNum) {
+                case 1: // Baez Receipt
+                    overlayLayer.innerHTML = `
+                        <div class="receipt-container">
+                            <strong>SOVEREIGN TRADE RECEIPT</strong><br>
+                            Date: July 30, 2021<br>
+                            ------------------------<br>
+                            TO NYM: Javier Baez<br>
+                            TO CHC: Pete Crow-Armstrong<br>
+                            ------------------------<br>
+                            Status: PAIN LEVEL HIGH<br>
+                            Value Leakage: 99.9%
+                        </div>
+                    `;
+                    addChatLine('keith_fanboy', 'UNBELIEVABLE. We traded him for half a season of Baez? I still grind my teeth thinking about this trade. PCA is going to destroy us tonight.', '#f43f5e');
+                    speak("Keith Hernandez rant triggered. Baez trade receipt rendering on main screen.");
+                    break;
+
+                case 2: // Robbery
+                    overlayLayer.innerHTML = `
+                        <div class="robbery-banner">
+                            CONGRATULATIONS,<br>YOU PLAYED YOURSELF
+                        </div>
+                    `;
+                    addChatLine('wrigley_wanderer', 'HE STOLE IT! PCA with a gold-glove rob in centerfield! That is 2016 magic baby!', '#0EA5E9');
+                    speak("Gold Glove highway robbery. Pete Crow-Armstrong catch probability 35 percent.");
+                    break;
+
+                case 3: // Warning Siren
+                    overlayLayer.innerHTML = `<div class="ex-factor-siren"></div>`;
+                    lightbar.style.backgroundColor = '#eab308';
+                    lightbar.style.boxShadow = '0 0 20px #eab308';
+                    goveeStatus.innerText = 'Govee Status: Siren Flash (Yellow)';
+                    addChatLine('doomer_dave', "He's going to hit a grand slam, I can feel it in my bones. Here comes the ex-Met collapse.", '#6b7280');
+                    speak("Ex-Factor warning siren. High situational leverage detected.");
+                    break;
+
+                case 4: // 30-30 Echo
+                    overlayLayer.innerHTML = `<div class="echo-3030">30-30 CLUB ECHO</div>`;
+                    addChatLine('statcast_savant', 'Crow-Armstrong home run. Hit distance: 412 feet. Statcast exit velocity: 104.2 mph. High trajectory.', '#10b981');
+                    speak("Pete Crow-Armstrong home run tracker. 30-30 echo active.");
+                    break;
+
+                case 5: // Sigh Meter
+                    overlayLayer.innerHTML = `
+                        <div class="sigh-meter-box">
+                            <strong style="font-size:0.75rem; text-transform:uppercase;">Keith Hernandez Sigh Meter</strong>
+                            <div class="sigh-bar-container">
+                                <div class="sigh-bar"></div>
+                            </div>
+                            <span style="font-size:0.65rem; color:#ef4444; font-weight:bold;">FUNDAMENT LEVELS: DEPLETED</span>
+                        </div>
+                    `;
+                    addChatLine('keith_fanboy', 'Sigh... Look at that cutoff position. We teach this in Little League, people. You cannot miss the cutoff man. Terrible fundamentals.', '#f43f5e');
+                    speak("Ugh... Fundament level sigh meter at critical depletion.");
+                    break;
+
+                case 6: // Pastrami Target
+                    overlayLayer.innerHTML = `
+                        <div class="crosshair-container">
+                            <div class="crosshair-target"></div>
+                            <div class="pastrami-img">🥪</div>
+                        </div>
+                    `;
+                    addChatLine('UncleStevieStan', 'THAT BALL IS TICKETED FOR SECTION 302! Pastrami sandwich target acquired!', '#F97316');
+                    speak("Mets Moonshot. Pastrami Target Index engaged.");
+                    break;
+
+                case 7: // Grimace Purge
+                    overlayLayer.innerHTML = `<div class="purple-overlay"></div>`;
+                    lightbar.style.backgroundColor = '#7c3aed';
+                    lightbar.style.boxShadow = '0 0 20px #7c3aed';
+                    goveeStatus.innerText = 'Govee Status: Purge Purple';
+                    scoreMets.innerText = parseInt(scoreMets.innerText) + 4;
+                    for (let i = 0; i < 4; i++) {
+                        addChatLine('grimace_leftovers', '🟣🟣🟣 GRIMACE BLESSING ACTIVE! METS SCORE 4 IN THE INNING! 🟣🟣🟣', '#7c3aed');
+                    }
+                    speak("Grimace Purge Protocol. Chaos gating shield bypassed.");
+                    break;
+
+                case 8: // 7 Train
+                    overlayLayer.innerHTML = `
+                        <div class="delay-ticker">
+                            <span class="delay-ticker-text">⚠️ 7 TRAIN DELAY: SERVICE CURRENTLY HELD DUE TO EXCESSIVE BOOTH REVIEWS. CHOOSE ALTERNATIVE ROUTE. ⚠️</span>
+                        </div>
+                    `;
+                    addChatLine('7_train_terry', 'I am going to miss my connection at Woodside! This review has taken five minutes! Just call it a strike!', '#f97316');
+                    speak("Booth review active. Transit ticker simulation on stream.");
+                    break;
+
+                case 9: // Uncle Stevie Capital Check
+                    overlayLayer.innerHTML = `
+                        <div class="stevie-ticker">
+                            <strong>STEVIE CAPITAL TAX METRIC</strong><br>
+                            Ingress: Strikeout Velocity 99+<br>
+                            Luxury Bracket Shift: +$1,250,000<br>
+                            Net Value Asset: Max Peak
+                        </div>
+                    `;
+                    addChatLine('UncleStevieStan', 'Strikeout pitch at 100 mph! That is why we pay the luxury tax, boys! Quality assets!', '#F97316');
+                    speak("Uncle Stevie Capital Check. Strikeout pitch velocity ninety nine plus.");
+                    break;
+
+                case 10: // Ghost Fork Blackout
+                    overlayLayer.innerHTML = `
+                        <div class="ghost-path"></div>
+                        <div class="white-strobe"></div>
+                    `;
+                    lightbar.style.backgroundColor = '#ffffff';
+                    lightbar.style.boxShadow = '0 0 30px #ffffff';
+                    goveeStatus.innerText = 'Govee Status: Ghost Fork Flash (White)';
+                    addChatLine('shota_shades', 'Senga Ghost Fork struck out the batter. Zero contact chance.', '#0EA5E9');
+                    speak("Ghost Fork Blackout. Govee port 4003 strobed white.");
+                    break;
+
+                case 11: // Heart Attack 9th
+                    overlayLayer.innerHTML = `<div class="heart-pulse"></div>`;
+                    viewport.className = 'feed-container shake-layout';
+                    lightbar.style.backgroundColor = '#ef4444';
+                    lightbar.style.boxShadow = '0 0 20px #ef4444';
+                    goveeStatus.innerText = 'Govee Status: Heartbeat Pulse (Red)';
+                    scoreInn.innerText = '9th';
+                    addChatLine('doomer_dave', 'Base runner on third with no outs in the 9th inning. I cannot handle this. My blood pressure is through the roof.', '#6b7280');
+                    speak("Heart Attack 9th pulse. High leverage index detected. Outrage screen shake active.");
+                    break;
+
+                case 12: // Benge Rocket Tracker
+                    addChatLine('statcast_savant', 'Carson Benge hit: 106.8 mph exit velocity. Launch angle: 12 degrees. Ground rule double. Structural tracking complete.', '#10b981');
+                    speak("Carson Benge rocket tracker. Exit velocity 106.8 miles per hour.");
+                    break;
+
+                case 13: // Alvarez Moonshot
+                    overlayLayer.innerHTML = `<div class="spidey-web"></div>`;
+                    addChatLine('barf', 'ALVAREZ DEEP DRIVE TO LEFT FIELD! WEB SLINGER TAKEOVER ENGAGED!', '#0EA5E9');
+                    speak("Alvarez Moonshot Matrix. Spidey swing watch party mode engaged.");
+                    break;
+
+                case 14: // Doomer Dampener
+                    addChatLine('barf', 'Please look at the flowers, everything is fine. Doomer Dave has been muted.', '#0EA5E9');
+                    speak("Boggs toxicity index threshold exceeded. Doomer Dave muted.");
+                    break;
+
+                case 15: // Ivy Infestation
+                    overlayLayer.innerHTML = `<div class="ivy-infestation"></div>`;
+                    scoreCubs.innerText = parseInt(scoreCubs.innerText) + 1;
+                    addChatLine('wrigley_wanderer', 'CUBS HOME RUN! Spawning the sacred Wrigley ivy! Go Cubs Go!', '#0EA5E9');
+                    speak("Cubs home run. Ivy infestation screen overlay active.");
+                    break;
+
+                case 16: // Deep Dish Discrepancy
+                    overlayLayer.innerHTML = `
+                        <div class="pizza-discrepancy">
+                            🍕 WARNING: CASSEROLE DENSITY OVERLOAD active 🍕
+                        </div>
+                    `;
+                    scoreCubs.innerText = parseInt(scoreCubs.innerText) + 3;
+                    addChatLine('deepdish_dan', 'THOSE CUBS RUNS ARE THICK LIKE A LOU MALNATI PIZZA PIE! NY PIZZA WEEPS!', '#b45309');
+                    speak("Deep dish discrepancy. Casserole density overload active.");
+                    break;
+
+                case 17: // Shota Shades
+                    overlayLayer.innerHTML = `<div class="shota-shades-takeover">🕶️</div>`;
+                    addChatLine('shota_shades', 'Shota Imanaga splitter strikeout swinging! Shades down! Splitter drop metric: 36 inches!', '#0EA5E9');
+                    speak("Shota shades dimmer. Splitting velocity locked down.");
+                    break;
+
+                case 18: // Bleacher Eviction
+                    overlayLayer.innerHTML = `
+                        <div class="windows-error">
+                            <div class="windows-title">Bleacher Bums Error</div>
+                            <div style="padding:10px;">Bleacher Bums have stopped responding due to Mets blowout. Restart watch party?</div>
+                            <button class="windows-btn" onclick="resetViewportEffects()">Restart</button>
+                        </div>
+                    `;
+                    addChatLine('comiskey_spy', 'Bleacher bums have logged out! Senga destroyed them! Go back to the North Side!', '#6b7280');
+                    speak("Bleacher Bum eviction. Windows error dialogue rendered.");
+                    break;
+
+                case 19: // Sam Cat
+                    overlayLayer.innerHTML = `<div class="sam-breach">🐈</div>`;
+                    addChatLine('smyrnaheights_sam', 'Meow. Walking across the infield during rain delay. System status: warm turf.', '#f97316');
+                    speak("Smyrna Heights security breach. Sam the orange cat detected on field turf.");
+                    break;
+
+                case 20: // Outro Win
+                    overlayLayer.innerHTML = `<div class="win-cardiac">METS WIN CARDIAC!</div>`;
+                    lightbar.style.backgroundColor = '#f97316';
+                    lightbar.style.boxShadow = '0 0 20px #f97316';
+                    goveeStatus.style.borderColor = '#f97316';
+                    goveeStatus.style.color = '#f97316';
+                    goveeStatus.innerText = 'Govee Status: Treehouse Amber Glow';
+                    addChatLine('UncleStevieStan', 'PUT IT IN THE BOOKS! METS WIN! WHAT A GAME!', '#F97316');
+                    speak("Put it in the books! Sovereign Cozy Outro engaged. Treehouse Amber lighting active.");
+                    break;
+
+                case 21: // Cow Wink
+                    overlayLayer.innerHTML = `
+                        <div class="cow-wink-box">
+                            <div class="cow-wink">🐮</div>
+                            <div class="ember-effect"></div>
+                            <span style="font-size:0.75rem; font-weight:bold; color:#ea580c; text-transform:uppercase;">Lantern Kicker Hex Active</span>
+                        </div>
+                    `;
+                    lightbar.style.backgroundColor = '#ea580c';
+                    lightbar.style.boxShadow = '0 0 25px #ea580c';
+                    goveeStatus.innerText = 'Govee Status: Fireplace Amber Pulse';
+                    addChatLine('keith_fanboy', "Talk about a hot time in the old town tonight. Senga's about to kick the lantern over on these bums.", '#f43f5e');
+                    speak("Mrs. O'Leary's Revenge. Sepia cow winking. Fireplace amber hardware pulse active.");
+                    break;
+            }
+        }
+    </script>
+</body>
+</html>

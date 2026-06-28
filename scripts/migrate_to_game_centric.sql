@@ -13,7 +13,6 @@ CREATE TABLE IF NOT EXISTS persona (
     user_name     TEXT UNIQUE NOT NULL,
     display_name  TEXT,
     team          TEXT,           -- MLB abbrev: SD, SF, ATL, SEA, GLOBAL
-    llm_engine    TEXT DEFAULT 'gemini-2.0-flash',
     system_prompt TEXT,
     boggs_level   INTEGER DEFAULT 2,
     avatar_url    TEXT,
@@ -95,7 +94,7 @@ CREATE INDEX IF NOT EXISTS idx_game_tmi_game ON game_tmi_event(game_pk);
 -- Pull from sys_user + cmdb_ci + cmdb_ci_ai_persona
 INSERT OR IGNORE INTO persona (
     id, user_name, display_name, team,
-    llm_engine, system_prompt, boggs_level,
+    system_prompt, boggs_level,
     cadence, deep_lore, behavior_notes, governance
 )
 SELECT
@@ -103,7 +102,6 @@ SELECT
     s.user_name,
     s.first_name || COALESCE(' ' || s.last_name, ''),
     ci.assigned_to,
-    COALESCE(p.u_llm_engine, 'gemini-2.0-flash'),
     p.u_system_prompt,
     COALESCE(CAST(p.u_boggs_reactivity AS INTEGER), 2),
     COALESCE(p.u_cadence, 'pacer'),

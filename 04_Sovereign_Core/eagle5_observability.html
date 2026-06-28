@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Eagle 5 Observability (Node .73)</title>
+    <style>
+        :root {
+            --bg-void: #0f1115;
+            --bg-card: #161920;
+            --border-slate: #1e293b;
+            --cyan-neon: #22d3ee;
+            --cyan-glow: rgba(34, 211, 238, 0.4);
+            --red-alert: #ef4444;
+            --amber-warn: #f59e0b;
+            --green-nom: #22c55e;
+            --text-main: #cbd5e1;
+            --text-muted: #64748b;
+        }
+
+        body {
+            background-color: var(--bg-void);
+            color: var(--text-main);
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            margin: 0; padding: 2rem;
+            display: flex; justify-content: center;
+        }
+
+        .container { max-width: 1200px; width: 100%; display: none; }
+        
+        header {
+            border-bottom: 1px solid var(--border-slate);
+            padding-bottom: 1rem; margin-bottom: 2rem;
+            display: flex; justify-content: space-between; align-items: flex-end;
+        }
+
+        h1 { font-size: 1.8rem; text-transform: uppercase; letter-spacing: 0.1em; margin: 0; color: #fff; }
+        h1 span { color: var(--cyan-neon); }
+        .subtitle { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; letter-spacing: 0.05em; }
+
+        .dot { height: 12px; width: 12px; border-radius: 50%; background-color: var(--cyan-neon); animation: pulse 2s infinite; }
+        .dot.error { background-color: var(--red-alert); animation: none; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .4; } }
+        .pulse { animation: pulse 2s infinite; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; }
+        
+        .card {
+            border: 1px solid var(--border-slate); background-color: var(--bg-card);
+            padding: 1.5rem; position: relative;
+        }
+        .status-line { position: absolute; top: 0; right: 0; width: 6px; height: 100%; background-color: var(--cyan-neon); }
+
+        .card-title { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin: 0 0 0.5rem 0; letter-spacing: 0.05em; }
+        .value-large { font-size: 2.25rem; font-weight: 700; margin: 0 0 1rem 0; letter-spacing: -0.025em; }
+        .label-small { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; }
+        
+        .load-grid {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; text-align: center;
+            border-top: 1px solid var(--border-slate); padding-top: 0.75rem; margin-top: 1rem;
+        }
+        .load-col:not(:first-child) { border-left: 1px solid var(--border-slate); }
+        .load-val { font-size: 1.125rem; font-weight: 600; color: var(--cyan-neon); }
+        
+        .power-box {
+            display: inline-block; font-size: 0.875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em;
+            padding: 0.5rem 1rem; border: 1px solid rgba(34,211,238,0.5); color: var(--cyan-neon); border-radius: 0.25rem;
+            box-shadow: 0 0 12px var(--cyan-glow);
+        }
+        .power-error { border-color: rgba(239,68,68,0.5); color: var(--red-alert); box-shadow: 0 0 15px rgba(239,68,68,0.6); }
+
+        .txt-red { color: var(--red-alert) !important; } .txt-amber { color: var(--amber-warn) !important; } 
+        .txt-green { color: var(--green-nom) !important; } .txt-cyan { color: var(--cyan-neon) !important; }
+        .bg-red { background-color: var(--red-alert) !important; } .bg-amber { background-color: var(--amber-warn) !important; } 
+        .bg-green { background-color: var(--green-nom) !important; } .bg-cyan { background-color: var(--cyan-neon) !important; }
+
+        #loading { height: 80vh; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: var(--cyan-neon); }
+    </style>
+</head>
+<body>
+    <div id="loading" class="pulse">[ INITIATING HARDWARE HANDSHAKE... ]</div>
+    
+    <div id="dashboard" class="container">
+        <header>
+            <div>
+                <h1>EAGLE 5 <span>NODE .73</span></h1>
+                <div class="subtitle">BETTERSTACK CLONE // VANILLA LOGIC // NATIVE POLLING</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <span class="label-small">STATE</span><div id="status-dot" class="dot"></div>
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- Core Temp -->
+            <div class="card">
+                <div id="temp-line" class="status-line bg-green"></div>
+                <div class="card-title">SoC Core Temp</div>
+                <div id="temp-val" class="value-large txt-green">0.0°C</div>
+                <div id="temp-label" class="label-small">NOMINAL</div>
+            </div>
+
+            <!-- Memory & Swap -->
+            <div class="card">
+                <div id="swap-line" class="status-line bg-cyan"></div>
+                <div class="card-title">System Memory</div>
+                <div class="value-large" style="color: #fff; font-size: 1.5rem;">
+                    <span id="ram-used">0</span> <span style="font-size: 1.1rem; color: var(--text-muted)">/ <span id="ram-total">0</span> MB</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+                    <span class="label-small">Swap Saturation</span>
+                    <span id="swap-val" class="txt-cyan" style="font-weight: 700; font-size: 0.85rem;">0 MB</span>
+                </div>
+            </div>
+
+            <!-- Load -->
+            <div class="card">
+                <div class="status-line bg-cyan"></div>
+                <div class="card-title">Compute Load</div>
+                <div class="load-grid">
+                    <div class="load-col"><div class="label-small" style="font-size:10px; margin-bottom:4px;">1M</div><div id="load-1m" class="load-val">0.00</div></div>
+                    <div class="load-col"><div class="label-small" style="font-size:10px; margin-bottom:4px;">5M</div><div id="load-5m" class="load-val">0.00</div></div>
+                    <div class="load-col"><div class="label-small" style="font-size:10px; margin-bottom:4px;">15M</div><div id="load-15m" class="load-val">0.00</div></div>
+                </div>
+            </div>
+
+            <!-- Power Rail -->
+            <div class="card">
+                <div id="power-line" class="status-line bg-cyan"></div>
+                <div class="card-title" style="margin-bottom: 1rem;">5.1V Rail Purity</div>
+                <div style="display: flex; align-items: center; padding-bottom: 1rem;">
+                    <div id="power-box" class="power-box">NOMINAL</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DOM = {
+            loading: document.getElementById('loading'), dboard: document.getElementById('dashboard'),
+            statusDot: document.getElementById('status-dot'),
+            tempLine: document.getElementById('temp-line'), tempVal: document.getElementById('temp-val'), tempLabel: document.getElementById('temp-label'),
+            swapLine: document.getElementById('swap-line'), ramUsed: document.getElementById('ram-used'), ramTotal: document.getElementById('ram-total'), swapVal: document.getElementById('swap-val'),
+            load1m: document.getElementById('load-1m'), load5m: document.getElementById('load-5m'), load15m: document.getElementById('load-15m'),
+            powerLine: document.getElementById('power-line'), powerBox: document.getElementById('power-box')
+        };
+
+        async function fetchTelemetry() {
+            try {
+                const response = await fetch('http://' + window.location.hostname + ':8000/api/system/telemetry');
+                if (!response.ok) throw new Error('Polling failed');
+                const data = await response.json();
+                
+                DOM.loading.style.display = 'none';
+                DOM.dboard.style.display = 'block';
+                DOM.statusDot.classList.remove('error');
+
+                // Temperature
+                let temp = parseFloat(data.tempC);
+                let tColor = 'txt-green', bgClass = 'bg-green', tLabel = 'NOMINAL';
+                if (temp > 80) { tColor = 'txt-red'; bgClass = 'bg-red'; tLabel = 'CRITICAL THERMAL'; } 
+                else if (temp > 70) { tColor = 'txt-amber'; bgClass = 'bg-amber'; tLabel = 'ELEVATED THERMAL'; }
+                else if (temp < 65) { tColor = 'txt-green'; bgClass = 'bg-green'; tLabel = 'NOMINAL'; }
+
+                DOM.tempVal.innerText = temp.toFixed(1) + '°C';
+                DOM.tempVal.className = `value-large ${tColor}`;
+                DOM.tempLine.className = `status-line ${bgClass}`;
+                DOM.tempLabel.innerText = tLabel;
+
+                // Memory / Swap
+                DOM.ramUsed.innerText = data.ramUsageUsedMB;
+                DOM.ramTotal.innerText = data.ramUsageTotalMB;
+                DOM.swapVal.innerText = data.swapUsedMB + ' MB';
+                const swapping = data.swapUsedMB > 0;
+                DOM.swapLine.className = `status-line ${swapping ? 'bg-red' : 'bg-cyan'}`;
+                DOM.swapVal.className = swapping ? 'txt-red pulse' : 'txt-cyan';
+                
+                // CPU Load
+                DOM.load1m.innerText = parseFloat(data.load1m).toFixed(2);
+                DOM.load5m.innerText = parseFloat(data.load5m).toFixed(2);
+                DOM.load15m.innerText = parseFloat(data.load15m).toFixed(2);
+
+                // Power Rail
+                const powerNominal = data.powerRailNominal;
+                DOM.powerLine.className = `status-line ${powerNominal ? 'bg-cyan' : 'bg-red'}`;
+                DOM.powerBox.className = `power-box ${powerNominal ? '' : 'power-error pulse'}`;
+                DOM.powerBox.innerText = powerNominal ? 'NOMINAL' : 'UNDERVOLTAGE_ALERT';
+
+            } catch (err) {
+                console.error(err);
+                DOM.statusDot.classList.add('error');
+            }
+        }
+        fetchTelemetry(); setInterval(fetchTelemetry, 2000);
+    </script>
+</body>
+</html>

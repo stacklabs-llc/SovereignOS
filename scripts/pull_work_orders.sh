@@ -22,24 +22,46 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-GDRIVE_SOURCE="sovereign_os:SovereignOS_Clio_Sync/work_orders"
+GDRIVE_SOURCE_SPARK="sovereign_os:SovereignOS_Clio_Sync/work_orders"
+GDRIVE_SOURCE_GEMINI="sovereign_os:"
+GDRIVE_ARCHIVE="sovereign_os:SovereignOS_Clio_Sync/work_orders/archive"
 LOCAL_INBOX="/home/james/sovereign_inbox"
 SORTING_HAT_SCRIPT="/home/james/SovereignOS/scripts/organize_inbox.py"
 
 echo -e "${CYAN}[*] Initiating Sovereign Google Drive Pull Pass...${NC}"
 
-# 1. Pull down files from the Google Drive work_orders folder
-# We specify '--drive-export-formats txt' to force rclone to download Google Docs
-# as raw, unformatted text files (which preserves your clean markdown text).
-if rclone copy "$GDRIVE_SOURCE" "$LOCAL_INBOX" \
+# 1. Pull down files from the Google Drive work_orders folder (Spark)
+echo -e "${CYAN}[➔] Pulling from Spark work_orders subfolder...${NC}"
+if rclone copy "$GDRIVE_SOURCE_SPARK" "$LOCAL_INBOX" \
     --drive-export-formats txt \
     --exclude "archive/**" \
+    --exclude "spark/**" \
     --max-depth 1 \
     --fast-list \
     --quiet; then
-    echo -e "${GREEN}[✔] Google Drive sync complete. Staged files pulled to inbox.${NC}"
+    echo -e "${GREEN}[✔] Spark subfolder pull complete.${NC}"
 else
-    echo -e "${RED}[❌] Failed to connect to Google Drive. Check Tailscale proxy routing.${NC}"
+    echo -e "${RED}[❌] Failed to pull from Spark subfolder. Check Tailscale proxy routing.${NC}"
+    exit 1
+fi
+
+# 1.5. Pull down files from the Google Drive root folder (Gemini)
+echo -e "${CYAN}[➔] Pulling from Gemini root folder...${NC}"
+if rclone copy "$GDRIVE_SOURCE_GEMINI" "$LOCAL_INBOX" \
+    --drive-export-formats txt \
+    --filter "- SovereignOS_Clio_Sync/**" \
+    --filter "- SovereignOS_Clio_Sync*" \
+    --filter "+ *[wW][oO][rR][kK]*[oO][rR][dD][eE][rR]*" \
+    --filter "+ *[wW][oO]-*" \
+    --filter "+ *[kK][nN][oO][wW][lL][eE][dD][gG][eE]*" \
+    --filter "+ *[kK][bB]*" \
+    --filter "- *" \
+    --max-depth 1 \
+    --fast-list \
+    --quiet; then
+    echo -e "${GREEN}[✔] Gemini root folder pull complete.${NC}"
+else
+    echo -e "${RED}[❌] Failed to pull from Gemini root folder. Check Tailscale proxy routing.${NC}"
     exit 1
 fi
 
@@ -69,14 +91,35 @@ fi
 
 # 2.5. Destroy active queue in Google Drive to prevent duplication loop
 echo -e "${CYAN}🧹 Archiving processed cloud files to prevent infinite replication loops...${NC}"
-if rclone move "$GDRIVE_SOURCE" "${GDRIVE_SOURCE}/archive" \
+
+echo -e "${CYAN}[➔] Archiving Spark subfolder queue...${NC}"
+if rclone move "$GDRIVE_SOURCE_SPARK" "$GDRIVE_ARCHIVE" \
     --exclude "archive/**" \
+    --exclude "spark/**" \
     --max-depth 1 \
     --fast-list \
     --quiet; then
-    echo -e "${GREEN}[✔] Google Drive queue cleaned and archived successfully.${NC}"
+    echo -e "${GREEN}[✔] Spark subfolder queue archived.${NC}"
 else
-    echo -e "${RED}[❌] Failed to archive Google Drive queue. Check permissions.${NC}"
+    echo -e "${RED}[❌] Failed to archive Spark subfolder queue.${NC}"
+    exit 1
+fi
+
+echo -e "${CYAN}[➔] Archiving Gemini root folder queue...${NC}"
+if rclone move "$GDRIVE_SOURCE_GEMINI" "$GDRIVE_ARCHIVE" \
+    --filter "- SovereignOS_Clio_Sync/**" \
+    --filter "- SovereignOS_Clio_Sync*" \
+    --filter "+ *[wW][oO][rR][kK]*[oO][rR][dD][eE][rR]*" \
+    --filter "+ *[wW][oO]-*" \
+    --filter "+ *[kK][nN][oO][wW][lL][eE][dD][gG][eE]*" \
+    --filter "+ *[kK][bB]*" \
+    --filter "- *" \
+    --max-depth 1 \
+    --fast-list \
+    --quiet; then
+    echo -e "${GREEN}[✔] Gemini root folder queue archived successfully.${NC}"
+else
+    echo -e "${RED}[❌] Failed to archive Gemini root folder queue.${NC}"
     exit 1
 fi
 

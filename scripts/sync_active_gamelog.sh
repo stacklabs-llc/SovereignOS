@@ -4,24 +4,28 @@
 # STRY-06072026-LOG-INTEGRATION — Phase 3: The 5-Minute Sync Loop
 # ==============================================================================
 
-GAME_PK="824505"
+GAME_PK="823206"
 OUTPUT_DIR="/home/james/sovereign_inbox/notebook_sync/StackLabs_Internal"
 OUTPUT_FILE="$OUTPUT_DIR/game_log_${GAME_PK}_live.md.txt"
+PILOT_FILE="/home/james/sovereign_inbox/pilot_drops/game_log_${GAME_PK}_20260626.md"
 
-echo "=== Gamelog Sync Start: $(date -u) ==="
+mkdir -p "$OUTPUT_DIR"
+mkdir -p "/home/james/sovereign_inbox/pilot_drops"
 
-# 1. Export the latest chat log from the SQLite database
-/usr/bin/python3 /home/james/SovereignOS/scripts/export_live_chat.py --game_pk "$GAME_PK" --output "$OUTPUT_FILE"
+echo "=== Gamelog Sync Started: Game PK ${GAME_PK} ==="
 
-# 2. Push the resulting file to the designated Google Drive remote repository
-# Using rclone copy to upload the single file efficiently
-/usr/bin/rclone copy "$OUTPUT_FILE" "sovereign_os:SovereignOS_Clio_Sync/NotebookLM_Sync/StackLabs_Internal" \
-  --fast-list \
-  --progress
-
-if [ $? -eq 0 ]; then
-  echo "=== Gamelog Sync Success: $(date -u) ==="
-else
-  echo "=== Gamelog Sync Failed: $(date -u) ==="
-  exit 1
-fi
+while true; do
+    echo "[$(date)] Syncing game log for ${GAME_PK}..."
+    
+    # Fetch log from local relay API
+    curl -s "http://127.0.0.1:8000/api/game-log/export/${GAME_PK}?format=md" > "$OUTPUT_FILE"
+    
+    # Also sync to pilot drops path
+    cp "$OUTPUT_FILE" "$PILOT_FILE"
+    
+    # Log progress
+    echo "[$(date)] Sync completed. Staged in $OUTPUT_FILE and $PILOT_FILE."
+    
+    # Wait for 5 minutes
+    sleep 300
+done

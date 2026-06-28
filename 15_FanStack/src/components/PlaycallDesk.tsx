@@ -58,7 +58,6 @@ export default function PlaycallDesk() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             title: editForm.desc,
-                            department: editForm.engine,
                             introduction: editForm.prompt
                         })
                     });
@@ -69,7 +68,6 @@ export default function PlaycallDesk() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         deployment_zone: editForm.room,
-                        llm_engine: editForm.engine,
                         system_prompt: editForm.prompt
                     })
                 });
@@ -82,7 +80,6 @@ export default function PlaycallDesk() {
                         name: editForm.name,
                         team: editForm.team || 'GLOBAL',
                         deployment_zone: editForm.room || 'GLOBAL',
-                        llm_engine: editForm.engine || 'gemini-flash',
                         boggs_reactivity: editForm.boggs || 'medium',
                         cadence: editForm.cadence || 'pacer',
                         system_prompt: editForm.prompt || editForm.desc,
@@ -205,7 +202,6 @@ export default function PlaycallDesk() {
                         desc: r.team || '',
                         team: r.team,
                         room: r.deployment_zone || 'BENCHED',
-                        engine: r.llm_engine,
                         boggs: r.boggs_reactivity,
                         prompt: r.system_prompt,
                         cadence: r.cadence,
@@ -232,7 +228,6 @@ export default function PlaycallDesk() {
                     desc: r.title,
                     team: r.department,
                     room: 'GLOBAL', 
-                    engine: 'gemini-flash',
                     boggs: 'medium',
                     prompt: r.introduction,
                     cadence: 'pacer',
@@ -1212,23 +1207,13 @@ export default function PlaycallDesk() {
                                 <label className="font-['Outfit'] text-[15px] font-bold tracking-[0.15em] text-[#64748b] uppercase mb-2 block">Short Description</label>
                                 <input value={editForm.desc || ''} onChange={e => setEditForm({...editForm, desc: e.target.value})} className="w-full bg-black/30 border border-white/10 text-white font-['Inter'] text-[16px] p-3 rounded-xl outline-none focus:border-[#38bdf8]" />
                             </div>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="font-['Outfit'] text-[15px] font-bold tracking-[0.15em] text-[#64748b] uppercase mb-2 block">Engine</label>
-                                    <select value={editForm.engine || ''} onChange={e => setEditForm({...editForm, engine: e.target.value})} className="w-full bg-black/30 border border-white/10 text-white font-['Inter'] text-[16px] p-3 rounded-xl outline-none focus:border-[#38bdf8] appearance-none">
-                                        <option value="gemini-2.5-flash" className="bg-[#111827] text-white">Gemini Flash</option>
-                                        <option value="gemini-2.5-pro" className="bg-[#111827] text-white">Gemini Pro</option>
-                                        <option value="mistral:latest" className="bg-[#111827] text-white">Mistral (Local)</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label className="font-['Outfit'] text-[15px] font-bold tracking-[0.15em] text-[#64748b] uppercase mb-2 block">Room (Game PK or GLOBAL)</label>
-                                    <select value={editForm.room || 'BENCHED'} onChange={e => setEditForm({...editForm, room: e.target.value})} className="w-full bg-black/30 border border-white/10 text-white font-['Inter'] text-[16px] p-3 rounded-xl outline-none focus:border-[#38bdf8] appearance-none">
-                                        <option value="GLOBAL" className="bg-[#111827] text-white">GLOBAL</option>
-                                        <option value="BENCHED" className="bg-[#111827] text-gray-500">BENCHED (Inactive)</option>
-                                        {games.map(g => <option key={g.id} value={g.id} className="bg-[#111827] text-white">{g.text.replace(' (Live)', '')}</option>)}
-                                    </select>
-                                </div>
+                            <div>
+                                <label className="font-['Outfit'] text-[15px] font-bold tracking-[0.15em] text-[#64748b] uppercase mb-2 block">Room (Game PK or GLOBAL)</label>
+                                <select value={editForm.room || 'BENCHED'} onChange={e => setEditForm({...editForm, room: e.target.value})} className="w-full bg-black/30 border border-white/10 text-white font-['Inter'] text-[16px] p-3 rounded-xl outline-none focus:border-[#38bdf8] appearance-none">
+                                    <option value="GLOBAL" className="bg-[#111827] text-white">GLOBAL</option>
+                                    <option value="BENCHED" className="bg-[#111827] text-gray-500">BENCHED (Inactive)</option>
+                                    {games.map(g => <option key={g.id} value={g.id} className="bg-[#111827] text-white">{g.text.replace(' (Live)', '')}</option>)}
+                                </select>
                             </div>
                             <div>
                                 <label className="font-['Outfit'] text-[15px] font-bold tracking-[0.15em] text-[#64748b] uppercase mb-2 block">Deep Lore / Advanced Prompt</label>

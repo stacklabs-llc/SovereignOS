@@ -62,7 +62,7 @@ export default function HololinkHub({ user: _user, wsRelayUrl: _wsRelayUrl }: Ho
     const labels: Record<string, string> = {
       aether_vet: '🏥 Aether Vet Clinic',
       fanstack: '🎙️ FanStack Studio',
-      gardenstack: '🌿 GardenStack',
+      gardenstack: "🌿 Eileen's Stack",
     };
     return labels[q] ?? q;
   };

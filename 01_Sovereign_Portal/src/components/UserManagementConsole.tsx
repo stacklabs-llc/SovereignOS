@@ -96,6 +96,7 @@ export default function UserManagementConsole() {
 
   // Ticket Cache (To filter assignments for selected user)
   const [allTasks, setAllTasks] = useState<any[]>([]);
+  const [executingTickets, setExecutingTickets] = useState<Set<string>>(new Set());
 
   // Edit form states
   const [editDisplay, setEditDisplay] = useState('');
@@ -218,6 +219,41 @@ export default function UserManagementConsole() {
       }
     } catch (e) {
       console.error('Failed to load tasks registry:', e);
+    }
+  };
+
+  const handleRunOnArgo = async (ticketId: string) => {
+    setExecutingTickets(prev => {
+      const next = new Set(prev);
+      next.add(ticketId);
+      return next;
+    });
+    try {
+      const res = await fetch('/api/personas/argo/run', {
+        method: 'POST',
+        headers: authHeader,
+        body: JSON.stringify({ ticket_id: ticketId })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === 'success') {
+          flash(setPanelStatus, 'success', `Argo Executed: ${data.output}`);
+          fetchTasks();
+        } else {
+          flash(setPanelStatus, 'error', `Argo Fail: ${data.message || data.errors}`);
+        }
+      } else {
+        const err = await res.json();
+        flash(setPanelStatus, 'error', err.detail || 'Argo execution request failed');
+      }
+    } catch (err: any) {
+      flash(setPanelStatus, 'error', err.message || 'Network error executing on Argo');
+    } finally {
+      setExecutingTickets(prev => {
+        const next = new Set(prev);
+        next.delete(ticketId);
+        return next;
+      });
     }
   };
 
@@ -361,7 +397,7 @@ export default function UserManagementConsole() {
     finally { setSaving(false); }
   };
 
-  const handlePrint = () => {
+  const handlePrint = (preview = false) => {
     if (!selected) return;
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
@@ -873,8 +909,7 @@ export default function UserManagementConsole() {
           <script>
             window.onload = function() {
               setTimeout(function() {
-                window.print();
-                window.close();
+                ${preview ? '' : 'window.print(); window.close();'}
               }, 1200);
             }
           </script>
@@ -1692,6 +1727,7 @@ export default function UserManagementConsole() {
                                 <th className="py-2.5 px-3">Description Title</th>
                                 <th className="py-2.5 px-3">Status</th>
                                 <th className="py-2.5 px-3 text-center">Priority</th>
+                                <th className="py-2.5 px-3 text-center">Execution</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-white/5 font-mono text-[11px]">
@@ -1703,6 +1739,8 @@ export default function UserManagementConsole() {
                                   statusPill = "bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20 font-bold";
                                 } else if (t.status === 'PLANNING' || t.status === 'Planning') {
                                   statusPill = "bg-[#f59e0b]/10 text-[#f59e0b] border border-[#f59e0b]/20 font-bold";
+                                } else if (t.status === 'STAGED' || t.status === 'Staged') {
+                                  statusPill = "bg-slate-500/10 text-slate-400 border border-slate-500/20 font-bold";
                                 }
 
                                 let priorityStyle = "text-slate-400";
@@ -1724,6 +1762,17 @@ export default function UserManagementConsole() {
                                       </span>
                                     </td>
                                     <td className={`py-3 px-3 text-center ${priorityStyle}`}>{t.priority}</td>
+                                    <td className="py-3 px-3 text-center">
+                                      {(t.status === 'STAGED' || t.status === 'Staged') && (
+                                        <button
+                                          onClick={() => handleRunOnArgo(t.id)}
+                                          disabled={executingTickets.has(t.id)}
+                                          className="bg-[#38bdf8]/10 hover:bg-[#38bdf8]/20 disabled:opacity-50 border border-[#38bdf8]/35 text-[#38bdf8] text-[9px] font-bold uppercase tracking-wider px-2.5 py-1 rounded transition-all cursor-pointer font-mono"
+                                        >
+                                          {executingTickets.has(t.id) ? 'Running...' : 'Run on Argo'}
+                                        </button>
+                                      )}
+                                    </td>
                                   </tr>
                                 );
                               })}
@@ -1990,7 +2039,14 @@ export default function UserManagementConsole() {
                 {/* Footer Save actions */}
                 <div className="flex justify-end pt-2 gap-3">
                   <button
-                    onClick={handlePrint}
+                    onClick={() => handlePrint(true)}
+                    className="flex items-center gap-2.5 px-6 py-3 bg-[#0f172a] hover:bg-[#1e293b] text-slate-300 border border-white/10 hover:border-white/20 font-bold text-xs uppercase tracking-[0.2em] rounded-xl shadow-lg transition-all duration-200"
+                  >
+                    <Eye className="w-4 h-4 text-slate-400" />
+                    <span>View Dossier</span>
+                  </button>
+                  <button
+                    onClick={() => handlePrint(false)}
                     className="flex items-center gap-2.5 px-6 py-3 bg-[#0f172a] hover:bg-[#1e293b] text-slate-300 border border-white/10 hover:border-white/20 font-bold text-xs uppercase tracking-[0.2em] rounded-xl shadow-lg transition-all duration-200"
                   >
                     <Printer className="w-4 h-4 text-slate-400" />

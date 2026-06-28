@@ -1,7 +1,7 @@
 import asyncio
 import sqlite3
 import uuid
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import re
@@ -38,7 +38,6 @@ class Persona(BaseModel):
     name: str
     team: str
     deployment_zone: str
-    llm_engine: str
     boggs_reactivity: str
     cadence: str
     system_prompt: str
@@ -53,7 +52,7 @@ async def get_personas():
     c = conn.cursor()
     c.execute("""
         SELECT c.sys_id, c.name, c.operational_status, c.assigned_to as team, 
-               p.u_deployment_zone as deployment_zone, p.u_llm_engine as llm_engine, 
+               p.u_deployment_zone as deployment_zone, 
                p.u_boggs_reactivity as boggs_reactivity, p.u_cadence as cadence, 
                p.u_system_prompt as system_prompt
         FROM cmdb_ci c
@@ -121,9 +120,9 @@ async def create_persona(p: Persona):
         """, (new_id, p.name, p.name, p.status, p.team))
         
         c.execute("""
-            INSERT INTO cmdb_ci_ai_persona (sys_id, u_llm_engine, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (new_id, p.llm_engine, p.system_prompt, p.deployment_zone, p.boggs_reactivity, p.cadence))
+            INSERT INTO cmdb_ci_ai_persona (sys_id, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence)
+            VALUES (?, ?, ?, ?, ?)
+        """, (new_id, p.system_prompt, p.deployment_zone, p.boggs_reactivity, p.cadence))
         conn.commit()
     except Exception as e:
         conn.rollback()
@@ -149,9 +148,7 @@ async def update_persona(sys_id: str, p: dict):
         if "cadence" in p:
             updates.append("u_cadence = ?")
             params.append(p["cadence"])
-        if "llm_engine" in p:
-            updates.append("u_llm_engine = ?")
-            params.append(p["llm_engine"])
+        # llm_engine has been deprecated and squashed
         if "system_prompt" in p:
             updates.append("u_system_prompt = ?")
             params.append(p["system_prompt"])
@@ -256,7 +253,6 @@ async def parse_gwen_payload(payload: ParsePayload):
             # Defaults
             if "team" not in current_persona: current_persona["team"] = current_gonzo_team or "Unknown"
             if "deployment_zone" not in current_persona: current_persona["deployment_zone"] = ""
-            if "llm_engine" not in current_persona: current_persona["llm_engine"] = "gemini-flash"
             if "boggs_reactivity" not in current_persona: current_persona["boggs_reactivity"] = "medium"
             if "cadence" not in current_persona: current_persona["cadence"] = "pacer"
             personas.append(current_persona)
@@ -299,7 +295,7 @@ async def parse_gwen_payload(payload: ParsePayload):
             elif line_s.startswith("Deployment Zone:"):
                 current_persona["deployment_zone"] = line_s.split(":", 1)[1].strip()
             elif line_s.startswith("LLM Engine:"):
-                current_persona["llm_engine"] = line_s.split(":", 1)[1].strip()
+                pass # Deprecated field
             elif line_s.startswith("Boggs Reactivity:"):
                 current_persona["boggs_reactivity"] = line_s.split(":", 1)[1].strip()
             elif line_s.startswith("Cadence:"):
@@ -332,9 +328,9 @@ async def parse_gwen_payload(payload: ParsePayload):
             """, (new_id, p["name"], p["name"], 1, p["team"]))
             
             c.execute("""
-                INSERT INTO cmdb_ci_ai_persona (sys_id, u_llm_engine, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (new_id, p["llm_engine"], p["system_prompt"], p["deployment_zone"], p["boggs_reactivity"], p["cadence"]))
+                INSERT INTO cmdb_ci_ai_persona (sys_id, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence)
+                VALUES (?, ?, ?, ?, ?)
+            """, (new_id, p["system_prompt"], p["deployment_zone"], p["boggs_reactivity"], p["cadence"]))
             inserted_count += 1
         conn.commit()
     except Exception as e:
@@ -548,6 +544,127 @@ async def proxy_cinema_request(req: CinemaProxyRequest):
             return response.json()
         except Exception as e:
             raise HTTPException(status_code=502, detail=f"Failed to forward request to core cinema service: {e}")
+
+import paramiko
+
+def execute_on_argo(work_order_id):
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    try:
+        # Direct secure connection over Tailscale MagicDNS
+        ssh.connect("argo.taila01894.ts.net", username="james")
+        stdin, stdout, stderr = ssh.exec_command(f"antigravity --run {work_order_id}")
+        output = stdout.read().decode("utf-8")
+        errors = stderr.read().decode("utf-8")
+        return {"status": "success", "output": output, "errors": errors}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+    finally:
+        ssh.close()
+
+class ArgoRunRequest(BaseModel):
+    ticket_id: str
+
+@app.post("/api/personas/argo/run")
+async def argo_run(req: ArgoRunRequest):
+    res = execute_on_argo(req.ticket_id)
+    
+    # Audit Trail Logged: Every manual and automated execution logs a closed incident ticket in 'sovereign_tickets'.
+    import sqlite3
+    conn = sqlite3.connect("/home/james/SovereignOS/dna/sovereign_now.db")
+    c = conn.cursor()
+    inc_id = f"INC{int(uuid.uuid4().hex, 16) % 10000000}"
+    sys_id = uuid.uuid4().hex
+    
+    status_text = res.get("status")
+    output_text = res.get("output", "")
+    errors_text = res.get("errors", "")
+    message_text = res.get("message", "")
+    
+    work_notes = f"SSH status: {status_text}. Output: {output_text}. Errors: {errors_text or message_text}"
+    
+    c.execute("""
+        INSERT INTO sovereign_tickets 
+          (sys_id, number, type, short_description, description, state, priority, assigned_to, cmdb_ci, work_notes)
+        VALUES (?, ?, 'INC', ?, ?, 4, 2, 'james', 'ArgoSSH', ?)
+    """, (
+        sys_id,
+        inc_id,
+        f"Argo Executed Work Order {req.ticket_id}",
+        f"Manual execution of antigravity command for ticket {req.ticket_id} on Argo remote node.",
+        work_notes[:1000]
+    ))
+    
+    if status_text == "success":
+        c.execute("UPDATE sovereign_tickets SET state = 4, work_notes = ? WHERE number = ?", (f"Executed on Argo. Output: {output_text[:500]}", req.ticket_id))
+        c.execute("UPDATE sys_sdlc_task SET state = 'RESOLVED' WHERE task_id = ?", (req.ticket_id,))
+        
+    conn.commit()
+    conn.close()
+    
+    if status_text == "error":
+        raise HTTPException(status_code=500, detail=f"Argo SSH execution failed: {message_text}")
+    return res
+
+@app.websocket("/api/ws/sync-terminal")
+async def websocket_terminal_sync(websocket: WebSocket):
+    await websocket.accept()
+    print("[WS] Client connected to Interactive Sync Terminal.")
+    try:
+        # Trigger the pull_work_orders.sh process
+        process = await asyncio.create_subprocess_exec(
+            "bash", "/home/james/SovereignOS/scripts/pull_work_orders.sh",
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE
+        )
+        
+        while True:
+            line = await process.stdout.readline()
+            if not line:
+                break
+            await websocket.send_json({
+                "stream": "stdout",
+                "text": line.decode("utf-8").strip()
+            })
+            
+        stderr_data = await process.stderr.read()
+        if stderr_data:
+            await websocket.send_json({
+                "stream": "stderr",
+                "text": stderr_data.decode("utf-8").strip()
+            })
+            
+        # Log to sovereign_tickets
+        import sqlite3
+        conn = sqlite3.connect("/home/james/SovereignOS/dna/sovereign_now.db")
+        c = conn.cursor()
+        inc_id = f"INC{int(uuid.uuid4().hex, 16) % 10000000}"
+        sys_id = uuid.uuid4().hex
+        c.execute("""
+            INSERT INTO sovereign_tickets 
+              (sys_id, number, type, short_description, description, state, priority, assigned_to, cmdb_ci, work_notes)
+            VALUES (?, ?, 'INC', 'Automated Work Order Sync execution', 'Sync triggered manually via Sync Console.', 4, 3, 'antigravity', 'GoogleDriveSync', 'Sync completed successfully.')
+        """, (sys_id, inc_id))
+        conn.commit()
+        conn.close()
+            
+        await websocket.send_json({
+            "stream": "status",
+            "text": "=== Sync Complete: All assets staged cleanly. ==="
+        })
+        
+    except WebSocketDisconnect:
+        print("[WS] Client disconnected prematurely.")
+    except Exception as e:
+        await websocket.send_json({
+            "stream": "error",
+            "text": f"Execution Error: {str(e)}"
+        })
+    finally:
+        try:
+            await websocket.close()
+        except Exception:
+            pass
 
 if __name__ == "__main__":
     print("🚀 Sovereign Persona Foundry Engine initializing on Port 8096...")

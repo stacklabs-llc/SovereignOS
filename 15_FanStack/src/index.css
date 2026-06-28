@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+@source not "../public/avatars";
+@source not "../public/avatars/**/*";
+
 @theme {
   /* Premium FanCast Base */
   --color-void: #0B0E14;

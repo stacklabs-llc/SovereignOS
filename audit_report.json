@@ -1,0 +1,29 @@
+{
+  "status": "COMPLETED",
+  "host_target": "clio.taila01894.ts.net",
+  "session_persistence_test": "PASSED",
+  "auth_redirects_detected": [],
+  "rebrand_violations": [],
+  "crawled_pages": {
+    "StackLabs Creator Portal": {
+      "url": "https://clio.taila01894.ts.net:3016/",
+      "persona_center_occurrences": 0,
+      "savant_occurrences": 0
+    },
+    "Barb Stack": {
+      "url": "https://clio.taila01894.ts.net:3020/",
+      "persona_center_occurrences": 0,
+      "savant_occurrences": 0
+    },
+    "Fan Portal": {
+      "url": "https://clio.taila01894.ts.net:3010/",
+      "persona_center_occurrences": 0,
+      "savant_occurrences": 0
+    },
+    "Eileen Stack": {
+      "url": "https://clio.taila01894.ts.net:3017/",
+      "persona_center_occurrences": 0,
+      "savant_occurrences": 0
+    }
+  }
+}

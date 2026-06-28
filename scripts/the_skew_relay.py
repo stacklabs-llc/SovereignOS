@@ -1004,7 +1004,7 @@ async def get_cis(sysparm_query: str = ""):
     cur = con.cursor()
     cur.execute('''
         SELECT c.sys_id, c.name, c.sys_class_name, c.short_description, c.operational_status,
-               'gemini-flash-latest' AS u_llm_engine, p.u_system_prompt, p.u_deployment_zone, p.u_boggs_reactivity, c.assigned_to, p.u_cadence
+               p.u_system_prompt, p.u_deployment_zone, p.u_boggs_reactivity, c.assigned_to, p.u_cadence
         FROM cmdb_ci c
         LEFT JOIN cmdb_ci_ai_persona p ON c.sys_id = p.sys_id
         WHERE c.sys_class_name = 'cmdb_ci_ai_persona'
@@ -1015,8 +1015,8 @@ async def get_cis(sysparm_query: str = ""):
     for r in rows:
         result.append({
             "sys_id": r[0], "name": r[1], "sys_class_name": r[2], "short_description": r[3],
-            "operational_status": r[4], "u_llm_engine": r[5], "u_system_prompt": r[6],
-            "u_deployment_zone": r[7], "u_boggs_reactivity": r[8], "assigned_to": r[9], "u_cadence": r[10]
+            "operational_status": r[4], "u_system_prompt": r[5],
+            "u_deployment_zone": r[6], "u_boggs_reactivity": r[7], "assigned_to": r[8], "u_cadence": r[9]
         })
     return {"result": result}
 
@@ -1072,7 +1072,6 @@ async def get_ai_personas():
             team            AS department,
             1               AS active,
             team            AS assigned_to,
-            'gemini-flash-latest' AS u_llm_engine,
             system_prompt   AS u_system_prompt,
             cadence         AS u_cadence,
             boggs_level     AS u_boggs_reactivity,
@@ -1128,7 +1127,6 @@ async def get_ai_persona_by_id(sys_id: str):
             team            AS department,
             1               AS active,
             team            AS assigned_to,
-            'gemini-flash-latest' AS u_llm_engine,
             system_prompt   AS u_system_prompt,
             cadence         AS u_cadence,
             boggs_level     AS u_boggs_reactivity,
@@ -1454,6 +1452,8 @@ async def get_persona_image(persona_id: str):
         print(f"[persona_image] DB lookup error: {e}")
     # 2. Fall back to filesystem
     for search_dir in [
+        "/home/james/SovereignOS/avatars",
+        "/home/james/SovereignOS/archive_quarantine_eon1",
         "/home/james/SovereignOS/15_FanStack/public/avatars",
         "/home/james/SovereignOS/dna/media/avatars",
         "/home/james/SovereignOS/dna/media/character_maps"
@@ -1645,11 +1645,13 @@ async def bro_decode(req: Request):
         return {"short_description": short_desc, "description": desc + "\n\n[Bro Decoder Bypass: No API Key / GenAI]"}
         
     try:
-        import google.generativeai as genai
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-flash-latest")
+        from google import genai
+        client = genai.Client(api_key=api_key)
         prompt = f"The user is typing a hurried/jumbled software development ticket from their phone at a baseball game. Clean this up into a concise, professional title and a clear, actionable set of instructions for an AI coding assistant. Return raw JSON ONLY with 'short_description' (string) and 'description' (string) keys. No markdown blocks.\n\nInput Title: {short_desc}\nInput Body: {desc}"
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt
+        )
         text = response.text.replace("```json", "").replace("```", "").strip()
         result = json.loads(text)
         return {"short_description": result.get("short_description", short_desc), "description": result.get("description", desc)}

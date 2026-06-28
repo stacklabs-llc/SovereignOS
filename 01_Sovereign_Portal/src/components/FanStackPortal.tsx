@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import LogArchiveModal from './LogArchiveModal';
 interface FanStackPortalProps {
-  onSelectDomain: (domain: 'MLB' | 'NBA' | 'NFL' | 'PGA' | 'SKEW' | 'HOLODEX' | 'ARGUS' | 'EDGE_DVR' | 'STREAM_SNIPER' | 'TELEMETRY' | 'VAULT' | 'STORYBOARD' | 'CMDB' | 'SAVANT' | 'VOCAL' | 'SOVEREIGN_CSS' | 'SCRUFFYS' | 'KANBAN' | 'ROLL_CALL' | 'DREADNOUGHT' | 'HOT_TAKES' | 'ROM_GALLERY' | 'OPTICAL_INGEST' | 'PROMO_INBOX' | 'MODEL_ARENA' | 'TMI_NEWS_DESK') => void;
+  onSelectDomain: (domain: 'MLB' | 'NBA' | 'NFL' | 'PGA' | 'SKEW' | 'HOLODEX' | 'ARGUS' | 'EDGE_DVR' | 'STREAM_SNIPER' | 'TELEMETRY' | 'VAULT' | 'STORYBOARD' | 'CMDB' | 'SAVANT' | 'VOCAL' | 'SOVEREIGN_CSS' | 'KANBAN' | 'ROLL_CALL' | 'DREADNOUGHT' | 'HOT_TAKES' | 'ROM_GALLERY' | 'OPTICAL_INGEST' | 'PROMO_INBOX' | 'MODEL_ARENA' | 'TMI_NEWS_DESK') => void;
 }
 
 export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) {
   const [isLogArchiveOpen, setIsLogArchiveOpen] = useState(false);
   const [osTheme, setOsTheme] = useState<string>(() => localStorage.getItem('sovereign_theme') || 'mac');
   const [activeUtils, setActiveUtils] = useState<string[]>([
-    'scruffys', 'the_skew', 'hot_takes', 'stream_sniper',
+    'the_skew', 'hot_takes', 'stream_sniper',
     'holodex', 'rom_gallery', 'artifact_gallery',
     'persona_center', 'promo_inbox', 'savant_query',
     'optical_ingest', 'roll_call', 'model_arena', 'tmi_news_desk'
@@ -49,7 +49,6 @@ export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) 
   const isHomeTheme = osTheme === 'sovereign-home';
 
   const col1 = [
-    { id: 'scruffys', domain: 'SCRUFFYS', title: "Scruffy's Tavern", subtitle: "LIVE CHAT & ADVOCATE INTERACTIONS", color: "#38bdf8" },
     { id: 'the_skew', domain: 'SKEW', title: "The Skew (Live)", subtitle: "DAYTIME SPORTS TALK & DEBATE", color: "#a855f7" },
     { id: 'hot_takes', domain: 'HOT_TAKES', title: "Hot Takes", subtitle: "High-Intensity Advocate Rants", color: "#ef4444", borderClass: "border-red-500/20 bg-red-500/5", textClass: "text-red-500" },
     { id: 'stream_sniper', domain: 'stream_sniper', title: "Stream Sniper", subtitle: "LIVE TARGET ACQUISITION", color: "#f43f5e" }

@@ -28,15 +28,27 @@ echo "Compiling live codebase and massive database transfer packages..."
 python3 /home/james/SovereignOS/scripts/compile_codebase_payload.py
 python3 /home/james/SovereignOS/scripts/compile_massive_notebook_payload.py
 python3 /home/james/SovereignOS/scripts/generate_persona_audit.py
+python3 /home/james/SovereignOS/scripts/compile_conversation_history.py
 
 # Ensure directory structure exists
 mkdir -p "$TARGET_NOTEBOOK_DIR/dna"
+mkdir -p "$TARGET_NOTEBOOK_DIR/conversations"
 
 # 2. Stage Explicit Codebase Chunks for Ingestion (with .txt extension at the root)
 echo "📦 Staging verified codebase components..."
 cp /home/james/SovereignOS/dna/notebook_lm_exports/SOVEREIGN_CODEBASE_PART_1.md "$TARGET_NOTEBOOK_DIR/SOVEREIGN_CODEBASE_PART_1.md.txt"
 cp /home/james/SovereignOS/dna/notebook_lm_exports/SOVEREIGN_CODEBASE_PART_2.md "$TARGET_NOTEBOOK_DIR/SOVEREIGN_CODEBASE_PART_2.md.txt"
-cp /home/james/SovereignOS/dna/notebook_lm_exports/SOVEREIGN_OS_INTERNAL_MASSIVE_DATA_TRANSFER_PACKAGE.md "$TARGET_NOTEBOOK_DIR/SOVEREIGN_OS_INTERNAL_MASSIVE_DATA_TRANSFER_PACKAGE.md.txt"
+
+# Remove any old massive data transfer packages (both monolithic and parts) from the target dir
+rm -f "$TARGET_NOTEBOOK_DIR/SOVEREIGN_OS_INTERNAL_MASSIVE_DATA_TRANSFER_PACKAGE"*
+
+# Copy the split parts of the massive package
+for part_file in /home/james/SovereignOS/dna/notebook_lm_exports/SOVEREIGN_OS_INTERNAL_MASSIVE_DATA_TRANSFER_PACKAGE_PART_*.txt; do
+  if [ -f "$part_file" ]; then
+    cp "$part_file" "$TARGET_NOTEBOOK_DIR/$(basename "$part_file")"
+  fi
+done
+
 
 # 3. Stage Shared Architectural References
 echo "📚 Staging partner-safe architectural references..."
@@ -55,6 +67,39 @@ fi
 if [ -f "/home/james/sovereign_inbox/StackLabs_Genesis_Chamber_Briefing.md" ]; then
   stage_with_timestamp "/home/james/sovereign_inbox/StackLabs_Genesis_Chamber_Briefing.md" "$TARGET_NOTEBOOK_DIR/StackLabs_Genesis_Chamber_Briefing.md.txt"
 fi
+if [ -f "/home/james/sovereign_inbox/daily_06222026/PROPOSAL_PLUGIN_PROVISIONING_SYSTEM.md" ]; then
+  stage_with_timestamp "/home/james/sovereign_inbox/daily_06222026/PROPOSAL_PLUGIN_PROVISIONING_SYSTEM.md" "$TARGET_NOTEBOOK_DIR/PROPOSAL_PLUGIN_PROVISIONING_SYSTEM.md.txt"
+fi
+
+# Stage Brand Seeder Intake Form & Blueprints
+echo "📝 Staging latest brand seeder intake forms & blueprints..."
+if [ -f "/home/james/sovereign_inbox/reports/Generic_Intake_Brief.txt" ]; then
+  cp "/home/james/sovereign_inbox/reports/Generic_Intake_Brief.txt" "$TARGET_NOTEBOOK_DIR/Generic_Intake_Brief.txt"
+fi
+if [ -f "/home/james/sovereign_inbox/reports/Generic_Intake_Blueprint.html" ]; then
+  cp "/home/james/sovereign_inbox/reports/Generic_Intake_Blueprint.html" "$TARGET_NOTEBOOK_DIR/Generic_Intake_Blueprint.html"
+fi
+if [ -f "/home/james/sovereign_inbox/reports/Generic_Intake_Blueprint.pdf" ]; then
+  cp "/home/james/sovereign_inbox/reports/Generic_Intake_Blueprint.pdf" "$TARGET_NOTEBOOK_DIR/Generic_Intake_Blueprint.pdf"
+fi
+
+# Stage Standard Provisioning Components
+echo "🔌 Staging standard provisioning power tools..."
+for comp in \
+  "01_Sovereign_Portal/src/components/CometMessenger.tsx" \
+  "01_Sovereign_Portal/src/components/MobileHololink.tsx" \
+  "01_Sovereign_Portal/src/components/HololinkHub.tsx" \
+  "01_Sovereign_Portal/src/components/HololinkModal.tsx" \
+  "01_Sovereign_Portal/src/components/HoloDex.tsx" \
+  "01_Sovereign_Portal/src/components/HoloDex/HoloDexApp.tsx" \
+  "01_Sovereign_Portal/src/components/HolodeckGenerator.tsx" \
+  "01_Sovereign_Portal/src/contexts/HoloLinkContext.tsx"; do
+  full_comp_path="/home/james/SovereignOS/$comp"
+  if [ -f "$full_comp_path" ]; then
+    stage_with_timestamp "$full_comp_path" "$TARGET_NOTEBOOK_DIR/$(basename "$comp").txt"
+  fi
+done
+
 
 # 4. Stage Telemetry Logs, Active Room Logs, Reports, and Walkthroughs from Today's Session
 echo "📊 Staging active session logs, reports, and walkthroughs..."
@@ -89,7 +134,7 @@ echo "📚 Staging all walkthroughs..."
 mkdir -p "$TARGET_NOTEBOOK_DIR/walkthroughs"
 find /home/james/sovereign_inbox/walkthroughs/ /home/james/sovereign_inbox/tickets/ -name "walkthrough_*.md" -type f 2>/dev/null | while read -r f; do
   if [ -f "$f" ]; then
-    stage_with_timestamp "$f" "$TARGET_NOTEBOOK_DIR/walkthroughs/$(basename "$f").txt"
+    cp "$f" "$TARGET_NOTEBOOK_DIR/walkthroughs/$(basename "$f").txt"
   fi
 done
 
@@ -97,9 +142,21 @@ echo "📚 Staging all implementation plans..."
 mkdir -p "$TARGET_NOTEBOOK_DIR/implementation_plans"
 find /home/james/sovereign_inbox/implementation_plans/ /home/james/sovereign_inbox/tickets/ -name "implementation_plan_*.md" -type f 2>/dev/null | while read -r f; do
   if [ -f "$f" ]; then
-    stage_with_timestamp "$f" "$TARGET_NOTEBOOK_DIR/implementation_plans/$(basename "$f").txt"
+    cp "$f" "$TARGET_NOTEBOOK_DIR/implementation_plans/$(basename "$f").txt"
   fi
 done
+
+# 4.6. Stage all repository documentation files from dna/docs/
+echo "📚 Staging repository documentation..."
+mkdir -p "$TARGET_NOTEBOOK_DIR/docs"
+rm -f "$TARGET_NOTEBOOK_DIR/docs"/*
+find /home/james/SovereignOS/dna/docs/ -name "*.md" -type f 2>/dev/null | while read -r f; do
+  if [ -f "$f" ]; then
+    cp "$f" "$TARGET_NOTEBOOK_DIR/docs/$(basename "$f").txt"
+  fi
+done
+
+
 
 
 # 5. Stage Critical Synchronization Tokens (both at root and inside dna/ for compatibility)
@@ -111,11 +168,19 @@ fi
 echo "🚀 Mirroring pristine session context to Google Drive remote..."
 rclone sync "$TARGET_NOTEBOOK_DIR" "sovereign_os:SovereignOS_Clio_Sync/NotebookLM_Sync/StackLabs_Internal" \
   --fast-list \
-  --progress
+  --progress \
+  --max-age 24h
 
-if [ $? -eq 0 ]; then
-  echo "🟢 SUCCESS: Ground truth successfully pushed. Safe to execute /sovereign_shutdown."
-else
+if [ $? -ne 0 ]; then
   echo "❌ ERROR: rclone handshake failed. Check Tailscale proxy routing tables."
+  exit 1
+fi
+
+# 7. Mirror the full local workspace codebase to Google Drive
+echo "🚀 Mirroring the full codebase workspace to Google Drive..."
+if /bin/bash /home/james/SovereignOS/scripts/sync_workspace_to_drive.sh; then
+  echo "🟢 SUCCESS: Ground truth and codebase successfully pushed. Safe to execute /sovereign_shutdown."
+else
+  echo "❌ ERROR: Codebase workspace sync failed."
   exit 1
 fi

@@ -218,7 +218,41 @@ export default function EditTicketModal({ isOpen, onClose, ticket, onSave }: Edi
               <button onClick={() => fileInputRef.current?.click()} className="text-white/60 hover:text-[#38bdf8] p-2 transition-colors rounded hover:bg-[#38bdf8]/10 flex items-center gap-2 font-bold tracking-widest text-xs">
                 <Paperclip size={20} /> ATTACH FILE
               </button>
+              
               <div className="w-px h-6 bg-white/10 mx-2"></div>
+              
+              <div className="flex items-center gap-1 bg-white/5 p-1 rounded border border-white/10">
+                <a 
+                  href={`/api/tickets/${ticket.id}/export/md`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-white/60 hover:text-[#38bdf8] p-1.5 transition-colors rounded hover:bg-white/5 font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-1"
+                  title="Export Markdown"
+                >
+                  📝 MD
+                </a>
+                <a 
+                  href={`/api/tickets/${ticket.id}/export/pdf`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-white/60 hover:text-[#f59e0b] p-1.5 transition-colors rounded hover:bg-white/5 font-mono text-[10px] font-bold tracking-widest uppercase border-l border-white/10 flex items-center gap-1"
+                  title="Export PDF"
+                >
+                  📕 PDF
+                </a>
+                <a 
+                  href={`/api/tickets/${ticket.id}/export/json`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-white/60 hover:text-[#3b82f6] p-1.5 transition-colors rounded hover:bg-white/5 font-mono text-[10px] font-bold tracking-widest uppercase border-l border-white/10 flex items-center gap-1"
+                  title="Export JSON"
+                >
+                  💻 JSON
+                </a>
+              </div>
+              
+              <div className="w-px h-6 bg-white/10 mx-2"></div>
+              
               <button onClick={onClose} className="text-white/40 hover:text-white p-2 transition-colors rounded hover:bg-white/5">
                 <X size={24} />
               </button>

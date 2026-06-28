@@ -18,7 +18,6 @@ for p in data:
     md_content += f"**City:** {p.get('location', '')}\n\n"
     md_content += f"**Department:** {p.get('department', '')}\n\n"
     md_content += f"**Introduction:** {p.get('introduction', '')}\n\n"
-    md_content += f"**LLM Engine:** {p.get('u_llm_engine', '')}\n\n"
     md_content += f"**Cadence:** {p.get('u_speech_cadence', '')}\n\n"
     
     sys_prompt = p.get('u_system_prompt', '')

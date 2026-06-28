@@ -13,7 +13,7 @@ def export_personas():
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
     c.execute("""
-        SELECT c.name, p.u_system_prompt, p.u_llm_engine, p.u_deployment_zone, p.u_boggs_reactivity, p.u_cadence
+        SELECT c.name, p.u_system_prompt, p.u_deployment_zone, p.u_boggs_reactivity, p.u_cadence
         FROM cmdb_ci c
         JOIN cmdb_ci_ai_persona p ON c.sys_id = p.sys_id
     """)

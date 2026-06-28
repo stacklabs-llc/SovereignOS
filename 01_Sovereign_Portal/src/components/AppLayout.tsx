@@ -3,7 +3,7 @@ import {
   Sliders, Settings, LogOut, User, LayoutGrid, Wine, Key, 
   BookOpen, MessageSquare, Flower2, Activity, Play, Pause, 
   HelpCircle, Terminal, RefreshCw, ChevronLeft, ChevronRight, Menu,
-  Music, Cpu, Users, Server, ClipboardList
+  Music, Cpu, Users, Server, ClipboardList, Database, UploadCloud, Camera
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import CometMessenger from './CometMessenger';
@@ -149,9 +149,9 @@ export default function AppLayout({
         {/* Navigation Section */}
         <div className="flex-1 p-2 flex flex-col gap-1 overflow-y-auto">
           <button 
-            onClick={() => handleNavigate('ROOT', 'starter')}
+            onClick={() => handleNavigate('ROOT', 'cockpit')}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
-              activeRoom === 'starter' 
+              activeRoom === 'cockpit' 
                 ? 'bg-white/10 text-[#38bdf8]' 
                 : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
@@ -184,6 +184,18 @@ export default function AppLayout({
             {sidebarOpen && 'Power Tools'}
           </button>
 
+          <button 
+            onClick={() => handleNavigate('GLOBAL', 'knowledge_hub')}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
+              activeRoom === 'knowledge_hub' 
+                ? 'bg-white/10 text-[#38bdf8]' 
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <BookOpen size={16} />
+            {sidebarOpen && 'Knowledge Hub'}
+          </button>
+
           {(auth?.role === 'pilot' || auth?.role === 'creator' || auth?.role === 'admin') && (
             <button 
               onClick={() => handleNavigate('ROOT', 'kanban')}
@@ -200,6 +212,20 @@ export default function AppLayout({
 
           {(auth?.role === 'pilot' || auth?.role === 'creator' || auth?.role === 'admin') && (
             <button 
+              onClick={() => handleNavigate('ROOT', 'pixel_dropzone')}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
+                activeRoom === 'pixel_dropzone'
+                  ? 'bg-white/10 text-[#38bdf8]' 
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <UploadCloud size={16} />
+              {sidebarOpen && 'Pixel Drop Zone'}
+            </button>
+          )}
+
+          {(auth?.role === 'pilot' || auth?.role === 'creator' || auth?.role === 'admin') && (
+            <button 
               onClick={() => handleNavigate('GLOBAL', 'system_config')}
               className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
                 activeRoom === 'system_config' || activeRoom === 'app_directory'
@@ -211,6 +237,44 @@ export default function AppLayout({
               {sidebarOpen && 'System Config'}
             </button>
           )}
+
+          {(auth?.role === 'pilot' || auth?.role === 'creator' || auth?.role === 'admin') && (
+            <button 
+              onClick={() => handleNavigate('GLOBAL', 'data')}
+              className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
+                activeRoom === 'data'
+                  ? 'bg-white/10 text-[#38bdf8]' 
+                  : 'text-white/60 hover:text-white hover:bg-white/5'
+              }`}
+            >
+              <Database size={16} />
+              {sidebarOpen && 'Sovereign Studio'}
+            </button>
+          )}
+
+          <button 
+            onClick={() => handleNavigate('GLOBAL', 'metsy_adventures')}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
+              activeRoom === 'metsy_adventures'
+                ? 'bg-white/10 text-[#f59e0b]' 
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Camera size={16} className={activeRoom === 'metsy_adventures' ? "text-[#f59e0b]" : ""} />
+            {sidebarOpen && "Metsy's Scrapbook"}
+          </button>
+
+          <button 
+            onClick={() => handleNavigate('GLOBAL', 'prompt_preview')}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
+              activeRoom === 'prompt_preview'
+                ? 'bg-white/10 text-[#00b4d8]' 
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Terminal size={16} className={activeRoom === 'prompt_preview' ? "text-[#00b4d8]" : ""} />
+            {sidebarOpen && "Prompt Interceptor"}
+          </button>
 
           <div className="mt-8 px-3">
             {sidebarOpen && (
@@ -248,12 +312,12 @@ export default function AppLayout({
       <div className="flex-1 flex flex-col min-w-0 bg-[#0B0E14] text-white">
         {/* Render nested components if we navigated away from the homepage */}
         {activeRoom !== 'starter' ? (
-          <div className="flex-1 overflow-y-visible p-4 md:p-6">
+          <div className="flex-1 overflow-y-auto p-4 md:p-6">
             {children}
           </div>
         ) : (
           /* Dynamic Dashboard Grid */
-          <div className="flex-1 overflow-y-visible p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 align-start max-w-7xl mx-auto w-full">
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 align-start max-w-7xl mx-auto w-full">
             {/* LEFT/CENTER WORKSPACE: Expanded Comet Messenger */}
             <div className="lg:col-span-2 flex flex-col gap-6">
               <CometMessenger />

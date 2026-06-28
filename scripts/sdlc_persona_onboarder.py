@@ -101,7 +101,7 @@ def main():
     
     prompt = f"Recent MLB News:\n{news}\n\nGenerate the new advocate JSON."
     
-    model = GenerativeModel("gemini-flash-latest", system_instruction=[sys_instr])
+    model = GenerativeModel("gemini-2.5-flash", system_instruction=[sys_instr])
     
     print("Generating advocate via Gemini...")
     try:

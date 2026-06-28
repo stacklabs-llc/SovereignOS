@@ -123,8 +123,39 @@ def _wrap_generate_response(original_fn):
     """
     @functools.wraps(original_fn)
     async def wrapper(model, prompt, system_instruction=None, allow_rant=False, **kw):
+        # Pull side-channel context set by caller
+        ctx = _call_context.get()
+
+        # Staging Interception Step
+        final_prompt = prompt
+        final_sys_instruction = system_instruction
+        action = "pass"
+        try:
+            import requests
+            stage_payload = {
+                "prompt": prompt,
+                "system_instruction": system_instruction,
+                "model": model,
+                "persona": ctx.get("persona", ""),
+                "game_pk": str(ctx.get("game_pk", ""))
+            }
+            def _post_stage():
+                res = requests.post("http://127.0.0.1:8000/api/prompt/stage", json=stage_payload, timeout=35.0)
+                if res.status_code == 200:
+                    return res.json()
+                return {"action": "pass"}
+            
+            res_json = await asyncio.to_thread(_post_stage)
+            action = res_json.get("action", "pass")
+            if action == "override":
+                final_prompt = res_json.get("prompt", prompt)
+                final_sys_instruction = res_json.get("system_instruction", system_instruction)
+        except Exception as exc:
+            # Fallback to standard pass-through
+            print(f"[INTERCEPTOR BYPASS] Stage error: {exc}")
+
         t0 = time.monotonic()
-        result = await original_fn(model, prompt, system_instruction=system_instruction,
+        result = await original_fn(model, final_prompt, system_instruction=final_sys_instruction,
                                    allow_rant=allow_rant, **kw)
         elapsed_ms = round((time.monotonic() - t0) * 1000)
 
@@ -133,20 +164,17 @@ def _wrap_generate_response(original_fn):
         except (TypeError, ValueError):
             text, in_tok, out_tok = str(result), 0, 0
 
-        # Pull side-channel context set by caller
-        ctx = _call_context.get()
-
         record = _build_record(
             routing_path="generate_response",
             model=model,
-            system_instruction=system_instruction,
-            prompt=prompt,
+            system_instruction=final_sys_instruction,
+            prompt=final_prompt,
             response_text=text,
             in_tokens=in_tok,
             out_tokens=out_tok,
             game_pk=ctx.get("game_pk"),
             persona=ctx.get("persona"),
-            extra={"allow_rant": allow_rant, "elapsed_ms": elapsed_ms},
+            extra={"allow_rant": allow_rant, "elapsed_ms": elapsed_ms, "interception": action},
         )
         _write_payload(record)
         return result

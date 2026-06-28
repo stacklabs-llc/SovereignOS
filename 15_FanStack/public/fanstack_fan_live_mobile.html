@@ -1078,8 +1078,8 @@
     }
 
     window.availablePersonas = ["barf", "the_chicken_man_az", "snake_pit_stu", "burnes_notice", "southside_sufferer", "disco_demolition_dave", "salvy_splash_survivor", "crown_vision_cynic", "altitude_andy", "dinger_defender", "gaslamp_greg", "friar_faithful_frank", "mean_gene"];
-    fetch(`${window.location.protocol}//${window.location.hostname}:8096/api/now/table/cmdb_ci`).then(r => r.json()).then(d => {
-        if(d.result) { window.availablePersonas = d.result.map(p => p.name.toLowerCase()); }
+    fetch('/api/now/table/cmdb_ci_ai_persona').then(r => r.json()).then(d => {
+        if(d.result) { window.availablePersonas = d.result.map(p => (p.user_name || p.name || "").toLowerCase()).filter(Boolean); }
     }).catch(e => console.log('Could not load live personas', e));
 
     const chatInputEl = document.getElementById('chat-input');

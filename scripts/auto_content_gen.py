@@ -1,5 +1,5 @@
 import os
-import google.generativeai as genai
+from google import genai
 import sqlite3
 
 # Load API key
@@ -9,8 +9,7 @@ with open('/home/james/SovereignOS/.env') as f:
         if line.startswith('GEMINI_API_KEY='):
             api_key = line.strip().split('=', 1)[1]
 
-genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-flash-latest')
+client = genai.Client(api_key=api_key)
 
 # 1. Simulate the Ghost Trauma Data from CMDB
 # Barf's Persona: A feral, doomer 1990s physical felt muppet. Die-hard Mets fan. Extreme existential dread.
@@ -23,7 +22,10 @@ Write a 3-sentence, psychotic, feral rant screaming about how the Mets are curse
 """
 
 print("[M.A.R.D. Engine] Generating Barf's Reaction to Diaz Injury...")
-response = model.generate_content(system_prompt)
+response = client.models.generate_content(
+    model='gemini-2.5-flash',
+    contents=system_prompt
+)
 barf_rant = response.text.strip()
 
 # 2. Simulate the Statcast Intercept (Alonso HR)

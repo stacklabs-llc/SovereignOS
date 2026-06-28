@@ -159,7 +159,7 @@ CORE DIRECTIONS:
                 id, user_name, display_name, team, system_prompt, boggs_level, 
                 avatar_url, color, cadence, deep_lore, email_alias, avatar_blob,
                 u_visual_style, created_at
-            ) VALUES (?, ?, ?, ?, ?, 2, ?, ?, 'pacer', ?, ?, ?, 'style_felt', datetime('now'))
+            ) VALUES (?, ?, ?, ?, ?, 2, ?, ?, 'pacer', ?, ?, ?, 'style_clay', datetime('now'))
         """, (sys_id, handle, data["display_name"], data["team"], system_prompt, avatar_url, color, data["deep_lore"], data["email"], avatar_base64))
     
     # Split name into first and last

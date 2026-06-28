@@ -159,7 +159,7 @@ game_states = __import__('collections').defaultdict(lambda: {
     "batter": "", "pitcher": "",
     "hit_speed": "---", "hit_distance": "---",
     "launch_angle": "---", "event_type": "pitch",
-    "batting_team": ""
+    "batting_team": "", "wind": "---"
 })
 
 global_system_state = {
@@ -182,12 +182,12 @@ async def run_simulation(game_pk, speed):
     con.close()
     
     if not rows:
-        state["status_msg"] = f"[SIMULATION ERROR] No statcast pitches found for game_pk {game_pk}"
-        await broadcast_state()
+        game_states[str(game_pk)]["status_msg"] = f"[SIMULATION ERROR] No statcast pitches found for game_pk {game_pk}"
+        await broadcast_state(str(game_pk))
         return
 
-    state["status_msg"] = f"[SIMULATION ACTIVE] Game {game_pk} loaded. MESH OVERRIDE ENGAGED."
-    await broadcast_state()
+    game_states[str(game_pk)]["status_msg"] = f"[SIMULATION ACTIVE] Game {game_pk} loaded. MESH OVERRIDE ENGAGED."
+    await broadcast_state(str(game_pk))
     await asyncio.sleep(2)
     
     try:
@@ -296,8 +296,146 @@ async def mlb_poller():
         await asyncio.sleep(3600)
 
 
+# ── Clio Cockpit WebSocket Stream Routers ──────────────────────────────────────
+
+import urllib.request
+import os
+
+system_metrics_clients = set()
+
+async def system_metrics_poller_loop():
+    print("🚀 Clio Cockpit Telemetry Poller Loop started in background.")
+    while True:
+        try:
+            if system_metrics_clients:
+                def fetch_metrics():
+                    try:
+                        req = urllib.request.Request("http://127.0.0.1:8090/api/system/metrics", method="GET")
+                        with urllib.request.urlopen(req, timeout=1.0) as response:
+                            return json.loads(response.read().decode())
+                    except Exception as e:
+                        return {"error": f"Failed to fetch metrics from Core API: {str(e)}"}
+                
+                loop = asyncio.get_running_loop()
+                metrics = await loop.run_in_executor(None, fetch_metrics)
+                
+                payload = json.dumps({"type": "METRICS_UPDATE", "data": metrics})
+                for client in list(system_metrics_clients):
+                    try:
+                        await client.send(payload)
+                    except Exception:
+                        pass
+        except Exception as e:
+            print(f"[RELAY ERROR] metrics_poller_loop failure: {e}")
+        await asyncio.sleep(1.0)
+
+async def handle_system_metrics(ws):
+    system_metrics_clients.add(ws)
+    print("New Clio Cockpit metrics client connected!")
+    try:
+        async for message in ws:
+            pass  # Read loop to keep connection alive and detect disconnects
+    except websockets.exceptions.ConnectionClosed:
+        pass
+    finally:
+        system_metrics_clients.remove(ws)
+        print("Clio Cockpit metrics client disconnected.")
+
+async def handle_system_logs(ws):
+    print("New Clio Cockpit log streamer client connected!")
+    tail_task = None
+    log_queue = asyncio.Queue()
+    is_paused = False
+
+    async def tail_file_worker(log_path):
+        try:
+            if not os.path.exists(log_path):
+                await log_queue.put({"type": "LOG_ERROR", "message": f"Log file not found: {log_path}"})
+                return
+            
+            # Send last 100 lines on connect
+            with open(log_path, 'r', errors='replace') as f:
+                lines = f.readlines()[-100:]
+                await log_queue.put({"type": "LOG_HISTORY", "lines": lines})
+            
+            # Stream trailing lines
+            f = open(log_path, 'r', errors='replace')
+            f.seek(0, os.SEEK_END)
+            while True:
+                line = f.readline()
+                if not line:
+                    await asyncio.sleep(0.1)
+                    continue
+                await log_queue.put({"type": "LOG_LINE", "line": line})
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            await log_queue.put({"type": "LOG_ERROR", "message": str(e)})
+
+    async def read_client_messages():
+        nonlocal is_paused, tail_task
+        try:
+            async for message in ws:
+                data = json.loads(message)
+                action = data.get("action")
+                if action == "stream":
+                    requested_file = data.get("file")
+                    # Path traversal mitigation
+                    if not requested_file or ".." in requested_file or "/" in requested_file or "\\" in requested_file:
+                        await ws.send(json.dumps({"type": "LOG_ERROR", "message": "Invalid log file scope"}))
+                        continue
+                    
+                    log_path = f"/home/james/SovereignOS/logs/{requested_file}"
+                    
+                    if tail_task:
+                        tail_task.cancel()
+                    
+                    # Clear queue
+                    while not log_queue.empty():
+                        log_queue.get_nowait()
+                    
+                    tail_task = asyncio.create_task(tail_file_worker(log_path))
+                elif action == "pause":
+                    is_paused = True
+                elif action == "resume":
+                    is_paused = False
+        except Exception:
+            pass
+
+    client_msg_task = asyncio.create_task(read_client_messages())
+
+    try:
+        while True:
+            item = await log_queue.get()
+            if not is_paused or item.get("type") == "LOG_ERROR":
+                try:
+                    await ws.send(json.dumps(item))
+                except Exception:
+                    break
+    except Exception:
+        pass
+    finally:
+        client_msg_task.cancel()
+        if tail_task:
+            tail_task.cancel()
+        print("Clio Cockpit log streamer client disconnected.")
+
 
 async def handle_client(ws):
+    # Intercept system monitoring WebSockets before standard chat room flow
+    path = '/'
+    if hasattr(ws, 'request') and hasattr(ws.request, 'path'):
+        path = ws.request.path
+    elif hasattr(ws, 'path') and ws.path is not None:
+        path = ws.path
+
+    if path == "/ws/system/metrics":
+        await handle_system_metrics(ws)
+        return
+    elif path and path.startswith("/ws/system/logs"):
+        await handle_system_logs(ws)
+        return
+
     clients.add(ws)
     print("New FanCast visualizer node connected!")
     ws_rooms[ws] = "GLOBAL"
@@ -529,6 +667,29 @@ async def handle_client(ws):
                 gs["onSecond"] = sync_data.get("onSecond", gs.get("onSecond", False))
                 gs["onThird"] = sync_data.get("onThird", gs.get("onThird", False))
                 gs["pitchCount"] = sync_data.get("pitchCount", gs.get("pitchCount", "-"))
+                gs["horizontal_break_inches"] = sync_data.get("horizontal_break_inches", gs.get("horizontal_break_inches", 0.0))
+                gs["vertical_break_inches"] = sync_data.get("vertical_break_inches", gs.get("vertical_break_inches", 0.0))
+                gs["swing_status"] = sync_data.get("swing_status", gs.get("swing_status", "TAKE"))
+                gs["bat_speed_mph"] = sync_data.get("bat_speed_mph", gs.get("bat_speed_mph", 0.0))
+                gs["whiff_distance_inches"] = sync_data.get("whiff_distance_inches", gs.get("whiff_distance_inches", 0.0))
+                gs["is_sword"] = sync_data.get("is_sword", gs.get("is_sword", False))
+                gs["wind"] = sync_data.get("wind", gs.get("wind", "---"))
+                gs["venue_name"] = sync_data.get("venue_name", gs.get("venue_name", ""))
+                gs["venue_location"] = sync_data.get("venue_location", gs.get("venue_location", ""))
+                gs["batter_id"] = sync_data.get("batter_id", gs.get("batter_id", ""))
+                gs["pitcher_id"] = sync_data.get("pitcher_id", gs.get("pitcher_id", ""))
+                gs["batter_avg"] = sync_data.get("batter_avg", gs.get("batter_avg", ""))
+                gs["batter_obp"] = sync_data.get("batter_obp", gs.get("batter_obp", ""))
+                gs["batter_slg"] = sync_data.get("batter_slg", gs.get("batter_slg", ""))
+                gs["batter_ops"] = sync_data.get("batter_ops", gs.get("batter_ops", ""))
+                gs["batter_hr"] = sync_data.get("batter_hr", gs.get("batter_hr", ""))
+                gs["batter_rbi"] = sync_data.get("batter_rbi", gs.get("batter_rbi", ""))
+                gs["pitcher_era"] = sync_data.get("pitcher_era", gs.get("pitcher_era", ""))
+                gs["pitcher_whip"] = sync_data.get("pitcher_whip", gs.get("pitcher_whip", ""))
+                gs["pitcher_wins"] = sync_data.get("pitcher_wins", gs.get("pitcher_wins", ""))
+                gs["pitcher_losses"] = sync_data.get("pitcher_losses", gs.get("pitcher_losses", ""))
+                gs["pitcher_so"] = sync_data.get("pitcher_so", gs.get("pitcher_so", ""))
+                gs["pitcher_ip"] = sync_data.get("pitcher_ip", gs.get("pitcher_ip", ""))
 
                 # Senga Ghost Protocol Easter Egg detection
                 status_msg = sync_data.get("status_msg", "")
@@ -679,7 +840,7 @@ async def handle_client(ws):
                 await broadcast_state(force_global=True)
                     
             # Pass all new Claude Wardy v2 UI events and WebRTC signaling transparently to backend bots/clients
-            if data.get("type") in ["persona_config", "persona_strike", "custom_prompt", "boggs_level", "sim_speed", "trigger_event", "switch_game", "update_context", "TMI_ANOMALY", "hot_take_rant", "HOLOLINK_REQUEST", "WEBRTC_OFFER", "WEBRTC_ANSWER", "WEBRTC_ICE_CANDIDATE", "HOLOLINK_END", "outrage_proxy_deployed"]:
+            if data.get("type") in ["persona_config", "persona_strike", "custom_prompt", "boggs_level", "sim_speed", "trigger_event", "switch_game", "update_context", "TMI_ANOMALY", "hot_take_rant", "HOLOLINK_REQUEST", "WEBRTC_OFFER", "WEBRTC_ANSWER", "WEBRTC_ICE_CANDIDATE", "HOLOLINK_END", "outrage_proxy_deployed", "MULTIVERSE_PREP", "MULTIVERSE_SETTLE"]:
                 out_msg = json.dumps(data)
                 for c in list(clients):
                     try: 
@@ -758,6 +919,145 @@ def _ensure_hot_takes_table():
     except Exception as _e:
         print(f"[STARTUP] hot_takes table init failed: {_e}")
 _ensure_hot_takes_table()
+
+# Persistent Swarm State Registry for "Bring the Gang Along" protocol
+sports_session = {
+    "active_session_id": "session_clio_sports_active",
+    "persistent_advocate_registry": [
+        "persona_proper_pinter",
+        "persona_expected_tears",
+        "persona_ultra_nip",
+        "persona_kit_collector_99"
+    ],
+    "historical_session_thread": [],
+    "current_ingress_stream": ""
+}
+
+@fastapi_app.post("/api/session/swap-stream")
+async def api_swap_stream(request: Request):
+    """
+    State-preservative route handler to hot-swap telemetry stream
+    while preserving active advocate room roster in memory.
+    """
+    import json
+    data = await request.json()
+    target_game_pk = str(data.get("target_game_pk", data.get("target_stream", "")))
+    if not target_game_pk:
+        return {"status": "error", "message": "target_game_pk/target_stream is required"}
+    
+    bring_gang = bool(data.get("bring_gang", False))
+    
+    # 1. Update in-memory session current ingress stream
+    sports_session["current_ingress_stream"] = target_game_pk
+    
+    # 2. Add to historical session thread
+    if target_game_pk not in sports_session["historical_session_thread"]:
+        sports_session["historical_session_thread"].append(target_game_pk)
+        
+    # 3. Carry over active advocate personas to the new target room in the database
+    if bring_gang:
+        try:
+            import sqlite3 as _sq, uuid as _uuid
+            con = _sq.connect(DB_PATH)
+            c = con.cursor()
+            
+            # Get active personas from the previous current_ingress_stream (if exists and has any)
+            prev_stream = data.get("previous_game_pk", "")
+            if not prev_stream:
+                # Fallback: get any active game room with personas
+                c.execute("SELECT DISTINCT game_pk FROM game_persona WHERE seat_state = 'active' LIMIT 1")
+                row = c.fetchone()
+                if row:
+                    prev_stream = row[0]
+                    
+            if prev_stream and prev_stream != target_game_pk:
+                # Fetch active personas in the previous room, along with their assigned_to team from cmdb_ci
+                c.execute("""
+                    SELECT gp.persona_id, c.assigned_to 
+                    FROM game_persona gp
+                    LEFT JOIN cmdb_ci c ON gp.persona_id = c.sys_id
+                    WHERE gp.game_pk = ? AND gp.seat_state = 'active'
+                """, (prev_stream,))
+                rows = c.fetchall()
+                
+                # Filter for global/gang advocates (assigned_to is 'GLOBAL' or empty, or in the persistent registry)
+                # Standard MLB teams are 3-letter uppercase codes (NYM, PHI, PIT, CIN, etc.)
+                global_active_ids = []
+                for p_id, assigned_to in rows:
+                    assigned_to_upper = str(assigned_to).upper().strip() if assigned_to else ""
+                    is_persistent = p_id in sports_session["persistent_advocate_registry"]
+                    is_global = assigned_to_upper in ('GLOBAL', '') or (len(assigned_to_upper) != 3 and assigned_to_upper != 'UFL')
+                    if is_persistent or is_global:
+                        global_active_ids.append(p_id)
+                        
+                if global_active_ids:
+                    # Find all active personas in the target room
+                    c.execute("""
+                        SELECT gp.persona_id, c.assigned_to 
+                        FROM game_persona gp
+                        LEFT JOIN cmdb_ci c ON gp.persona_id = c.sys_id
+                        WHERE gp.game_pk = ? AND gp.seat_state = 'active'
+                    """, (target_game_pk,))
+                    target_rows = c.fetchall()
+                    
+                    # Identify which ones in the target room are global/gang advocates
+                    global_target_ids = []
+                    for p_id, assigned_to in target_rows:
+                        assigned_to_upper = str(assigned_to).upper().strip() if assigned_to else ""
+                        is_persistent = p_id in sports_session["persistent_advocate_registry"]
+                        is_global = assigned_to_upper in ('GLOBAL', '') or (len(assigned_to_upper) != 3 and assigned_to_upper != 'UFL')
+                        if is_persistent or is_global:
+                            global_target_ids.append(p_id)
+                    
+                    # Remove only the existing global personas in the target room first to avoid duplicates
+                    # This explicitly PRESERVES the target room's native team-specific personas!
+                    if global_target_ids:
+                        placeholders = ', '.join(['?'] * len(global_target_ids))
+                        c.execute(
+                            f"DELETE FROM game_persona WHERE game_pk = ? AND persona_id IN ({placeholders})",
+                            [target_game_pk] + global_target_ids
+                        )
+                    
+                    # Insert the carried-over global personas into the target room!
+                    for p_id in global_active_ids:
+                        # Double-check to avoid duplicates
+                        c.execute("SELECT 1 FROM game_persona WHERE game_pk = ? AND persona_id = ?", (target_game_pk, p_id))
+                        if not c.fetchone():
+                            c.execute(
+                                "INSERT INTO game_persona (id, game_pk, persona_id, seat_state) VALUES (?, ?, ?, 'active')",
+                                (_uuid.uuid4().hex, target_game_pk, p_id)
+                            )
+                    con.commit()
+                    print(f"[SWAP-STREAM] Carried over {len(global_active_ids)} global/gang personas from room {prev_stream} to {target_game_pk} (preserved native team advocates)")
+            con.close()
+        except Exception as db_err:
+            print(f"[SWAP-STREAM] Database persona carryover warning: {db_err}")
+    else:
+        print(f"[SWAP-STREAM] Optional carryover skipped: bring_gang = False (preserved rosters)")
+        
+    # 4. Broadcast the hot-swap event (GAME_SWITCHED) to all connected websocket clients
+    ws_msg = json.dumps({
+        "type": "GAME_SWITCHED",
+        "game_pk": target_game_pk,
+        "is_hot_swap": True,
+        "session_id": sports_session["active_session_id"]
+    })
+    
+    success_count = 0
+    for cl in list(clients):
+        try:
+            await cl.send(ws_msg)
+            success_count += 1
+        except:
+            pass
+            
+    print(f"[SWAP-STREAM] Swapped active stream to {target_game_pk}. Broadcasted to {success_count} clients.")
+    
+    return {
+        "status": "success",
+        "message": f"Hot-swapped to stream {target_game_pk}",
+        "session": sports_session
+    }
 
 # Also wire hot_takes DB persistence INTO hot_takes_service
 @fastapi_app.get("/api/hot_takes")
@@ -1117,10 +1417,16 @@ async def inject_media(file: UploadFile = File(...), room_id: str = "GLOBAL"):
             "--category", "Playcall Injections"
         ]
         
-        proc = subprocess.run(cmd, capture_output=True, text=True)
+        proc = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        stdout, stderr = await proc.communicate()
         if proc.returncode != 0:
-            print(f"[MEDIA INJECT ERROR] Ingestion failed: {proc.stderr}")
-            raise HTTPException(status_code=500, detail=f"Asset ingestion failed: {proc.stderr}")
+            stderr_str = stderr.decode('utf-8', errors='ignore')
+            print(f"[MEDIA INJECT ERROR] Ingestion failed: {stderr_str}")
+            raise HTTPException(status_code=500, detail=f"Asset ingestion failed: {stderr_str}")
             
         ws_msg = json.dumps({
             "type": "media_injection",
@@ -1243,6 +1549,7 @@ async def create_flow_asset(req: FlowAssetCreate):
 async def api_all_personas():
     """All available personas for the Room Builder modal. Only returns valid AI personas with a team assignment."""
     import sqlite3 as _sq
+    import re as _re
     con = _sq.connect(DB_PATH)
     c = con.cursor()
     c.execute("""
@@ -1253,7 +1560,23 @@ async def api_all_personas():
     """)
     rows = c.fetchall()
     con.close()
-    personas = [{"sys_id": r[0], "user_name": r[1], "team": r[2], "deep_lore": r[3], "system_prompt": r[4], "behavior_notes": r[5], "governance": r[6], "color": r[7], "avatar_url": r[8]} for r in rows]
+    
+    clone_pattern = _re.compile(r'_\d{6}$')
+    personas = [
+        {
+            "sys_id": r[0],
+            "user_name": r[1],
+            "team": r[2],
+            "deep_lore": r[3],
+            "system_prompt": r[4],
+            "behavior_notes": r[5],
+            "governance": r[6],
+            "color": r[7],
+            "avatar_url": r[8]
+        }
+        for r in rows
+        if not clone_pattern.search(r[1])
+    ]
     return {"personas": personas}
 
 
@@ -1267,12 +1590,14 @@ async def api_room_personas(gamePk: str):
     con = _sq.connect(DB_PATH)
     c = con.cursor()
     c.execute("""
-        SELECT p.user_name, p.team, p.color, gp.gemini_tokens, gp.local_tokens
+        SELECT p.user_name, p.team, p.color, COALESCE(gp.gemini_tokens, 0), COALESCE(gp.local_tokens, 0)
         FROM persona p
-        JOIN game_persona gp ON gp.persona_id = p.id
-        WHERE gp.game_pk = ? AND gp.seat_state = 'active'
+        LEFT JOIN game_persona gp ON (gp.persona_id = p.id AND gp.game_pk = ?)
+        LEFT JOIN m2m_persona_room m2m ON (m2m.room = ? AND (m2m.persona = p.id OR m2m.persona = p.user_name OR m2m.persona = (SELECT sys_id FROM sys_user WHERE user_name = p.user_name COLLATE NOCASE)))
+        WHERE (gp.game_pk = ? AND gp.seat_state = 'active') OR m2m.sys_id IS NOT NULL
+        GROUP BY p.user_name
         ORDER BY p.team, p.user_name
-    """, (gamePk,))
+    """, (gamePk, gamePk, gamePk))
     rows = c.fetchall()
     
     c.execute("SELECT gemini_tokens, local_tokens, sys_tokens FROM mlb_schedule WHERE game_pk = ?", (gamePk,))
@@ -1283,7 +1608,7 @@ async def api_room_personas(gamePk: str):
     con.close()
     
     # String array — required by ScruffysTavern component (@-prefixed for mention autocomplete)
-    persona_strings = [f"@{r[0]}" for r in rows]
+    persona_strings = [f"@{r[0].lstrip('@')}" for r in rows]
     # Rich object array for anything that needs team/color data
     roster = [{"user_name": r[0], "team": r[1], "color": r[2], "gemini_tokens": r[3] or 0, "local_tokens": r[4] or 0} for r in rows]
     return {"personas": persona_strings, "roster": roster, "game_pk": gamePk, "room_gemini_tokens": room_gemini, "room_local_tokens": room_local, "room_sys_tokens": room_sys}
@@ -1326,8 +1651,15 @@ async def api_save_room_personas(request: Request):
                     "INSERT INTO game_persona (id, game_pk, persona_id, seat_state) VALUES (?,?,?,'active')",
                     (_uuid.uuid4().hex, game_pk, persona_id)
                 )
+            c.execute("SELECT sys_id FROM m2m_persona_room WHERE room = ? AND (persona = ? OR persona = ?)", (game_pk, persona_id, persona_name))
+            if not c.fetchone():
+                c.execute(
+                    "INSERT INTO m2m_persona_room (sys_id, persona, room, prompt_overlay) VALUES (?,?,?,?)",
+                    (_uuid.uuid4().hex, persona_id, game_pk, f"Deployed to Game {game_pk} via Room Builder")
+                )
         elif action == 'remove':
             c.execute("DELETE FROM game_persona WHERE game_pk = ? AND persona_id = ?", (game_pk, persona_id))
+            c.execute("DELETE FROM m2m_persona_room WHERE room = ? AND (persona = ? OR persona = ?)", (game_pk, persona_id, persona_name))
             
         con.commit()
         con.close()
@@ -1350,14 +1682,20 @@ async def api_save_room_personas(request: Request):
             return {"status": "error", "message": "gamePk required"}
             
         c.execute("DELETE FROM game_persona WHERE game_pk = ?", (game_pk,))
+        c.execute("DELETE FROM m2m_persona_room WHERE room = ?", (game_pk,))
         inserted = 0
         for name in persona_names:
             c.execute("SELECT id FROM persona WHERE user_name = ? COLLATE NOCASE", (name,))
             row = c.fetchone()
             if row:
+                p_id = row[0]
                 c.execute(
                     "INSERT INTO game_persona (id, game_pk, persona_id, seat_state) VALUES (?,?,?,'active')",
-                    (_uuid.uuid4().hex, game_pk, row[0])
+                    (_uuid.uuid4().hex, game_pk, p_id)
+                )
+                c.execute(
+                    "INSERT INTO m2m_persona_room (sys_id, persona, room, prompt_overlay) VALUES (?,?,?,?)",
+                    (_uuid.uuid4().hex, p_id, game_pk, f"Deployed to Game {game_pk} via Room Builder")
                 )
                 inserted += 1
         con.commit()
@@ -1528,8 +1866,15 @@ async def api_roll_call():
             s.room_state,
             group_concat(p.user_name) as personas
         FROM mlb_schedule s
-        LEFT JOIN game_persona gp ON gp.game_pk = s.game_pk AND gp.seat_state = 'active'
-        LEFT JOIN persona p ON p.id = gp.persona_id
+        LEFT JOIN (
+            SELECT gp.game_pk, p.user_name
+            FROM persona p
+            JOIN game_persona gp ON gp.persona_id = p.id AND gp.seat_state = 'active'
+            UNION
+            SELECT m2m.room as game_pk, p.user_name
+            FROM persona p
+            JOIN m2m_persona_room m2m ON (m2m.persona = p.id OR m2m.persona = p.user_name OR m2m.persona = (SELECT sys_id FROM sys_user WHERE user_name = p.user_name COLLATE NOCASE))
+        ) p ON p.game_pk = s.game_pk
         WHERE s.game_date = ?
         GROUP BY s.game_pk
         ORDER BY s.game_date
@@ -1664,7 +2009,14 @@ import glob
 @fastapi_app.get("/api/persona_image/{persona_id}")
 async def get_persona_image(persona_id: str):
     import base64, sqlite3 as _sq, glob
-    from fastapi.responses import Response, FileResponse
+    from fastapi.responses import Response, FileResponse, RedirectResponse
+    
+    # 0. Check if persona_id itself consists of digits. If so, redirect directly to MLB static.
+    if persona_id.isdigit():
+        return RedirectResponse(
+            f"https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/{persona_id}/headshot/67/current"
+        )
+        
     safe_id = persona_id.lower().replace(" ", "_")
 
     # Map name variations / aliases
@@ -1710,21 +2062,50 @@ async def get_persona_image(persona_id: str):
     except Exception as e:
         print(f"[persona_image] DB lookup error: {e}")
 
+    print(f"[persona_image_debug] safe_id={safe_id}")
     # 2. Fall back to direct filesystem search
     for search_dir in [
+        "/home/james/SovereignOS/avatars",
+        "/home/james/SovereignOS/archive_quarantine_eon1",
         "/home/james/SovereignOS/15_FanStack/public/avatars",
         "/home/james/SovereignOS/dna/media/avatars",
-        "/home/james/SovereignOS/dna/media/character_maps"
+        "/home/james/SovereignOS/dna/media/character_maps",
+        "/home/james/SovereignOS/media_vault/03_Assets/Harvested_Artifacts"
     ]:
         for f in glob.glob(os.path.join(search_dir, f"{safe_id}.*")):
             if f.lower().endswith(('.jpg','.jpeg','.png','.jfif','.webp')):
                 return FileResponse(f)
-        # Also check inside a subdirectory matching safe_id
-        sub_dir = os.path.join(search_dir, safe_id)
-        if os.path.isdir(sub_dir):
-            for f in glob.glob(os.path.join(sub_dir, "*")):
-                if f.lower().endswith(('.jpg','.jpeg','.png','.jfif','.webp')) and "avatar" in f.lower():
-                    return FileResponse(f)
+        # Also check inside a subdirectory matching safe_id or prefix or base persona name
+        prefix_id = safe_id.split('_')[0]
+        base_name = safe_id.replace("_sprite_sheet", "")
+        for sub_name in [safe_id, prefix_id, base_name]:
+            sub_dir = os.path.join(search_dir, sub_name)
+            print(f"[persona_image_debug] Checking sub_dir={sub_dir} exists={os.path.isdir(sub_dir)}")
+            if os.path.isdir(sub_dir):
+                for f in glob.glob(os.path.join(sub_dir, "*")):
+                    cond = (safe_id in f.lower() or "avatar" in f.lower() or "sprite" in f.lower() or "sheet" in f.lower() or sub_name == safe_id)
+                    print(f"[persona_image_debug] Checking file={f} cond={cond}")
+                    if f.lower().endswith(('.jpg','.jpeg','.png','.jfif','.webp')) and cond:
+                        return FileResponse(f)
+
+    # 3. Fall back to mlb_rosters table matching name
+    try:
+        search_name = safe_id.replace("_", " ")
+        con = _sq.connect(DB_PATH)
+        row = con.execute(
+            "SELECT sys_id FROM mlb_rosters WHERE LOWER(player_name) = ?",
+            (search_name,)
+        ).fetchone()
+        con.close()
+        if row and row[0]:
+            sys_id = row[0]
+            numeric_id = "".join([c for c in sys_id if c.isdigit()])
+            if numeric_id:
+                return RedirectResponse(
+                    f"https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_213,q_auto:best/v1/people/{numeric_id}/headshot/67/current"
+                )
+    except Exception as e:
+        print(f"[persona_image] MLB roster lookup error: {e}")
 
     raise HTTPException(status_code=404, detail="Image not found")
 
@@ -1754,16 +2135,25 @@ async def upload_persona_image_blob(persona_id: str, file: UploadFile = File(...
 async def upload_chat_image(file: UploadFile = File(...)):
     """Upload a general chat image to public/images and return its web-accessible path."""
     import uuid
-    images_dir = "/home/james/SovereignOS/15_FanStack/public/images"
-    os.makedirs(images_dir, exist_ok=True)
     
     ext = os.path.splitext(file.filename or "")[1] or ".png"
     filename = f"chat_upload_{uuid.uuid4().hex}{ext}"
-    dest_path = os.path.join(images_dir, filename)
+    
+    # Write to both locations to prevent 404s on port 3010
+    images_dir_15 = "/home/james/SovereignOS/15_FanStack/public/images"
+    images_dir_19 = "/home/james/SovereignOS/19_Sovereign_Sports/public/images"
+    
+    os.makedirs(images_dir_15, exist_ok=True)
+    os.makedirs(images_dir_19, exist_ok=True)
+    
+    dest_path_15 = os.path.join(images_dir_15, filename)
+    dest_path_19 = os.path.join(images_dir_19, filename)
     
     try:
         content = await file.read()
-        with open(dest_path, "wb") as f:
+        with open(dest_path_15, "wb") as f:
+            f.write(content)
+        with open(dest_path_19, "wb") as f:
             f.write(content)
         return {"status": "success", "mediaUrl": f"/images/{filename}"}
     except Exception as e:
@@ -1840,6 +2230,269 @@ async def get_storyboards(project: str = "Mets_Twins_Collapse_Storyboard"):
     except Exception as e:
         return {"artifacts": [], "error": str(e)}
 
+# ─── PROMPT INTERCEPTOR STATE & API ENDPOINTS ───
+intercept_mode = False
+staged_prompts = {}
+
+class PromptStagePayload(BaseModel):
+    prompt: str
+    system_instruction: str | None = None
+    model: str | None = None
+    persona: str | None = None
+    game_pk: str | None = None
+
+class PromptOverridePayload(BaseModel):
+    prompt: str
+    system_instruction: str | None = None
+
+class ToggleInterceptPayload(BaseModel):
+    intercept_mode: bool
+
+@fastapi_app.get("/api/prompt/intercept")
+async def get_prompt_intercept_status():
+    staged_list = []
+    for pid, val in staged_prompts.items():
+        staged_list.append({
+            "id": pid,
+            "prompt": val["prompt"],
+            "system_instruction": val["system_instruction"],
+            "model": val["model"],
+            "persona": val["persona"],
+            "game_pk": val["game_pk"],
+            "status": val["status"]
+        })
+    return {
+        "intercept_mode": intercept_mode,
+        "staged": staged_list
+    }
+
+@fastapi_app.post("/api/prompt/intercept/toggle")
+async def toggle_prompt_intercept(payload: ToggleInterceptPayload):
+    global intercept_mode
+    intercept_mode = payload.intercept_mode
+    return {"status": "success", "intercept_mode": intercept_mode}
+
+@fastapi_app.post("/api/prompt/release/{prompt_id}")
+async def release_prompt(prompt_id: str):
+    if prompt_id in staged_prompts:
+        staged_prompts[prompt_id]["status"] = "released"
+        staged_prompts[prompt_id]["event"].set()
+        return {"status": "released"}
+    raise HTTPException(status_code=404, detail="Prompt ID not found or already processed")
+
+@fastapi_app.post("/api/prompt/override/{prompt_id}")
+async def override_prompt(prompt_id: str, payload: PromptOverridePayload):
+    if prompt_id in staged_prompts:
+        staged_prompts[prompt_id]["override_prompt"] = payload.prompt
+        staged_prompts[prompt_id]["override_system_instruction"] = payload.system_instruction
+        staged_prompts[prompt_id]["status"] = "overridden"
+        staged_prompts[prompt_id]["event"].set()
+        return {"status": "overridden"}
+    raise HTTPException(status_code=404, detail="Prompt ID not found or already processed")
+
+@fastapi_app.post("/api/prompt/stage")
+async def stage_prompt(payload: PromptStagePayload):
+    if not intercept_mode:
+        return {"action": "pass"}
+    
+    import uuid
+    prompt_id = uuid.uuid4().hex
+    event = asyncio.Event()
+    
+    staged_prompts[prompt_id] = {
+        "id": prompt_id,
+        "prompt": payload.prompt,
+        "system_instruction": payload.system_instruction,
+        "model": payload.model,
+        "persona": payload.persona,
+        "game_pk": payload.game_pk,
+        "status": "pending",
+        "event": event,
+        "override_prompt": None,
+        "override_system_instruction": None
+    }
+    
+    # Broadcast to all websocket clients
+    ws_msg = {
+        "type": "PROMPT_INTERCEPTED",
+        "id": prompt_id,
+        "prompt": payload.prompt,
+        "system_instruction": payload.system_instruction,
+        "model": payload.model,
+        "persona": payload.persona,
+        "game_pk": payload.game_pk
+    }
+    # Send ws broadcast
+    for client in list(clients):
+        try:
+            await client.send(json.dumps(ws_msg))
+        except Exception:
+            pass
+            
+    # Wait for release/override with 30s timeout
+    try:
+        await asyncio.wait_for(event.wait(), timeout=30.0)
+    except asyncio.TimeoutError:
+        staged_prompts.pop(prompt_id, None)
+        return {"action": "pass"}
+        
+    entry = staged_prompts.pop(prompt_id, None)
+    if not entry:
+        return {"action": "pass"}
+        
+    if entry["status"] == "overridden":
+        return {
+            "action": "override",
+            "prompt": entry["override_prompt"],
+            "system_instruction": entry["override_system_instruction"]
+        }
+    return {"action": "pass"}
+
+
+class AdvocateSpritePayload(BaseModel):
+    persona_name: str
+    theme: str
+
+@fastapi_app.post("/api/advocate/generate_sprite")
+async def generate_advocate_sprite(payload: AdvocateSpritePayload):
+    import urllib.parse
+    import uuid
+    import sqlite3
+    import os
+    import requests
+    from PIL import Image
+    import io
+    
+    persona_name = payload.persona_name.strip()
+    norm_name = persona_name.lower().lstrip('@').replace(' ', '_')
+    theme = payload.theme.strip()
+    
+    system_prompt = ""
+    deep_lore = ""
+    team = "global"
+    try:
+        con = sqlite3.connect(DB_PATH)
+        row = con.execute(
+            "SELECT system_prompt, deep_lore, team FROM persona WHERE LOWER(user_name) = ? OR LOWER(user_name) = ?",
+            (norm_name, norm_name)
+        ).fetchone()
+        con.close()
+        if row:
+            system_prompt = row[0] or ""
+            deep_lore = row[1] or ""
+            team = row[2] or "global"
+    except Exception as e:
+        print(f"[Sprite Gen DB Error] {e}")
+        
+    base_description = f"Consistent facial features, headshot portrait of {persona_name}. Description: {deep_lore[:150]}. System context: {system_prompt[:150]}."
+    
+    if theme == "Beach Promotion":
+        grid_instructions = (
+            "A 3x3 high-contrast grid matrix sheet of the same character. "
+            "Row 1: Modern Era (Col 1: regular headshot on a sunny beach, Col 2: excited face holding a cold drink, Col 3: disgruntled face by the ocean). "
+            "Row 2: Beach Morning (Col 1: regular morning fog beachwear, Col 2: excited waving morning towel, Col 3: disgruntled sunscreen on nose). "
+            "Row 3: Beach Sunset (Col 1: warm golden hour light, Col 2: excited smiling at sunset, Col 3: disgruntled storm clouds background)."
+        )
+        row_keys = ["modern", "beach_morning", "beach_sunset"]
+    elif theme == "Golf Tournament":
+        grid_instructions = (
+            "A 3x3 high-contrast grid matrix sheet of the same character. "
+            "Row 1: Modern Era (Col 1: regular headshot in golf apparel, Col 2: excited face holding a golf ball, Col 3: disgruntled face after missing a putt). "
+            "Row 2: Golf Tee (Col 1: wearing golf cap standing on the tee box, Col 2: excited waving golf club, Col 3: disgruntled in the rough). "
+            "Row 3: Golf Clubhouse (Col 1: clubhouse background, Col 2: excited cheering with trophy, Col 3: disgruntled with broken golf club)."
+        )
+        row_keys = ["modern", "golf_tee", "golf_clubhouse"]
+    else:
+        grid_instructions = (
+            f"A 3x3 high-contrast grid matrix sheet of the same character. "
+            f"Row 1: Modern Era (Col 1: regular headshot in modern {team} team baseball apparel, Col 2: excited victory face, Col 3: disgruntled fan meltdown). "
+            f"Row 2: 1970s Throwback (Col 1: retro 1970s sideburns/hair and pullover racing-stripe {team} uniform, Col 2: vintage cap fly-off excited state, Col 3: disgruntled throwing cup). "
+            f"Row 3: 1920s Throwback (Col 1: 1920s sepia newsboy cap baggy wool {team} uniform, Col 2: excited shouting through vintage megaphone, Col 3: disgruntled scowling behind wire mesh backstop)."
+        )
+        row_keys = ["modern", "1975", "1920"]
+        
+    full_prompt = f"{base_description} {grid_instructions} Masterpiece, strict 3x3 grid layout, symmetric spacing, high-definition character sprite sheet."
+    encoded_prompt = urllib.parse.quote(full_prompt)
+    pollinations_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&nologo=true"
+    
+    target_dir = f"/home/james/SovereignOS/media_vault/03_Assets/Harvested_Artifacts/{norm_name}"
+    os.makedirs(target_dir, exist_ok=True)
+    
+    master_name = f"{norm_name}_sprite_sheet.png"
+    master_path = os.path.join(target_dir, master_name)
+    
+    try:
+        res = requests.get(pollinations_url, timeout=30)
+        if res.status_code != 200:
+            return {"status": "error", "message": f"Pollinations download failed: HTTP {res.status_code}"}
+            
+        with open(master_path, "wb") as f:
+            f.write(res.content)
+            
+        img = Image.open(io.BytesIO(res.content))
+        width, height = img.size
+        cell_width = width / 3
+        cell_height = height / 3
+        
+        col_keys = ["regular", "excited", "disgruntled"]
+        sliced_urls = []
+        
+        for row in range(3):
+            for col in range(3):
+                left = col * cell_width
+                top = row * cell_height
+                right = (col + 1) * cell_width
+                bottom = (row + 1) * cell_height
+                
+                cropped = img.crop((left, top, right, bottom))
+                
+                slice_filename = f"{norm_name}_{row_keys[row]}_{col_keys[col]}.png"
+                slice_path = os.path.join(target_dir, slice_filename)
+                cropped.save(slice_path, "PNG")
+                
+                # Also save to public folder for frontend access
+                static_dir = "/home/james/SovereignOS/15_FanStack/public/images/sprites"
+                os.makedirs(static_dir, exist_ok=True)
+                cropped.save(os.path.join(static_dir, slice_filename), "PNG")
+                
+                sliced_urls.append({
+                    "row": row_keys[row],
+                    "col": col_keys[col],
+                    "filename": slice_filename,
+                    "url": f"/images/sprites/{slice_filename}"
+                })
+                
+        # Register in CMDB
+        try:
+            sys_id = uuid.uuid4().hex
+            con = sqlite3.connect(DB_PATH)
+            c = con.cursor()
+            c.execute("SELECT asset_tag FROM sys_media_asset ORDER BY asset_tag DESC LIMIT 1")
+            row_db = c.fetchone()
+            tag = "FS-MED-00001"
+            if row_db:
+                import re
+                match = re.search(r'FS-MED-(\d+)', row_db[0])
+                if match:
+                    tag = f"FS-MED-{(int(match.group(1)) + 1):05d}"
+            c.execute("""
+                INSERT INTO sys_media_asset (sys_id, asset_tag, name, file_name, file_path, file_size_bytes, mime_type, category, status, md5_hash)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (sys_id, tag, f"Sprite Sheet: {persona_name} - {theme}", master_name, master_path, len(res.content), "image/png", "SpriteSheet", f"Theme: {theme}", sys_id))
+            con.commit()
+            con.close()
+        except Exception as e:
+            print(f"[Sprite CMDB Error] {e}")
+            
+        return {
+            "status": "success",
+            "master_url": f"/api/persona_image/{norm_name}_sprite_sheet",
+            "slices": sliced_urls
+        }
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
 @fastapi_app.websocket("/{path_name:path}")
 async def catch_all_websocket(websocket: WebSocket, path_name: str):
     if path_name in ["ws", "ws-relay", "mesh-ws", "mesh-ws-dev", "mesh-ws-uat", "mesh-ws-sandbox"]:
@@ -1880,6 +2533,142 @@ async def run_fastapi():
         import traceback
         print(f"FASTAPI STARTUP ERROR: {e}")
         traceback.print_exc()
+# ── PGA Golf Telemetry Endpoints ──────────────────────────────────────────────
+@fastapi_app.get("/api/pga/leaderboard")
+def get_pga_leaderboard():
+    try:
+        conn = sqlite3.connect("/home/james/SovereignOS/dna/sovereign_now.db")
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        c.execute("SELECT player_id, player_name, current_position, score_to_par, current_hole, status, updated_at FROM pga_active_leaderboard ORDER BY current_position ASC, score_to_par ASC")
+        rows = [dict(r) for r in c.fetchall()]
+        conn.close()
+        return {"leaderboard": rows}
+    except Exception as e:
+        return {"error": str(e)}
+
+@fastapi_app.post("/api/pga/leaderboard")
+def post_pga_leaderboard(data: dict):
+    try:
+        player_id = data.get("player_id")
+        player_name = data.get("player_name")
+        current_position = data.get("current_position")
+        score_to_par = data.get("score_to_par")
+        current_hole = data.get("current_hole", 18)
+        status = data.get("status", "ACTIVE")
+        
+        conn = sqlite3.connect("/home/james/SovereignOS/dna/sovereign_now.db")
+        c = conn.cursor()
+        c.execute("""
+            INSERT OR REPLACE INTO pga_active_leaderboard 
+            (player_id, player_name, current_position, score_to_par, current_hole, status, updated_at) 
+            VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+        """, (player_id, player_name, current_position, score_to_par, current_hole, status))
+        conn.commit()
+        conn.close()
+        return {"status": "success"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@fastapi_app.delete("/api/pga/leaderboard/{player_id}")
+def delete_pga_leaderboard(player_id: int):
+    try:
+        conn = sqlite3.connect("/home/james/SovereignOS/dna/sovereign_now.db")
+        c = conn.cursor()
+        c.execute("DELETE FROM pga_active_leaderboard WHERE player_id = ?", (player_id,))
+        conn.commit()
+        conn.close()
+        return {"status": "success"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@fastapi_app.post("/api/pga/pulse")
+async def post_pga_pulse(data: dict):
+    text = data.get("text", "")
+    if not text:
+        return {"error": "text is required"}
+    try:
+        pk = "amen_corner"
+        gs = game_states[pk]
+        gs["timestamp"] = time.strftime("%H:%M:%S")
+        gs["target_game_pk"] = pk
+        gs["status_msg"] = text
+        gs["away_team"] = "GOLF"
+        gs["home_team"] = "PGA"
+        gs["event_type"] = "golf_shot"
+        
+        await broadcast_state(pk)
+        
+        # Broadcast the update_context message over websockets to trigger bots
+        out_msg = json.dumps({
+            "type": "update_context",
+            "text": text,
+            "target_nodes": ["ALL"],
+            "target_game_pk": pk
+        })
+        for c in list(clients):
+            try:
+                await c.send(out_msg)
+            except:
+                pass
+                
+        return {"status": "success"}
+    except Exception as e:
+        return {"error": str(e)}
+
+@fastapi_app.get("/api/pga/clio-metrics")
+def get_clio_metrics():
+    import subprocess
+    import os
+    
+    temp = "N/A"
+    try:
+        for path in ["/sys/class/thermal/thermal_zone0/temp", "/sys/class/thermal/thermal_zone1/temp"]:
+            if os.path.exists(path):
+                with open(path) as f:
+                    raw_temp = int(f.read().strip())
+                    temp = f"{round(raw_temp / 1000.0, 1)}°C"
+                    break
+    except:
+        pass
+        
+    ts_status = "Disconnected"
+    try:
+        res = subprocess.run(["tailscale", "status"], capture_output=True, text=True, timeout=1)
+        if res.returncode == 0:
+            if "tailscale is stopped" in res.stderr.lower() or "logged out" in res.stdout.lower():
+                ts_status = "Stopped/Logged Out"
+            else:
+                ts_status = "Connected"
+    except:
+        pass
+        
+    cpu_load = "N/A"
+    mem_usage = "N/A"
+    try:
+        load = os.getloadavg()
+        cpu_load = f"{round(load[0] * 100 / os.cpu_count(), 1)}%"
+    except:
+        pass
+    try:
+        with open('/proc/meminfo', 'r') as mem:
+            lines = mem.readlines()
+            total = int(lines[0].split()[1])
+            free = int(lines[1].split()[1])
+            buffers = int(lines[3].split()[1])
+            cached = int(lines[4].split()[1])
+            used = total - free - buffers - cached
+            mem_usage = f"{round(used / total * 100, 1)}%"
+    except:
+        pass
+            
+    return {
+        "cpu_temp": temp,
+        "tailscale_status": ts_status,
+        "cpu_load": cpu_load,
+        "memory_usage": mem_usage,
+        "hostname": "clio"
+    }
 
 @fastapi_app.get("/api/mlb/boxscore/{game_pk}")
 async def get_mlb_boxscore(game_pk: str):
@@ -1900,6 +2689,7 @@ async def main():
     
     asyncio.create_task(mlb_poller())
     asyncio.create_task(run_fastapi())
+    asyncio.create_task(system_metrics_poller_loop())
     
     async with websockets.serve(handle_client, "0.0.0.0", 8008, ping_interval=None, ping_timeout=None):
          await asyncio.Future()

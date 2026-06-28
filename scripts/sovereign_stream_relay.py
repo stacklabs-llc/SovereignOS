@@ -5,7 +5,7 @@ import asyncio
 import logging
 import sqlite3
 from datetime import date, timedelta
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -152,65 +152,136 @@ async def get_active_games():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.get("/api/sports/footy/incidents")
+async def get_footy_incidents(match_id: int):
+    """
+    Returns live footy match incidents from the soccer_incident_ingress table for the given match_id.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT incident_id, match_minute, incident_type, leverage_delta, data_payload "
+            "FROM soccer_incident_ingress WHERE match_id = ? ORDER BY CAST(match_minute AS INTEGER) DESC",
+            (match_id,)
+        )
+        rows = cursor.fetchall()
+        conn.close()
+        
+        return [
+            {
+                "incident_id": r["incident_id"],
+                "match_minute": r["match_minute"],
+                "incident_type": r["incident_type"],
+                "leverage_delta": float(r["leverage_delta"]),
+                "data_payload": r["data_payload"]
+            }
+            for r in rows
+        ]
+    except Exception as e:
+        logger.error(f"Error fetching footy incidents: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+
 @app.get("/api/sports/{sport_type}")
 async def get_games(sport_type: str):
     """
     Returns filtered weekend and today games from the SQLite mlb_schedule database table,
-    complete with mapped live statuses and injected cached game scores.
+    complete with mapped live statuses, sorted by status priority (LIVE first, then scheduled, then finished).
     """
-    if sport_type == "mlb":
-        try:
-            today_str = date.today().isoformat()
-            start_date = (date.today() - timedelta(days=2)).isoformat()
-            
-            conn = get_db_connection()
-            cursor = conn.cursor()
+    try:
+        today_str = date.today().isoformat()
+        start_date = (date.today() - timedelta(days=2)).isoformat()
+        
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        if sport_type == "mlb":
             cursor.execute(
-                "SELECT game_pk, home_team, away_team, status, game_time, stream_url, stream_source "
-                "FROM mlb_schedule WHERE game_date BETWEEN ? AND ?",
+                "SELECT game_pk, home_team, away_team, status, game_time, stream_url, stream_source, venue "
+                "FROM mlb_schedule WHERE game_date BETWEEN ? AND ? "
+                "AND away_team NOT IN ('PGA', 'GOLF', 'FOOTY', 'WORLD_CUP', 'NFL', 'UFL', 'CATNIPSYNDICATE', 'WEEDSTACK', 'USA', 'ENG', 'GER', 'ESP', 'MEX', 'ARG') "
+                "AND home_team NOT IN ('PGA', 'GOLF', 'FOOTY', 'WORLD_CUP', 'NFL', 'UFL', 'CATNIPSYNDICATE', 'WEEDSTACK', 'USA', 'ENG', 'GER', 'ESP', 'MEX', 'ARG')",
                 (start_date, today_str)
             )
-            rows = cursor.fetchall()
+        elif sport_type == "pga":
+            cursor.execute(
+                "SELECT game_pk, home_team, away_team, status, game_time, stream_url, stream_source, venue "
+                "FROM mlb_schedule WHERE game_date BETWEEN ? AND ? "
+                "AND (away_team IN ('PGA', 'GOLF') OR home_team IN ('PGA', 'GOLF'))",
+                (start_date, today_str)
+            )
+        elif sport_type == "footy":
+            cursor.execute(
+                "SELECT game_pk, home_team, away_team, status, game_time, stream_url, stream_source, venue "
+                "FROM mlb_schedule WHERE game_date BETWEEN ? AND ? "
+                "AND (away_team IN ('FOOTY', 'WORLD_CUP', 'USA', 'ENG', 'GER', 'ESP', 'MEX', 'ARG') "
+                "OR home_team IN ('FOOTY', 'WORLD_CUP', 'USA', 'ENG', 'GER', 'ESP', 'MEX', 'ARG'))",
+                (start_date, today_str)
+            )
+        else:
             conn.close()
-            
-            games = []
-            for r in rows:
-                game_pk = str(r["game_pk"])
-                home_score = None
-                away_score = None
-                
-                state_path = f"/home/james/SovereignOS/game_states/{game_pk}.json"
-                if os.path.exists(state_path):
-                    try:
-                        with open(state_path, "r") as f:
-                            state_data = json.load(f)
-                            home_score = state_data.get("home_score")
-                            away_score = state_data.get("away_score")
-                    except Exception:
-                        pass
-                
-                # Map active/in-progress game states to "LIVE" for frontend CSS trigger
-                status = r["status"] or "Scheduled"
-                if status in ("In Progress", "Warmup"):
-                    status = "LIVE"
-                
-                games.append({
-                    "id": game_pk,
-                    "title": f"{r['away_team']} @ {r['home_team']}",
-                    "status": status,
-                    "time": r["game_time"] or "7:10 PM ET",
-                    "stream_available": bool(r["stream_url"]),
-                    "scraper": r["stream_source"] or "Unknown",
-                    "home_team": r["home_team"],
-                    "away_team": r["away_team"],
-                    "home_score": home_score,
-                    "away_score": away_score
-                })
-            return games
-        except Exception as e:
-            logger.error(f"Error fetching from DB: {e}")
             return []
-    return []
+            
+        rows = cursor.fetchall()
+        conn.close()
+        
+        games = []
+        for r in rows:
+            game_pk = str(r["game_pk"])
+            home_score = None
+            away_score = None
+            
+            state_path = f"/home/james/SovereignOS/game_states/{game_pk}.json"
+            if os.path.exists(state_path):
+                try:
+                    with open(state_path, "r") as f:
+                        state_data = json.load(f)
+                        home_score = state_data.get("home_score")
+                        away_score = state_data.get("away_score")
+                except Exception:
+                    pass
+            
+            # Map active/in-progress game states to "LIVE" for frontend CSS trigger
+            status = r["status"] or "Scheduled"
+            if status in ("In Progress", "Warmup", "Active"):
+                status = "LIVE"
+            
+            title = f"{r['away_team']} @ {r['home_team']}"
+            if sport_type == "pga" and r["venue"]:
+                title = f"PGA: {r['venue']}"
+                
+            games.append({
+                "id": game_pk,
+                "title": title,
+                "status": status,
+                "time": r["game_time"] or "7:10 PM ET",
+                "stream_available": bool(r["stream_url"]),
+                "scraper": r["stream_source"] or "Unknown",
+                "home_team": r["home_team"],
+                "away_team": r["away_team"],
+                "home_score": home_score,
+                "away_score": away_score
+            })
+            
+        # Sort games: LIVE (0) first, Scheduled/Pre-Game (1) next, Final/Closed (2) last
+        def get_sort_priority(g):
+            s = g["status"].upper()
+            if s in ("LIVE", "IN PROGRESS", "WARMUP", "ACTIVE"):
+                return 0
+            elif s in ("SCHEDULED", "PRE-GAME"):
+                return 1
+            else:
+                return 2
+                
+        games.sort(key=lambda x: (get_sort_priority(x), x["time"], x["id"]))
+        return games
+    except Exception as e:
+        logger.error(f"Error fetching from DB for {sport_type}: {e}")
+        return []
+
 
 @app.get("/api/stream/{game_id}")
 async def get_stream_url(game_id: str):
@@ -280,7 +351,148 @@ async def get_game_state(game_id: str):
         except Exception as e:
             logger.error(f"Error reading game state file {file_path}: {e}")
             raise HTTPException(status_code=500, detail="Failed to parse game state")
-    raise HTTPException(status_code=404, detail="Game state not found")
+@app.get("/api/properties")
+def get_properties():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT name, value, description FROM sys_properties")
+        props = [dict(row) for row in cursor.fetchall()]
+        conn.close()
+        return props
+    except Exception as e:
+        logger.error(f"Error fetching properties: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.put("/api/properties")
+async def update_properties(request: Request):
+    try:
+        data = await request.json()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        for name, value in data.items():
+            cursor.execute("UPDATE sys_properties SET value = ?, sys_updated_on = datetime('now') WHERE name = ?", (str(value), name))
+        conn.commit()
+        conn.close()
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Error updating properties: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/studio/tables")
+def get_studio_tables():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")
+        tables = [row["name"] for row in cursor.fetchall()]
+        conn.close()
+        return tables
+    except Exception as e:
+        logger.error(f"Error listing tables: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/studio/tables/{table_name}")
+def get_table_data(table_name: str, limit: int = 100, offset: int = 0):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Get table info (columns)
+        cursor.execute(f"PRAGMA table_info({table_name})")
+        columns = [{"name": row["name"], "type": row["type"], "pk": bool(row["pk"])} for row in cursor.fetchall()]
+        
+        # Fetch rows including rowid
+        cursor.execute(f"SELECT rowid as _rowid, * FROM {table_name} LIMIT ? OFFSET ?", (limit, offset))
+        rows = [dict(row) for row in cursor.fetchall()]
+        
+        # Get total count
+        cursor.execute(f"SELECT count(*) as total FROM {table_name}")
+        total = cursor.fetchone()["total"]
+        
+        conn.close()
+        return {"columns": columns, "rows": rows, "total": total}
+    except Exception as e:
+        logger.error(f"Error loading table data for {table_name}: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/studio/tables/{table_name}")
+async def create_table_row(table_name: str, request: Request):
+    try:
+        data = await request.json()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Filter keys to columns that exist in the table
+        cursor.execute(f"PRAGMA table_info({table_name})")
+        col_names = [row[1] for row in cursor.fetchall()]
+        
+        insert_data = {k: v for k, v in data.items() if k in col_names and k != "_rowid"}
+        
+        if not insert_data:
+            conn.close()
+            # If no data columns are passed (e.g. empty or default row), let sqlite handle it
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute(f"INSERT INTO {table_name} DEFAULT VALUES")
+            new_rowid = cursor.lastrowid
+            conn.commit()
+            conn.close()
+            return {"status": "success", "_rowid": new_rowid}
+            
+        keys = list(insert_data.keys())
+        placeholders = ", ".join(["?"] * len(keys))
+        query = f"INSERT INTO {table_name} ({', '.join(keys)}) VALUES ({placeholders})"
+        
+        cursor.execute(query, list(insert_data.values()))
+        conn.commit()
+        new_rowid = cursor.lastrowid
+        conn.close()
+        return {"status": "success", "_rowid": new_rowid}
+    except Exception as e:
+        logger.error(f"Error inserting row into {table_name}: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.put("/api/studio/tables/{table_name}/{row_id}")
+async def update_table_row(table_name: str, row_id: int, request: Request):
+    try:
+        data = await request.json()
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        
+        # Filter keys to columns that exist in the table
+        cursor.execute(f"PRAGMA table_info({table_name})")
+        col_names = [row[1] for row in cursor.fetchall()]
+        
+        update_data = {k: v for k, v in data.items() if k in col_names and k != "_rowid"}
+        
+        if not update_data:
+            conn.close()
+            return {"status": "success"}
+            
+        sets = [f"{k} = ?" for k in update_data.keys()]
+        query = f"UPDATE {table_name} SET {', '.join(sets)} WHERE rowid = ?"
+        
+        cursor.execute(query, list(update_data.values()) + [row_id])
+        conn.commit()
+        conn.close()
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Error updating row in {table_name} (rowid={row_id}): {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.delete("/api/studio/tables/{table_name}/{row_id}")
+def delete_table_row(table_name: str, row_id: int):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute(f"DELETE FROM {table_name} WHERE rowid = ?", (row_id,))
+        conn.commit()
+        conn.close()
+        return {"status": "success"}
+    except Exception as e:
+        logger.error(f"Error deleting row in {table_name} (rowid={row_id}): {e}")
+        raise HTTPException(status_code=400, detail=str(e))
 
 
 if __name__ == "__main__":

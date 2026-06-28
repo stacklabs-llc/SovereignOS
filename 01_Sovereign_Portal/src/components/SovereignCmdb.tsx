@@ -28,8 +28,9 @@ const VM = {
 const CMDB_TABLES = [
   { id: 'cmdb_ci', label: 'All Configuration Items', icon: Database, color: VM.blue },
   { id: 'cmdb_ci_hardware', label: 'IT Hardware', icon: Server, color: VM.blue },
-  { id: 'cmdb_ci_garden', label: 'GardenStack', icon: Leaf, color: VM.emerald },
+  { id: 'cmdb_ci_garden', label: "Eileen's Stack", icon: Leaf, color: VM.emerald },
   { id: 'cmdb_ci_ai_persona', label: 'AI Personas', icon: Bot, color: VM.purple },
+  { id: 'cmdb_ci_appl', label: 'Active Mission Stacks', icon: Server, color: VM.orange },
   { id: 'sys_user', label: 'System Users', icon: User, color: VM.orange },
 ];
 
@@ -277,73 +278,118 @@ export default function SovereignCmdb() {
   const { upstream: relUpstream, downstream: relDownstream } = getSelectedRelationships();
 
   // Class icon mapper
-  const cmdbColumns = [
-    {
-      key: "operational_status",
-      label: "Status",
-      sortable: true,
-      render: (r: any) => (
-        <span className="flex items-center justify-center">
-          <span className={`w-2.5 h-2.5 rounded-full shadow-sm animate-pulse
-            ${r.operational_status == 1 ? "bg-[#10b981] shadow-[#10b981]" : 
-              r.operational_status == 2 ? "bg-[#f97316] shadow-[#f97316]" : 
-              "bg-[#ef4444] shadow-[#ef4444]"}
-          `} />
-        </span>
-      )
-    },
-    {
-      key: "name",
-      label: "Configuration Name",
-      sortable: true,
-      render: (r: any) => (
-        <span className="font-semibold uppercase tracking-wider text-white">
-          {r.name || r.user_name || "—"}
-        </span>
-      )
-    },
-    {
-      key: "sys_class_name",
-      label: "Class Name",
-      sortable: true,
-      render: (r: any) => {
-        const isNodeIoT = ["C120", "Nest-Cam-indoor", "govee-smart-light", "govee-hygrometer"].includes(r.name);
-        return (
-          <span className={`px-2 py-0.5 rounded border text-[10px] uppercase tracking-widest
-            ${r.sys_class_name === "cmdb_ci_hardware" 
-              ? isNodeIoT 
-                ? "bg-[#10b981]/10 border-[#10b981]/30 text-[#10b981]"
-                : "bg-[#06b6d4]/10 border-[#06b6d4]/30 text-[#06b6d4]" 
-              : r.sys_class_name === "cmdb_ci_ai_persona" 
-                ? "bg-[#a855f7]/10 border-[#a855f7]/30 text-[#a855f7]"
-                : "bg-[#e2e8f0]/10 border-[#e2e8f0]/30 text-white"}
-          `}>
-            {r.sys_class_name === "cmdb_ci_hardware" ? isNodeIoT ? "IoT Node" : "Compute" : r.sys_class_name?.replace("cmdb_ci_", "") || "Generic"}
+  // Dynamic columns based on active class table
+  const getColumnsForActiveTable = () => {
+    const base = [
+      {
+        key: "operational_status",
+        label: "Status",
+        sortable: true,
+        render: (r: any) => (
+          <span className="flex items-center justify-center">
+            <span className={`w-2.5 h-2.5 rounded-full shadow-sm animate-pulse
+              ${r.operational_status == 1 ? "bg-[#10b981] shadow-[#10b981]" : 
+                r.operational_status == 2 ? "bg-[#f97316] shadow-[#f97316]" : 
+                "bg-[#ef4444] shadow-[#ef4444]"}
+            `} />
           </span>
-        );
+        )
+      },
+      {
+        key: "name",
+        label: "Configuration Name",
+        sortable: true,
+        render: (r: any) => (
+          <span className="font-semibold uppercase tracking-wider text-white">
+            {r.name || r.user_name || "—"}
+          </span>
+        )
       }
-    },
-    {
-      key: "short_description",
-      label: "Short Description",
-      sortable: true,
-      render: (r: any) => (
-        <span className="text-[#cbd5e1] truncate max-w-[280px] block">
-          {r.short_description || r.introduction || r.ip_address || "—"}
-        </span>
-      )
-    },
-    {
-      key: "assigned_to",
-      label: "Assigned",
-      sortable: true,
-      render: (r: any) => (
-        <span className="text-[#64748b]">
-          {r.assigned_to || r.department || "GLOBAL"}
-        </span>
-      )
+    ];
+
+    if (activeTable.id === 'cmdb_ci_appl') {
+      return [
+        ...base,
+        {
+          key: "port",
+          label: "Port",
+          sortable: true,
+          render: (r: any) => (
+            <span className="font-mono text-[#06b6d4]">
+              {r.port || "—"}
+            </span>
+          )
+        },
+        {
+          key: "short_description",
+          label: "Short Description",
+          sortable: true,
+          render: (r: any) => (
+            <span className="text-[#cbd5e1] truncate max-w-[280px] block">
+              {r.short_description || "—"}
+            </span>
+          )
+        },
+        {
+          key: "active",
+          label: "Active Stack",
+          sortable: true,
+          render: (r: any) => (
+            <span className={`font-mono text-xs uppercase ${r.active ? "text-[#10b981]" : "text-[#cbd5e1]/30"}`}>
+              {r.active ? "YES" : "NO"}
+            </span>
+          )
+        }
+      ];
     }
-  ];
+
+    return [
+      ...base,
+      {
+        key: "sys_class_name",
+        label: "Class Name",
+        sortable: true,
+        render: (r: any) => {
+          const isNodeIoT = ["C120", "Nest-Cam-indoor", "govee-smart-light", "govee-hygrometer"].includes(r.name);
+          return (
+            <span className={`px-2 py-0.5 rounded border text-[10px] uppercase tracking-widest
+              ${r.sys_class_name === "cmdb_ci_hardware" 
+                ? isNodeIoT 
+                  ? "bg-[#10b981]/10 border-[#10b981]/30 text-[#10b981]"
+                  : "bg-[#06b6d4]/10 border-[#06b6d4]/30 text-[#06b6d4]" 
+                : r.sys_class_name === "cmdb_ci_ai_persona" 
+                  ? "bg-[#a855f7]/10 border-[#a855f7]/30 text-[#a855f7]"
+                  : "bg-[#e2e8f0]/10 border-[#e2e8f0]/30 text-white"}
+            `}>
+              {r.sys_class_name === "cmdb_ci_hardware" ? isNodeIoT ? "IoT Node" : "Compute" : r.sys_class_name?.replace("cmdb_ci_", "") || "Generic"}
+            </span>
+          );
+        }
+      },
+      {
+        key: "short_description",
+        label: "Short Description",
+        sortable: true,
+        render: (r: any) => (
+          <span className="text-[#cbd5e1] truncate max-w-[280px] block">
+            {r.short_description || r.introduction || r.ip_address || "—"}
+          </span>
+        )
+      },
+      {
+        key: "assigned_to",
+        label: "Assigned",
+        sortable: true,
+        render: (r: any) => (
+          <span className="text-[#64748b]">
+            {r.assigned_to || r.department || "GLOBAL"}
+          </span>
+        )
+      }
+    ];
+  };
+
+  const cmdbColumns = getColumnsForActiveTable();
 
   return (
     <div className="flex flex-col lg:flex-row h-screen bg-[#020617] text-[#cbd5e1] font-sans overflow-hidden border border-[#1e293b] rounded-2xl relative shadow-2xl">
@@ -874,6 +920,47 @@ export default function SovereignCmdb() {
                     className="w-full bg-[#020617] border border-[#1e293b] focus:border-[#06b6d4] rounded-lg px-3 py-2 text-xs font-mono text-white outline-none transition-colors"
                   />
                 </div>
+              )}
+
+              {editForm.sys_class_name === "cmdb_ci_appl" && (
+                <>
+                  <div>
+                    <label className="block font-mono text-[9px] text-[#64748b] uppercase tracking-widest mb-1.5">
+                      Port Number
+                    </label>
+                    <input 
+                      type="text"
+                      value={editForm.port || ""}
+                      onChange={e => setEditForm({ ...editForm, port: e.target.value })}
+                      className="w-full bg-[#020617] border border-[#1e293b] focus:border-[#06b6d4] rounded-lg px-3 py-2 text-xs font-mono text-white outline-none transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block font-mono text-[9px] text-[#64748b] uppercase tracking-widest mb-1.5">
+                      Active Stack state
+                    </label>
+                    <select
+                      value={editForm.active || 0}
+                      onChange={e => setEditForm({ ...editForm, active: parseInt(e.target.value) })}
+                      className="w-full bg-[#020617] border border-[#1e293b] focus:border-[#06b6d4] rounded-lg px-3 py-2 text-xs font-mono text-white outline-none transition-colors"
+                    >
+                      <option value={1}>1 - Active Stack</option>
+                      <option value={0}>0 - Staged/Offline</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block font-mono text-[9px] text-[#64748b] uppercase tracking-widest mb-1.5">
+                      Dashboard Icon text (Single Char)
+                    </label>
+                    <input 
+                      type="text"
+                      maxLength={1}
+                      value={editForm.icon || ""}
+                      onChange={e => setEditForm({ ...editForm, icon: e.target.value })}
+                      className="w-full bg-[#020617] border border-[#1e293b] focus:border-[#06b6d4] rounded-lg px-3 py-2 text-xs font-mono text-white outline-none transition-colors"
+                    />
+                  </div>
+                </>
               )}
             </div>
 

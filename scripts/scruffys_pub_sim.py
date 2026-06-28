@@ -3,7 +3,6 @@ import websockets
 import json
 import os
 import sys
-import google.generativeai as genai
 
 async def scruffys_pub_sim(target_game_pk):
     try:
@@ -21,8 +20,9 @@ async def scruffys_pub_sim(target_game_pk):
                 if line.startswith('GEMINI_API_KEY='):
                     api_key = line.strip().split('=', 1)[1]
         
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel('gemini-flash-latest', generation_config={"response_mime_type": "application/json", "temperature": 0.9})
+        from google import genai
+        from google.genai import types
+        client = genai.Client(api_key=api_key)
         
         prompt = f"""You are directing a highly toxic, dramatic post-game discussion at 'Scruffy's Pub'.
 The Mets just lost their 12th game in a row (actually 13, but they say 12). They blew the lead in the 9th inning to Devin Williams and lost 5-3. 
@@ -39,7 +39,14 @@ Output exactly a JSON array of objects with keys: 'user' (must be exactly 'barf'
 """
 
         print(f"🧠 Calling Gemini for the Scruffy's Pub simulation (Target Game PK: {target_game_pk})...")
-        res = model.generate_content(prompt)
+        res = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json",
+                temperature=0.9
+            )
+        )
         import ast
         try:
             messages = json.loads(res.text)

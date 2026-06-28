@@ -64,6 +64,7 @@ def run():
         ('tmi_news_desk', 'TMI News Desk', 'Broadcast Director Triage Dashboard', '🚨', '#ef4444', 1, 'utility', None),
         ('artifact_gallery', 'Media Vault Matrix', 'Consolidated Artifacts', '📦', '#a855f7', 1, 'utility', None),
         ('promo_inbox', 'The Cosmic Sieve', 'Incoming Brand & Agent Messages', '📬', '#38bdf8', 1, 'utility', None),
+        ('knowledge_hub', 'Knowledge Hub', 'Integrated Sovereign Knowledge Gateway and documentation lookup', '📚', '#e0bc68', 1, 'utility', None),
         ('optical_ingest', 'Optical Ingest Console', 'Advocate Intake Stream', '📷', '#10b981', 1, 'utility', None),
         ('roll_call', 'Daily Roll Call', 'Morning Agent Check-In', '📋', '#fbbf24', 1, 'utility', 8000),
         ('model_arena', 'Model Battle Arena', 'LLM Performance Testing', '⚔️', '#ef4444', 1, 'utility', None),
@@ -147,7 +148,7 @@ def run():
         'holodex', 'rom_gallery', 'artifact_gallery',
         'persona_center', 'promo_inbox', 'savant_query',
         'optical_ingest', 'roll_call', 'model_arena',
-        'tmi_news_desk'
+        'tmi_news_desk', 'knowledge_hub'
     ]
     for util in fanstack_utilities:
         c.execute("SELECT active FROM m2m_stack_utility WHERE stack_module_name='fanstack' AND utility_module_name=?", (util,))
@@ -156,6 +157,19 @@ def run():
             c.execute("INSERT INTO m2m_stack_utility (stack_module_name, utility_module_name, active) VALUES ('fanstack', ?, 1)", (util,))
         else:
             c.execute("UPDATE m2m_stack_utility SET active=1 WHERE stack_module_name='fanstack' AND utility_module_name=?", (util,))
+
+    # 6. Seed default m2m_stack_utility links for aethervet
+    aethervet_utilities = [
+        'itsm', 'voice', 'holodex', 'persona_center',
+        'presence', 'savant_query', 'knowledge_hub'
+    ]
+    for util in aethervet_utilities:
+        c.execute("SELECT active FROM m2m_stack_utility WHERE stack_module_name='aethervet' AND utility_module_name=?", (util,))
+        row = c.fetchone()
+        if row is None:
+            c.execute("INSERT INTO m2m_stack_utility (stack_module_name, utility_module_name, active) VALUES ('aethervet', ?, 1)", (util,))
+        else:
+            c.execute("UPDATE m2m_stack_utility SET active=1 WHERE stack_module_name='aethervet' AND utility_module_name=?", (util,))
 
     conn.commit()
     conn.close()

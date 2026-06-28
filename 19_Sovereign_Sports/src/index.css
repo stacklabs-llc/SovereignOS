@@ -1,3 +1,7 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
 :root {
   font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
   color-scheme: light dark;
@@ -13,23 +17,31 @@
   --color-sov-blue-glow: rgba(10, 132, 255, 0.4);
 }
 
+html, body {
+  margin: 0 !important;
+  padding: 0 !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  overflow: hidden !important;
+}
+
 body {
-  margin: 0;
-  display: flex;
-  min-height: 100vh;
-  overflow-x: hidden;
+  display: flex !important;
 }
 
 #root {
-  width: 100%;
+  width: 100% !important;
+  height: 100% !important;
+  overflow: hidden !important;
 }
 
 /* Base Layout */
 .app-container {
+  height: 100vh !important;
+  width: 100vw !important;
+  overflow: hidden !important;
   display: flex;
-  height: 100vh;
-  width: 100vw;
-  overflow: hidden;
+  flex-direction: row; /* Desktop defaults to side-by-side */
   background-color: var(--color-void);
 }
 
@@ -73,7 +85,7 @@ body {
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 1.5rem;
-  color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
   transition: all 0.2s ease;
 }
@@ -100,8 +112,11 @@ body {
 
 /* Main Content Area */
 .main-content {
+  height: 100%;
   flex: 1;
-  overflow-y: auto;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
   padding: 2rem;
   position: relative;
 }
@@ -293,6 +308,13 @@ body.industrial-slate,
     transition: all 0.15s ease-in-out;
 }
 
+/* Keith Hernandez vibration and orange/blue glow */
+.tmi-keith-shatter {
+    animation: intense-spidey-shake 0.3s ease-in-out infinite;
+    filter: drop-shadow(0 0 25px rgba(253, 90, 30, 0.9)) drop-shadow(0 0 12px rgba(0, 45, 98, 0.7));
+    transition: all 0.15s ease-in-out;
+}
+
 /* =========================================
    [ SOVEREIGN SPORTS RESPONSIVE OVERRIDES ]
    ========================================= */
@@ -346,6 +368,307 @@ body.industrial-slate,
     }
 }
 
+/* =========================================
+   [ CYPHER CELL OVERLAY ANIMATIONS ]
+   ========================================= */
+@keyframes cypher-pulse-red {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.cypher-pulse-red {
+  animation: cypher-pulse-red 1.5s infinite;
+}
 
+@keyframes cypher-bar-1 {
+  0%, 100% { height: 20%; }
+  50% { height: 80%; }
+}
+@keyframes cypher-bar-2 {
+  0%, 100% { height: 40%; }
+  50% { height: 60%; }
+}
+@keyframes cypher-bar-3 {
+  0%, 100% { height: 10%; }
+  50% { height: 90%; }
+}
 
+.cypher-eq-bar {
+  animation: cypher-bar-1 0.5s ease-in-out infinite alternate;
+}
+.cypher-eq-bar:nth-child(2n) {
+  animation-name: cypher-bar-2;
+  animation-duration: 0.7s;
+}
+.cypher-eq-bar:nth-child(3n) {
+  animation-name: cypher-bar-3;
+  animation-duration: 0.4s;
+}
 
+/* Cardboard Station Wagon CSS Animation */
+@keyframes station-wagon-drive {
+  0% {
+    transform: translateX(-150%) rotate(-1deg);
+  }
+  15% {
+    transform: translateX(-50%) rotate(2deg);
+  }
+  30% {
+    transform: translateX(10%) rotate(-2deg);
+  }
+  50% {
+    transform: translateX(45%) rotate(1deg);
+  }
+  70% {
+    transform: translateX(80%) rotate(-1deg);
+  }
+  85% {
+    transform: translateX(110%) rotate(2deg);
+  }
+  100% {
+    transform: translateX(150%) rotate(0deg);
+  }
+}
+
+.station-wagon-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(11, 14, 20, 0.95);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  pointer-events: all;
+  backdrop-filter: blur(10px);
+}
+
+.station-wagon-sprite {
+  font-size: 15rem;
+  display: inline-block;
+  animation: station-wagon-drive 1.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.station-wagon-label {
+  margin-top: 2rem;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 1.5rem;
+  color: #ff5a00;
+  text-transform: uppercase;
+  letter-spacing: 0.25rem;
+  text-shadow: 0 0 10px rgba(255, 90, 0, 0.5);
+}
+
+/* Terrace Balcony Sidebar Style - retro typewriter typography, ragged border */
+.terrace-balcony-sidebar {
+  width: 35%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow-y: auto;
+  padding: 0.5rem;
+  border-left: 2px dashed rgba(255, 255, 255, 0.15) !important;
+  background: rgba(20, 24, 33, 0.3) !important;
+  border-radius: 0px !important;
+}
+
+.typewriter-text {
+  font-family: 'Courier New', Courier, monospace !important;
+  letter-spacing: -0.5px;
+  line-height: 1.4;
+}
+
+.ragged-border {
+  border-style: dashed !important;
+  border-width: 1px !important;
+  border-color: rgba(255,255,255,0.15) !important;
+  border-radius: 0px !important;
+}
+
+/* Bottom Telemetry Ticker style */
+.bottom-telemetry-ticker {
+  width: 100%;
+  height: 48px;
+  background: rgba(11, 14, 20, 0.85);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  white-space: nowrap;
+  position: relative;
+  padding: 0 1.5rem;
+  box-sizing: border-box;
+}
+
+.ticker-track {
+  display: flex;
+  gap: 3rem;
+  animation: ticker-scroll 25s linear infinite;
+}
+
+@keyframes ticker-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.ticker-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  font-family: 'Courier New', Courier, monospace;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.ticker-badge {
+  background: rgba(255, 90, 0, 0.1);
+  color: #ff5a00;
+  border: 1px solid rgba(255, 90, 0, 0.3);
+  padding: 0.15rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: bold;
+  border-radius: 4px;
+}
+
+/* Interactive username state inside Scruffy chat */
+.interactive-username {
+  color: rgba(245, 158, 11, 0.9) !important;
+  font-weight: 600 !important;
+  border-bottom: 1px dotted rgba(100, 116, 139, 0.6) !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.interactive-username:hover {
+  text-decoration: underline !important;
+  color: rgba(251, 191, 36, 1) !important;
+}
+
+/* =========================================
+   [ THEME SYSTEM DEFINITIONS ]
+   ========================================= */
+
+/* 1. Sovereign Cyan (Default) */
+.sovereign-cyan {
+  --color-void: #0B0E14;
+  --color-glass-bg: rgba(255, 255, 255, 0.03);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+  font-family: 'Outfit', 'Inter', sans-serif !important;
+}
+.sovereign-cyan .sovereign-sports-dashboard,
+.sovereign-cyan .main-content,
+.sovereign-cyan .sidebar {
+  border-color: rgba(0, 255, 204, 0.15) !important;
+}
+
+/* 2. 16-Bit Retro */
+.retro-16bit {
+  --color-void: #000000;
+  --color-glass-bg: #111;
+  --color-glass-border: #FF00FF;
+  font-family: 'Courier New', Courier, monospace !important;
+}
+.retro-16bit * {
+  border-radius: 0px !important;
+}
+.retro-16bit button, 
+.retro-16bit select, 
+.retro-16bit input {
+  border: 3px double #00FF00 !important;
+  background: #000 !important;
+  color: #00FF00 !important;
+  font-family: 'Courier New', Courier, monospace !important;
+  text-shadow: 0 0 5px #00FF00 !important;
+}
+.retro-16bit .chat-message-bubble {
+  border: 2px solid #00FFFF !important;
+  background: #000 !important;
+  color: #FFF !important;
+}
+.retro-16bit h1, .retro-16bit h2, .retro-16bit h3 {
+  color: #FF00FF !important;
+  text-shadow: 0 0 8px #FF00FF !important;
+}
+
+/* 3. The Show Sim */
+.the-show-sim {
+  --color-void: #111827;
+  --color-glass-bg: rgba(255, 255, 255, 0.95);
+  --color-glass-border: rgba(0, 0, 0, 0.15);
+  font-family: 'Arial Narrow', sans-serif !important;
+}
+.the-show-sim .sovereign-sports-dashboard,
+.the-show-sim .chat-message-bubble,
+.the-show-sim .portal-nav-header {
+  background: #E5E7EB !important;
+  color: #111827 !important;
+  border-color: #D1D5DB !important;
+}
+.the-show-sim h1, .the-show-sim h2, .the-show-sim h3, .the-show-sim span, .the-show-sim div, .the-show-sim p {
+  color: #111827 !important;
+}
+.the-show-sim button {
+  background: #111827 !important;
+  color: #FFF !important;
+  border-radius: 4px !important;
+}
+
+/* 4. SNY Cinematic */
+.sny-cinematic {
+  --color-void: #002D62;
+  --color-glass-bg: rgba(253, 90, 30, 0.1);
+  --color-glass-border: #FD5A1E;
+  font-family: 'Trebuchet MS', sans-serif !important;
+  background: linear-gradient(185deg, #002D62 0%, #001530 100%) !important;
+}
+.sny-cinematic .sovereign-sports-dashboard {
+  background: radial-gradient(circle at center, rgba(253, 90, 30, 0.05) 0%, rgba(0, 45, 98, 0.4) 100%) !important;
+  box-shadow: inset 0 0 100px rgba(0,0,0,0.8) !important;
+}
+.sny-cinematic h1, .sny-cinematic h2, .sny-cinematic h3 {
+  color: #FD5A1E !important;
+  text-shadow: 0 0 12px rgba(253, 90, 30, 0.5) !important;
+}
+.sny-cinematic button {
+  background: #002D62 !important;
+  border: 1px solid #FD5A1E !important;
+  color: #FFF !important;
+  box-shadow: 0 0 10px rgba(253, 90, 30, 0.4) !important;
+}
+.sny-cinematic .chat-message-bubble {
+  border-left: 4px solid #FD5A1E !important;
+  background: rgba(0, 45, 98, 0.3) !important;
+}
+
+/* 5. Muppet Hell */
+.muppet-hell {
+  --color-void: #78350F;
+  --color-glass-bg: #FEF3C7;
+  --color-glass-border: #D97706;
+  font-family: 'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif !important;
+}
+.muppet-hell * {
+  border-style: dashed !important;
+  border-width: 2px !important;
+  border-color: #D97706 !important;
+}
+.muppet-hell .sovereign-sports-dashboard,
+.muppet-hell .chat-message-bubble {
+  background: #FEF3C7 !important;
+  color: #78350F !important;
+  border: 3px dashed #B45309 !important;
+  box-shadow: 8px 8px 0px #78350F !important;
+}
+.muppet-hell h1, .muppet-hell h2, .muppet-hell h3, .muppet-hell span, .muppet-hell p, .muppet-hell div {
+  color: #78350F !important;
+}
+.muppet-hell button {
+  background: #F59E0B !important;
+  color: #FFF !important;
+  border: 3px dashed #B45309 !important;
+  box-shadow: 4px 4px 0px #78350F !important;
+}

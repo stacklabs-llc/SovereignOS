@@ -75,6 +75,50 @@ def execute_investor_followups():
     except Exception as e:
         print(f"[VESPER ERROR] Investor Follow-up Check Failed: {str(e)}")
 
+def execute_ticket_autoclose():
+    print("\n=== [VESPER] Executing 48-Hour Ticket Auto-Closure Escalation Sweep ===")
+    db_path = "/home/james/SovereignOS/dna/sovereign_now.db"
+    if not os.path.exists(db_path):
+        print(f"[VESPER ERROR] Database not found at {db_path}")
+        return
+        
+    try:
+        import sqlite3
+        conn = sqlite3.connect(db_path)
+        c = conn.cursor()
+        
+        # Identify tickets to close: state = 4 (RESOLVED), older than 48 hours (2 days)
+        c.execute("""
+            SELECT sys_id, number 
+            FROM sovereign_tickets 
+            WHERE state = 4 AND sys_updated_on < datetime('now', '-2 days')
+        """)
+        to_close = c.fetchall()
+        
+        if to_close:
+            for sys_id, number in to_close:
+                print(f"[VESPER] Auto-closing resolved ticket {number} (sys_id: {sys_id})")
+                c.execute("""
+                    UPDATE sovereign_tickets 
+                    SET state = 5, work_notes = 'Automated 48-hour auto-closure escalation sweep.', sys_updated_on = CURRENT_TIMESTAMP
+                    WHERE sys_id = ?
+                """, (sys_id,))
+                
+                c.execute("""
+                    UPDATE sys_sdlc_task 
+                    SET state = 'CLOSED' 
+                    WHERE task_id = ?
+                """, (number,))
+            
+            conn.commit()
+            print(f"✅ Successfully closed {len(to_close)} tickets.")
+        else:
+            print("[VESPER] No resolved tickets eligible for 48-hour auto-closure.")
+            
+        conn.close()
+    except Exception as e:
+        print(f"[VESPER ERROR] Ticket Auto-Closure Failed: {str(e)}")
+
 if __name__ == "__main__":
     print("[VESPER KERNEL] Initializing Core Scheduler Loop...")
     cycles = 0
@@ -84,6 +128,7 @@ if __name__ == "__main__":
         execute_greenstack()
         execute_smuggler_bay()
         execute_investor_followups()
+        execute_ticket_autoclose()
         
         # Perform discovery sweep every 5 minutes (5 cycles)
         if cycles % 5 == 1:

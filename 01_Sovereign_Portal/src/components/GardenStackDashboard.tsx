@@ -53,7 +53,7 @@ export default function GardenStackDashboard({ onEnterPortal }: { onEnterPortal?
         <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <header className="flex items-end justify-between border-b border-white/10 pb-6">
             <div>
-              <h1 className="text-3xl font-black tracking-widest uppercase mb-1">GardenStack</h1>
+              <h1 className="text-3xl font-black tracking-widest uppercase mb-1">Eileen's Stack</h1>
               <p className="text-white/50 font-light tracking-widest text-sm uppercase">Agricultural Telemetry & Operations Command</p>
             </div>
             <div className="flex gap-4">

@@ -69,7 +69,6 @@ interface AiPersona {
   sys_created_on: string;
   sys_updated_on: string;
   u_system_prompt?: string;
-  u_llm_engine?: string;
   u_cadence?: string;
   u_deployment_zone?: string;
   assigned_to?: string;
@@ -287,7 +286,6 @@ export default function PersonaCenter() {
       sys_created_on: new Date().toISOString(),
       sys_updated_on: new Date().toISOString(),
       u_system_prompt: "",
-      u_llm_engine: "gemini-2.5-flash",
       u_cadence: "pacer",
       u_visual_style: "style_clay",
       u_boggs_reactivity: 5,
@@ -473,15 +471,16 @@ export default function PersonaCenter() {
     return recordsToExport;
   };
 
-  const handleExportJSON = () => {
-    const recordsToExport = getRecordsToExport();
+  const handleExportJSON = (singleRecord?: any) => {
+    const isRecord = singleRecord && typeof singleRecord === 'object' && 'sys_id' in singleRecord;
+    const recordsToExport = isRecord ? [singleRecord] : getRecordsToExport();
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(recordsToExport, null, 2));
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
     
-    // Conditionally assign the download filename based on selection count
-    const filename = (selectedRecords.size === 1 && recordsToExport.length === 1)
-      ? `${recordsToExport[0].user_name}_export.json`
+    // Conditionally assign the download filename based on selection count or single record pass
+    const filename = (isRecord || (selectedRecords.size === 1 && recordsToExport.length === 1))
+      ? `${(isRecord ? singleRecord : recordsToExport[0]).user_name}_export.json`
       : "sovereign_personas_export.json";
     downloadAnchorNode.setAttribute("download", filename);
     
@@ -490,8 +489,9 @@ export default function PersonaCenter() {
     downloadAnchorNode.remove();
   };
 
-  const handleExportMD = () => {
-    const recordsToExport = getRecordsToExport();
+  const handleExportMD = (singleRecord?: any) => {
+    const isRecord = singleRecord && typeof singleRecord === 'object' && 'sys_id' in singleRecord;
+    const recordsToExport = isRecord ? [singleRecord] : getRecordsToExport();
     let mdStr = `# Sovereign OS — AI Advocates Export\n\n`;
     
     recordsToExport.forEach((record: any) => {
@@ -504,7 +504,6 @@ export default function PersonaCenter() {
        mdStr += `**Email Alias:** ${record.email_alias || "N/A"}\n\n`;
        mdStr += `**Color:** ${record.color || "N/A"}\n\n`;
        mdStr += `**Cadence:** ${record.u_cadence || "pacer"}\n\n`;
-       mdStr += `**LLM Engine:** ${record.u_llm_engine || "N/A"}\n\n`;
        mdStr += `**Boggs Reactivity:** ${record.u_boggs_reactivity || "N/A"}\n\n`;
        mdStr += `**Deployment Zone:** ${record.u_deployment_zone || "N/A"}\n\n`;
        mdStr += `**Visual Theme Class:** ${record.u_visual_style || "N/A"}\n\n`;
@@ -534,9 +533,9 @@ export default function PersonaCenter() {
     const downloadAnchorNode = document.createElement('a');
     downloadAnchorNode.setAttribute("href", dataStr);
     
-    // Conditionally assign the download filename based on selection count
-    const filename = (selectedRecords.size === 1 && recordsToExport.length === 1)
-      ? `${recordsToExport[0].user_name}_export.md`
+    // Conditionally assign the download filename based on selection count or single record pass
+    const filename = (isRecord || (selectedRecords.size === 1 && recordsToExport.length === 1))
+      ? `${(isRecord ? singleRecord : recordsToExport[0]).user_name}_export.md`
       : "sovereign_personas_export.md";
     downloadAnchorNode.setAttribute("download", filename);
     
@@ -1620,13 +1619,8 @@ export default function PersonaCenter() {
                   <>
                     <button
                       onClick={() => {
-                        const prevSel = new Set(selectedRecords);
-                        const cleanSel = new Set([editForm.sys_id]);
-                        setSelectedRecords(cleanSel);
-                        setTimeout(() => {
-                          handleExportJSON();
-                          setSelectedRecords(prevSel);
-                        }, 50);
+                        const targetBot = bots.find(b => b.sys_id === editForm.sys_id);
+                        handleExportJSON(targetBot || editForm);
                       }}
                       title="Export this advocate's dossier to JSON"
                       style={{ background: "transparent", border: `1px solid ${VM.border}`, borderRadius: "8px", padding: "8px 12px", cursor: "pointer", color: VM.emerald, display: "flex", alignItems: "center", gap: "6px", fontFamily: VM.fontMono, fontSize: "0.8rem", transition: "border-color 0.2s" }}
@@ -1637,13 +1631,8 @@ export default function PersonaCenter() {
                     </button>
                     <button
                       onClick={() => {
-                        const prevSel = new Set(selectedRecords);
-                        const cleanSel = new Set([editForm.sys_id]);
-                        setSelectedRecords(cleanSel);
-                        setTimeout(() => {
-                          handleExportMD();
-                          setSelectedRecords(prevSel);
-                        }, 50);
+                        const targetBot = bots.find(b => b.sys_id === editForm.sys_id);
+                        handleExportMD(targetBot || editForm);
                       }}
                       title="Export this advocate's dossier to Markdown"
                       style={{ background: "transparent", border: `1px solid ${VM.border}`, borderRadius: "8px", padding: "8px 12px", cursor: "pointer", color: VM.blue, display: "flex", alignItems: "center", gap: "6px", fontFamily: VM.fontMono, fontSize: "0.8rem", transition: "border-color 0.2s" }}
@@ -1823,7 +1812,6 @@ export default function PersonaCenter() {
                       { key: "title", label: "Title / Role" },
                       { key: "assigned_to", label: "Team", type: "team-select" },
                       { key: "active", label: "Status", type: "status-select" },
-                      { key: "u_llm_engine", label: "LLM Engine", type: "llm-select" },
                       { key: "u_deployment_zone", label: "Deployment Zone", type: "deployment-select" },
                       { key: "u_cadence", label: "Cadence", type: "cadence-select" },
                       { key: "u_visual_style", label: "Visual Style", type: "style-select" },
@@ -1844,16 +1832,6 @@ export default function PersonaCenter() {
                             onFocus={(e) => e.target.style.borderColor = VM.emerald} onBlur={(e) => e.target.style.borderColor = VM.border}>
                             <option value="1">Active</option>
                             <option value="0">Inactive</option>
-                          </select>
-                        ) : type === "llm-select" ? (
-                          <select value={String(editForm[key] || "")} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })} disabled={!isAuthorized}
-                            style={{ width: "100%", background: VM.surface, border: `1px solid ${VM.border}`, borderRadius: "6px", color: VM.text, padding: "10px 12px", fontFamily: VM.fontMono, fontSize: "0.82rem", outline: "none" }}
-                            onFocus={(e) => e.target.style.borderColor = VM.emerald} onBlur={(e) => e.target.style.borderColor = VM.border}>
-                            <option value="gemini-3.1-flash-lite">gemini-3.1-flash-lite (Active Default)</option>
-                            <option value="gemini-2.0-flash">gemini-2.0-flash (Core Standard)</option>
-                            <option value="gemini-1.5-flash">gemini-1.5-flash (Legacy Fallback)</option>
-                            <option value="local_phi3">local_phi3 (Local Low Resource)</option>
-                            <option value="local_llama3">local_llama3 (Local Uncensored)</option>
                           </select>
                         ) : type === "deployment-select" ? (
                           <select value={String(editForm[key] || "")} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })} disabled={!isAuthorized}

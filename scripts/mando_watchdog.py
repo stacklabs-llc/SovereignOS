@@ -36,7 +36,7 @@ SERVICES = {
         "port": 3004, 
         "ci": "SamTracker",
         "keyword": "SamTracker",
-        "restart_cmd": "cd /home/james/SovereignOS/14_SamTracker && nohup npm run dev -- --force --port 3004 >> /home/james/SovereignOS/logs/vite_sam.log 2>&1 &"
+        "restart_cmd": "cd /home/james/SovereignOS/14_SamTracker && nohup npm run dev -- --force --port 3024 >> /home/james/SovereignOS/logs/vite_sam.log 2>&1 &"
     },
     "SamTracker Backend": {
         "port": 8083,
@@ -239,6 +239,88 @@ def fetch_db_val(sql, params=()):
         except subprocess.CalledProcessError as e:
             print(f"SSH DB Fetch Error: {e.stderr}")
             return None
+
+def fetch_db_rows(sql, params=()):
+    """Fetches multiple rows from database locally or via SSH fallback."""
+    if os.path.exists(DB_PATH):
+        try:
+            conn = sqlite3.connect(DB_PATH)
+            cursor = conn.cursor()
+            cursor.execute(sql, params)
+            rows = cursor.fetchall()
+            conn.close()
+            return rows
+        except Exception as e:
+            print(f"Local Fetch Rows SQL Error: {e}")
+            return []
+    else:
+        # Fallback to SSH via Tailscale Hostname (KI-001)
+        formatted_sql = sql
+        for p in params:
+            if isinstance(p, str):
+                escaped_p = p.replace("'", "''")
+                formatted_sql = formatted_sql.replace("?", f"'{escaped_p}'", 1)
+            else:
+                formatted_sql = formatted_sql.replace("?", str(p), 1)
+        ssh_cmd = [
+            "ssh", "-o", "StrictHostKeyChecking=no", "-o", "BatchMode=yes",
+            f"james@{TARGET_HOST}",
+            f'sqlite3 {DB_PATH} "{formatted_sql.strip()}"'
+        ]
+        try:
+            res = subprocess.run(ssh_cmd, check=True, capture_output=True, text=True)
+            out = res.stdout.strip()
+            rows = []
+            if out:
+                for line in out.splitlines():
+                    rows.append(line.split('|'))
+            return rows
+        except subprocess.CalledProcessError as e:
+            print(f"SSH DB Fetch Rows Error: {e.stderr}")
+            return []
+
+def load_active_paa7_tickets():
+    """Queries the database to load any active (state < 4) PAA-7 tickets."""
+    global active_paa7_tickets
+    sql = "SELECT number, short_description FROM sovereign_tickets WHERE type = 'STRY' AND state < 4 AND short_description LIKE 'PAA-7 PORT AUTHORITY ALERT: Port %';"
+    rows = fetch_db_rows(sql)
+    for row in rows:
+        if len(row) >= 2:
+            num, short_desc = row[0], row[1]
+            try:
+                parts = short_desc.split("Port ")
+                if len(parts) > 1:
+                    port_str = parts[1].split()[0]
+                    port = int(port_str)
+                    active_paa7_tickets[port] = num
+                    print(f"[PAA-7] Loaded active ticket {num} for Port {port} from database.")
+            except Exception as e:
+                print(f"[PAA-7] Failed to parse port from ticket {num} ({short_desc}): {e}")
+
+def load_active_incidents():
+    """Queries the database to load any active (state < 4) INC tickets."""
+    global active_incidents
+    sql = "SELECT number, short_description FROM sovereign_tickets WHERE type = 'INC' AND state < 4 AND short_description LIKE 'CRITICAL: % Offline';"
+    rows = fetch_db_rows(sql)
+    for row in rows:
+        if len(row) >= 2:
+            num, short_desc = row[0], row[1]
+            try:
+                service_name = short_desc.replace("CRITICAL: ", "").replace(" Offline", "")
+                active_incidents[service_name] = {"time": time.time(), "inc_num": num}
+                print(f"[Watchdog] Loaded active incident {num} for service '{service_name}' from database.")
+            except Exception as e:
+                print(f"[Watchdog] Failed to parse service name from incident {num} ({short_desc}): {e}")
+
+def load_active_hardware_incident():
+    """Queries the database to load any active hardware telemetry incident."""
+    global active_hardware_incident
+    sql = "SELECT number FROM sovereign_tickets WHERE type = 'INC' AND state < 4 AND short_description LIKE 'CRITICAL: Hardware Telemetry Breached%';"
+    rows = fetch_db_rows(sql)
+    if rows and len(rows[0]) > 0:
+        num = rows[0][0]
+        active_hardware_incident = {"time": time.time(), "inc_num": num}
+        print(f"[Watchdog] Loaded active hardware incident {num} from database.")
 
 def get_expression_avatar(ci):
     """Fetch expression avatar URL from the database for the given CI system."""
@@ -447,6 +529,18 @@ def monitor_hardware():
             dispatch_comet_resolve("Hardware Telemetry", active_hardware_incident["inc_num"])
             active_hardware_incident = None
 
+    # Auto-mitigate Swap Usage breach if it exceeds 90% (Decoupled from ticket cooldown)
+    if swap_use > 90.0:
+        print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Auto-mitigating Swap Usage breach by cycling swap...")
+        try:
+            if os.path.exists(DB_PATH):
+                subprocess.run("sudo swapoff -a && sudo swapon -a", shell=True, check=True)
+            else:
+                subprocess.run(["ssh", "-o", "StrictHostKeyChecking=no", "-o", "BatchMode=yes", f"james@{TARGET_HOST}", "sudo swapoff -a && sudo swapon -a"], check=True)
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Swap cycle command executed successfully.")
+        except Exception as cycle_err:
+            print(f"[{time.strftime('%Y-%m-%d %H:%M:%S')}] Swap cycle execution failed: {cycle_err}")
+
 def main():
     print("=========================================")
     print("   Sovereign Watchdog (Project Mando)    ")
@@ -458,6 +552,11 @@ def main():
     last_sam_status = 1
     last_mando_status = 1
     global active_hardware_incident
+    
+    # Load active tickets/incidents from database on startup to prevent redundant alerts (PAA-7 resolution)
+    load_active_paa7_tickets()
+    load_active_incidents()
+    load_active_hardware_incident()
     
     while True:
         now = time.time()

@@ -416,13 +416,39 @@ export default function App() {
                       {s.text.split(' |||')[0]}
                     </div>
                     {s.text.includes(' ||| IMG:') && (() => {
-                      const imgUrl = s.text.split(' ||| IMG:')[1];
-                      const src = imgUrl.startsWith('http') ? imgUrl : `/sam${imgUrl}`;
-                      return (
-                        <div className="mt-4">
-                          <img src={src} alt="Sighting Evidence" className="rounded-xl border-4 border-black max-h-64 object-cover" />
-                        </div>
-                      );
+                      const parts = s.text.split(' ||| IMG:');
+                      const imgUrls = parts.slice(1);
+                      if (imgUrls.length === 1) {
+                        const src = imgUrls[0].startsWith('http') ? imgUrls[0] : `/sam${imgUrls[0]}`;
+                        return (
+                          <div className="mt-4">
+                            <img src={src} alt="Sighting Evidence" className="rounded-xl border-4 border-black max-h-64 object-cover hover:scale-[1.02] transition-transform duration-200" />
+                          </div>
+                        );
+                      } else {
+                        // Multi-panel comic strip!
+                        const panelNames = ["THE FLIP", "GPS HORIZON", "WEATHER MATRIX", "METS TEMPO", "CLIMAX ESCAPE"];
+                        return (
+                          <div className="mt-4 p-4 bg-amber-50/70 rounded-2xl border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)]">
+                            <div className="font-display font-bold text-center text-xl uppercase tracking-wider mb-4 text-black border-b-4 border-black pb-2 bg-yellow-300 p-2 rounded-lg">
+                              📖 METSY'S DAILY ADVENTURES
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                              {imgUrls.map((imgUrl: string, idx: number) => {
+                                const src = imgUrl.startsWith('http') ? imgUrl : `/sam${imgUrl}`;
+                                return (
+                                  <div key={idx} className="bg-white p-2 rounded-lg border-2 border-black flex flex-col justify-between shadow-[4px_4px_0_rgba(0,0,0,1)] hover:translate-y-[-4px] hover:shadow-[6px_6px_0_rgba(0,0,0,1)] transition-all duration-200">
+                                    <img src={src} alt={`Panel ${idx + 1}`} className="w-full aspect-square object-cover rounded-md border border-slate-300" />
+                                    <div className="mt-2 text-center text-xs font-black uppercase text-slate-800 tracking-wider bg-slate-100 py-1 rounded">
+                                      {panelNames[idx] || `PANEL ${idx + 1}`}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        );
+                      }
                     })()}
                     {s.text.includes(' ||| VID_PROCESSING:') && (() => {
                       const vidProcUrl = s.text.split(' ||| VID_PROCESSING:')[1];

@@ -38,6 +38,11 @@ export default defineConfig(({mode}) => {
           changeOrigin: true,
           secure: false,
         },
+        '/api/persona_image': {
+          target: 'http://127.0.0.1:8090',
+          changeOrigin: true,
+          secure: false,
+        },
         '/api/sys_rules': {
           target: 'http://127.0.0.1:8090',
           changeOrigin: true,
@@ -142,6 +147,18 @@ export default defineConfig(({mode}) => {
           changeOrigin: true,
         },
         '/api/snipe': {
+          target: 'http://127.0.0.1:5056',
+          changeOrigin: true,
+        },
+        '/api/transcribe': {
+          target: 'http://127.0.0.1:5056',
+          changeOrigin: true,
+        },
+        '/api/summarize': {
+          target: 'http://127.0.0.1:5056',
+          changeOrigin: true,
+        },
+        '/api/analyze_video': {
           target: 'http://127.0.0.1:5056',
           changeOrigin: true,
         },

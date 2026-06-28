@@ -1,6 +1,7 @@
 from flask import Flask, render_template_string, request, jsonify
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 
 app = Flask(__name__)
 
@@ -16,9 +17,6 @@ try:
                 break
 except Exception as e:
     print(f"Warning: Could not load API key: {e}")
-
-if api_key:
-    genai.configure(api_key=api_key)
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -236,7 +234,7 @@ def generate():
         return jsonify({"error": f"Could not load persona lore: {e}"}), 500
 
     try:
-        model = genai.GenerativeModel('gemini-flash-latest', generation_config={"temperature": 0.8})
+        client = genai.Client(api_key=api_key)
         
         prompt = f"""You are acting as the persona described below. 
         
@@ -248,7 +246,13 @@ You are watching a live stream about the Mets. Here is the latest chat context y
 
 Task: Write ONE single, highly punchy, character-accurate response to this chat. Do not use hashtags or emojis. Keep it STRICTLY UNDER 200 CHARACTERS. React directly to what was said in the chat context provided above."""
 
-        res = model.generate_content(prompt)
+        res = client.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.8
+            )
+        )
         return jsonify({"response": res.text.strip()})
     except Exception as e:
         return jsonify({"error": str(e)}), 500

@@ -2,7 +2,6 @@ import os
 import sys
 import time
 import warnings
-import google.generativeai as genai
 
 # Suppress the deprecation warning to keep the output pristine for Wardy/System checks
 warnings.filterwarnings('ignore')
@@ -18,18 +17,22 @@ def main():
         sys.exit(1)
 
     # Load API Key
+    api_key = None
     try:
         with open('/home/james/SovereignOS/.env') as f:
             for line in f:
                 if line.startswith('GEMINI_API_KEY='):
-                    genai.configure(api_key=line.strip().split('=', 1)[1])
+                    api_key = line.strip().split('=', 1)[1]
                     break
     except Exception as e:
         print(f"[!] Error loading Gemini API key: {e}")
         sys.exit(1)
 
-    print(f"[*] Uploading {os.path.basename(video_path)} to Sovereign AI (Gemini 1.5 Pro)...")
-    video_file = genai.upload_file(path=video_path)
+    from google import genai
+    client = genai.Client(api_key=api_key)
+
+    print(f"[*] Uploading {os.path.basename(video_path)} to Sovereign AI (Gemini 2.5 Flash)...")
+    video_file = client.files.upload(file=video_path)
 
     print(f"[*] Upload complete. File URI: {video_file.uri}")
     print("[*] Awaiting video ingestion and temporal encoding...")
@@ -37,7 +40,7 @@ def main():
     while video_file.state.name == "PROCESSING":
         print('.', end='', flush=True)
         time.sleep(5)
-        video_file = genai.get_file(video_file.name)
+        video_file = client.files.get(name=video_file.name)
     print()
 
     if video_file.state.name == "FAILED":
@@ -51,11 +54,13 @@ def main():
         "Analyze this postgame show video. Your directive is to extract 4 to 5 highly specific, contextual highlights. "
         "Focus intensely on player call-outs, umpire grudges, bizarre analogies, controversial calls, and intense emotional peaks. "
         "Format your output as simple, punchy bullet points under 50 words each. "
-        "Do not include any pleasantries or introductory text. Output ONLY the raw contextual data designed to be ingested directly into the Wardy Desk Hive Mind."
+        "Do not include any pleasantries or introductory text. Output ONLY the raw contextual data designed to be ingested directly into the Playcall Desk Hive Mind."
     )
 
-    model = genai.GenerativeModel('gemini-flash-latest')
-    response = model.generate_content([video_file, prompt])
+    response = client.models.generate_content(
+        model='gemini-2.5-flash',
+        contents=[video_file, prompt]
+    )
 
     # Save output
     base_name = os.path.splitext(video_path)[0]
@@ -71,7 +76,7 @@ def main():
     print("=================================================================\n")
 
     # Clean up file from Gemini to save space/quota
-    genai.delete_file(video_file.name)
+    client.files.delete(name=video_file.name)
     print("[*] Source media purged from Gemini remote storage.")
 
 if __name__ == "__main__":

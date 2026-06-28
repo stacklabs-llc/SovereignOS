@@ -1,0 +1,54 @@
+/* SpideyMet.css */
+
+.spidey-canvas-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 10000;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.swinging-met-container {
+  position: absolute;
+  top: -200px;
+  left: -20%;
+  transform-origin: top center;
+  animation: pendulum-swing 3s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+.mr-met-spidey-svg {
+  width: 180px;
+  height: 180px;
+  filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.5));
+}
+
+@keyframes pendulum-swing {
+  0% {
+    left: -20%;
+    top: -50px;
+    transform: rotate(45deg);
+  }
+  25% {
+    left: 15%;
+    top: 150px;
+    transform: rotate(20deg);
+  }
+  50% {
+    left: 50%;
+    top: 250px;
+    transform: rotate(0deg);
+  }
+  75% {
+    left: 85%;
+    top: 150px;
+    transform: rotate(-20deg);
+  }
+  100% {
+    left: 120%;
+    top: -50px;
+    transform: rotate(-45deg);
+  }
+}

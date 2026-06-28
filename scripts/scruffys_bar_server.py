@@ -193,6 +193,21 @@ import sqlite3
 
 @app.route('/api/room_personas', methods=['GET'])
 def get_room_personas():
+    username = request.args.get('username')
+    if username:
+        clean_username = username.lstrip('@')
+        try:
+            conn = sqlite3.connect('/home/james/SovereignOS/dna/sovereign_now.db')
+            c = conn.cursor()
+            c.execute("SELECT avatar_blob, avatar_url FROM persona WHERE user_name = ? COLLATE NOCASE", (clean_username,))
+            row = c.fetchone()
+            conn.close()
+            if row:
+                return jsonify({"avatar_blob": row[0], "avatar_url": row[1]})
+            return jsonify({"avatar_blob": None, "avatar_url": None})
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
     game_pk = request.args.get('gamePk')
     if not game_pk:
         return jsonify({"personas": ["@Dot", "@Coach_Shrubbs", "@Scruffy", "@Wardy", "@Uncle_Stevie", "@Barf"]})

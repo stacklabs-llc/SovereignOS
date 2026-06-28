@@ -4,19 +4,19 @@ import os
 import json
 import asyncio
 import websockets
-import google.generativeai as genai
 from PIL import Image
 
 # Load API Key
+api_key = None
 env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env")
 if os.path.exists(env_path):
     with open(env_path) as f:
         for line in f:
             if line.startswith("GEMINI_API_KEY"):
                 api_key = line.strip().split("=", 1)[1].strip()
-                genai.configure(api_key=api_key)
 
-model = genai.GenerativeModel("gemini-flash-latest")
+from google import genai
+client = genai.Client(api_key=api_key)
 
 class ArgusOpticalSync:
     def __init__(self):
@@ -51,7 +51,10 @@ class ArgusOpticalSync:
                 # Ask Gemini purely for the Pitch Count integer to compute Delta
                 prompt = "Look at this TV broadcast of a baseball game. Locate the scorebug graphics (usually bottom right or top left). Extract ONLY the total Pitch Count for the current pitcher. Return ONLY the integer number. If not visible, return 'None'."
                 
-                response = model.generate_content([prompt, img])
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=[prompt, img]
+                )
                 text = response.text.strip()
                 
                 if text.isdigit():

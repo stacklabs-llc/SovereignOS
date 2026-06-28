@@ -34,6 +34,7 @@ import {
   Legend
 } from 'recharts';
 import VetTelemetryDashboard from './VetTelemetryDashboard';
+import InteractiveCockpit from './InteractiveCockpit';
 
 interface AetherVetDashboardProps {
   onNavigate?: (domain: string, room: string) => void;
@@ -490,6 +491,7 @@ export default function AetherVetDashboard({ onNavigate }: AetherVetDashboardPro
             <button className={`hover:text-[#38bdf8] transition-colors ${activeTab === 'telemetry' ? 'text-[#38bdf8] border-b-2 border-[#38bdf8] pb-1' : ''}`} onClick={() => setActiveTab('telemetry')}>Telemetry</button>
             <button className={`hover:text-[#38bdf8] transition-colors ${activeTab === 'patients' ? 'text-[#38bdf8] border-b-2 border-[#38bdf8] pb-1' : ''}`} onClick={() => setActiveTab('patients')}>Patients</button>
             <button className={`hover:text-[#38bdf8] transition-colors ${activeTab === 'telepresence' ? 'text-[#38bdf8] border-b-2 border-[#38bdf8] pb-1' : ''}`} onClick={() => setActiveTab('telepresence')}>Telepresence</button>
+            <button className={`hover:text-[#38bdf8] transition-colors ${activeTab === 'cockpit' ? 'text-[#38bdf8] border-b-2 border-[#38bdf8] pb-1' : ''}`} onClick={() => setActiveTab('cockpit')}>Cockpit</button>
           </div>
 
           <div className="flex items-center gap-4">
@@ -517,7 +519,11 @@ export default function AetherVetDashboard({ onNavigate }: AetherVetDashboardPro
             <VetTelemetryDashboard />
           )}
 
-          {activeTab !== 'telemetry' && (
+          {activeTab === 'cockpit' && (
+            <InteractiveCockpit onNavigate={() => {}} />
+          )}
+
+          {activeTab !== 'telemetry' && activeTab !== 'cockpit' && (
             <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6">
               
               {/* Left Sidebar */}

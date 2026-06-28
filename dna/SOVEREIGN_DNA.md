@@ -29,29 +29,36 @@ This document serves as the absolute, non-narrative, declarative architecture bl
 | **`3000`** | StackLabs LLC Gateway | Vite / React Frontend | Main gateway and prospect portal homepage. |
 | **`3004`** | SamTracker Frontend | Vite / React Frontend | Active sports/simulation telemetry tracker frontend. |
 | **`3008`** | Sovereign Cinema UI | Vite / React Frontend | Media and playback control interface (reverse proxy masked). |
-| **`3009`** | FanStack Portal | Vite / React Frontend | FanStack Sovereign Sports Portal interface. |
+| **`3009`** | Sovereign SDLC UI | Vite / React Frontend | SDLC Ticket tracking and administration workspace. |
+| **`3010`** | Sovereign Sports / FanStack | Vite / React Frontend | Sovereign Sports Fan Portal (Sovereign Oracle) and Creator Portal (Playcall Desk on /creator-portal). |
 | **`3015`** | AetherVet Telemedicine | Vite / React Frontend | AetherVet Smyrna clinical patient and medicine tracker (port 3015). |
-| **`3016`** | Sovereign OS Portal | Vite / React Frontend | Sovereign OS workspace and application launcher dashboard. |
+| **`3016`** | Sovereign OS Portal | Vite / React Frontend | Sovereign OS workspace and application launcher dashboard (defaults to Clio Cockpit; Comet Messenger nested as Power Tool). |
 | **`3017`** | Storybook Station Portal | Vite / React Frontend | Eileen's Storybook Station daily hub portal. |
 | **`3020`** | Barb's Stack | Vite / React Frontend | Barb's Personal Cockpit, Smyrna Sentinel delivery tracker & active stacks. |
+| **`3022`** | Clio Cockpit Dashboard | Vite / React Frontend (HTTPS) | Clio Cockpit System Dashboard (Tailscale SSL secured, local ws/api proxies). |
+| **`3026`** | Tesseract Stack Card | Next.js / React Frontend | Interactive 4D Tesseract Baseball Card staging engine. |
 | **`7300`** | Catnip Wars Sandbox | Vite / React | 16-bit emergent World Ledger and active Catnip Wars board interface. |
 | **`5051`** | Sovereign OS Core | FastAPI / Python | Core OS system orchestration API. |
 | **`5055`** | Sovereign OS Auth | FastAPI / Python | Identity and session token validation server. |
 | **`5056`** | Sovereign Admin API | FastAPI / Python | Low-level administrative commands and node telemetry. |
 | **`8000`** | M.A.R.D REST API | FastAPI / Python | Multi-Agent Real-Time Discourse sports telemetry and metadata REST API. |
+| **`8001`** | Masters Relay / Ingress | FastAPI / Python | Ingress proxy serving Butler Cabin HTML views & proxying /ws connection. |
 | **`8008`** | M.A.R.D WebSockets | FastAPI / Python | Live real-time WebSocket comment stream and simulated sports chatrooms. |
+| **`8009`** | Masters WebSocket Stream | Python WS Daemon | Backend WebSocket server streaming golf/simulator telemetry. |
 | **`8012`** | HoloLink Signaling WS | Python Daemon | WebRTC signaling, queue routing, and presence tracking daemon. |
 | **`8015`** | Comet Relay WS | Python Daemon | Sputnik Comet-90 retro radio relay messaging, provisions, and priority alerts server. |
 | **`8085`** | Sovereign Cinema API | FastAPI / Python | Pipelines media lists and handles HTTP Range video streaming. |
 | **`8095`** | SDLC Ticketing API | FastAPI / Python | Backend engine serving tickets, attachments, and the integrated SDLC Portal. |
 | **`8097`** | Sovereign Stream Relay | FastAPI / Python | Overrides and routes external HLS live stream links (.m3u8) for active watch parties. |
-| **`8090`** | Sovereign Core Monolith | FastAPI / Python | Unified endpoint API monolith exposing prompt decoders, macro matrix, and self-healing voice routers. |
+| **`8090`** | Sovereign Core Monolith | FastAPI / Python | Unified endpoint API monolith exposing prompt decoders, macro matrix, self-healing voice routers, Cinema TV Request & SABnzbd Queue Tunneling APIs, and the Sovereign Knowledge Base REST API (exposing full CRUD runbook ingestion at /api/system/kb). |
 | **`8088`** | Sovereign Dead Drop | Flask / Python | Air-gapped gateway for media and logs ingestion (Tailscale proxied). |
 | **`5000`** | Sandbox Admin API | Flask / Python | Sandbox Catnip Wars dynamic endpoints and SQLite card image mutations. |
 | **`11434`**| Ollama Local LLM | Ollama Engine | Local LLM host for fallbacks. |
 | **`4001`** | Govee LAN Scan | UDP Broadcast Scan | Temporary port used to scan for local Govee lights. |
 | **`4002`** | Govee Status Receiver | UDP Status Listener | Listens for incoming color and status responses from local Govee devices. |
 | **`4003`** | Govee LAN API | UDP Command Target | Command target port used to send colorWC and status queries to living room lights. |
+| **`4005`** | PGA Ingest Daemon | Python UDP Listener | Listens for UDP PGA golf tournament telemetry and leaderboard payloads. |
+
 
 ---
 
@@ -61,13 +68,30 @@ This document serves as the absolute, non-narrative, declarative architecture bl
 | :--- | :--- |
 | `/home/james/SovereignOS` | **Primary Production Worktree Root** |
 | `/home/james/SovereignOS/18_BarbStack` | **Barb's Stack Workspace** — Standalone React + Tailwind client portal for Barb's Personal Cockpit. |
+| `/home/james/SovereignOS/24_TesseractStack` | **Tesseract Stack Workspace** — Standalone Next.js app serving the interactive 4D Tesseract baseball card timeline scrubber. |
 | `/home/james/SovereignOS/avatars/` | **Canonical Avatars Directory** — Single location on Clio holding all character and advocate avatar assets, with relative symlinks pointing here from all frontend outposts. |
 | `/home/james/SovereignOS-sandbox` | **Strict Sandbox Environment Worktree Root** |
 | `/home/james/SovereignOS/dna/` | **Master Architectural Ledger Directory** |
+| `/home/james/SovereignOS/dna/docs/` | **Canonical Documentation Directory** — Universal repository for all system user guides, architecture overviews, and component manuals. |
 | `/home/james/SovereignOS/dna/sovereign_now.db` | **Singular SQLite Database (Canonical Path - KI-038)** |
 | `/home/james/SovereignOS/dna/sovereign_dna_2026.md` | **2026 MLB Season DNA Ground-Truth Baseline File** |
 | `/home/james/SovereignOS/dna/notebook_lm_instructions.md` | **NotebookLM generic multi-team & persona-aware prompt instructions** |
+| `/home/james/SovereignOS/dna/medical_vault/` | **Smyrna Medical Vault** — Local clinical records directory structure (labs, oncology, scans, medication). |
+
+---
+
+### 3.1 SYSTEM DOCUMENTATION STANDARDS
+
+To prevent fragmented document discovery and maintenance rot, all team members and AI agents must adhere to the following rules for system documentation:
+
+1. **Storage Location:** All technical documentation, user guides, component descriptions, and architectural manuals MUST be stored directly in `/home/james/SovereignOS/dna/docs/`.
+2. **Flat Structure:** Storing documentation in subdirectories (e.g., `ui_guides/`, `components/`) is strictly forbidden. The directory structure of `dna/docs/` must remain flat.
+3. **Naming Convention:** Filenames should be uppercase, descriptive, and use underscores (e.g., `HOLOLINK_README.md`, `DATABASE_SCHEMA.md`).
+4. **Maintenance:** When a module, port, or schema is added or modified, the developer/agent must update or create the corresponding guide file in `dna/docs/` during the same sprint.
+
 | `/home/james/SovereignOS/scripts/generate_onboarding_pdf.py` | **Genesis PDF Onboarding Report Compiler** |
+| `/home/james/SovereignOS/scripts/generate_metsy_adventures_daily.py` | **Metsy Daily Adventure Generator** — Generates daily comic narrative illustration assets for Metsy Smyrna Heights using `metsy_anchor_2d.png` as visual style anchor and distributes them dynamically. |
+| `/home/james/SovereignOS/scripts/ingest_medical_vault.py` | **Medical Vault Ingestion Daemon** — Sweeps vault directories and registers new records in sovereign_now.db. |
 | `/home/james/SovereignOS/scripts/uat_headed_runner.py` | **Headed Playwright UAT Test Runner on DISPLAY=:0** |
 | `/home/james/SovereignOS/scripts/generate_universal_advocate.py` | **Universal Advocate Generator ("The Wildcard Forge")** — Decoupled Vertex AI script synthesizing complete advocate JSON profiles. |
 | `/home/james/SovereignOS/scripts/advocate_forge.py` | **Advocate Emote Forge** — Generates tactical visual emotes (avatar, pointing, shrug) in target style. |
@@ -76,6 +100,9 @@ This document serves as the absolute, non-narrative, declarative architecture bl
 | `/home/james/sovereign_inbox/` | **Session Inbox and Active Sprint Workspace** |
 | `/home/james/sovereign_inbox/today/` | **Active Operational Date Symlink Folder** |
 | `/home/james/sovereign_inbox/pilot_drops/` | **Pilot Staging Ground** — Central server directory for the Pilot's manual file uploads, downloads, and custom notes before sync processing. |
+| `/home/james/SovereignOS/apps/samtracker/backend/watchers/raw_upload_watcher.py` | **SamTracker Comic Watcher Daemon** — Python watchdog script monitoring raw image uploads and executing the style transfer + prompt compiler pipeline. |
+| `/home/james/SovereignOS/apps/samtracker/storage/raw_uploads/` | **SamTracker Raw Uploads Storage** — Destination directory for raw image uploads that triggers the Comic Factory pipeline. |
+| `/home/james/SovereignOS/14_SamTracker/public/media/` | **SamTracker Media Directory** — Holds the generated 5-panel comic strip images. |
 | `sovereign_os:` | **GDrive Sync Remote (rclone)**: mapped to `sovereign.os.v1@gmail.com`. Owns session reports, DNA updates, walkthroughs, UAT reports, boot/shutdown logs, and inbox drops. |
 | `gdrive:` | **GDrive Sync Remote (rclone)**: mapped to `sovereign.fanstack@gmail.com`. Owns sports game room logs, poller/relay logs, persona caches, and all code under `15_FanStack/`. |
 
@@ -105,9 +132,16 @@ The canonical SQLite state database is `/home/james/SovereignOS/dna/sovereign_no
 | **`rpg_world_state`** | Sandbox entity grid locations, active zones, tension levels, and custom image configurations (`custom_image`). | **ACTIVE** |
 | **`rpg_agent_memory`** | Sandbox cognitive memories and ideological alignment weights. | **ACTIVE** |
 | **`catnip_wars_comic_assets`** | Stores character pose assets mapping to cloud-cached CDN edge URLs under V1.0 Asset CDN Protocol. | **ACTIVE** |
+| **`samtracker_comic_strips`** | Stores metadata and image paths for the 5-panel Generative Comic Factory comic strips, with update triggers. | **ACTIVE** |
+| **`sovereign_medical_vault`** | Holds registered clinical records and local file system ledger paths for Smyrna care coordination. | **ACTIVE** |
+| **`govee_active_alerts`** | Maintains active and acknowledged physical alert states for caregiver signals. | **ACTIVE** |
+| **`pga_active_leaderboard`** | Maintains active PGA player scores and positions for Amen Corner simulator. | **ACTIVE** |
+| **`pga_tournament_telemetry`** | Stores spatial telemetry coordinates and speed for golf shots. | **ACTIVE** |
+| **`system_cron_config`** | Configures time intervals and properties for scanning cron tasks (such as poll intervals). | **ACTIVE** |
 | **`rm_story`** | Legacy ticket storage table. | **DEPRECATED (DO NOT WRITE)** |
 | **`rm_defect`** | Legacy defect storage table. | **DEPRECATED (DO NOT WRITE)** |
 | **`rm_enhancement`** | Legacy enhancement storage table. | **DEPRECATED (DO NOT WRITE)** |
+
 
 ---
 
@@ -223,7 +257,7 @@ The canonical SQLite state database is `/home/james/SovereignOS/dna/sovereign_no
 *   **KI-067: Dynamic ToolStack Provisioning & Advocate Center Standard**  
     The dynamic utility/tool stack (referred to as **ToolStack**) provisioned to each active environment (FanStack, WeedStack, AetherVet) is controlled dynamically via the `m2m_stack_utility` table in `sovereign_now.db`. The core components of the ToolStack—including `StackSeeder`, `The Skew`, `HoloDex`, and the `Advocate Center` (formerly Persona Center)—are retrieved dynamically via `/api/auth/stack_utilities/{stack_name}`.
 *   **KI-068: Monolithic Codebase and Data Payloads for NotebookLM Sync**  
-    To eliminate the manual overhead of refreshing dozens of individual sources in NotebookLM (which lacks auto-refresh capabilities and paywalls bulk syncing via extensions like Kortex), the system consolidates context into monolithic transfer files. The SQLite DB tables, incident logs, and session reports are compiled into `SOVEREIGN_OS_INTERNAL_MASSIVE_DATA_TRANSFER_PACKAGE.md.txt`, and active codebase files (Python, Shell, TSX, CSS, SQL, JSON) are compiled into split part payloads (e.g. `SOVEREIGN_CODEBASE_PART_1.md.txt`, `SOVEREIGN_CODEBASE_PART_2.md.txt`) via `compile_codebase_payload.py` to protect against NotebookLM character/word constraints. To prevent race conditions with background sync daemons, all compiled payloads and anchors must be staged directly to the canonical local directory `/home/james/sovereign_inbox/notebook_sync/StackLabs_Internal/` rather than temporary directories. Additionally, all active and historical implementation plans (`implementation_plans/`) and walkthroughs (`walkthroughs/`) from the inbox and tickets folders are staged into this target directory with timestamped headers to ensure external agents (like Spark) retain a complete ground truth record of all ticket activity, even for tasks created without direct work orders. The Pilot only needs to refresh these split codebase parts along with the massive data package and the staged docs in NotebookLM to sync the entire Sovereign OS state.
+    To eliminate the manual overhead of refreshing dozens of individual sources in NotebookLM (which lacks auto-refresh capabilities and paywalls bulk syncing via extensions like Kortex), the system consolidates context into monolithic transfer files. The SQLite DB tables, incident logs, and session reports are compiled into `SOVEREIGN_OS_INTERNAL_MASSIVE_DATA_TRANSFER_PACKAGE.md.txt`, and active codebase files (Python, Shell, TSX, CSS, SQL, JSON) are compiled into split part payloads (e.g. `SOVEREIGN_CODEBASE_PART_1.md.txt`, `SOVEREIGN_CODEBASE_PART_2.md.txt`) via `compile_codebase_payload.py` to protect against NotebookLM character/word constraints. To prevent race conditions with background sync daemons, all compiled payloads and anchors must be staged directly to the canonical local directory `/home/james/sovereign_inbox/notebook_sync/StackLabs_Internal/` rather than temporary directories. Additionally, all active and historical implementation plans (`implementation_plans/`) and walkthroughs (`walkthroughs/`) from the inbox and tickets folders are staged into this target directory with timestamped headers to ensure external agents (like Spark) retain a complete ground truth record of all ticket activity, even for tasks created without direct work orders. The entire multi-session pair programming conversation history (dating back to day one of the project) is also automatically compiled, sorted chronologically, formatted as clean user-assistant dialog, and split into 10 chunk files (`SOVEREIGN_OS_CONVERSATION_HISTORY_PART_1.txt` through `PART_10.txt`, each under 450,000 characters) via `/home/james/SovereignOS/scripts/compile_conversation_history.py`. The Pilot only needs to refresh these split codebase parts, conversation logs, massive data package, and staged documents in NotebookLM to sync the entire Sovereign OS state.
 *   **KI-069: Pre-Flight URL Validation Mandate (No Dead Links Invariant)**  
     Before providing or printing any URL or server link to the Pilot in chat, the Agent MUST execute the browser-level validation pipeline (`mile_in_my_shoes.py`) on a remote sandbox node (such as `metsy-prime`) to verify connection integrity and inspect the live screenshot. Generating or returning a connection error (such as `ERR_CONNECTION_REFUSED` or HSTS certificate blocks) triggers a failure, requiring local remediation before declaring the link active.
 *   **KI-070: The Wet Toothbrush Invariant (Anti-Evidence-Theater Doctrine)**  
@@ -272,6 +306,43 @@ The canonical SQLite state database is `/home/james/SovereignOS/dna/sovereign_no
     A full count (3-2 count) triggers asynchronous staging of outcome videos (strikeout, walk, base hit) under `/tmp/precog_staged/`. Upon outcome delivery, the poller selects the winning video, executes FFMPEG drawing filters to overlay outcome text in <800ms, writes the winning clip to `/videos/precog_winning.mp4` on Port 7300, and caches the remaining staged clips in SQLite `sys_predictive_cache` for future plate appearance reference.
 *   **KI-088: Sovereign Oracle Branding Invariant**  
     All sports/telemetry frontends and backends are globally rebranded to "Sovereign Oracle". Page titles, sidebar headers (with violet/sky-blue gradient and glowing drop shadow), and logs must reflect this brand identity.
+*   **KI-089: Parent Epic and Sprint Agile Architecture**  
+    The SDLC and ticketing database tables in `sovereign_now.db` are structured with Parent Epic (`sovereign_epics`) and Sprint (`sovereign_sprints`) relationships. The `sovereign_tickets` table links to these via the foreign keys `epic_id` and `sprint_id` to allow logical grouping of user stories, incident response streams, and game-day sprint tracking. All ticketing portals, API endpoints, and automatic ticket creation daemons must honor these relationships and maintain database foreign key integrity.
+*   **KI-091: Tailscale Cookie Scoping & HSTS Secure Rule**  
+    All authentication gates and cookie utility helpers (e.g. `setCookie`, `deleteCookie`) must dynamically detect hostnames ending in `.ts.net`. For Tailscale hostnames, they must append `; domain=.ts.net` and exclude the `; Secure` attribute to bypass modern browser blocks on self-signed/untrusted SSL certificates. In addition, the `isLocal` cookie-bypass or validation gate must include `.ts.net` to prevent rapid deletion of local storage tokens.
+*   **KI-092: Generic Database CRUD & Properties API Standard**  
+    All generic database grid administration and table exploration is served via the `/api/studio/tables` routes in `fanstack_relay.py` (Port 8000), using SQLite's native `rowid` identifier to manipulate records in tables lacking dedicated primary keys. Dynamic cards and settings layouts query system properties from the `/api/properties` endpoints on mount.
+*   **KI-093: HTTPS-First Automated UAT Validation Invariant**  
+    The Vertex UAT Agent validation suite (`scripts/vertex_uat_agent.py`) evaluates endpoints using both HTTP and HTTPS protocols. For secure outposts (such as Sovereign Sports on Port 3010 or GardenStack on Port 3016) that serve exclusively secure TLS/SSL traffic, the agent applies an unverified SSL context fallback to prevent connection handshake resets from blocking automated walkthrough sign-off.
+*   **KI-094: Crosstalk Lounge Admin Exclusion Rule**  
+    The Crosstalk Lounge is a fan-exclusive forum where administrative components—such as the Outrage Proxy Override, Soundboard, and M.A.R.D. sliders—are strictly forbidden from rendering or being accessed. All administrative tools and developer knobs must live exclusively within the Playcall Desk (/creator-portal) route.
+*   **KI-095: Locked Viewport & Zero Global Scroll Invariant**  
+    All React/Vite frontends in the Sovereign OS ecosystem must enforce a locked viewport with zero global page-level scrolling. Outer `html`, `body`, and `#root` elements must apply strict `overflow: hidden; height: 100vh; width: 100vw; box-sizing: border-box;` layouts. All content scrolling must be confined to dedicated, independent inner sub-viewports (using `overflow-y: auto;`) to prevent browser scrollbars from breaking the locked desktop layout.
+*   **KI-096: Dot Chatbot Bouncer Exemption Invariant**  
+    The chatbot persona `dot` is completely exempt from the Okerlund Protocol, toxicity filtering, and 8-Mile Penalty Box shadowbanning. Pre-persistence evaluations in `mean_gene.py` and bouncer evaluation hooks in `fanstack_chatbots.py` and `the_skew_chatbots.py` must return early or bypass evaluations for `dot` to prevent her playcall telemetry parroting from triggering moderation penalties.
+*   **KI-097: Deprecation of LLM Engine Field**  
+    The `u_llm_engine` field is permanently deprecated and removed from `persona` database schema tables and UI outposts.
+*   **KI-098: Discourse Throttle Mound Visit Mitigation**  
+    To prevent chatroom lockouts under intense Boggs-level active play, the websocket parser classifies mound visits as Major Events, automatically elevating rate limit thresholds dynamically.
+*   **KI-099: Centralized Eon1 Style Registry Invariant**  
+    Visual style presets for advocates (clay vector, vintage engraving, 90s cartoon, etc.) are managed dynamically via the central `/home/james/SovereignOS/config/style_registry.json` schema on Clio. Frontends must retrieve these options via `/api/style_registry` and persist selections to the database.
+*   **KI-100: Eon1 Avatar Quarantine & Fallback Search Path**  
+    All loose legacy files from `/home/james/SovereignOS/avatars/` are quarantined in `/home/james/SovereignOS/archive_quarantine_eon1/`. To maintain backward compatibility, image resolution routers MUST query this quarantine folder as a fallback when assets are not found in the canonical directory.
+*   **`KI-101: Unified Knowledge Base & Bidirectional Filesystem Sync Engine`**  
+    To guarantee synchronization between database records and the canonical flat-file documentation directory `/home/james/SovereignOS/dna/docs/`, all Knowledge Base (KB) runbooks and technical articles must be managed via the unified REST API on Port 8090 (`/api/system/kb`). Direct database insertions or manual markdown creation without API synchronization is strictly prohibited to prevent concurrency drift. The sync engine automatically enforces transactional SQLite WAL safety and injects standard YAML frontmatter containing the article identifier (e.g. `KB0002`) and high-entropy timestamping upon flat-file writes.
+*   **`KI-102: The Secure Path Validation Invariant`**  
+    All FastAPI routers, Python scripts, or Shell utilities that accept path parameters from external clients or WebSockets MUST NOT validate paths using substring matching, suffix checks, or `.startswith()`. They must resolve the absolute realpath (`os.path.abspath(os.path.realpath(path))`) and enforce boundary validation using `os.path.commonpath` matching against allowed roots.
+*   **`KI-103: Strict Sorting Hat Regex & Extension Whitelisting`**  
+    Any daemon tasked with automated directory classification or sorting (e.g. Decision Derby, Inbox Sorting Hat) MUST wrap keyword matchers in word boundaries (`\b`) to prevent substring collisions (e.g. matching `checkbox` or `lookbook` as `kb`), enforce documentation-only extensions (`.md`, `.txt`) for the Knowledge Base, and route un-whitelisted files to `needs_review/`.
+*   **`KI-104: Sovereign OS Portal Homepage & Route Anchoring`**  
+    The main Sovereign OS Portal (Port 3016) serves the Clio Cockpit (`'cockpit'`) by default on clean root hits (`/`). All general "Go Home / Close / OS Root" navigation buttons must route to `'cockpit'` to preserve a seamless cockpit experience, while the Comet Messenger is maintained as a dynamic utility card in the Power Tools section.
+*   **`KI-105: Dynamic Ballpark Geometry & Infield Proportions Invariant`**  
+    To guarantee high-fidelity sports watch-party visuals, the canvas rendering pipeline in `FanFanStackPortal.tsx` must render dynamic, team-specific outfield wall boundaries (such as Citi Field or Oracle Park) utilizing custom polygon vertex paths resolved from `gameState.home_team`, rather than a generic circular arc. The warning track, outfield grass, radar grids, and foul lines must dynamically clip and align to these vertex endpoints. Additionally, the infield dirt skin radius is strictly governed at `82 * S` relative to the home-to-second base line (`70 * S`) to maintain realistic field proportions.
+*   **`KI-106: Selective Persona Carryover ("Bring Gang") Protocol`**  
+    To protect game-specific native advocate rosters from cross-contamination during game-room swaps, the WebSocket stream relay `/api/session/swap-stream` in `fanstack_relay.py` must enforce conditional persona migration. If `bring_gang` is `false`, the roster swap must short-circuit and preserve both rooms' configurations. If `bring_gang` is `true`, only global-scope commentators (marked as `'GLOBAL'` in `cmdb_ci_ai_persona.assigned_to`) are carried over to the target room, while all target-room native team-specific advocates must be strictly preserved.
+*   **`KI-107: Dynamic Sports Headshot Resolution & Vite Proxy Mapping`**  
+    All player headshots and persona avatars on the Sovereign Oracle dashboard must be resolved dynamically via `/api/persona_image/{persona_id}` (available on Core API port 8090 and websocket relay port 8000). The endpoint automatically redirects digit-only MLB player IDs to the official MLB CDN (`img.mlbstatic.com`) and resolves alphabetic name slugs case-insensitively using the `mlb_rosters` database, extracting the numeric player ID from the found record's `sys_id` to redirect. To prevent Vite dev servers from returning `index.html` on missing assets, frontends must map `/api/persona_image` proxy rules in `vite.config.ts` to forward requests to the core API (port 8090).
+
 
 ---
 
@@ -348,7 +419,7 @@ If the entire Sovereign OS environment were destroyed, execute these steps in ex
      ```
    - This script cleans up zombie processes and automatically launches:
      - **Core Backends:** `sovereign_core_api.py` (8090), `sdlc_portal_server.py` (8095), `sam_tracker_server.py` (8083), and `theater_media_server.py` (8085).
-     - **Vite Frontends:** StackLabs Monolith (3000), Sovereign OS Portal (3016), SamTracker Frontend (3004), Sovereign Media (3008), Sovereign Sports (3010), Aether Vet Telemedicine (3015), Storybook Station (3017), Barb's Stack (3020), and Catnip Wars Sandbox (7300).
+     - **Vite Frontends:** StackLabs Monolith (3000), Sovereign OS Portal (3016), SamTracker Frontend (3004), Sovereign Media (3008), Sovereign Sports (3010), Aether Vet Telemedicine (3015), Storybook Station (3017), Barb's Stack (3020), Clio Cockpit Dashboard (3022), and Catnip Wars Sandbox (7300).
      - **Watchdog Guard:** Launches `mando_watchdog.py` to continuously monitor and self-heal all services.
 
 8. **Tailscale Funnel Configuration:**

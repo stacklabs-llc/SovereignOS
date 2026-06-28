@@ -8,13 +8,28 @@ const getCookie = (name: string): string | null => {
   return match ? decodeURIComponent(match[2]) : null;
 };
 
+const getCookieDomain = (): string => {
+  const hostname = window.location.hostname;
+  if (hostname.endsWith('.ts.net')) {
+    const parts = hostname.split('.');
+    if (parts.length >= 3) {
+      return '; domain=.' + parts.slice(-3).join('.');
+    }
+    return '; domain=' + hostname;
+  }
+  return '';
+};
+
 const setCookie = (name: string, value: string, days: number = 7) => {
   const expires = new Date(Date.now() + days * 864e5).toUTCString();
-  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax; Secure`;
+  const domain = getCookieDomain();
+  const secure = window.location.protocol === 'https:' && !window.location.hostname.endsWith('.ts.net') ? '; Secure' : '';
+  document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/; SameSite=Lax${domain}${secure}`;
 };
 
 const deleteCookie = (name: string) => {
-  document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax`;
+  const domain = getCookieDomain();
+  document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; SameSite=Lax${domain}`;
 };
 
 // ── DEV AUTH BYPASS ──────────────────────────────────────────────────────────
@@ -95,8 +110,8 @@ export default function AuthGate({ children }: AuthGateProps) {
         stored = cookieToken;
       }
     } else {
-      // Cookie is missing. Unless on localhost (handled by bypass), clear local storage token to sync logout.
-      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      // Cookie is missing. Unless on localhost (handled by bypass) or Tailscale network, clear local storage token to sync logout.
+      const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.endsWith('.ts.net');
       if (!isLocal && stored) {
         localStorage.removeItem(TOKEN_KEY);
         stored = null;

@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Butler Cabin - Command Center</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,600;1,400&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --augusta-green: #006747;
+            --augusta-green-dark: #003624;
+            --augusta-green-light: #00875e;
+            --gold: #D4AF37;
+            --gold-hover: #f3e5ab;
+            --bg-void: #020806;
+            --card-glass: rgba(12, 38, 28, 0.5);
+            --border-glass: rgba(212, 175, 55, 0.25);
+            --text-main: #e2f0ea;
+            --text-muted: #8ba89f;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-void);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 50% 10%, var(--augusta-green-dark) 0%, var(--bg-void) 90%);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.25rem 2rem;
+            border-bottom: 1px solid var(--border-glass);
+            background: rgba(0, 54, 36, 0.5);
+            backdrop-filter: blur(10px);
+            z-index: 10;
+        }
+
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-logo svg {
+            fill: var(--gold);
+            width: 28px;
+            height: 28px;
+        }
+
+        .header-logo h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--gold);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 10px var(--gold);
+        }
+
+        .main-layout {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 320px 1fr 340px;
+            padding: 1.5rem;
+            gap: 1.5rem;
+            z-index: 10;
+            height: calc(100vh - 75px);
+            overflow: hidden;
+        }
+
+        .panel {
+            background: var(--card-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            backdrop-filter: blur(15px);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.5);
+        }
+
+        .panel-header {
+            padding: 1rem 1.25rem;
+            background: rgba(0, 54, 36, 0.6);
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-header h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.15rem;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .panel-header span {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .panel-content {
+            flex: 1;
+            padding: 1.25rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Leaderboard styling */
+        .leaderboard-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .leaderboard-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0, 15, 10, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+        }
+
+        .leaderboard-row.highlight {
+            border-color: var(--gold);
+            background: rgba(212, 175, 55, 0.05);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.1);
+        }
+
+        .leaderboard-row.highlight .player-name {
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        .player-name {
+            font-size: 0.95rem;
+        }
+
+        .player-thru {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* Chat feed styling */
+        .chat-messages {
+            flex: 1;
+            padding: 1.25rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: rgba(212, 175, 55, 0.2);
+            border-radius: 99px;
+        }
+
+        .message-card {
+            background: rgba(0, 15, 10, 0.3);
+            border-left: 3px solid var(--augusta-green);
+            padding: 0.85rem 1rem;
+            border-radius: 0 8px 8px 0;
+            animation: slide-in 0.2s ease-out;
+        }
+
+        .message-card.user-james {
+            border-left-color: var(--gold);
+        }
+
+        .message-card.user-oracle {
+            border-left-color: #a78bfa;
+        }
+
+        .message-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .message-user {
+            font-weight: 700;
+        }
+
+        .message-time {
+            color: var(--text-muted);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .message-text {
+            font-size: 0.95rem;
+            line-height: 1.4;
+            color: #d2e4dd;
+        }
+
+        .chat-input-bar {
+            padding: 1rem;
+            background: rgba(0, 20, 14, 0.4);
+            border-top: 1px solid var(--border-glass);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input-bar input {
+            flex: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-glass);
+            border-radius: 6px;
+            padding: 0.6rem 0.8rem;
+            color: var(--text-main);
+            outline: none;
+        }
+
+        .chat-input-bar button {
+            background: var(--gold);
+            color: var(--bg-void);
+            border: none;
+            font-weight: 700;
+            padding: 0 1.25rem;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        /* Control deck styling */
+        .cast-section {
+            background: rgba(0, 15, 10, 0.4);
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .cast-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gold);
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tv-badge {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 0.7rem;
+            background: rgba(212, 175, 55, 0.15);
+            padding: 0.1rem 0.4rem;
+            border-radius: 3px;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+
+        .btn-cast {
+            background: rgba(0, 54, 36, 0.8);
+            border: 1px solid var(--border-glass);
+            color: var(--text-main);
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-cast:hover {
+            background: var(--gold);
+            color: var(--bg-void);
+            border-color: var(--gold);
+        }
+
+        .sim-control-bar {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-sim {
+            flex: 1;
+            padding: 0.6rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            cursor: pointer;
+            border: 1px solid var(--border-glass);
+            transition: all 0.2s;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .btn-sim.pause {
+            background: rgba(255, 0, 60, 0.1);
+            color: #ff3c62;
+            border-color: rgba(255, 0, 60, 0.3);
+        }
+
+        .btn-sim.pause:hover {
+            background: rgba(255, 0, 60, 0.25);
+        }
+
+        .btn-sim.play {
+            background: rgba(0, 255, 102, 0.1);
+            color: #00ff66;
+            border-color: rgba(0, 255, 102, 0.3);
+        }
+
+        .btn-sim.play:hover {
+            background: rgba(0, 255, 102, 0.25);
+        }
+
+        @keyframes slide-in {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-logo">
+            <!-- Augusta Map Outline style SVG -->
+            <svg viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+            </svg>
+            <h1>The Butler Cabin</h1>
+        </div>
+        <div class="header-controls">
+            <span class="status-dot"></span>
+            <span style="font-family: 'Share Tech Mono', monospace; font-size: 0.85rem;" id="header-status">CONNECTING...</span>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <!-- LEFT PANEL: Leaderboard -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Leaderboard</h2>
+                <span>STATIC 2025 GROUND TRUTH</span>
+            </div>
+            <div class="panel-content" style="padding: 1rem;">
+                <div class="leaderboard-list" id="leaderboard-list">
+                    <!-- Leaderboard entries -->
+                </div>
+            </div>
+        </div>
+
+        <!-- CENTER PANEL: Chat -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>MARD Live Stream</h2>
+                <span id="chat-count">0 MESSAGES</span>
+            </div>
+            <div class="chat-messages" id="chat-messages">
+                <!-- Chat messages -->
+            </div>
+            <form class="chat-input-bar" id="chat-form">
+                <input type="text" id="chat-input" placeholder="Broadcasting on port 8009..." autocomplete="off">
+                <button type="submit">SEND</button>
+            </form>
+        </div>
+
+        <!-- RIGHT PANEL: Casting Deck -->
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Casting & Control</h2>
+                <span>ADB DISPLAY ARRAY</span>
+            </div>
+            <div class="panel-content" style="gap: 1.25rem;">
+                <!-- Simulator play/pause -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <span style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-muted); font-family: 'Share Tech Mono', monospace;">Simulator Speed-gate</span>
+                    <div class="sim-control-bar">
+                        <button onclick="controlSim('pause')" class="btn-sim pause">PAUSE SIM</button>
+                        <button onclick="controlSim('play')" class="btn-sim play">PLAY SIM</button>
+                    </div>
+                </div>
+
+                <hr style="border: 0; border-top: 1px solid var(--border-glass);">
+
+                <!-- TV Casting Section -->
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <!-- 65-Inch (Left TV) -->
+                    <div class="cast-section">
+                        <div class="cast-title">
+                            <span>65" Left Fire TV</span>
+                            <span class="tv-badge">192.168.1.68</span>
+                        </div>
+                        <div class="btn-grid">
+                            <button onclick="castUrl('192.168.1.68', 'amen')" class="btn-cast">Amen Corner</button>
+                            <button onclick="castUrl('192.168.1.68', 'crows')" class="btn-cast">Crow's Nest</button>
+                        </div>
+                    </div>
+
+                    <!-- 55-Inch (Right TV) -->
+                    <div class="cast-section">
+                        <div class="cast-title">
+                            <span>55" Right Fire TV</span>
+                            <span class="tv-badge">192.168.1.111</span>
+                        </div>
+                        <div class="btn-grid">
+                            <button onclick="castUrl('192.168.1.111', 'amen')" class="btn-cast">Amen Corner</button>
+                            <button onclick="castUrl('192.168.1.111', 'crows')" class="btn-cast">Crow's Nest</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const wsUrl = (window.location.protocol === "https:" ? "wss://" : "ws://") + window.location.host + "/ws";
+        let ws;
+        const leaderboardList = document.getElementById("leaderboard-list");
+        const messagesContainer = document.getElementById("chat-messages");
+
+        function appendMessage(user, text, color, timestamp) {
+            const card = document.createElement("div");
+            card.className = "message-card";
+            if (user === "Pilot James") {
+                card.classList.add("user-james");
+            } else if (user === "SOVEREIGN ORACLE") {
+                card.classList.add("user-oracle");
+            }
+            if (color) {
+                card.style.borderLeftColor = color;
+            }
+
+            const meta = document.createElement("div");
+            meta.className = "message-meta";
+
+            const userSpan = document.createElement("span");
+            userSpan.className = "message-user";
+            userSpan.style.color = color || "var(--gold)";
+            userSpan.innerText = user;
+
+            const timeSpan = document.createElement("span");
+            timeSpan.className = "message-time";
+            timeSpan.innerText = timestamp || new Date().toLocaleTimeString().substring(0, 5);
+
+            meta.appendChild(userSpan);
+            meta.appendChild(timeSpan);
+
+            const textDiv = document.createElement("div");
+            textDiv.className = "message-text";
+            textDiv.innerText = text;
+
+            card.appendChild(meta);
+            card.appendChild(textDiv);
+
+            messagesContainer.appendChild(card);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            const count = messagesContainer.childElementCount;
+            document.getElementById("chat-count").innerText = `${count} MESSAGE` + (count === 1 ? "" : "S");
+        }
+
+        function updateLeaderboard(players) {
+            leaderboardList.innerHTML = "";
+            players.forEach(pStr => {
+                const row = document.createElement("div");
+                row.className = "leaderboard-row";
+                if (pStr.includes("The Scrambler")) {
+                    row.classList.add("highlight");
+                }
+                
+                // Parse "Justin Rose (-7) Thru F" or similar
+                const match = pStr.match(/^(.*?) \((E|[+-]\d+)\) Thru (.*?)$/);
+                if (match) {
+                    const name = match[1];
+                    const score = match[2];
+                    const thru = match[3];
+
+                    const nameSpan = document.createElement("span");
+                    nameSpan.className = "player-name";
+                    nameSpan.innerText = name;
+
+                    const scoreSpan = document.createElement("span");
+                    scoreSpan.style.fontWeight = "bold";
+                    scoreSpan.style.color = score.startsWith("-") ? "#00ff66" : (score === "E" ? "#fff" : "#ff3838");
+                    scoreSpan.innerText = score;
+
+                    const thruSpan = document.createElement("span");
+                    thruSpan.className = "player-thru";
+                    thruSpan.innerText = `Thru ${thru}`;
+
+                    const wrapper = document.createElement("div");
+                    wrapper.style.display = "flex";
+                    wrapper.style.alignItems = "center";
+                    wrapper.style.gap = "0.75rem";
+                    wrapper.appendChild(scoreSpan);
+                    wrapper.appendChild(thruSpan);
+
+                    row.appendChild(nameSpan);
+                    row.appendChild(wrapper);
+                } else {
+                    row.innerText = pStr;
+                }
+                
+                leaderboardList.appendChild(row);
+            });
+        }
+
+        function updateState(data) {
+            if (data.status_msg) {
+                document.getElementById("header-status").innerText = data.status_msg.toUpperCase();
+            }
+            if (data.leaderboard) {
+                updateLeaderboard(data.leaderboard);
+            }
+        }
+
+        function connect() {
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = function() {
+                console.log("Butler Cabin connected to relay.");
+                document.querySelector(".status-dot").style.backgroundColor = "var(--gold)";
+                document.querySelector(".status-dot").style.boxShadow = "0 0 10px var(--gold)";
+            };
+
+            ws.onmessage = function(event) {
+                const payload = JSON.parse(event.data);
+
+                if (payload.type === "STATE_UPDATE") {
+                    updateState(payload.data);
+                } else if (payload.type === "CHAT_MESSAGE") {
+                    appendMessage(payload.user, payload.text, payload.color, payload.timestamp);
+                } else if (payload.type === "CHAT_HISTORY") {
+                    messagesContainer.innerHTML = "";
+                    payload.messages.forEach(msg => {
+                        appendMessage(msg.user, msg.text, msg.color, msg.timestamp);
+                    });
+                }
+            };
+
+            ws.onclose = function() {
+                console.log("Relay connection lost, retrying...");
+                document.querySelector(".status-dot").style.backgroundColor = "#ff3838";
+                document.querySelector(".status-dot").style.boxShadow = "0 0 10px #ff3838";
+                document.getElementById("header-status").innerText = "RECONNECTING...";
+                setTimeout(connect, 3000);
+            };
+        }
+
+        document.getElementById("chat-form").addEventListener("submit", function(e) {
+            e.preventDefault();
+            const input = document.getElementById("chat-input");
+            if (!input.value.trim()) return;
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                const msg = {
+                    type: "CHAT_MESSAGE",
+                    user: "Pilot James",
+                    color: "#D4AF37",
+                    text: input.value
+                };
+                ws.send(JSON.stringify(msg));
+                input.value = "";
+            }
+        });
+
+        // Sim controls
+        function controlSim(action) {
+            fetch(`/api/sim/${action}`, { method: 'POST' })
+                .then(res => res.json())
+                .then(data => {
+                    console.log("Sim status:", data);
+                    appendMessage("SYSTEM", `Simulator speed-gate: ${action.toUpperCase()}`, "var(--gold)");
+                })
+                .catch(err => console.error("Sim control error:", err));
+        }
+
+        // ADB TV casting
+        function castUrl(tvIp, viewType) {
+            // Determine absolute url based on current address origin
+            const origin = window.location.origin;
+            const castUrl = origin + `/08_FanCast/${viewType === 'amen' ? 'amen_corner.html' : 'crows_nest.html'}`;
+            
+            appendMessage("SYSTEM", `Casting ${viewType === 'amen' ? 'Amen Corner' : "Crow's Nest"} to TV (${tvIp})...`, "var(--gold)");
+            
+            fetch(`/api/cast_tv/${tvIp}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ url: castUrl })
+            })
+            .then(res => res.json())
+            .then(data => {
+                console.log("Cast response:", data);
+                appendMessage("SYSTEM", `SUCCESS: Target ${tvIp} displays ${viewType.toUpperCase()} UI.`, "#00ff66");
+            })
+            .catch(err => {
+                console.error("Cast error:", err);
+                appendMessage("SYSTEM", `ERROR: ADB connection to ${tvIp} failed.`, "#ff3838");
+            });
+        }
+
+        connect();
+    </script>
+</body>
+</html>

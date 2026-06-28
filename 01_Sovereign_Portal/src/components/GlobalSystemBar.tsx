@@ -17,6 +17,7 @@ interface GlobalSystemBarProps {
   globalRoomBoggsOverride: string;
   setGlobalRoomBoggsOverride: (rating: string) => void;
   onNavigateRoom?: (room: string) => void;
+  onToggleSearch?: () => void;
 }
 
 export default function GlobalSystemBar({ 
@@ -31,6 +32,7 @@ export default function GlobalSystemBar({
   globalRoomBoggsOverride,
   setGlobalRoomBoggsOverride,
   onNavigateRoom,
+  onToggleSearch,
 }: GlobalSystemBarProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [isAccountOpen, setIsAccountOpen] = useState(false);
@@ -77,45 +79,25 @@ export default function GlobalSystemBar({
 
       {/* Sovereign Oracle Toggle */}
       {auth?.role === 'pilot' || auth?.role === 'creator' ? (
-      <button
-        onClick={() => setIsVocalMatrixOpen(!isVocalMatrixOpen)}
-        className={`px-3 py-1.5 border rounded transition-colors font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-[0_2px_5px_rgba(0,0,0,0.5)] ${isVocalMatrixOpen
-            ? 'bg-[#38bdf8] text-white border-[#38bdf8]'
-            : 'bg-[#38bdf8]/20 text-[#38bdf8] border-[#38bdf8]/50 hover:bg-[#38bdf8] hover:text-white'
-          }`}
-      >
-        🎙️ Sovereign Oracle
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onToggleSearch}
+          className="px-3 py-1.5 border border-cyan-500/50 bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500 hover:text-white rounded transition-colors font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-[0_2px_5px_rgba(0,0,0,0.5)]"
+        >
+          🔍 Search <span className="text-[8px] opacity-65">(Ctrl+/)</span>
+        </button>
+        <button
+          onClick={() => setIsVocalMatrixOpen(!isVocalMatrixOpen)}
+          className={`px-3 py-1.5 border rounded transition-colors font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-[0_2px_5px_rgba(0,0,0,0.5)] ${isVocalMatrixOpen
+              ? 'bg-[#38bdf8] text-white border-[#38bdf8]'
+              : 'bg-[#38bdf8]/20 text-[#38bdf8] border-[#38bdf8]/50 hover:bg-[#38bdf8] hover:text-white'
+            }`}
+        >
+          🎙️ Sovereign Oracle
+        </button>
+      </div>
       ) : null}
 
-      {/* Cast Controls */}
-      {!isDev && (auth?.role === 'pilot' || auth?.role === 'creator') && (
-        <>
-          <span className="font-sans text-[9px] uppercase tracking-widest text-white/60 px-2 border-l border-white/20 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">ADB Cast</span>
-          <button
-            onClick={() => {
-              const targetUrl = window.location.origin + window.location.pathname + "?domain=" + activeDomain + (activeRoom ? "&room=" + activeRoom : "");
-              fetch(`/api/cast_tv/192.168.1.68`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: targetUrl })
-              });
-            }}
-            className="px-3 py-1.5 bg-[#4285F4]/20 text-[#4285F4] border border-[#4285F4]/50 rounded hover:bg-[#4285F4] hover:text-white transition-colors font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-[0_2px_5px_rgba(0,0,0,0.5)]"
-          >
-            📺 65" TV
-          </button>
-          <button
-            onClick={() => {
-              const targetUrl = window.location.origin + window.location.pathname + "?domain=" + activeDomain + (activeRoom ? "&room=" + activeRoom : "");
-              fetch(`/api/cast_tv/192.168.1.111`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: targetUrl })
-              });
-            }}
-            className="px-3 py-1.5 bg-[#4285F4]/20 text-[#4285F4] border border-[#4285F4]/50 rounded hover:bg-[#4285F4] hover:text-white transition-colors font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-[0_2px_5px_rgba(0,0,0,0.5)]"
-          >
-            📺 55" TV
-          </button>
-        </>
-      )}
 
           {/* Account Chip */}
           <div className="pl-4 border-l border-white/20 ml-2 relative">

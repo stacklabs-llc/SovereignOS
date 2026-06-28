@@ -61,20 +61,24 @@ async def setup_game_room(game, data, candidates, dot, wordy):
         # Select exactly 3 personas whose assigned_to matches the team abbreviation
         import random
         def get_team_personas(team_abbr, candidate_pool):
+            if team_abbr.upper() == 'NYM':
+                target_names = ['barf', 'unclesteviestan', 'keith_fanboy', '7_train_terry']
+                selected = []
+                for name in target_names:
+                    match = next((p for p in candidate_pool if p['user_name'].lower() == name), None)
+                    if match:
+                        selected.append(match)
+                return selected
+
             matching = []
             for p in candidate_pool:
+                if p['user_name'].lower() == 'barf_prime':
+                    continue
                 assigned = str(p.get('team') or '').strip().lower()
                 if assigned in [k.lower() for k in mlb_teams.keys()]:
                     assigned = mlb_teams[assigned].lower()
                 if team_abbr.lower() in assigned.split('-'):
                     matching.append(p)
-            
-            if team_abbr.upper() == 'NYM':
-                metsfan = next((p for p in matching if p['user_name'] == 'metsfan_86'), None)
-                if metsfan:
-                    matching.remove(metsfan)
-                    random.shuffle(matching)
-                    return [metsfan] + matching[:2]
 
             random.shuffle(matching)
             return matching[:3]
@@ -145,7 +149,7 @@ async def setup_game_room(game, data, candidates, dot, wordy):
                 try:
                     client = genai.Client(api_key=api_key)
                     res = client.models.generate_content(
-                        model='gemini-flash-latest',
+                        model='gemini-2.5-flash',
                         contents=prompt,
                         config={"response_mime_type": "application/json"}
                     )
@@ -161,7 +165,7 @@ async def setup_game_room(game, data, candidates, dot, wordy):
                     LOCATION = "us-central1"
                     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = CREDENTIALS_PATH
                     vertexai.init(project=PROJECT_ID, location=LOCATION)
-                    model = GenerativeModel("gemini-flash-latest")
+                    model = GenerativeModel("gemini-2.5-flash")
                     res = model.generate_content(prompt)
                     text = res.text
                 except Exception as e:
@@ -243,7 +247,7 @@ def main():
             from backports.zoneinfo import ZoneInfo
         from datetime import datetime, timedelta
         now_et = datetime.now(ZoneInfo('America/New_York'))
-        if now_et.hour < 10:
+        if now_et.hour < 4:
             target_date = (now_et - timedelta(days=1)).strftime('%Y-%m-%d')
         else:
             target_date = now_et.strftime('%Y-%m-%d')

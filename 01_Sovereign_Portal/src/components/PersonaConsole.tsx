@@ -14,7 +14,6 @@ interface AiPersona {
   city: string;
   department: string;
   active: number;
-  u_llm_engine?: string | null;
   u_system_prompt?: string | null;
   u_deployment_zone?: string | null;
   u_boggs_reactivity?: string | null;

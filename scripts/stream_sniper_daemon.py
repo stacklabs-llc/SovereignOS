@@ -93,106 +93,60 @@ def summarize_transcript(job_id, filepath, model='gemini'):
             f"Transcript:\n{content}"
         )
 
-        if model in ('gemini', 'gemini-2.5-flash'):
-            try:
-                import os
-                import vertexai
-                from vertexai.generative_models import GenerativeModel
+        try:
+            import os
+            import vertexai
+            from vertexai.generative_models import GenerativeModel
+            
+            credentials_path = "/home/james/SovereignOS/config/vertex_sa.json"
+            if os.path.exists(credentials_path):
+                os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
                 
-                credentials_path = "/home/james/SovereignOS/config/vertex_sa.json"
-                if os.path.exists(credentials_path):
-                    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
-                    
-                vertexai.init(project="gen-lang-client-0840454416", location="us-central1")
+            vertexai.init(project="gen-lang-client-0840454416", location="us-central1")
+            
+            sys_text = (
+                "You are a sports media analyst. Summarize transcripts cleanly. "
+                "ABSOLUTE RULE: Output ONLY the character's spoken words or pure analysis. "
+                "NEVER include parenthetical notes, meta-commentary, guideline references, "
+                "or any text like '(Note: ...)' or '[Note: ...]'. Your output is raw markdown summary — nothing else."
+            )
+            
+            gemini_model = GenerativeModel("gemini-2.5-flash", system_instruction=[sys_text])
+            res = gemini_model.generate_content(prompt)
+            parts_text = []
+            if res.candidates and len(res.candidates) > 0:
+                candidate = res.candidates[0]
+                if candidate.content and candidate.content.parts:
+                    for part in candidate.content.parts:
+                        if hasattr(part, "text") and part.text:
+                            parts_text.append(part.text)
+            if parts_text:
+                result_text = "".join(parts_text)
+            else:
+                try:
+                    result_text = res.text
+                except Exception:
+                    result_text = ""
+            result_text = result_text.strip()
+            
+            output_md = filepath.rsplit('_transcript.md', 1)[0] + "_summary.md"
+            with open(output_md, "w", encoding="utf-8") as f:
+                f.write(f"# Sovereign Vertex AI TL;DR (Gemini 2.5 Flash)\n\n{result_text}")
                 
-                sys_text = (
-                    "You are a sports media analyst. Summarize transcripts cleanly. "
-                    "ABSOLUTE RULE: Output ONLY the character's spoken words or pure analysis. "
-                    "NEVER include parenthetical notes, meta-commentary, guideline references, "
-                    "or any text like '(Note: ...)' or '[Note: ...]'. Your output is raw markdown summary — nothing else."
-                )
-                
-                gemini_model = GenerativeModel("gemini-2.5-flash", system_instruction=[sys_text])
-                res = gemini_model.generate_content(prompt)
-                parts_text = []
-                if res.candidates and len(res.candidates) > 0:
-                    candidate = res.candidates[0]
-                    if candidate.content and candidate.content.parts:
-                        for part in candidate.content.parts:
-                            if hasattr(part, "text") and part.text:
-                                parts_text.append(part.text)
-                if parts_text:
-                    result_text = "".join(parts_text)
-                else:
-                    try:
-                        result_text = res.text
-                    except Exception:
-                        result_text = ""
-                result_text = result_text.strip()
-                
-                output_md = filepath.rsplit('_transcript.md', 1)[0] + "_summary.md"
-                with open(output_md, "w", encoding="utf-8") as f:
-                    f.write(f"# Sovereign Vertex AI TL;DR (Gemini 2.5 Flash)\n\n{result_text}")
-                    
-                jobs[job_id] = {
-                    "status": "complete",
-                    "file": output_md,
-                    "filename": os.path.basename(output_md)
-                }
-                return
-            except Exception as gemini_err:
-                print(f"[VERTEX FALLBACK] Vertex AI failed, falling back to local Llama 3: {gemini_err}")
-                model = "llama3:latest"
-
-        # Create sentinel lock file and start local Ollama service
-        with open("/tmp/ollama_active_lock", "w") as f:
-            f.write("active")
-        subprocess.run(["sudo", "systemctl", "start", "ollama"], check=True)
-        
-        # Wait up to 10 seconds for Ollama to bind to port 11434
-        for _ in range(10):
-            try:
-                r = requests.get("http://clio.taila01894.ts.net:11434", timeout=1)
-                if r.status_code == 200:
-                    break
-            except:
-                pass
-            time.sleep(1)
-
-        # Pipe the request to the local Ollama instance on Node .183 (Dreadnought)
-        ollama_model = model if model not in ('gemini', 'gemini-2.5-flash') else 'llama3:latest'
-        response = requests.post(
-            "http://clio.taila01894.ts.net:11434/api/generate",
-            json={
-                "model": ollama_model,
-                "prompt": prompt,
-                "stream": False
-            },
-            timeout=900 # Allow up to 15 minutes for generation
-        )
-        response.raise_for_status()
-        result_text = response.json().get("response", "")
-
-        output_md = filepath.rsplit('_transcript.md', 1)[0] + "_summary.md"
-        with open(output_md, "w", encoding="utf-8") as f:
-            f.write(f"# Sovereign Dreadnought TL;DR ({ollama_model})\n\n{result_text.strip()}")
-
-        jobs[job_id] = {
-            "status": "complete",
-            "file": output_md,
-            "filename": os.path.basename(output_md)
-        }
+            jobs[job_id] = {
+                "status": "complete",
+                "file": output_md,
+                "filename": os.path.basename(output_md)
+            }
+            return
+        except Exception as gemini_err:
+            print(f"[VERTEX ERROR] Vertex AI failed: {gemini_err}")
+            raise gemini_err
     except Exception as e:
         jobs[job_id] = {
             "status": "error",
             "error": str(e)
         }
-    finally:
-        try:
-            if os.path.exists("/tmp/ollama_active_lock"):
-                os.remove("/tmp/ollama_active_lock")
-        except:
-            pass
 
 
 @app.route('/api/snipe', methods=['POST'])
@@ -300,18 +254,34 @@ def generate_flowmercial():
             "Generate the Flowmercial script now."
         )
 
-        # Send to local Llama 3
-        response = requests.post(
-            "http://clio.taila01894.ts.net:11434/api/generate",
-            json={
-                "model": "llama3",
-                "prompt": prompt,
-                "stream": False
-            },
-            timeout=300
-        )
-        response.raise_for_status()
-        result_text = response.json().get("response", "")
+        # Send to Gemini
+        import os
+        import vertexai
+        from vertexai.generative_models import GenerativeModel
+        
+        credentials_path = "/home/james/SovereignOS/config/vertex_sa.json"
+        if os.path.exists(credentials_path):
+            os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = credentials_path
+            
+        vertexai.init(project="gen-lang-client-0840454416", location="us-central1")
+        
+        gemini_model = GenerativeModel("gemini-2.5-flash")
+        res = gemini_model.generate_content(prompt)
+        parts_text = []
+        if res.candidates and len(res.candidates) > 0:
+            candidate = res.candidates[0]
+            if candidate.content and candidate.content.parts:
+                for part in candidate.content.parts:
+                    if hasattr(part, "text") and part.text:
+                        parts_text.append(part.text)
+        if parts_text:
+            result_text = "".join(parts_text)
+        else:
+            try:
+                result_text = res.text
+            except Exception:
+                result_text = ""
+        result_text = result_text.strip()
 
         # Automatically create Storyboard folder and copy assets
         import re

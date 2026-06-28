@@ -26,6 +26,7 @@ def crop_pose_local(anchor_path, pose_name, target_path, handle=None):
     
     is_keith = "keith" in handle_lower or "keith" in anchor_lower
     is_triplea = "triplea" in handle_lower or "triple_a" in handle_lower or "triple" in anchor_lower
+    is_bluecrew = "bluecrew" in handle_lower or "blue_crew" in handle_lower or "bluecrew" in anchor_lower
     
     if is_keith:
         if w == 1024 and h == 1024:
@@ -57,6 +58,21 @@ def crop_pose_local(anchor_path, pose_name, target_path, handle=None):
                 "avatar": (30, 500, 298, 768),
                 "pointing": (374, 500, 642, 768),
                 "shrug": (718, 500, 986, 768)
+            }
+        box = coords.get(pose_name)
+    elif is_bluecrew:
+        if w == 1024 and h == 1024:
+            # BlueCrewBoss custom 1024x1024 coordinates
+            coords = {
+                "avatar": (0, 0, 341, 341),
+                "pointing": (341, 0, 682, 341),
+                "shrug": (682, 0, 1024, 341)
+            }
+        else:
+            coords = {
+                "avatar": (0, 0, 341, 341),
+                "pointing": (341, 0, 682, 341),
+                "shrug": (682, 0, 1024, 341)
             }
         box = coords.get(pose_name)
     else:
@@ -188,9 +204,13 @@ def append_advocate(args):
         # Replicate cropped pose to all target files
         import shutil
         os.makedirs(os.path.dirname(fanstack_path), exist_ok=True)
-        shutil.copy2(portal_path, fanstack_path)
-        shutil.copy2(portal_path, portal_prefix_path)
-        shutil.copy2(portal_path, fanstack_prefix_path)
+        for dest in [fanstack_path, portal_prefix_path, fanstack_prefix_path]:
+            try:
+                if os.path.exists(dest) and os.path.samefile(portal_path, dest):
+                    continue
+                shutil.copy2(portal_path, dest)
+            except (shutil.SameFileError, AttributeError, OSError):
+                pass
         print(f"  [Replication] Synchronized {pose} across standard and prefixed paths.")
             
     # Double-check files exist and are not SVGs

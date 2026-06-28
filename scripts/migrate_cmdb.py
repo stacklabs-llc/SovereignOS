@@ -26,7 +26,6 @@ def migrate():
     c.execute("""
     CREATE TABLE IF NOT EXISTS cmdb_ci_ai_persona (
         sys_id TEXT PRIMARY KEY,
-        u_llm_engine TEXT,
         u_system_prompt TEXT,
         u_deployment_zone TEXT,
         u_boggs_reactivity TEXT,
@@ -73,8 +72,8 @@ def migrate():
             c.execute("INSERT OR IGNORE INTO cmdb_ci (sys_id, name, sys_class_name, short_description, operational_status, assigned_to) VALUES (?, ?, 'cmdb_ci_ai_persona', ?, ?, ?)",
                 (sys_id, name, short_description, active, assigned_to))
             
-            c.execute("INSERT OR IGNORE INTO cmdb_ci_ai_persona (sys_id, u_llm_engine, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence) VALUES (?, ?, ?, ?, 'medium', 'pacer')",
-                (sys_id, u_llm_engine, u_system_prompt, ''))
+            c.execute("INSERT OR IGNORE INTO cmdb_ci_ai_persona (sys_id, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence) VALUES (?, ?, ?, 'medium', 'pacer')",
+                (sys_id, u_system_prompt, ''))
 
     except Exception as e:
         print("Couldn't pull from sys_user:", e)
@@ -86,12 +85,11 @@ def migrate():
                 name = p.get('name', 'Unknown')
                 prompt = p.get('u_system_prompt', '')
                 team = p.get('team', '')
-                engine = p.get('u_llm_engine', 'gemini-flash')
                 zone = p.get('u_deployment_zone', '')
                 c.execute("INSERT OR IGNORE INTO cmdb_ci (sys_id, name, sys_class_name, short_description, operational_status, assigned_to) VALUES (?, ?, 'cmdb_ci_ai_persona', '', 1, ?)",
                     (sys_id, name, team))
-                c.execute("INSERT OR IGNORE INTO cmdb_ci_ai_persona (sys_id, u_llm_engine, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence) VALUES (?, ?, ?, ?, ?, ?)",
-                    (sys_id, engine, prompt, zone, p.get('u_boggs_reactivity', ''), p.get('u_cadence', '')))
+                c.execute("INSERT OR IGNORE INTO cmdb_ci_ai_persona (sys_id, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence) VALUES (?, ?, ?, ?, ?)",
+                    (sys_id, prompt, zone, p.get('u_boggs_reactivity', ''), p.get('u_cadence', '')))
 
     conn.commit()
     conn.close()

@@ -11,7 +11,7 @@ import os
 import shutil
 from datetime import datetime
 from fastapi import FastAPI, Request, UploadFile, File
-from fastapi.responses import HTMLResponse, JSONResponse, FileResponse
+from fastapi.responses import HTMLResponse, JSONResponse, FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import uvicorn
@@ -281,7 +281,12 @@ def get_ticket(ticket_id: str):
     return JSONResponse({"error": "Not found"}, status_code=404)
 
 @app.get("/api/tickets/{ticket_id}/export")
-def export_ticket(ticket_id: str):
+@app.get("/api/tickets/{ticket_id}/export/{format}")
+def export_ticket(ticket_id: str, format: str = "md"):
+    format = str(format or "md").lower()
+    if format not in ("md", "json", "pdf"):
+        format = "md"
+        
     conn = get_db()
     row = conn.execute("""
         SELECT sys_id, number as id, type, parent_sys_id, short_description as title, 
@@ -325,6 +330,30 @@ def export_ticket(ticket_id: str):
     else:
         att_list = "*No attachments.*"
         
+    # ── JSON export ────────────────────────────────────────────────────────────
+    if format == "json":
+        payload = {
+            "ticket_id": t_num,
+            "sys_id": t_sys_id,
+            "title": title,
+            "type": t_type,
+            "status": status,
+            "priority": priority,
+            "assigned_to": assigned,
+            "affected_ci": affected_ci,
+            "created_at": created,
+            "updated_at": updated,
+            "description": desc,
+            "work_notes": work,
+            "attachments": [dict(r) for r in att_rows]
+        }
+        return Response(
+            content=json.dumps(payload, indent=2, default=str),
+            media_type="application/json",
+            headers={"Content-Disposition": f"attachment; filename={t_num}_export.json"}
+        )
+        
+    # Generate Markdown representation
     md_content = f"""# [{t_num}] {title}
 
 | Attribute | Value |
@@ -355,13 +384,256 @@ def export_ticket(ticket_id: str):
 
 {att_list}
 """
-    
-    from fastapi.responses import Response
-    return Response(
-        content=md_content,
-        media_type="text/markdown",
-        headers={"Content-Disposition": f"attachment; filename={t_num}_export.md"}
-    )
+
+    # ── Markdown export ───────────────────────────────────────────────────────
+    if format == "md":
+        return Response(
+            content=md_content,
+            media_type="text/markdown",
+            headers={"Content-Disposition": f"attachment; filename={t_num}_export.md"}
+        )
+        
+    # ── PDF export ────────────────────────────────────────────────────────────
+    elif format == "pdf":
+        import markdown
+        import subprocess
+        
+        # Convert MD to HTML using markdown library
+        body_html = markdown.markdown(md_content, extensions=['fenced_code', 'tables'])
+        
+        css_content = """
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        :root {
+            --color-bg: #fafaf9;
+            --color-text: #1c2e2c;
+            --color-text-light: #445654;
+            --color-primary: #0f766e;
+            --color-primary-light: #f0fdfa;
+            --color-accent: #b45309;
+            --color-accent-light: #fef3c7;
+            --color-border: #e2e8f0;
+        }
+        
+        * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+        }
+        
+        @page {
+            size: letter;
+            margin: 25mm 20mm 20mm 20mm;
+            @bottom-right {
+                content: counter(page);
+                font-family: 'Outfit', sans-serif;
+                font-size: 9pt;
+                color: #889694;
+            }
+            @top-left {
+                content: "Sovereign OS • Ticket Export Record";
+                font-family: 'Outfit', sans-serif;
+                font-size: 8pt;
+                color: #889694;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+            }
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: var(--color-text);
+            background-color: var(--color-bg);
+            line-height: 1.6;
+            font-size: 11pt;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .content-container {
+            padding: 0 10px;
+        }
+        
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', sans-serif;
+            color: #0f172a;
+            font-weight: 700;
+            margin-top: 1.6em;
+            margin-bottom: 0.5em;
+            page-break-after: avoid;
+        }
+        
+        h1 {
+            font-size: 22pt;
+            line-height: 1.2;
+            border-bottom: 3px solid var(--color-primary);
+            padding-bottom: 8px;
+            margin-top: 0;
+            margin-bottom: 1em;
+            text-transform: uppercase;
+        }
+        
+        h2 {
+            font-size: 13pt;
+            border-left: 4px solid var(--color-primary);
+            padding-left: 12px;
+            color: var(--color-primary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 2em;
+        }
+        
+        h3 {
+            font-size: 11pt;
+            color: var(--color-accent);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        p {
+            margin-top: 0;
+            margin-bottom: 1.2em;
+            color: var(--color-text-light);
+            text-align: justify;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5em 0;
+            page-break-inside: avoid;
+            font-size: 9.5pt;
+        }
+        
+        th, td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--color-border);
+        }
+        
+        th {
+            background-color: var(--color-primary-light);
+            color: var(--color-primary);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 8.5pt;
+            letter-spacing: 0.5px;
+        }
+        
+        tr:nth-child(even) td {
+            background-color: #fcfcfb;
+        }
+        
+        blockquote {
+            margin: 1.5em 0;
+            padding: 15px 20px;
+            background-color: #fef3c7;
+            border-left: 5px solid #d97706;
+            border-radius: 0 6px 6px 0;
+            page-break-inside: avoid;
+        }
+        
+        blockquote p {
+            margin: 0;
+            color: #78350f;
+            font-weight: 500;
+            font-size: 10pt;
+        }
+        
+        pre {
+            background-color: #0f172a;
+            color: #38bdf8;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 9pt;
+            line-height: 1.5;
+            margin: 1.5em 0;
+            border-left: 4px solid var(--color-accent);
+        }
+        
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 90%;
+            background-color: #f1f5f9;
+            color: #0f766e;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        
+        hr {
+            border: 0;
+            border-top: 1px dashed var(--color-border);
+            margin: 2em 0;
+        }
+        """
+        
+        html_document = f"""<!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="utf-8">
+            <title>{title}</title>
+            <style>
+                {css_content}
+            </style>
+        </head>
+        <body>
+            <div class="content-container">
+                {body_html}
+            </div>
+        </body>
+        </html>
+        """
+        
+        # Post-process GitHub alert style blocks
+        html_document = html_document.replace('<blockquote>\n<p>&gt; [!IMPORTANT]', '<blockquote style="background-color: #fef2f2; border-left-color: #ef4444;"><p style="color: #991b1b;"><strong>⚠️ IMPORTANT:</strong>')
+        html_document = html_document.replace('<blockquote>\n<p>&gt; [!WARNING]', '<blockquote style="background-color: #fef2f2; border-left-color: #ef4444;"><p style="color: #991b1b;"><strong>⚠️ WARNING:</strong>')
+        html_document = html_document.replace('<blockquote>\n<p>&gt; [!TIP]', '<blockquote style="background-color: #fef3c7; border-left-color: #d97706;"><p style="color: #78350f;"><strong>💡 TIP:</strong>')
+        html_document = html_document.replace('<blockquote>\n<p>&gt; [!NOTE]', '<blockquote style="background-color: #eff6ff; border-left-color: #3b82f6;"><p style="color: #1e3a8a;"><strong>ℹ️ NOTE:</strong>')
+        
+        # Create temp files
+        temp_dir = "/home/james/SovereignOS/scratch"
+        if not os.path.exists(temp_dir):
+            os.makedirs(temp_dir)
+            
+        temp_html_path = os.path.join(temp_dir, f"ticket_{t_num}_temp.html")
+        temp_pdf_path = os.path.join(temp_dir, f"ticket_{t_num}_temp.pdf")
+        
+        try:
+            with open(temp_html_path, 'w', encoding='utf-8') as f:
+                f.write(html_document)
+                
+            # Run Headless Chrome to compile PDF
+            chrome_cmd = [
+                "/snap/bin/chromium",
+                "--headless",
+                "--disable-gpu",
+                "--no-sandbox",
+                "--virtual-time-budget=10000",
+                f"--print-to-pdf={temp_pdf_path}",
+                f"file://{temp_html_path}"
+            ]
+            
+            result = subprocess.run(chrome_cmd, capture_output=True, text=True)
+            if not os.path.exists(temp_pdf_path):
+                raise Exception(f"Chromium PDF generation failed (code {result.returncode}): {result.stderr or result.stdout}")
+                
+            with open(temp_pdf_path, 'rb') as f:
+                pdf_data = f.read()
+                
+            return Response(
+                content=pdf_data,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f"attachment; filename={t_num}_export.pdf"}
+            )
+        finally:
+            if os.path.exists(temp_html_path):
+                try: os.remove(temp_html_path)
+                except: pass
+            if os.path.exists(temp_pdf_path):
+                try: os.remove(temp_pdf_path)
+                except: pass
 
 def resolve_markdown_images(md_text: str, attachments: list) -> str:
     name_map = {}
@@ -806,8 +1078,10 @@ def get_flat_ticket_page(ticket_id: str):
   <div class="container">
     <div class="header">
       <a href="/" class="back-link">← Back to SDLC Portal</a>
-      <div class="actions">
-        <a href="/api/tickets/{t_num}/export" class="btn btn-export">💾 Export to Markdown</a>
+      <div class="actions" style="display: flex; gap: 8px;">
+        <a href="/api/tickets/{t_num}/export/md" class="btn btn-export" style="background-color: #0f766e; border-color: #0f766e; color: #ffffff;">📝 MD</a>
+        <a href="/api/tickets/{t_num}/export/pdf" class="btn btn-export" style="background-color: #b45309; border-color: #b45309; color: #ffffff;">📕 PDF</a>
+        <a href="/api/tickets/{t_num}/export/json" class="btn btn-export" style="background-color: #1e3a8a; border-color: #1e3a8a; color: #ffffff;">💻 JSON</a>
       </div>
     </div>
 
@@ -1358,6 +1632,139 @@ async def get_media_asset(advocate: str, expression: str = "front_neutral"):
     except HTTPException:
         raise
     except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+# ── METSY ADVENTURES STAGING & SCRAPBOOK API ──────────────────
+
+@app.get("/api/metsy/scenarios/staged")
+async def get_staged_scenarios():
+    import sqlite3
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        c = conn.cursor()
+        c.execute("""
+            SELECT id, ticket_id, name, slug, expression_reference, vibe, prompt, status, created_at, updated_at 
+            FROM metsy_adventure_stage 
+            WHERE status != 'Completed'
+            ORDER BY created_at DESC
+        """)
+        rows = c.fetchall()
+        results = []
+        for r in rows:
+            results.append({
+                "id": r[0],
+                "ticket_id": r[1],
+                "name": r[2],
+                "slug": r[3],
+                "expression_reference": r[4],
+                "vibe": r[5],
+                "prompt": r[6],
+                "status": r[7],
+                "created_at": r[8],
+                "updated_at": r[9]
+            })
+        return results
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@app.put("/api/metsy/scenarios/staged/{id}")
+async def update_staged_scenario(id: str, request: Request):
+    data = await request.json()
+    name = data.get('name')
+    prompt = data.get('prompt')
+    expression_reference = data.get('expression_reference')
+    vibe = data.get('vibe')
+    
+    import sqlite3
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        c = conn.cursor()
+        c.execute("""
+            UPDATE metsy_adventure_stage 
+            SET name = ?, prompt = ?, expression_reference = ?, vibe = ?, updated_at = CURRENT_TIMESTAMP 
+            WHERE id = ?
+        """, (name, prompt, expression_reference, vibe, id))
+        conn.commit()
+        if c.rowcount == 0:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Staged scenario not found")
+        return {"status": "success", "message": "Scenario updated successfully"}
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+@app.post("/api/metsy/scenarios/generate/{id}")
+async def generate_staged_scenario(id: str):
+    import subprocess
+    import sys
+    try:
+        script_path = "/home/james/SovereignOS/scripts/generate_metsy_adventures_daily.py"
+        cmd = [sys.executable, script_path, "--execute-id", id]
+        
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        if result.returncode != 0:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=500, detail=f"Generation pipeline failed: {result.stderr or result.stdout}")
+        
+        import sqlite3
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("SELECT slug FROM metsy_adventure_stage WHERE id = ?", (id,))
+        row = c.fetchone()
+        conn.close()
+        
+        slug = row[0] if row else "unknown"
+        
+        return {
+            "status": "success",
+            "message": "Scenario generated successfully",
+            "mediaUrl": f"/avatars/metsy_smyrna/{slug}.png",
+            "log": result.stdout
+        }
+    except subprocess.TimeoutExpired:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=504, detail="Generation pipeline timed out")
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/metsy/scenarios/archive")
+async def get_archived_adventures():
+    import sqlite3
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        c = conn.cursor()
+        c.execute("""
+            SELECT sys_id, name, file_name, file_path, md5_hash, sys_created_on 
+            FROM sys_media_asset 
+            WHERE category = 'Metsy Adventures'
+            ORDER BY sys_created_on DESC
+        """)
+        rows = c.fetchall()
+        results = []
+        for r in rows:
+            file_name = r[2]
+            slug = file_name.replace("[PROCESSED]_", "").replace(".png", "")
+            results.append({
+                "sys_id": r[0],
+                "name": r[1].replace("Metsy Adventure: ", ""),
+                "file_name": r[2],
+                "file_path": r[3],
+                "md5_hash": r[4],
+                "created_at": r[5],
+                "slug": slug,
+                "url": f"/avatars/metsy_smyrna/{slug}.png"
+            })
+        return results
+    except Exception as e:
+        from fastapi import HTTPException
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()

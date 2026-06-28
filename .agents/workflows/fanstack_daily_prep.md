@@ -25,9 +25,21 @@ python3 /home/james/SovereignOS/scripts/stream_url_resolver.py
 ```
 
 ```bash
+/home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/vertex_persona_audit.py
+```
+
+```bash
 python3 /home/james/SovereignOS/scripts/setup_all_rooms.py
 ```
 
 ```bash
 bash /home/james/SovereignOS/scripts/restart_stack.sh
+```
+
+```bash
+/home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/barf_twitter_bot.py
+```
+
+```bash
+/home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/sdlc_persona_onboarder.py
 ```

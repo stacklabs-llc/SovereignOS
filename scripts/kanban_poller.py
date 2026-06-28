@@ -1,7 +1,7 @@
 import json
 import time
 import os
-import google.generativeai as genai
+import google.genai as genai
 
 # Load Gemini key
 env_path = "/home/james/SovereignOS/.env"
@@ -11,8 +11,7 @@ if os.path.exists(env_path):
             if line.startswith("GEMINI_API_KEY="):
                 os.environ["GEMINI_API_KEY"] = line.strip().split("=", 1)[1]
 
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-model = genai.GenerativeModel('gemini-flash-latest')
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 KANBAN_FILE = "/home/james/SovereignOS/01_Sovereign_Portal/public/agent_kanban.json"
 
@@ -54,7 +53,10 @@ def process_tickets():
             """
             
             try:
-                response = model.generate_content(prompt)
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt
+                )
                 reply_text = response.text.strip()
             except Exception as e:
                 reply_text = f"Automated acknowledgment: Ticket received. (Error querying Gemini: {e})"

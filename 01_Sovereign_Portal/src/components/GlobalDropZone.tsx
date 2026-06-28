@@ -232,8 +232,7 @@ export default function GlobalDropZone() {
 
   return (
     <div 
-      className="fixed bottom-0 left-0 right-0 z-50 flex flex-col bg-slate-950/80 backdrop-blur-xl border-t-2 border-[#00d4ff]/40 shadow-[0_-8px_30px_rgba(0,212,255,0.15)] text-white transition-all duration-300 ease-in-out"
-      style={{ height: isOpen ? '220px' : '40px' }}
+      className={`fixed bottom-0 left-0 right-0 z-50 flex flex-col bg-slate-950/80 backdrop-blur-xl border-t-2 border-[#00d4ff]/40 shadow-[0_-8px_30px_rgba(0,212,255,0.15)] text-white transition-all duration-300 ease-in-out ${isOpen ? 'h-[100dvh] md:h-[220px] translate-y-0 opacity-100' : 'h-0 translate-y-full opacity-0 pointer-events-none'}`}
     >
       {/* Drawer Header / Toggle Bar */}
       <div 
@@ -261,7 +260,7 @@ export default function GlobalDropZone() {
 
       {/* Expanded Area */}
       {isOpen && (
-        <div className="flex-1 h-[180px] p-4 flex gap-4 overflow-hidden relative">
+        <div className="flex-1 p-4 flex flex-col md:flex-row gap-4 overflow-y-auto md:overflow-hidden relative min-h-0">
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -271,7 +270,7 @@ export default function GlobalDropZone() {
           />
 
           {/* Column 1: Mode Switcher */}
-          <div className="w-[150px] flex flex-col gap-2 border-r border-white/5 pr-4 shrink-0">
+          <div className="w-full md:w-[150px] flex flex-row md:flex-col gap-2 border-b md:border-b-0 md:border-r border-white/5 pb-3 md:pb-0 md:pr-4 shrink-0">
             <button
               onClick={() => { setMode('file'); resetUploader(); }}
               className={`w-full py-2 px-3 rounded-lg text-[10px] font-mono font-bold tracking-widest uppercase transition-all duration-200 border ${
@@ -296,7 +295,7 @@ export default function GlobalDropZone() {
             {(uploadTasks.length > 0 || resultMessage) && (
               <button
                 onClick={resetUploader}
-                className="w-full mt-auto py-1.5 px-3 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-[9px] font-mono uppercase tracking-widest text-white/80 transition-colors"
+                className="w-full md:mt-auto py-1.5 px-3 rounded bg-white/5 hover:bg-white/10 border border-white/10 text-[9px] font-mono uppercase tracking-widest text-white/80 transition-colors"
               >
                 Clear Queue
               </button>
@@ -414,7 +413,7 @@ export default function GlobalDropZone() {
 
           {/* Column 3: Scrollable Queue List */}
           {uploadTasks.length > 0 && (
-            <div className="w-[220px] flex flex-col gap-1.5 border-l border-white/5 pl-4 overflow-y-auto shrink-0 pr-1 select-none">
+            <div className="w-full md:w-[220px] flex flex-col gap-1.5 border-t md:border-t-0 md:border-l border-white/5 pt-3 md:pt-0 md:pl-4 overflow-y-auto shrink-0 pr-1 select-none">
               <span className="font-mono text-[8px] uppercase tracking-widest text-white/30 mb-0.5">
                 Staging Inventory
               </span>

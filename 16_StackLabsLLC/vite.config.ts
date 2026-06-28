@@ -16,12 +16,38 @@ export default defineConfig({
       cert: fs.readFileSync('../01_Sovereign_Portal/clio.taila01894.ts.net.crt'),
     },
     proxy: {
+      '/api/snipe': {
+        target: 'http://127.0.0.1:5056',
+        changeOrigin: true,
+      },
+      '/api/transcribe': {
+        target: 'http://127.0.0.1:5056',
+        changeOrigin: true,
+      },
+      '/api/summarize': {
+        target: 'http://127.0.0.1:5056',
+        changeOrigin: true,
+      },
+      '/api/analyze_video': {
+        target: 'http://127.0.0.1:5056',
+        changeOrigin: true,
+      },
       '/api': {
         target: 'http://127.0.0.1:8090',
         changeOrigin: true,
         secure: false
       },
       '/v1': {
+        target: 'http://127.0.0.1:8090',
+        changeOrigin: true,
+        secure: false
+      },
+      '/docs': {
+        target: 'http://127.0.0.1:8090',
+        changeOrigin: true,
+        secure: false
+      },
+      '/openapi.json': {
         target: 'http://127.0.0.1:8090',
         changeOrigin: true,
         secure: false

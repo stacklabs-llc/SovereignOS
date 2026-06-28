@@ -39,16 +39,24 @@ def main():
         print(f"Database not found at {DB_PATH}")
         sys.exit(1)
         
-    # Determine date using Eastern Time to align with schedule
-    try:
-        from zoneinfo import ZoneInfo
-    except ImportError:
-        from backports.zoneinfo import ZoneInfo
-    now_et = datetime.datetime.now(ZoneInfo('America/New_York'))
-    if now_et.hour < 10:
-        target_date = (now_et - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-    else:
-        target_date = now_et.strftime('%Y-%m-%d')
+    # Determine date using Eastern Time to align with schedule, allowing override via CLI
+    target_date = None
+    if len(sys.argv) > 1:
+        arg = sys.argv[1]
+        import re
+        if re.match(r'^\d{4}-\d{2}-\d{2}$', arg):
+            target_date = arg
+
+    if not target_date:
+        try:
+            from zoneinfo import ZoneInfo
+        except ImportError:
+            from backports.zoneinfo import ZoneInfo
+        now_et = datetime.datetime.now(ZoneInfo('America/New_York'))
+        if now_et.hour < 4:
+            target_date = (now_et - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+        else:
+            target_date = now_et.strftime('%Y-%m-%d')
 
     print(f"[RESOLVER] Aligning stream URL resolution with date: {target_date}")
         

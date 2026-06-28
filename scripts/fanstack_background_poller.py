@@ -16,6 +16,10 @@ last_status_map = {}
 delay_state_map = {}
 blowout_state_map = {}
 game_count_states = {}
+game_payoff_batters = {}
+game_payoff_pitchers = {}
+game_payoff_batter_ids = {}
+game_payoff_pitcher_ids = {}
 extra_innings_notified = {}
 whiff_anomalies_notified = {}
 schedule_cache = None
@@ -90,6 +94,22 @@ def _write_game_state_cache(game_pk: int, feed: dict, payload_data: dict) -> Non
         "status_msg":     payload_data.get("status_msg"),
         "innings_detail": innings_data,
         "recent_plays":   recent_plays,
+        "venue_name":     payload_data.get("venue_name"),
+        "venue_location": payload_data.get("venue_location"),
+        "batter_id":      payload_data.get("batter_id"),
+        "pitcher_id":     payload_data.get("pitcher_id"),
+        "batter_avg":      payload_data.get("batter_avg"),
+        "batter_obp":      payload_data.get("batter_obp"),
+        "batter_slg":      payload_data.get("batter_slg"),
+        "batter_ops":      payload_data.get("batter_ops"),
+        "batter_hr":       payload_data.get("batter_hr"),
+        "batter_rbi":      payload_data.get("batter_rbi"),
+        "pitcher_era":     payload_data.get("pitcher_era"),
+        "pitcher_whip":    payload_data.get("pitcher_whip"),
+        "pitcher_wins":    payload_data.get("pitcher_wins"),
+        "pitcher_losses":  payload_data.get("pitcher_losses"),
+        "pitcher_so":      payload_data.get("pitcher_so"),
+        "pitcher_ip":      payload_data.get("pitcher_ip"),
     }
 
     # Atomic write: tmp file → os.replace().
@@ -533,6 +553,106 @@ async def poll_games(ws):
         away_team = gd_teams.get("away", {}).get("abbreviation", "AWY")
         home_team = gd_teams.get("home", {}).get("abbreviation", "HME")
         
+        # 1. Ingest Venue Telemetry (WO-2026-094)
+        gd_venue = feed.get("gameData", {}).get("venue", {})
+        venue_name = gd_venue.get("name", "")
+        gd_loc = gd_venue.get("location", {})
+        city = gd_loc.get("city", "")
+        state_abbrev = gd_loc.get("stateAbbrev", "")
+        
+        TEAM_STADIUMS = {
+            "LAD": ("Dodger Stadium", "Los Angeles, CA"),
+            "NYY": ("Yankee Stadium", "Bronx, NY"),
+            "CHC": ("Wrigley Field", "Chicago, IL"),
+            "NYM": ("Citi Field", "Flushing, NY"),
+            "MIN": ("Target Field", "Minneapolis, MN"),
+            "DET": ("Comerica Park", "Detroit, MI"),
+            "PIT": ("PNC Park", "Pittsburgh, PA"),
+            "SF":  ("Oracle Park", "San Francisco, CA"),
+            "TEX": ("Globe Life Field", "Arlington, TX"),
+            "TOR": ("Rogers Centre", "Toronto, ON"),
+            "OAK": ("Sutter Health Park", "Sacramento, CA"),
+            "PHI": ("Citizens Bank Park", "Philadelphia, PA"),
+            "MIA": ("loanDepot park", "Miami, FL"),
+            "ATL": ("Truist Park", "Atlanta, GA"),
+            "COL": ("Coors Field", "Denver, CO"),
+            "SD":  ("Petco Park", "San Diego, CA"),
+            "MIL": ("American Family Field", "Milwaukee, WI"),
+            "CWS": ("Guaranteed Rate Field", "Chicago, IL"),
+            "BAL": ("Oriole Park at Camden Yards", "Baltimore, MD"),
+            "CIN": ("Great American Ball Park", "Cincinnati, OH"),
+            "HOU": ("Daikin Park", "Houston, TX"),
+            "STL": ("Busch Stadium", "St. Louis, MO"),
+            "WSH": ("Nationals Park", "Washington, DC"),
+            "ARI": ("Chase Field", "Phoenix, AZ"),
+            "CLE": ("Progressive Field", "Cleveland, OH"),
+            "LAA": ("Angel Stadium", "Anaheim, CA"),
+            "TB":  ("Tropicana Field", "St. Petersburg, FL"),
+            "KC":  ("Kauffman Stadium", "Kansas City, MO"),
+            "SEA": ("T-Mobile Park", "Seattle, WA"),
+            "BOS": ("Fenway Park", "Boston, MA"),
+        }
+
+        VENUE_LOCATIONS = {
+            "Oracle Park": "San Francisco, CA",
+            "Citi Field": "Flushing, NY",
+            "American Family Field": "Milwaukee, WI",
+            "Wrigley Field": "Chicago, IL",
+            "Oriole Park at Camden Yards": "Baltimore, MD",
+            "Great American Ball Park": "Cincinnati, OH",
+            "Daikin Park": "Houston, TX",
+            "Petco Park": "San Diego, CA",
+            "Busch Stadium": "St. Louis, MO",
+            "Citizens Bank Park": "Philadelphia, PA",
+            "UNIQLO Field at Dodger Stadium": "Los Angeles, CA",
+            "Dodger Stadium": "Los Angeles, CA",
+            "T-Mobile Park": "Seattle, WA",
+            "Rogers Centre": "Toronto, ON",
+            "loanDepot park": "Miami, FL",
+            "Truist Park": "Atlanta, GA",
+            "Kauffman Stadium": "Kansas City, MO",
+            "Chase Field": "Phoenix, AZ",
+            "Rate Field": "Chicago, IL",
+            "Guaranteed Rate Field": "Chicago, IL",
+            "Nationals Park": "Washington, DC",
+            "Comerica Park": "Detroit, MI",
+            "Yankee Stadium": "Bronx, NY",
+            "Fenway Park": "Boston, MA",
+            "Globe Life Field": "Arlington, TX",
+            "Progressive Field": "Cleveland, OH",
+            "Target Field": "Minneapolis, MN",
+            "Coors Field": "Denver, CO",
+            "PNC Park": "Pittsburgh, PA",
+            "Angel Stadium": "Anaheim, CA",
+            "Sutter Health Park": "Sacramento, CA",
+            "Tropicana Field": "St. Petersburg, FL",
+            "Estadio Alfredo Harp Helu": "Mexico City, Mexico",
+            "Las Vegas Ballpark": "Las Vegas, NV",
+            "Field of Dreams": "Dyersville, IA",
+            "Journey Bank Ballpark": "Williamsport, PA",
+            "MetLife Stadium": "East Rutherford, NJ",
+            "The BattleDome": "Simulated Void",
+            "The Simulation Chamber": "Simulated Void",
+            "Augusta National": "Augusta, GA",
+            "Pinehurst No. 2": "Pinehurst, NC",
+            "Allianz Arena": "Munich, Germany"
+        }
+
+        if home_team and (not venue_name or venue_name in ("Home", "N/A", "")):
+            default_stadium, default_loc = TEAM_STADIUMS.get(home_team.upper(), ("Home Stadium", "Home City"))
+            venue_name = default_stadium
+            venue_location = default_loc
+        else:
+            if city and state_abbrev:
+                venue_location = f"{city}, {state_abbrev}"
+            elif city:
+                venue_location = city
+            else:
+                venue_location = VENUE_LOCATIONS.get(venue_name, "Home City")
+        
+        weather = feed.get("gameData", {}).get("weather", {})
+        wind = weather.get("wind", "---")
+        
         plays = feed.get("liveData", {}).get("plays", {})
         targetPlay = plays.get("currentPlay", {})
         allPlays = plays.get("allPlays", [])
@@ -582,6 +702,14 @@ async def poll_games(ws):
         horiz_delta = 0.0
         whiff_image_url = None
         
+        # STRY-WHIFF-OVERLAY custom metrics
+        horizontal_break_inches = 0.0
+        vertical_break_inches = 0.0
+        swing_status = "TAKE"
+        bat_speed_mph = 0.0
+        whiff_distance_inches = 0.0
+        is_sword = False
+        
         for ev in reversed(events):
             if ev.get("hitData") and hit_speed == "---":
                 hit_speed = ev["hitData"].get("launchSpeed", "---")
@@ -592,6 +720,33 @@ async def poll_games(ws):
                     speed = ev["pitchData"].get("startSpeed", "---")
                 if pName == "---" and ev.get("details", {}).get("type", {}).get("description"):
                     pName = ev.get("details", {}).get("type", {}).get("description", "---")
+                
+                # Ingest break data
+                pd = ev.get("pitchData")
+                if pd:
+                    breaks = pd.get("breaks") or {}
+                    if horizontal_break_inches == 0.0:
+                        horizontal_break_inches = breaks.get("breakHorizontal") or breaks.get("break_horizontal") or 0.0
+                    if vertical_break_inches == 0.0:
+                        vertical_break_inches = breaks.get("breakVertical") or breaks.get("break_vertical") or 0.0
+
+            # Determine swing_status, is_sword
+            details = ev.get("details") or {}
+            desc = details.get("description", "")
+            code = details.get("type", {}).get("code", "")
+            
+            # Check is_sword
+            if not is_sword:
+                is_sword = details.get("isSword") or details.get("is_sword") or "sword" in desc.lower() or False
+
+            # Determine swing_status
+            if swing_status == "TAKE":
+                if ev.get("hitData"):
+                    swing_status = "HIT"
+                elif "Swinging Strike" in desc or "Miss" in desc or "Swinging Pitchout" in desc or code in ["S", "W"]:
+                    swing_status = "WHIFF"
+                elif "Foul" in desc or "foul" in desc.lower() or code == "F":
+                    swing_status = "FOUL"
             
             # Extract bat tracking if present
             bt = ev.get("batTracking") or ev.get("bat_tracking") or ev.get("pitchData", {}).get("batTracking") or ev.get("pitchData", {}).get("bat_tracking")
@@ -606,6 +761,18 @@ async def poll_games(ws):
                     vert_delta = ca.get("vertical_delta_in") or ca.get("verticalDeltaIn") or 0.0
                     horiz_align = ca.get("horizontal_alignment") or ca.get("horizontalAlignment") or "---"
                     horiz_delta = ca.get("horizontal_delta_in") or ca.get("horizontalDeltaIn") or 0.0
+                    
+        # Parse bat speed / miss distance to float
+        if bat_speed != "---":
+            try:
+                bat_speed_mph = float(bat_speed)
+            except:
+                pass
+        if miss_distance is not None:
+            try:
+                whiff_distance_inches = float(miss_distance)
+            except:
+                pass
                     
         # Pivot to Hit Telemetry if Pitch Data is missing
         if (pName == "---" or speed == "---") and hit_speed != "---":
@@ -652,16 +819,21 @@ async def poll_games(ws):
                 
         # P2 FIX: Include DB room_state in hash so staged→active transition forces a re-broadcast
         # Root cause: chatbots slept for 50min because Pre-Game state_hash never changed after room activation
-        db_room_state = "unknown"
+        db_room_state = "staged"
         try:
             import sqlite3 as _sq
             _con = _sq.connect('/home/james/SovereignOS/dna/sovereign_now.db')
             _cur = _con.cursor()
             _cur.execute("SELECT room_state FROM mlb_schedule WHERE game_pk = ?", (str(pk),))
             _row = _cur.fetchone()
+            if _row and _row[0]:
+                db_room_state = _row[0]
+            else:
+                _cur.execute("SELECT room_state FROM cmdb_ci_fanstack_room WHERE game_pk = ?", (str(pk),))
+                _row_fallback = _cur.fetchone()
+                if _row_fallback and _row_fallback[0]:
+                    db_room_state = _row_fallback[0]
             _con.close()
-            if _row:
-                db_room_state = _row[0] or "unknown"
         except Exception:
             pass
 
@@ -676,6 +848,60 @@ async def poll_games(ws):
             event_type = "strikeout"
         else:
             event_type = "pitch"
+
+        # Extract season stats from boxscore
+        boxscore = feed.get("liveData", {}).get("boxscore", {})
+        box_teams = boxscore.get("teams", {})
+        home_players = box_teams.get("home", {}).get("players", {})
+        away_players = box_teams.get("away", {}).get("players", {})
+        
+        def find_player(p_id):
+            if not p_id: return None
+            key = f"ID{p_id}"
+            return home_players.get(key) or away_players.get(key)
+            
+        batter_id = targetPlay.get("matchup", {}).get("batter", {}).get("id")
+        if not batter_id and linescore.get("offense", {}).get("batter", {}).get("id"):
+            batter_id = linescore.get("offense", {}).get("batter", {}).get("id")
+            
+        pitcher_id = targetPlay.get("matchup", {}).get("pitcher", {}).get("id")
+        if not pitcher_id and linescore.get("defense", {}).get("pitcher", {}).get("id"):
+            pitcher_id = linescore.get("defense", {}).get("pitcher", {}).get("id")
+            
+        b_player = find_player(batter_id)
+        p_player = find_player(pitcher_id)
+        
+        batter_avg = "---"
+        batter_obp = "---"
+        batter_slg = "---"
+        batter_ops = "---"
+        batter_hr = "0"
+        batter_rbi = "0"
+        
+        if b_player and b_player.get("seasonStats", {}).get("batting"):
+            bat_stats = b_player["seasonStats"]["batting"]
+            batter_avg = str(bat_stats.get("avg", "---"))
+            batter_obp = str(bat_stats.get("obp", "---"))
+            batter_slg = str(bat_stats.get("slg", "---"))
+            batter_ops = str(bat_stats.get("ops", "---"))
+            batter_hr = str(bat_stats.get("homeRuns", "0"))
+            batter_rbi = str(bat_stats.get("rbi", "0"))
+            
+        pitcher_era = "---"
+        pitcher_whip = "---"
+        pitcher_wins = "0"
+        pitcher_losses = "0"
+        pitcher_so = "0"
+        pitcher_ip = "0.0"
+        
+        if p_player and p_player.get("seasonStats", {}).get("pitching"):
+            pit_stats = p_player["seasonStats"]["pitching"]
+            pitcher_era = str(pit_stats.get("era", "---"))
+            pitcher_whip = str(pit_stats.get("whip", "---"))
+            pitcher_wins = str(pit_stats.get("wins", "0"))
+            pitcher_losses = str(pit_stats.get("losses", "0"))
+            pitcher_so = str(pit_stats.get("strikeOuts", "0"))
+            pitcher_ip = str(pit_stats.get("inningsPitched", "0.0"))
 
         state_hash = f"{playDesc}|{balls}|{strikes}|{outs}|{away_score}|{home_score}|{pName}|{speed}|{batterName}|room:{db_room_state}"
         if pk not in last_status_map or last_status_map[pk] != state_hash:
@@ -705,7 +931,30 @@ async def poll_games(ws):
                     "hit_distance": hit_distance,
                     "launch_angle": launch_angle,
                     "event_type": event_type,
-                    "batting_team": batting_team
+                    "batting_team": batting_team,
+                    "horizontal_break_inches": horizontal_break_inches,
+                    "vertical_break_inches": vertical_break_inches,
+                    "swing_status": swing_status,
+                    "bat_speed_mph": bat_speed_mph,
+                    "whiff_distance_inches": whiff_distance_inches,
+                    "is_sword": is_sword,
+                    "wind": wind,
+                    "venue_name": venue_name,
+                    "venue_location": venue_location,
+                    "batter_id": batter_id,
+                    "pitcher_id": pitcher_id,
+                    "batter_avg": batter_avg,
+                    "batter_obp": batter_obp,
+                    "batter_slg": batter_slg,
+                    "batter_ops": batter_ops,
+                    "batter_hr": batter_hr,
+                    "batter_rbi": batter_rbi,
+                    "pitcher_era": pitcher_era,
+                    "pitcher_whip": pitcher_whip,
+                    "pitcher_wins": pitcher_wins,
+                    "pitcher_losses": pitcher_losses,
+                    "pitcher_so": pitcher_so,
+                    "pitcher_ip": pitcher_ip
                 }
             }
             print(f"[POLLER] New play for {away_team}@{home_team} (Game {pk}): {playDesc}")
@@ -731,38 +980,91 @@ async def poll_games(ws):
                 await ws.send(json.dumps(payload))
                 last_status_map[pk] = state_hash
 
+                if event_type == "strikeout" and db_room_state == 'active':
+                    keith_payload = {
+                        "type": "webslinger_trigger",
+                        "event_name": "KEITH_SIT_DOWN_OVERLAY",
+                        "data": {"trigger": "KEITH_SIT_DOWN_OVERLAY", "batter": batterName, "pitcher": pitcherName},
+                        "room_id": str(pk)
+                    }
+                    try:
+                        await ws.send(json.dumps(keith_payload))
+                        print(f"[POLLER] Keith Hernandez overlay triggered for strikeout in game {pk}!")
+                    except Exception as keith_err:
+                        print(f"[POLLER] Failed to send Keith overlay: {keith_err}")
+
                 # PRECOG 50-SECOND PREDICTIVE VIDEO PIPELINE TRIGGER
                 try:
                     import sys
                     sys.path.append("/home/james/SovereignOS/scripts")
                     import precog_pipeline
                     
-                    # 1. Finalization: Check if previous count was 3-2 (payoff pitch outcome)
+                    # 1. Finalization: Check if count transitioned away from 3-2 (payoff pitch outcome)
                     prev_count = game_count_states.get(pk, (0, 0))
-                    if prev_count == (3, 2):
-                        print(f"[PRECOG] Payoff pitch outcome detected for {batterName} vs {pitcherName}: {playDesc}. Finalizing...")
-                        dyn_text = await asyncio.to_thread(
-                            precog_pipeline.finalize_prediction, pk, batterName, pitcherName, playDesc
-                        )
-                        # Broadcast winning video to live chat
-                        video_msg = {
-                            "type": "CHAT_MESSAGE",
-                            "user": "SOVEREIGN ORACLE",
-                            "persona": "oracle",
-                            "color": "#A78BFA",
-                            "text": f"🔮 PRECOG REALIZED: {dyn_text}",
-                            "target_game_pk": str(pk),
-                            "image": "https://clio.taila01894.ts.net:7300/videos/precog_winning.mp4",
-                            "is_telemetry": True
+                    if prev_count == (3, 2) and (balls, strikes) != (3, 2):
+                        # Retrieve cached batter/pitcher details for the payoff pitch outcome
+                        payoff_batter = game_payoff_batters.get(pk, batterName)
+                        payoff_pitcher = game_payoff_pitchers.get(pk, pitcherName)
+                        payoff_batter_id = game_payoff_batter_ids.get(pk, batter_id)
+                        payoff_pitcher_id = game_payoff_pitcher_ids.get(pk, pitcher_id)
+                        
+                        print(f"[PRECOG] Payoff pitch outcome detected for {payoff_batter} vs {payoff_pitcher}: {playDesc}. Broadcasting settlement...")
+                        settle_payload = {
+                            "type": "MULTIVERSE_SETTLE",
+                            "game_pk": str(pk),
+                            "batter": payoff_batter,
+                            "pitcher": payoff_pitcher,
+                            "play_desc": playDesc,
+                            "batter_id": payoff_batter_id,
+                            "pitcher_id": payoff_pitcher_id
                         }
-                        await ws.send(json.dumps(video_msg))
+                        await ws.send(json.dumps(settle_payload))
+                        
+                        # Inline fallback in case daemon is not running
+                        try:
+                            dyn_text = await asyncio.to_thread(
+                                precog_pipeline.finalize_prediction,
+                                pk, payoff_batter, payoff_pitcher, playDesc,
+                                payoff_batter_id, payoff_pitcher_id
+                            )
+                        except Exception as fb_err:
+                            print(f"[PRECOG] Inline fallback finalization failed/skipped: {fb_err}")
+                        
+                        # Clean up cache
+                        game_payoff_batters.pop(pk, None)
+                        game_payoff_pitchers.pop(pk, None)
+                        game_payoff_batter_ids.pop(pk, None)
+                        game_payoff_pitcher_ids.pop(pk, None)
                     
-                    # 2. Pre-loading: Check if count is now 3-2
-                    if balls == 3 and strikes == 2:
-                        print(f"[PRECOG] Full count (3-2) detected for {batterName} vs {pitcherName}. Initiating pre-generation...")
-                        await asyncio.to_thread(
-                            precog_pipeline.init_pregeneration, pk, batterName, pitcherName
-                        )
+                    # 2. Pre-loading: Check if count transitioned to 3-2
+                    if balls == 3 and strikes == 2 and prev_count != (3, 2):
+                        # Cache current batter/pitcher details for the payoff pitch
+                        game_payoff_batters[pk] = batterName
+                        game_payoff_pitchers[pk] = pitcherName
+                        game_payoff_batter_ids[pk] = batter_id
+                        game_payoff_pitcher_ids[pk] = pitcher_id
+
+                        print(f"[PRECOG] Full count (3-2) detected for {batterName} vs {pitcherName}. Broadcasting prep...")
+                        prep_payload = {
+                            "type": "MULTIVERSE_PREP",
+                            "game_pk": str(pk),
+                            "batter": batterName,
+                            "pitcher": pitcherName,
+                            "batter_id": batter_id,
+                            "pitcher_id": pitcher_id
+                        }
+                        await ws.send(json.dumps(prep_payload))
+                        
+                        # Inline fallback in case daemon is not running
+                        try:
+                            await asyncio.to_thread(
+                                precog_pipeline.init_pregeneration,
+                                pk, batterName, pitcherName,
+                                batter_id,
+                                pitcher_id
+                            )
+                        except Exception as fb_err:
+                            print(f"[PRECOG] Inline fallback pre-generation failed/skipped: {fb_err}")
                     
                     # Update stored count state
                     game_count_states[pk] = (balls, strikes)
@@ -886,7 +1188,7 @@ async def poll_games(ws):
                                 "id": f"anom-{pk}-{int(time.time())}",
                                 "target_game_pk": "GLOBAL"
                             }
-                            # Also dispatch standard update_context to local so Wardy Desk catches the override
+                            # Also dispatch standard update_context to local so Playcall Desk catches the override
                             local_msg = {
                                 "type": "update_context",
                                 "text": f"SYSTEM OVERRIDE (TMI TIMELINE BRANCH): {tmi_payload}",
@@ -957,6 +1259,8 @@ async def main():
             # without blocking the asyncio event loop on idle game nights
             async with websockets.connect(WS_URL, ping_interval=None, ping_timeout=None) as ws:
                 print("[BACKGROUND POLLER] Connected to Sovereign Mesh!")
+                # Clear state hash cache on new connection/reconnection to force state re-sync
+                last_status_map.clear()
                 while True:
                     await poll_games(ws)
                     await asyncio.sleep(1)  # 1s poll 

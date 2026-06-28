@@ -54,6 +54,10 @@ nohup /home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/
 echo "[+] Starting Agent Courier Payload Engine..."
 nohup /home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/fanstack_admin/fanstack_admin_api.py > /tmp/admin_api.log 2>&1 &
 
+# 8. Start Sovereign Stream Relay
+echo "[+] Starting Sovereign Stream Relay (Port 8097)..."
+nohup /home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/sovereign_stream_relay.py > /home/james/SovereignOS/logs/sovereign_stream_relay.log 2>&1 &
+
 echo ""
 echo "=================================================="
 echo " [✔] MESH SECURED. THE ORACLE IS LISTENING."

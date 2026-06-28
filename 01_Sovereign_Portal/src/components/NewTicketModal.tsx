@@ -58,7 +58,8 @@ export default function NewTicketModal({ isOpen, onClose }: NewTicketModalProps)
   }, [isOpen]);
 
   const handleSubmit = async () => {
-    if (!title) return alert("Short Description is required.");
+    if (!title.trim()) return alert("Short Description is required.");
+    if (!affectedCi) return alert("Affected Configuration Item (CI) is mandatory. Please select a Configuration Item.");
     setIsSubmitting(true);
     try {
       const res = await fetch('/api/tickets', {
@@ -209,7 +210,9 @@ export default function NewTicketModal({ isOpen, onClose }: NewTicketModalProps)
                 </select>
               </div>
               <div>
-                <label className="block font-mono text-[10px] text-[#34d399] uppercase tracking-widest mb-2 flex items-center gap-1"><ShieldAlert size={12}/> Affected Configuration Item (CI)</label>
+                <label className="block font-mono text-[10px] text-[#34d399] uppercase tracking-widest mb-2 flex items-center gap-1">
+                  <ShieldAlert size={12}/> Affected Configuration Item (CI) <span className="text-red-500 font-bold ml-1">*</span>
+                </label>
                 <select value={affectedCi} onChange={(e) => setAffectedCi(e.target.value)} className="w-full bg-black/60 border border-[#34d399]/30 rounded-lg p-3 text-white font-bold text-sm focus:border-[#34d399] outline-none">
                   <option value="">-- None --</option>
                   {allCis.map(ci => <option key={ci.sys_id} value={ci.name}>{ci.name} ({ci.sys_class_name})</option>)}

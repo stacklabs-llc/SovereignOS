@@ -43,38 +43,15 @@ def get_ollama_status():
         return False
 
 def main():
-    if not os.path.exists(DB_PATH):
-        print(f"Database not found at {DB_PATH}")
-        sys.exit(1)
-        
-    active = check_active_rooms()
+    print("[OLLAMA GOVERNOR] Local Ollama integration has been permanently sunset.")
     is_active_service = get_ollama_status()
-    is_summarizing = check_active_summarize_jobs()
-    
-    if active and not is_summarizing:
-        print("[OLLAMA GOVERNOR] Active game-day room detected!")
-        if is_active_service:
-            print("[OLLAMA GOVERNOR] Stopping local Ollama service to conserve CPU/RAM...")
-            subprocess.run(["sudo", "systemctl", "stop", "ollama"], check=True)
-            print("[OLLAMA GOVERNOR] Successfully stopped Ollama.")
-        else:
-            print("[OLLAMA GOVERNOR] Ollama is already stopped.")
-    elif is_summarizing:
-        print("[OLLAMA GOVERNOR] Active summarization job detected! Keeping Ollama active...")
-        if not is_active_service:
-            print("[OLLAMA GOVERNOR] Starting local Ollama service...")
-            subprocess.run(["sudo", "systemctl", "start", "ollama"], check=True)
-            print("[OLLAMA GOVERNOR] Successfully started Ollama.")
-        else:
-            print("[OLLAMA GOVERNOR] Ollama is already running.")
+    if is_active_service:
+        print("[OLLAMA GOVERNOR] Stopping and disabling local Ollama service to enforce sunset status...")
+        subprocess.run(["sudo", "systemctl", "stop", "ollama"], check=True)
+        subprocess.run(["sudo", "systemctl", "disable", "ollama"], check=True)
+        print("[OLLAMA GOVERNOR] Successfully stopped and disabled Ollama.")
     else:
-        print("[OLLAMA GOVERNOR] No active game-day rooms.")
-        if not is_active_service:
-            print("[OLLAMA GOVERNOR] Starting local Ollama service...")
-            subprocess.run(["sudo", "systemctl", "start", "ollama"], check=True)
-            print("[OLLAMA GOVERNOR] Successfully started Ollama.")
-        else:
-            print("[OLLAMA GOVERNOR] Ollama is already running.")
+        print("[OLLAMA GOVERNOR] Ollama is confirmed offline.")
 
 if __name__ == "__main__":
     main()

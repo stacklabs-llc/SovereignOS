@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Sparkles, ClipboardCopy, X, MessageSquare, Activity, LayoutDashboard, MoreHorizontal, Check } from 'lucide-react';
-import avatarMap from '../avatarMap';
+import { Sparkles, ClipboardCopy, X, MessageSquare, Activity, LayoutDashboard, MoreHorizontal, Check, RefreshCw } from 'lucide-react';
 import LivingKanbanBoard from './LivingKanbanBoard';
 
 interface LiveChatSniperProps {
@@ -46,6 +45,29 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
   } | null>(null);
   const [draftNote, setDraftNote] = useState("");
   const [personaData, setPersonaData] = useState<Record<string, {system_prompt: string, deep_lore: string}>>({});
+  const [allPersonas, setAllPersonas] = useState<any[]>([]);
+  const [activeSwapIndex, setActiveSwapIndex] = useState<number | null>(null);
+  const [personaSearch, setPersonaSearch] = useState('');
+
+  const getAuthHeaders = (extraHeaders: Record<string, string> = {}) => {
+    const token = localStorage.getItem('sovereign_session_token');
+    return {
+      ...extraHeaders,
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+    };
+  };
+
+  const getTopicIcon = (topic: string) => {
+    const lower = topic.toLowerCase();
+    if (lower.includes('nfl') || lower.includes('football')) return '🏈';
+    if (lower.includes('nba') || lower.includes('basketball')) return '🏀';
+    if (lower.includes('mlb') || lower.includes('baseball') || lower.includes('mets') || lower.includes('cubs') || lower.includes('yankees') || lower.includes('dodgers')) return '⚾';
+    if (lower.includes('soccer') || lower.includes('futbol') || lower.includes('mls') || lower.includes('premier league')) return '⚽';
+    if (lower.includes('golf') || lower.includes('pga')) return '⛳';
+    if (lower.includes('tennis')) return '🎾';
+    if (lower.includes('f1') || lower.includes('racing') || lower.includes('nascar')) return '🏎️';
+    return '🎙️';
+  };
 
   const handleStartSniping = async () => {
       if (!youtubeUrl) return;
@@ -56,7 +78,7 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
       try {
           const res = await fetch('/api/snipe/tail', {
               method: 'POST',
-              headers: {'Content-Type': 'application/json'},
+              headers: getAuthHeaders({'Content-Type': 'application/json'}),
               body: JSON.stringify({video_id: vid})
           });
            const data = await res.json();
@@ -75,9 +97,13 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
 
   // Load full persona system prompts from DB on mount
   useEffect(() => {
-    fetch('/api/all_personas').then(r => r.json()).then(d => {
+    fetch('/api/all_personas', {
+      headers: getAuthHeaders()
+    }).then(r => r.json()).then(d => {
+      const personasList = d.personas || [];
+      setAllPersonas(personasList);
       const map: Record<string, {system_prompt: string, deep_lore: string}> = {};
-      (d.personas || []).forEach((p: any) => {
+      personasList.forEach((p: any) => {
         map[p.user_name.toLowerCase()] = { system_prompt: p.system_prompt || '', deep_lore: p.deep_lore || '' };
       });
       setPersonaData(map);
@@ -272,7 +298,7 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
                                         try {
                                             const res = await fetch(`/api/hot_take_sniper`, {
                                                 method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
+                                                headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
                                                 body: JSON.stringify({ voice: shotModal.voice, prompt })
                                             });
                                             const data = await res.json();
@@ -453,8 +479,8 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
                 </AnimatePresence>
 
                {/* Panelists — compact single-line strip */}
-               <div className="flex justify-center items-center gap-3 shrink-0 py-2">
-                   {panelists.map((panelist) => {
+               <div className="flex justify-center items-center gap-3 shrink-0 py-2 relative">
+                   {panelists.map((panelist, index) => {
                        const isSpeaking = activeSpeaker === panelist.id;
                        const avatarKeyRaw = panelist.name.toLowerCase();
                        const avatarUrl = `/api/persona_image/${avatarKeyRaw}`;
@@ -462,13 +488,20 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
                        return (
                            <motion.div 
                               key={panelist.id}
+                              onClick={() => setActiveSwapIndex(index)}
                               animate={{ y: isSpeaking ? -3 : 0, scale: isSpeaking ? 1.05 : 1 }}
-                              className={`relative w-24 h-20 rounded-xl border-2 flex flex-col items-center justify-center gap-1 p-2 transition-all duration-300 cursor-pointer overflow-hidden ${
+                              className={`relative w-24 h-20 rounded-xl border-2 flex flex-col items-center justify-center gap-1 p-2 transition-all duration-300 cursor-pointer overflow-hidden group ${
                                  isSpeaking 
                                  ? 'border-[#FF5910] bg-gradient-to-b from-black/80 to-[#FF5910]/20 z-20' 
                                  : 'border-[#3B82F6]/40 bg-gradient-to-b from-black/80 to-[#3B82F6]/10 z-10'
                               }`}
                            >
+                               {/* Swap Overlay on Hover */}
+                               <div className="absolute inset-0 bg-black/85 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col items-center justify-center gap-1 z-30">
+                                   <RefreshCw size={14} className="text-[#3B82F6]" />
+                                   <span className="text-[9px] font-black text-white uppercase tracking-widest">SWAP SLOT</span>
+                               </div>
+
                                {isSpeaking && (
                                    <div className="absolute -top-3 bg-red-600 text-white text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-widest z-30 shadow-[0_0_10px_red]">On Air</div>
                                )}
@@ -487,6 +520,73 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
                            </motion.div>
                        );
                    })}
+
+                   {/* Swap Dropdown */}
+                   {activeSwapIndex !== null && (
+                       <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[100] bg-[#0B0E14]/95 border-2 border-[#3B82F6] rounded-2xl p-4 w-80 shadow-2xl backdrop-blur-md flex flex-col gap-3 max-h-[320px] transition-all duration-300">
+                           <div className="flex justify-between items-center border-b border-white/10 pb-2">
+                               <span className="text-white font-black text-[10px] uppercase tracking-widest flex items-center gap-1.5"><RefreshCw size={12} className="text-[#3B82F6]" /> Swap Slot {activeSwapIndex + 1}</span>
+                               <button onClick={() => { setActiveSwapIndex(null); setPersonaSearch(''); }} className="text-white/40 hover:text-white transition-colors"><X size={14}/></button>
+                           </div>
+                           <input 
+                               type="text" 
+                               placeholder="Search personas..." 
+                               className="bg-black border border-white/10 rounded-lg px-3 py-2 text-xs text-white outline-none focus:border-[#3B82F6] placeholder:text-white/30"
+                               value={personaSearch}
+                               onChange={(e) => setPersonaSearch(e.target.value)}
+                               autoFocus
+                           />
+                           <div className="flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-1 pr-1 max-h-48">
+                               {allPersonas
+                                   .filter(p => 
+                                       p.display_name?.toLowerCase().includes(personaSearch.toLowerCase()) ||
+                                       p.user_name?.toLowerCase().includes(personaSearch.toLowerCase()) ||
+                                       p.team?.toLowerCase().includes(personaSearch.toLowerCase())
+                                   )
+                                   .map((p) => {
+                                       const isAlreadySelected = panelists.some(pan => pan.name.toLowerCase() === p.user_name.toLowerCase());
+                                       return (
+                                           <div 
+                                               key={p.id}
+                                               onClick={() => {
+                                                   if (isAlreadySelected) return;
+                                                   const updated = [...panelists];
+                                                   updated[activeSwapIndex] = { id: p.user_name, name: p.user_name, alias: p.display_name };
+                                                   setPanelists(updated);
+                                                   setActiveSwapIndex(null);
+                                                   setPersonaSearch('');
+                                               }}
+                                               className={`flex items-center gap-3 p-2 rounded-lg border transition-all ${isAlreadySelected ? 'opacity-40 cursor-not-allowed border-transparent' : 'hover:bg-white/5 cursor-pointer border-transparent hover:border-white/5'}`}
+                                           >
+                                               <div className="w-8 h-8 rounded-full border border-white/10 overflow-hidden bg-slate-800 shrink-0">
+                                                   <img 
+                                                       src={`/api/persona_image/${p.user_name.toLowerCase()}`} 
+                                                       alt={p.display_name} 
+                                                       className="w-full h-full object-cover" 
+                                                       onError={(e) => { e.currentTarget.src = `https://api.dicebear.com/7.x/initials/svg?seed=${p.display_name}&backgroundColor=0f172a&textColor=ffffff`; }} 
+                                                   />
+                                               </div>
+                                               <div className="flex-1 min-w-0">
+                                                   <div className="text-white text-xs font-bold truncate">{p.display_name}</div>
+                                                   <div className="text-white/40 text-[9px] font-mono truncate">{p.team || 'GLOBAL'}</div>
+                                               </div>
+                                               {isAlreadySelected && (
+                                                   <span className="text-white/30 text-[8px] font-bold uppercase tracking-wider">Active</span>
+                                               )}
+                                           </div>
+                                       );
+                                   })
+                               }
+                               {allPersonas.filter(p => 
+                                   p.display_name?.toLowerCase().includes(personaSearch.toLowerCase()) ||
+                                   p.user_name?.toLowerCase().includes(personaSearch.toLowerCase()) ||
+                                   p.team?.toLowerCase().includes(personaSearch.toLowerCase())
+                               ).length === 0 && (
+                                   <div className="text-white/30 text-xs text-center py-4 uppercase tracking-widest">No matching personas</div>
+                               )}
+                           </div>
+                       </div>
+                   )}
                </div>
 
                {/* Keyword Sniffer Panel */}

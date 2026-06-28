@@ -4,6 +4,12 @@ This document preserves the chronological record of architectural changes, deplo
 
 ---
 
+## 2026-06-26 (Night): Cross-Portal Stream Sniper Integration & Cockpit Command Center Convergence
+- **Cross-Portal Stream Sniper Console Integration:** Imported, registered, and deployed the `StreamSniperConsole` component inside the `16_StackLabsLLC` workspace.
+- **Decoupled API Proxy Hardening:** Configured Vite proxy routing in `16_StackLabsLLC/vite.config.ts` to redirect `/api/snipe`, `/api/transcribe`, `/api/summarize`, and `/api/analyze_video` requests directly to the background stream_sniper_daemon (port 5056), establishing complete pipeline parity across major portals.
+- **Cockpit Dashboard Relic Synchronization:** Added a brand-new high-fidelity "Stream Sniper" relic matrix card in both `01_Sovereign_Portal` and `16_StackLabsLLC`'s `InteractiveCockpit.tsx` dashboards.
+- **Seamless Navigation Routing:** Connected the `onNavigate` command callback inside the StackLabs homepage (`App.tsx`) to natively trigger the full-screen Stream Sniper overlay when the relic is ignited, while maintaining redirection to the main portal for external service cards.
+
 ## 2026-05-22 (Evening): HoloLink Mobile Auth Presence & Administrative Profile Security Unification
 - **HoloLink Mobile Auth Integration:** Refactored `MobileHololink.tsx` to leverage the global `useAuth()` React context, dynamically registering WebSocket presence under authenticated credentials (`eileen` / `Eileen Carroll`, `patron`) instead of randomized temporary guest fallbacks.
 - **Inbound WebRTC Offer Routing:** Standardized `HololinkHub.tsx` to accept incoming signaling targeting the portal hostname `'clio'`, allowing standard workstations to ring and connect when remote guest/patron terminals dial.

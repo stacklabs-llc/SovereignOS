@@ -1,0 +1,21 @@
+{
+  "theme": {
+    "darkMode": true,
+    "backgroundColor": "#0f172a",
+    "fontFamily": "monospace"
+  },
+  "fanPortal": {
+    "url": "https://clio.taila01894.ts.net:3010/fan-portal?game_room=824910",
+    "layout": "65/35",
+    "centralColumnWidth": "unknown",
+    "sidebarColumnWidth": "35%",
+    "soundboardVisible": false
+  },
+  "creatorPortal": {
+    "url": "https://clio.taila01894.ts.net:3010/creator-portal",
+    "commandDeckVisible": false,
+    "toxicityIndexVisible": false,
+    "mardCoreVisible": false
+  },
+  "timestamp": "2026-06-28T18:22:47.941Z"
+}

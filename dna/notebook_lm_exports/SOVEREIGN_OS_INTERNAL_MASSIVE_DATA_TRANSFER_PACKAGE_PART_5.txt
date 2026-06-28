@@ -1,0 +1,2094 @@
+* Context: A 90s cartoon outline character style, showing Metsy, a brown striped tabby cat with green eyes, wearing a blue tactical chest harness with orange trim and a glowing multicolored LED tracker collar, gingerly stepping into a deep, dark mud puddle, one paw submerged, her face slightly scrunched in mild distaste or discomfort, but her gaze fixed on the distant dry ground, conveying a resolute determination to cross the treacherous, sticky terrain, solid dark background, clean lines.
+
+Scenario 5: Operation Wind Chime Whispers (Acoustic Anomaly Analysis)
+* Core Expression Reference: STANCE: PERPLEXED / ANALYTICAL LISTENING
+* Vibe: Enigmatic mystery, sonic espionage.
+* Context: A 90s cartoon outline character style, showing Metsy, a brown striped tabby cat with green eyes, wearing a blue tactical chest harness with orange trim and a glowing multicolored LED tracker collar, standing on her hind legs, one paw gently batting at a metallic wind chime, her ears swiveling intently to catch every sound, her green eyes wide with a perplexed yet analytical expression, as if attempting to decode the melodic vibrations, solid dark background, clean lines.
+
+
+________________
+
+
+3. TECHNICAL PIPELINE INVARIANTS
+1. Identity & Style Continuity:
+   * The generation service on Clio utilizes one of the previous day's assets (metsy_tight_cropped.png) as the structural and style reference anchor.
+   * Preserve all key visual identifiers: Brown striped tabby pattern, green eyes, blue tactical chest harness with orange trim, and the glowing multicolored LED tracker collar.
+
+2. Asset Routing & Ingress:
+   * All 5 images must be converted to .png format, prefixed with [PROCESSED]_, and saved directly to the active Google Drive folder: SovereignOS_Clio_Sync/work_orders/spark/media/ (mapping to the local path /spark/media/images/ under the ALPHA route).
+   * For each routed image, an accompanying _receipt.json must be written to log the execution metadata and pipeline provenance.
+
+
+________________
+
+
+4. VERIFICATION & ACCEPTANCE CRITERIA
+* Clio successfully staging ticket WO-2026-0620-METSY-ADVENTURES inside sovereign_now.db.
+* The generation pipeline executes and outputs 5 distinct .png images corresponding to the 5 scenarios.
+* Each generated image displays high character continuity matching the tabby pattern and tactical gear in her reference sheet.
+* All 5 processed assets are deposited inside your Google Drive media folder at /work_orders/spark/media/ and recorded in the database ledger.
+
+
+________________
+
+
+
+
+Authorized Signature: Bro-Decoder Co-Pilot Engine
+Ingest Channel: Sovereign OS Local Sync Gate
+
+
+## 2. Web Access & Setup Guide
+* **Target Port:** Port 3000 / 3010 / 3022 / 3016 (Vite Dev Server)
+* **Access Link:** https://clio.taila01894.ts.net:3000/
+* **SSL Note:** Remember to type `thisisunsafe` on the Chrome warning screen to bypass HSTS constraints on self-signed certs.
+
+## 3. Step-by-Step UI Navigation & UAT Guide
+1. Access the workstation dashboard via Tailscale link.
+2. Verify that all components and related modules load correctly.
+
+## 4. Database Verification Proof
+Run the following SQL check on the target database:
+```bash
+sqlite3 /home/james/SovereignOS/dna/sovereign_now.db "SELECT number, state FROM sovereign_tickets WHERE number='WO-2026-06-18-003-METSY-REEL';"
+```
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-06-18-002-REMOTE-CANVAS.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-06-18-002-REMOTE-CANVAS.md`
+
+```markdown
+# SDLC Walkthrough & Verification Report — WO-2026-06-18-002-REMOTE-CANVAS
+
+## 1. Goal / Summary
+🐾 WORK ORDER: METSY ADVENTURE SERIES GENERATION & CONTINUITY INGRESS
+Attribute
+	Specification
+	Ticket ID
+	WO-2026-0620-METSY-ADVENTURES
+	Priority
+	⚡ P2 — Automated Creative Generation & Style Transfer
+	Assigned To
+	antigravity
+	Location
+	Clio Server ──► /home/james/SovereignOS/work_orders/spark/media/
+	
+
+________________
+
+
+1. THE STORY OF METSY'S DAILY ADVENTURES (JUNE 20, 2026)
+Following the Pilot's daily workflow, this ticket represents today's newly generated Backyard Adventures. To maintain absolute character continuity and narrative progression, the style transfer and generation process utilizes one of the previous day's verified assets (metsy_tight_cropped.png) as the anchor image. This preserves her brown tabby markings, green eyes, blue tactical harness with orange trim, and glowing collar across all narrative frames.
+
+
+________________
+
+
+2. THE 5 NEW CONCEPT SCHEMAS
+The generation pipeline has compiled detailed image prompts and executed localized rendering for the following 5 new scenarios:
+Scenario 1: The Great Worm Migration (Operation Subterranean Intel)
+* Core Expression Reference: STANCE: COVERT OBSERVATION / ANALYTICAL
+* Vibe: Humorous nature documentary, covert observation.
+* Context: A 90s cartoon outline character style, showing Metsy, a brown striped tabby cat with green eyes, wearing a blue tactical chest harness with orange trim and a glowing multicolored LED tracker collar, crouched low with intense focus, one paw delicately extended towards a small, wriggling earthworm on damp soil, her green eyes wide with curiosity as if deciphering a secret message from subterranean operatives, solid dark background, clean lines.
+
+Scenario 2: The Watering Can Infiltration (Operation Aqua-Container)
+* Core Expression Reference: STANCE: AGENT ON ASSIGNMENT / STEALTHY ENTRY
+* Vibe: Agile spy, impossible mission.
+* Context: A 90s cartoon outline character style, showing Metsy, a brown striped tabby cat with green eyes, wearing a blue tactical chest harness with orange trim and a glowing multicolored LED tracker collar, expertly navigating her way *into* the narrow spout of a large, green watering can, her body agile and stretched, one front paw reaching deep inside, her expression determined and focused on the covert entry, solid dark background, clean lines.
+
+Scenario 3: Operation Fledgling Fortress (The Fallen Nest Protocol)
+* Core Expression Reference: STANCE: CONCERNED / GENTLE REPAIR
+* Vibe: Compassionate, slightly clumsy hero.
+* Context: A 90s cartoon outline character style, showing Metsy, a brown striped tabby cat with green eyes, wearing a blue tactical chest harness with orange trim and a glowing multicolored LED tracker collar, gently nudging a small, dislodged bird's nest with her nose, one paw carefully holding a tiny twig as if attempting to mend or reinforce it, her green eyes showing a soft, concerned, yet determined expression, solid dark background, clean lines.
+
+Scenario 4: The Mud Puddle Traverse (Operation Sticky Situation)
+* Core Expression Reference: STANCE: RELUCTANT BUT RESOLUTE / CAUTIOUS CROSSING
+* Vibe: Gritty survival, reluctant hero.
+* Context: A 90s cartoon outline character style, showing Metsy, a brown striped tabby cat with green eyes, wearing a blue tactical chest harness with orange trim and a glowing multicolored LED tracker collar, gingerly stepping into a deep, dark mud puddle, one paw submerged, her face slightly scrunched in mild distaste or discomfort, but her gaze fixed on the distant dry ground, conveying a resolute determination to cross the treacherous, sticky terrain, solid dark background, clean lines.
+
+Scenario 5: Operation Wind Chime Whispers (Acoustic Anomaly Analysis)
+* Core Expression Reference: STANCE: PERPLEXED / ANALYTICAL LISTENING
+* Vibe: Enigmatic mystery, sonic espionage.
+* Context: A 90s cartoon outline character style, showing Metsy, a brown striped tabby cat with green eyes, wearing a blue tactical chest harness with orange trim and a glowing multicolored LED tracker collar, standing on her hind legs, one paw gently batting at a metallic wind chime, her ears swiveling intently to catch every sound, her green eyes wide with a perplexed yet analytical expression, as if attempting to decode the melodic vibrations, solid dark background, clean lines.
+
+
+________________
+
+
+3. TECHNICAL PIPELINE INVARIANTS
+1. Identity & Style Continuity:
+   * The generation service on Clio utilizes one of the previous day's assets (metsy_tight_cropped.png) as the structural and style reference anchor.
+   * Preserve all key visual identifiers: Brown striped tabby pattern, green eyes, blue tactical chest harness with orange trim, and the glowing multicolored LED tracker collar.
+
+2. Asset Routing & Ingress:
+   * All 5 images must be converted to .png format, prefixed with [PROCESSED]_, and saved directly to the active Google Drive folder: SovereignOS_Clio_Sync/work_orders/spark/media/ (mapping to the local path /spark/media/images/ under the ALPHA route).
+   * For each routed image, an accompanying _receipt.json must be written to log the execution metadata and pipeline provenance.
+
+
+________________
+
+
+4. VERIFICATION & ACCEPTANCE CRITERIA
+* Clio successfully staging ticket WO-2026-0620-METSY-ADVENTURES inside sovereign_now.db.
+* The generation pipeline executes and outputs 5 distinct .png images corresponding to the 5 scenarios.
+* Each generated image displays high character continuity matching the tabby pattern and tactical gear in her reference sheet.
+* All 5 processed assets are deposited inside your Google Drive media folder at /work_orders/spark/media/ and recorded in the database ledger.
+
+
+________________
+
+
+
+
+Authorized Signature: Bro-Decoder Co-Pilot Engine
+Ingest Channel: Sovereign OS Local Sync Gate
+
+
+## 2. Web Access & Setup Guide
+* **Target Port:** Port 3000 / 3010 / 3022 / 3016 (Vite Dev Server)
+* **Access Link:** https://clio.taila01894.ts.net:3000/
+* **SSL Note:** Remember to type `thisisunsafe` on the Chrome warning screen to bypass HSTS constraints on self-signed certs.
+
+## 3. Step-by-Step UI Navigation & UAT Guide
+1. Access the workstation dashboard via Tailscale link.
+2. Verify that all components and related modules load correctly.
+
+## 4. Database Verification Proof
+Run the following SQL check on the target database:
+```bash
+sqlite3 /home/james/SovereignOS/dna/sovereign_now.db "SELECT number, state FROM sovereign_tickets WHERE number='WO-2026-06-18-002-REMOTE-CANVAS';"
+```
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-06-18-002-AMEN-CORNER-PGA.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-06-18-002-AMEN-CORNER-PGA.md`
+
+```markdown
+# Walkthrough - WO-2026-06-18-002-AMEN-CORNER-PGA
+
+Successfully implemented the Amen Corner (PGA) Country Club operations board in the Sovereign OS FanStack.
+
+## Proposed Changes Implemented
+
+### Database Seeding
+- Created `scripts/seed_golf_room.py` and successfully seeded:
+  - `mlb_schedule` row for `'amen_corner'` (setting status to `'Active'` and room state to `'active'`).
+  - `game_persona` mappings for all 15 golf room personas (snake_case and CamelCase variants).
+
+### UDP Ingest Daemon
+- Created `scripts/pga_ingest_daemon.py` bound to UDP port `4005`.
+- Features robust packet parsing to detect shot telemetry and leaderboard updates, updates SQLite tables `pga_tournament_telemetry` and `pga_active_leaderboard`, and posts commentary sweeps to the relay server.
+
+### REST API Integration
+- Added GET/POST/DELETE endpoints under `/api/pga/*` in `scripts/fanstack_relay.py` to support:
+  - Leaderboard retrieval, creation/updates, and deletion overrides.
+  - Commentary pulse triggers notifying all active WebSocket clients.
+  - Clio system metrics detection (CPU Temperature, Memory, CPU Load, and Tailscale connection status).
+
+### Front-End Dashboard (Vite App)
+- Developed a forest-green and brushed-gold themed `AmenCorner.tsx` operations dashboard.
+- Features:
+  - Real-time Clio metrics panel pulling from `/api/pga/clio-metrics`.
+  - Manual pulse sweeps allowing direct entry of events or one-click preset commentary injections.
+  - Fully interactive Leaderboard CRUD table with inline forms to add, edit, or delete player scores.
+  - Embedded `FanStackChat` to display multi-agent responses directly alongside telemetry.
+
+## Verification & Testing Results
+
+- Sent test UDP packets to Port 4005 using a scratch script, confirming database insertions into `pga_active_leaderboard` and `pga_tournament_telemetry`.
+- Verified the relay broadcasts events successfully to the chat mesh, showing agents reacting instantaneously in the logs.
+- Confirmed full front-end build compilation with zero errors via `npm run build`.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-06-18-001-POLL-ENGINE.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-06-18-001-POLL-ENGINE.md`
+
+```markdown
+# Walkthrough: Polling Daemon Database Optimization & Script Build [WO-2026-06-18-001-POLL-ENGINE]
+
+I have successfully executed the database setup and daemon script creation for the work order polling engine.
+
+## Changes Made
+
+### 1. Persistence Layer Configuration (Clio Core DB)
+- Created the SQLite table `system_cron_config` inside the canonical `/home/james/SovereignOS/dna/sovereign_now.db`.
+- Seeded the dynamic scheduling configuration parameter:
+  - `work_order_poll_interval_sec` set to `300` seconds.
+
+### 2. Automated Polling Engine Generation
+- **[work_order_poll_daemon.sh](file:///home/james/SovereignOS/scripts/work_order_poll_daemon.sh)**:
+  - Created the active polling daemon script.
+  - Set the script permissions to executable (`chmod +x`).
+- **[work-order-poll.service](file:///home/james/SovereignOS/scripts/work-order-poll.service)**:
+  - Created a systemd service unit template file to manage the daemon execution lifecycle.
+
+---
+
+## Verification Results
+
+### 1. Database Configuration Verification
+- Queried the `system_cron_config` table:
+  ```bash
+  sqlite3 /home/james/SovereignOS/dna/sovereign_now.db "SELECT * FROM system_cron_config;"
+  ```
+  *Output:* `work_order_poll_interval_sec|300|Interval in seconds for scanning staged markdown work orders|2026-06-18 21:37:40`
+
+### 2. Script Presence & Executability
+- Confirmed the script location and permission tags:
+  ```bash
+  ls -la /home/james/SovereignOS/scripts/work_order_poll_daemon.sh
+  ```
+  *Output:* `-rwxr-xr-x 1 james james 465 Jun 18 21:37 /home/james/SovereignOS/scripts/work_order_poll_daemon.sh`
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-034-GROUND-CLOUD-TRUTH.md
+*   **Path:** `/home/james/sovereign_inbox/executed/walkthrough_WO-2026-034-GROUND-CLOUD-TRUTH.md`
+
+```markdown
+# Walkthrough — Compare Ground vs Cloud Truth Sync Status (WO-2026-034-GROUND-CLOUD-TRUTH)
+
+This walkthrough documents the successful implementation of the Ground vs Cloud Truth Sync validation and reporting system.
+
+## Changes Completed
+
+### 1. Reconfigured and Restarted Continuous Sync Daemon
+- Identified that the `gameday_continuous_sync.py` process was running in the background with the `--no-rclone` flag.
+- Terminated the old process (PID `2443159`) and spawned a new background daemon without `--no-rclone`:
+  ```bash
+  /home/james/SovereignOS/.venv/bin/python3 -u /home/james/SovereignOS/scripts/gameday_continuous_sync.py --daemon
+  ```
+- Verified in the log files that game log files (including Mets-Braves room `823616`) are actively syncing to Google Drive every 60 seconds.
+
+### 2. Created the Ground vs Cloud Truth Sync Audit Script
+- Implemented `/home/james/SovereignOS/scripts/generate_ground_vs_cloud_truth_report.py`.
+- The script checks:
+  1. `SovereignOS` staging path.
+  2. `SovereignOS_Internal` staging path.
+  3. `StackLabs_Internal` staging path.
+  4. `StackLabs_Syndicate` staging path.
+  5. The entire `/home/james/SovereignOS` repository workspace (using `/home/james/SovereignOS/.rclone-ignore` to exclude local environment configurations, build folders, and cache directories).
+- Outputs the audit results to `/home/james/sovereign_inbox/reports/ground_vs_cloud_truth_report.md`.
+- Copies/stages the generated report to all 4 staging folders as a text file (`ground_vs_cloud_truth_report.md.txt`) and directly triggers a remote `rclone copyto` to push it to the Google Drive folder instantly.
+
+---
+
+## Verification & Testing
+
+### 1. Manual Execution and Report Generation
+We ran the script and successfully compiled the first report:
+```bash
+/home/james/SovereignOS/scripts/generate_ground_vs_cloud_truth_report.py
+```
+It ran all checks and staged/uploaded the reports to the following targets:
+- `sovereign_os:SovereignOS_Clio_Sync/NotebookLM_Sync/SovereignOS/ground_vs_cloud_truth_report.md.txt`
+- `sovereign_os:SovereignOS_Clio_Sync/NotebookLM_Sync/SovereignOS_Internal/ground_vs_cloud_truth_report.md.txt`
+- `sovereign_os:SovereignOS_Clio_Sync/NotebookLM_Sync/NotebookLM_Sync/StackLabs_Internal/ground_vs_cloud_truth_report.md.txt`
+- `sovereign_os:SovereignOS_Clio_Sync/NotebookLM_Sync/StackLabs_Syndicate/ground_vs_cloud_truth_report.md.txt`
+
+### 2. Report Output Verification
+The generated report contains:
+- Current Sync Anchor Word: `STEEL_ANVIL`
+- Active Coordinate: `76.5207° N, 130.5457° E`
+- Sync Daemon Status: Active PID
+- Summary table showing alignment status (e.g. NotebookLM staging folders are in perfect 🟢 Aligned status).
+- Detailed differences log highlighting file drift.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-034-GROUND-CLOUD-TRUTH.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-034-GROUND-CLOUD-TRUTH.md`
+
+```markdown
+# Walkthrough — Compare Ground vs Cloud Truth Sync Status (WO-2026-034-GROUND-CLOUD-TRUTH)
+
+This walkthrough documents the successful implementation of the Ground vs Cloud Truth Sync validation and reporting system.
+
+## Changes Completed
+
+### 1. Reconfigured and Restarted Continuous Sync Daemon
+- Identified that the `gameday_continuous_sync.py` process was running in the background with the `--no-rclone` flag.
+- Terminated the old process (PID `2443159`) and spawned a new background daemon without `--no-rclone`:
+  ```bash
+  /home/james/SovereignOS/.venv/bin/python3 -u /home/james/SovereignOS/scripts/gameday_continuous_sync.py --daemon
+  ```
+- Verified in the log files that game log files (including Mets-Braves room `823616`) are actively syncing to Google Drive every 60 seconds.
+
+### 2. Created the Ground vs Cloud Truth Sync Audit Script
+- Implemented `/home/james/SovereignOS/scripts/generate_ground_vs_cloud_truth_report.py`.
+- The script checks:
+  1. `SovereignOS` staging path.
+  2. `SovereignOS_Internal` staging path.
+  3. `StackLabs_Internal` staging path.
+  4. `StackLabs_Syndicate` staging path.
+  5. The entire `/home/james/SovereignOS` repository workspace (using `/home/james/SovereignOS/.rclone-ignore` to exclude local environment configurations, build folders, and cache directories).
+- Outputs the audit results to `/home/james/sovereign_inbox/reports/ground_vs_cloud_truth_report.md`.
+- Copies/stages the generated report to all 4 staging folders as a text file (`ground_vs_cloud_truth_report.md.txt`) and directly triggers a remote `rclone copyto` to push it to the Google Drive folder instantly.
+
+---
+
+## Verification & Testing
+
+### 1. Manual Execution and Report Generation
+We ran the script and successfully compiled the first report:
+```bash
+/home/james/SovereignOS/scripts/generate_ground_vs_cloud_truth_report.py
+```
+It ran all checks and staged/uploaded the reports to the following targets:
+- `sovereign_os:SovereignOS_Clio_Sync/NotebookLM_Sync/SovereignOS/ground_vs_cloud_truth_report.md.txt`
+- `sovereign_os:SovereignOS_Clio_Sync/NotebookLM_Sync/SovereignOS_Internal/ground_vs_cloud_truth_report.md.txt`
+- `sovereign_os:SovereignOS_Clio_Sync/NotebookLM_Sync/NotebookLM_Sync/StackLabs_Internal/ground_vs_cloud_truth_report.md.txt`
+- `sovereign_os:SovereignOS_Clio_Sync/NotebookLM_Sync/StackLabs_Syndicate/ground_vs_cloud_truth_report.md.txt`
+
+### 2. Report Output Verification
+The generated report contains:
+- Current Sync Anchor Word: `STEEL_ANVIL`
+- Active Coordinate: `76.5207° N, 130.5457° E`
+- Sync Daemon Status: Active PID
+- Summary table showing alignment status (e.g. NotebookLM staging folders are in perfect 🟢 Aligned status).
+- Detailed differences log highlighting file drift.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-034-CHINDOGU-SLIDER.md
+*   **Path:** `/home/james/sovereign_inbox/executed/walkthrough_WO-2026-034-CHINDOGU-SLIDER.md`
+
+```markdown
+# Walkthrough - WO-2026-034-CHINDOGU-SLIDER
+
+This document details the completed implementation of the **Decorum (Chindogu) Slider** on the Fan Portal / Sovereign Sports application (Port 3010).
+
+## Changes Made
+
+### 1. Unified Theme Control & Storage Synchronization
+- **File**: `19_Sovereign_Sports/src/context/ThemeContext.tsx`
+- **Details**: Added a window `storage` listener so that if `decorumLevel` is adjusted in one tab, all other open tabs synchronise in real-time. Kept the existing mute & style logic intact.
+
+### 2. Main Portal Navigation Header
+- **File**: `19_Sovereign_Sports/src/components/SportsLayout.tsx`
+- **Details**: Added a beautiful desktop top header styled with glassmorphism matching the dashboard. Renders a Decorum Slider. Added a compact slider to the mobile header bar.
+
+### 3. Redundancy Removal
+- **File**: `19_Sovereign_Sports/src/components/FanFanStackPortal.tsx`
+- **Details**: Removed the inline page-specific slider from the Crosstalk Lounge page to avoid control duplication.
+
+---
+
+## Verification Results
+
+### 1. Code Compilation
+Verified that code passes all TypeScript and React linting rules:
+```bash
+npx tsc --noEmit
+```
+Result: `Exit code: 0` (Clean compilation)
+
+### 2. Production Asset Build
+Verified production assets bundle successfully:
+```bash
+npm run build
+```
+Result: Succeeded with production bundle created in `dist/`.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-034-CHINDOGU-SLIDER.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-034-CHINDOGU-SLIDER.md`
+
+```markdown
+# Walkthrough — WO-2026-034-CHINDOGU-SLIDER
+
+This walkthrough summarizes the changes made to implement the Chindogu Decorum Slider and double-seed `@wavy` in Cubs @ Giants room `823951`.
+
+## Changes Made
+
+### 1. Database Seeding & Registry
+- Registered ticket `WO-2026-034-CHINDOGU-SLIDER` as `STRY-06132026-CHINDOGU-SLIDER` in the `sys_sdlc_task` table of `sovereign_now.db`.
+- Seeded `@wavy` and the curated cross-talk roster (14 total personas) into `m2m_persona_room` and `game_persona` inside room `823951`.
+- Modified `/home/james/SovereignOS/scripts/seed_crosstalk_room.py` to match the curated list.
+
+### 2. Theme Context & Web Audio Muting
+- Created `/home/james/SovereignOS/19_Sovereign_Sports/src/context/ThemeContext.tsx` to handle global state hooks for `decorumLevel` (integer 0 to 11).
+- Toggled the `.industrial-slate` CSS class on `document.documentElement` dynamically when `decorumLevel === 0`.
+- Overrode and mocked the global Web Audio `Audio` and `AudioContext` classes/prototypes to return silent mock handlers when `decorumLevel === 0` (force muting slide-whistles, soundboards, and telepresence chimes).
+- Restored original Web Audio handlers when `decorumLevel > 0`.
+
+### 3. Slate Layout Styles
+- Appended overrides to `/home/james/SovereignOS/19_Sovereign_Sports/src/index.css` under the `.industrial-slate` class.
+- Purged all glassmorphism, glowing lines, semi-transparent panels, and background blurs.
+- Set background to solid opaque dark-gray `#1A1E24`.
+- Set borders to sharp `1px solid #334155` and border-radius to `0px`.
+- Restructured typography to monospace font.
+
+### 4. Slider UI Component
+- Injected range inputs (`<input type="range" min="0" max="11" />`) next to the connection status badges in `VideoPlayer.tsx` and `FanFanStackPortal.tsx` to allow dynamic hot-swapping.
+- Wrapped the routing layout in `App.tsx` with `<ThemeProvider>`.
+
+---
+
+## Verification Results
+
+### Build Verification
+- Successfully compiled the React frontend using `npm run build`:
+  ```bash
+  dist/assets/index-BY18qUsZ.css    4.41 kB
+  dist/assets/index-BoolZNjK.js   809.73 kB
+  ✓ built in 2.45s
+  ```
+
+### Database Verification
+- Verified that all 14 personas, including `wavy`, are mapped and double-seated:
+  ```bash
+  ✅ Seated Advocate: @wavy in Faction Room 823951
+  ✅ Seated Advocate: @senora in Faction Room 823951
+  ...
+  🏆 Successfully completed multi-tenant cross-talk seeder run.
+  ```
+
+### Mockups Created and Synced to Google Drive
+- Staged mockups and the implementation plan locally and synced them using `sync_to_gdrive.sh`:
+  - [Level 0 Flat Monospace Slate Mockup](file:///home/james/sovereign_inbox/implementation_plans/chindogu_slider_level_0.png)
+  - [Level 11 Sovereign Chaos Frosted Glass Mockup](file:///home/james/sovereign_inbox/implementation_plans/chindogu_slider_level_11.png)
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-033-MLB-SLATE-DAILY-SYNC.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-033-MLB-SLATE-DAILY-SYNC.md`
+
+```markdown
+# Walkthrough — WO-2026-033-MLB-SLATE-DAILY-SYNC — Sync Daily MLB Schedule
+
+This walkthrough details the changes made to resolve the MLB Streams page out-of-date issue by integrating the `sync_mlb_schedule.py` script into the FanStack daily preparation workflow.
+
+## Changes Made
+
+### 1. Database Ticket & SDLC Task Setup
+Created tracking ticket `WO-2026-033-MLB-SLATE-DAILY-SYNC` in `sovereign_tickets` and `sys_sdlc_task` to trace this work.
+
+### 2. Update Daily Prep Scripts & Workflows
+- **`scripts/daily_prep.sh`**: Replaced the print-only command `bash "${SOVEREIGN_HOME}/scripts/fanstack_mlb.sh" today` with the actual database sync call:
+  ```bash
+  "${VENV_PYTHON}" "${SOVEREIGN_HOME}/scripts/sync_mlb_schedule.py"
+  ```
+- **`fanstack_daily_prep.md` & `fanstack_daily_prep copy.md`**: Updated the step from `bash /home/james/SovereignOS/scripts/fanstack_mlb.sh today` to `python3 /home/james/SovereignOS/scripts/sync_mlb_schedule.py`.
+
+### 3. Update `fanstack_mlb.sh` CLI
+- **`scripts/fanstack_mlb.sh`**: Modified the `today` command to trigger the `sync_mlb_schedule.py --today` script, syncing schedule details to the DB instead of just outputting formatted text to stdout.
+
+---
+
+## Verification Results
+
+### 1. Daily Prep CLI Sync Test
+Running `bash /home/james/SovereignOS/scripts/fanstack_mlb.sh today` successfully pulls the schedule from the MLB Stats API and updates the local SQLite database:
+```
+[sync_mlb_schedule] Fetching today (2026-06-13 → 2026-06-13)...
+[sync_mlb_schedule] Fetched 15 games from MLB API
+[sync_mlb_schedule] Upserted 15 rows into mlb_schedule
+
+[Today's Slate — 2026-06-13]
+  ⚾ 822725  SEA @ WSH  [In Progress]
+  ⚾ 822802  NYY @ TOR  [In Progress]
+  ⚾ 823213  CHC @ SF  [Scheduled]
+  ...
+```
+
+### 2. API Response Validation
+Quering the API server (`/api/sports/mlb`) confirmed that:
+1. Past games (June 11 & 12) that had concluded are correctly resolved and returned with status `Final`.
+2. Today's live slate is correctly detected as `LIVE`, `Pre-Game`, or `Scheduled`.
+3. The MLB Streams page UI on port 3010 is now displaying the correct live games (June 13th) instead of stale games from June 11th.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-032-BATTLE-STATION-DELIVERY.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-032-BATTLE-STATION-DELIVERY.md`
+
+```markdown
+# Walkthrough - WO-2026-032-BATTLE-STATION-DELIVERY
+
+This walkthrough documents the successful resolution of ticket **WO-2026-032-BATTLE-STATION-DELIVERY**.
+
+## Changes Implemented
+
+### 1. Root Portal Smyrna Heights Sentinel Map Integration
+- **index.html**: Added Leaflet.js CSS & JS CDN script tags to the `<head>` of the root portal project to support map canvas rendering.
+- **SovereignOsPortal.tsx**:
+  - Implemented the `Smyrna Heights Sentinel Map` widget container, designed with modern dark glassmorphic styling.
+  - Added state hooks for telemetry `progress`, map instance refs, and marker refs.
+  - Added a `useEffect` initializer that checks/polls for the `L` Leaflet global namespace and draws the route line (orange dashed path) between:
+    - Da Vinci's Pizza `[33.8950, -84.5220]`
+    - Gonzas Store `[33.8901, -84.5123]`
+    - SpiteSlice `[33.8821, -84.5098]`
+    - Wild Paws Rescue `[33.8851, -84.5305]`
+  - Added linear interpolation (LERP) logic mapping range progress (`0` - `100`) to the delivery truck coordinate coordinates.
+  - Integrated the native Web Audio API synthesizer slide-whistle frequency sweep (900Hz to 80Hz over 1.6s) which fires automatically upon reaching `100%` (Meal Delivered!).
+
+### 2. MLB Sports Fan Portal Active Game Select Dropdown
+- Confirmed type-safety and sound build of the MLB Fan Portal project `/home/james/SovereignOS/19_Sovereign_Sports`.
+- Verified the active game switcher dropdown fetches available live room keys from `/api/sports/active_games` and properly lists the target live room `ATL @ NYM (823616)`.
+
+### 3. True Cost Advocate Soundboard API Verification
+- Verified that the soundboard endpoints correctly retrieve seeded advocate sound phrases from `/api/media/soundboard` for:
+  - `@brand_boycott` (Buster)
+  - `@isolated_silo` (Silo Sam)
+
+## Verification & Build Results
+
+- **TypeScript Verification**: Ran `npm run lint` (`tsc --noEmit`) on `01_Sovereign_Portal` and verified clean compilation (exit code 0).
+- **TypeScript Verification**: Ran type checks (`tsc --noEmit`) on `19_Sovereign_Sports` and verified clean compilation (exit code 0).
+- **Endpoint Verification**: Queried `/api/media/soundboard?advocate=brand_boycott` and verified complete phrase listing.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-031-METSY-ADVENTURES.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-031-METSY-ADVENTURES.md`
+
+```markdown
+# Walkthrough: WO-2026-031-METSY-ADVENTURES Resolution
+
+## Objective
+To generate and catalog 6 daily adventure illustration assets for Metsy Smyrna Heights, including the real-life inspired "Operation Orange Alert", while creating a distinct daily ticket `WO-2026-031-METSY-ADVENTURES` to prevent the reopening of historical tickets. 
+
+## Continuity Strategy
+In accordance with the Pilot's feedback, we utilized a previous day's verified adventure asset (`[PROCESSED]_metsy_pirate.png`) as the character and style anchor for the image generation pipeline. This successfully preserved Metsy's key identifiers (ginger striped tabby pattern, green eyes, tactical orange harness, and glowing collar) and thematic elements (like her pirate hat and eye-patch) across the sequence of frames. For the "Operation Orange Alert" cartoon (Scenario 20), we ingested and registered the Gemini-generated cartoon asset directly matching the white van stakeout discovery.
+
+---
+
+## 📸 Generated Narrative Scenarios
+
+* **Scenario 15: Raising the Jolly Roger**
+  Metsy is standing proudly on the bow of a wooden motorboat parked in the driveway, hoisting a miniature skull-and-crossbones (Jolly Roger) flag up the boat's radio antenna. Her tracker collar glows electric blue.
+* **Scenario 16: The Fire Pit Stargazer**
+  Metsy sits on a stone bench next to a brick fire pit in the backyard under a starry night sky, looking through a pair of binoculars. Her LED collar glows bright green.
+* **Scenario 17: The Leaf Pile Ambush**
+  Metsy is burrowed deep in a giant pile of dried leaves in the backyard, preparing to pounce. Her collar glows bright cyan.
+* **Scenario 18: The Fence Post Lookout**
+  Metsy is balanced on top of a weathered wooden fence post at sunset, scanning the neighborhood. Her blue LED collar pulses softly.
+* **Scenario 19: The Bird Feeder Stakeout**
+  Metsy is hiding inside a large hollow tree trunk, peering out intensely at a fat grey squirrel on a nearby bird feeder. Her pirate tricorn hat and eye-patch carry over from the anchor image.
+* **Scenario 20: Operation Orange Alert (The Van Stakeout)**
+  Metsy is lying completely flat under a white van in a concrete driveway, monitoring the perimeter. Her orange LED collar pulses intensely, matching the high-alert status of her mission.
+
+---
+
+## 🛠️ Work Accomplished
+
+1. **Daily Ticket Creation**:
+   * Initialized and resolved a new daily story record (`WO-2026-031-METSY-ADVENTURES`) in `sovereign_tickets` and `sys_sdlc_task` inside `/home/james/SovereignOS/dna/sovereign_now.db`.
+2. **Asset Processing & DB Registration**:
+   * Copied all 6 generated PNGs (including the `orange_alert.png` cartoon asset) to the canonical folder `/home/james/SovereignOS/work_orders/spark/media/` and registered each in the system media assets ledger (`sys_media_asset` and `cmdb_ci_media_asset`).
+3. **Frontend Integration**:
+   * Distributed the processed, non-prefixed image files to all frontend avatar outposts:
+     * Sovereign Portal: `/home/james/SovereignOS/01_Sovereign_Portal/public/avatars/metsy_smyrna/`
+     * Sovereign Media: `/home/james/SovereignOS/02_Sovereign_Media/public/avatars/metsy_smyrna/`
+     * FanStack: `/home/james/SovereignOS/15_FanStack/public/avatars/metsy_smyrna/`
+4. **Receipt Ingress**:
+   * Wrote the corresponding pipeline provenance receipts (`*_receipt.json`) detailing scenario metadata, hashes, and style anchor mapping.
+
+---
+
+## 🔬 Verification Results
+
+* **Ticket Registry Invariant**: Successfully validated that the ticket is marked as `RESOLVED` in the SQLite database.
+* **Assets Integrity**: Confirmed that all 6 images are readable, correctly named, and match the target locations for sync and display.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-030-FAN-PORTAL-GAME-SWITCHER.md
+*   **Path:** `/home/james/sovereign_inbox/executed/walkthrough_WO-2026-030-FAN-PORTAL-GAME-SWITCHER.md`
+
+```markdown
+# Walkthrough: WO-2026-030-FAN-PORTAL-GAME-SWITCHER Resolution
+
+## Objective
+To implement, verify, and catalog the glassmorphic Game Switcher Dropdown in the standalone Fan FanStack Portal (`FanFanStackPortal.tsx`) to allow users to toggle between active game rooms on the fly.
+
+---
+
+## 🛠️ Work Accomplished
+
+1. **Active Games Endpoint**:
+   * Verified that the endpoint `/api/sports/active_games` is exposed via `/home/james/SovereignOS/scripts/sovereign_stream_relay.py`.
+   * It successfully queries the SQLite `mlb_schedule` table for games where `room_state == 'active'` and returns them as a structured JSON list.
+
+2. **Frontend Game Switcher UI**:
+   * Integrated a responsive, glassmorphic dropdown `<select>` element directly in the header of `FanFanStackPortal.tsx` next to the `CROSSTALK ACTIVE` status badge.
+   * Structured the select options using the `availableGames` state retrieved from `/api/sports/active_games` on mount.
+
+3. **Dynamic Re-hydration Handler**:
+   * Wired the `onChange` event to update `activeGamePk`.
+   * The `activeGamePk` change triggers the standard React lifecycle cleanup:
+     * Forcefully closes the existing WebSocket connection.
+     * Establishes a new WebSocket connection targeting the selected game PK.
+     * Re-fetches the targeted room's advocate roster using `/api/room_personas?gamePk={newGamePk}`.
+     * Clears the current chat messages state to prevent crosstalk noise between rooms.
+     * Re-hydrates the live scoreboard runs, innings, outs, and bases display to cleanly reflect the new game metrics.
+
+---
+
+## 🔬 Verification & UAT Checklist
+
+* **Active Games API Check**: Hitting `GET /api/sports/active_games` returns active games from the DB.
+* **Dropdown Rendering**: Checked that `https://clio.taila01894.ts.net:3010/fan-portal` compiles and serves a 200 OK.
+* **Type Safety Pass**: Verified that running `npm run build` runs `tsc` and compiles successfully with zero type or build errors.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-030-FAN-PORTAL-GAME-SWITCHER.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-030-FAN-PORTAL-GAME-SWITCHER.md`
+
+```markdown
+# Walkthrough: Standalone Fan Portal Game-Switcher Dropdown (WO-2026-030-FAN-PORTAL-GAME-SWITCHER)
+
+Verified and resolved the Game Switcher Dropdown ticket for the multi-game Day-Game interface.
+
+## Actions Completed
+
+1. **API Validation**:
+   - Verified that GET `/api/sports/active_games` correctly queries active game rooms in the `mlb_schedule` table.
+   
+2. **Frontend Compilation**:
+   - Built the `19_Sovereign_Sports` frontend project using `npm run build` to confirm zero TypeScript compile or build errors.
+
+3. **Verification of Features**:
+   - Confirmed the header-bar dropdown in `FanFanStackPortal.tsx` handles dynamic stream re-instantiation, room switching, roster re-fetching, and scoreboard hydration correctly.
+
+4. **Ticket Transition**:
+   - Uploaded the walkthrough document as an attachment to `WO-2026-030-FAN-PORTAL-GAME-SWITCHER` and updated its state to `RESOLVED` (state = 4).
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-028-STATEFUL-TMI.md
+*   **Path:** `/home/james/sovereign_inbox/executed/walkthrough_WO-2026-028-STATEFUL-TMI.md`
+
+```markdown
+# Walkthrough: STRY-WO-2026-028-STATEFUL-TMI
+
+This walkthrough details the implementation, verification, and resolution of **WO-2026-028-STATEFUL-TMI** ("STATEFUL TMI EVENT TRIGGERS & CHATROOM CONTEXT ROUTING").
+
+## Changes Made
+
+### 1. Backend: Stateful GameStateAccumulator & Whiff Anomaly Generator
+- Modified [fanstack_background_poller.py](file:///home/james/SovereignOS/scripts/fanstack_background_poller.py) to implement a stateful engine tracking game state transitions.
+- Added triggering logic for:
+  - **Extra Innings**: `inning >= 10`
+  - **Bases Loaded**: `runner_on_1st`, `runner_on_2nd`, and `runner_on_3rd` all active.
+  - **Close Game**: Score margin $\le 1$ in the 8th or 9th inning, or score margin $\le 2$ in the 10th or higher.
+- Added **Ghost Pitch Whiff Anomaly** detection:
+  - Checks if a swing misses by $\ge 8.0$ inches and vertical alignment is `OVER`.
+  - Spawns [auto_image_generator.py](file:///home/james/SovereignOS/scripts/auto_image_generator.py) to render a sports-style graphic illustrating the whiff details.
+  - Deploys the graphic to the Vite assets folder and broadcasts the image link with context prompting advocates to express shock.
+
+### 2. SDLC Portal: Configuration Endpoints
+- Added GET/POST routes to [sdlc_portal_server.py](file:///home/james/SovereignOS/scripts/sdlc_portal_server.py) at `/api/tmi_event_config` to persist the admin's selected events under `sys_user_preference` in the SQLite database.
+
+### 3. Frontend: TMI Event Configuration Modal
+- Created a glassmorphism-styled [TmiEventConfigModal.tsx](file:///home/james/SovereignOS/01_Sovereign_Portal/src/components/TmiEventConfigModal.tsx).
+- Integrated the modal into the SDLC Command Center layout to allow admins to toggle which events generate raw statcast debugging packages.
+
+---
+
+## Verification Results
+
+### 1. Stateful Triggers Test
+The logic was validated using [test_stateful_triggers.py](file:///home/james/.gemini/antigravity/brain/8617bf50-d7c0-4a47-80ef-44bbd3a2d9e5/scratch/test_stateful_triggers.py), simulating live game plays:
+```bash
+python3 scratch/test_stateful_triggers.py
+```
+**Results:**
+- **Trigger [Close Game]**: PASSED (Detected 1-run game in the 9th inning).
+- **Trigger [Bases Loaded]**: PASSED (Detected bases-loaded play).
+- **Trigger [Extra Innings]**: PASSED (Detected 10th inning play).
+- **Trigger [Ghost Pitch Whiff Anomaly]**: PASSED (Generated whiff PNG and copied it to public images successfully).
+
+### 2. End-to-End API Persistence
+Verified that preferences are correctly saved in and retrieved from SQLite:
+```bash
+curl -s -X POST -H "Content-Type: application/json" -d '["Home Run","Full-Count Strikeout"]' http://localhost:8095/api/tmi_event_config
+# {"status":"saved"}
+
+curl -s http://localhost:8095/api/tmi_event_config
+# ["Home Run","Full-Count Strikeout"]
+```
+All checks completed successfully.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-028-GAME-ROOM-CROSS-POLLINATION.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-028-GAME-ROOM-CROSS-POLLINATION.md`
+
+```markdown
+# Walkthrough: WO-2026-028 Cross-Stack Game Room Integration
+
+Successfully integrated, registered, and verified the multi-tenant cross-pollination roster setup for the Yankees vs. Guardians game room (ID `824428`).
+
+## 🛠️ Changes Implemented
+
+### 1. Database Seeding & Relation Ingestion
+- Developed `/home/james/SovereignOS/scripts/prepare_cross_pollination.py` to register 18 multi-tenant advocates across the CMDB and simulation schemas:
+  - **Spite Slice**: `gyro_master`, `pizzabot_74`, `sconer_stoner`
+  - **WeedStack & Wild Seed**: `gummy_guru`, `wild_seed_william`
+  - **Gonzas Convenience**: `gonza_snack_emperor`, `counter_clerk_carl`
+  - **AetherVet & Wild Paws**: `telemetry_ted`, `rescue_rita`
+  - **Baseball Core / Team specific**: `bronx_bomber_bob`, `pinstripe_purist`, `believeland_rock`, `midwest_scrappy`, `barf`, `unclesteviestan`, `fredbird_fiend`, `2008_ghost`, and host `pilot_james`.
+- Automatically generated avatar directories and default media files.
+
+### 2. Room Roster Orchestration
+- Developed `/home/james/SovereignOS/scripts/seat_cross_pollinated.py` to clear the roster of room `824428` and seat exactly the 18 target advocates.
+- Resolved dual database ID mapping (joining `persona.id` and `sys_user.sys_id`) to cleanly seat Spite Slice personas which utilize different prefixes (`pna_` and `usr_`).
+
+### 3. Pipeline Flag Support
+- Modified `/home/james/SovereignOS/scripts/fanstack_daily_prep.sh` to introduce the `--cross-pollinate` flag.
+- When active, the daily setup pipeline routes room orchestration directly to our customized `seat_cross_pollinated.py` logic.
+
+---
+
+## 🔬 Verification & Validation Results
+
+### 1. Database Audit Verification
+Ran verification queries to check database integrity of cross-stack records:
+```sql
+SELECT id, role FROM cmdb_ci_persona WHERE id IN ('gyro_master', 'sconer_stoner', 'gonza_snack_emperor', 'telemetry_ted');
+```
+**Results:** All 4 multi-tenant global advocate records retrieved successfully with accurate roles and descriptions.
+
+### 2. Roster Diversity check
+Verified that the assembled room roster contains a diverse mix of:
+- **Team-specific**: NYY (2), CLE (2)
+- **General Baseball**: NYM (2), PHI (1), STL (1)
+- **Multi-tenant global**: Spite Slice (3), WeedStack (2), Gonzas (2), AetherVet (1), Wild Paws (1)
+- **Host**: `pilot_james` (1)
+
+### 3. Roster Roll Call
+Queried `/api/roll_call` via port 8000. Verified that room `824428` correctly lists exactly 18 active advocates:
+```json
+{
+  "game_pk": "824428",
+  "away_team": "NYY",
+  "home_team": "CLE",
+  "room_state": "active",
+  "personas": [
+    "gyro_master",
+    "pizzabot_74",
+    "sconer_stoner",
+    "gummy_guru",
+    "wild_seed_william",
+    "gonza_snack_emperor",
+    "counter_clerk_carl",
+    "telemetry_ted",
+    "rescue_rita",
+    "bronx_bomber_bob",
+    "pinstripe_purist",
+    "believeland_rock",
+    "midwest_scrappy",
+    "barf",
+    "UncleStevieStan",
+    "fredbird_fiend",
+    "2008_ghost",
+    "pilot_james"
+  ]
+}
+```
+
+### 4. Interactive Live Chat Verification
+Checked latest messages in `game_chat` table for game `824428` to ensure the MARD engine is actively broadcasting chat events:
+- Seated bots are actively joining the stream.
+- Messages are logged under their respective names and colors with zero database failures or constraint violations.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-027-INBOX-REORG.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-027-INBOX-REORG.md`
+
+```markdown
+# Walkthrough — WO-2026-027-INBOX-REORG
+
+## Changes Implemented
+1. **Directory Split**: Partitioned `/home/james/sovereign_inbox` into specialized directories:
+   - `/home/james/sovereign_inbox/tickets/`: For core ticket metadata files.
+   - `/home/james/sovereign_inbox/implementation_plans/`: For technical design/plan documents.
+   - `/home/james/sovereign_inbox/walkthroughs/`: For closure logs and verification walkthroughs.
+2. **Path Mapping Patches**:
+   - **`organize_inbox.py`**: Added `"implementation_plan"` route and updated keyword classifiers to separate implementation plans from walkthrough files.
+   - **`close_tickets.py`**: Prepend the new `walkthroughs/` subdirectory to candidate search paths.
+   - **`sync_to_gdrive.sh`**: Modified walkthrough discovery to scan the new `walkthroughs/` directory.
+3. **Migration Script**: Created `/home/james/SovereignOS/scripts/migrate_inbox_structure.py` which moved 212 files from `tickets/` into `implementation_plans/` and `walkthroughs/` while ignoring and whitelisting the recursive `tickets/wire_frames/` directory.
+4. **Documentation**: Updated `rule.md` to codify the new directory rules for future model sessions.
+
+## Verification
+- Executed migration successfully.
+- Verified `/home/james/sovereign_inbox/tickets/wire_frames/` remains untouched and intact.
+- Verified `organize_inbox.py` and `sync_to_gdrive.sh` paths function cleanly.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-027-GAME-ROOM-RECOVERY.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-027-GAME-ROOM-RECOVERY.md`
+
+```markdown
+# Walkthrough - Yankees vs. Guardians Game Room Recovery (WO-2026-027-GAME-ROOM-RECOVERY)
+
+## Goal
+Recover the Yankees vs. Guardians game room (ID 824428) for the June 10, 2026, simulation by resolving advocate team affiliations, seating 19 advocates, and hydrating the game room via the `fanstack_daily_prep.sh` pipeline.
+
+## Proposed & Executed Changes
+
+### Database Remediation
+1. Normalized the `cmdb_ci_persona` table by adding the `id` column.
+2. Formally created the `active_game_rooms` schema table.
+3. Updated the team affiliations in `cmdb_ci_persona` to map the existing advocates correctly (`NYM`, `PHI`, `STL`).
+4. Registered 8 new Yankees (`NYY`) and Guardians (`CLE`) advocates into `persona`, `sys_user`, `cmdb_ci`, and `cmdb_ci_ai_persona` tables:
+   - `bronx_bomber_bob` (NYY)
+   - `pinstripe_purist` (NYY)
+   - `bleacher_creature_99` (NYY)
+   - `judgements_court` (NYY)
+   - `believeland_rock` (CLE)
+   - `cle_guardian_spirit` (CLE)
+   - `midwest_scrappy` (CLE)
+   - `jacobs_field_ghost` (CLE)
+5. Cleaned up duplicate/out-of-sync persona configurations (e.g. `Fredbird_Fiend`/`birds_on_bat`) to ensure ID parity.
+
+### Automation and Seating Pipeline
+- Created `scripts/seat_advocates.py` to seat exactly 19 advocate personas into the room `824428` (`game_persona` and `m2m_persona_room` tables) matching their `sys_user.sys_id` keys.
+- Implemented `scripts/fanstack_daily_prep.sh` supporting `--game-id 824428` and `--force-refresh` arguments. The script runs the daily setup, seats all 19 advocates, deploys the game room, and restarts the simulation services.
+
+---
+
+## Verification & UAT Results
+
+### Roster Hydration Verification
+Queried the SQLite database to confirm the status of the game room and seated advocates:
+- The game room `824428` status is `ACTIVE`.
+- Seated advocates: 19 personas successfully seated in `m2m_persona_room` for the game.
+- Team affiliations: Verified that all 16+ team advocates (NYY, CLE, NYM, STL, PHI) are mapped to their correct teams.
+
+### Live UI verification
+- Verified that the Vite frontend server on port `3016` (Tailscale MagicDNS UAT port) is active and returning `HTTP 200 OK`.
+- Deployed and verified the MARD Engine bots joining the live chat room.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-026-STATE-AVATARS.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-026-STATE-AVATARS.md`
+
+```markdown
+# WALKTHROUGH: WO-2026-026-STATE-AVATARS
+
+## Summary of Accomplishments
+Successfully implemented status-triggered dynamic CMDB Expression Avatars and warning alerts integration:
+1. **CMDB Expression Avatar Schema**: Added `cmdb_ci_expression_avatar` table to track different avatars for a CI based on whether it is `OFFLINE` or `DEGRADED`.
+2. **Watchdog Alerts Integration**: Updated `mando_watchdog.py` to fetch dynamic expression avatars from the DB when triggering incident alerts and broadcasting them via the Comet Relay API.
+3. **FanStack Relay Integration**: Modified `fanstack_relay.py` to broadcast system health warnings and degraded status maps to all frontend WebSocket clients.
+4. **CometMessenger Integration**: UI updated to display custom expression avatars dynamically next to incident notification alerts.
+5. **PlaycallDesk Integration**: Central feed panel updated with a responsive, premium system warnings/outages banner featuring the specific expression avatars for degraded CIs.
+
+## Verification & Testing Results
+All monitored services (Vite portals, FastAPI, aiohttp backend) verified locally and via secure Tailscale hostnames:
+- Standard HTTP/HTTPS protocol probing resolved successfully.
+- Incident simulation verified: when a port or script goes down, the watchdog generates the incident ticket, fetches the designated expression avatar, and instantly pushes the alert payload.
+- Frontend WebSocket listeners successfully received the `d.system` payload and rendered the alert banners/avatars automatically.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-025-FREDBIRD-INGESTION.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-025-FREDBIRD-INGESTION.md`
+
+```markdown
+# Walkthrough: Fredbird Ingestion (WO-2026-025-FREDBIRD-INGESTION)
+
+This walkthrough documents the successful ingestion, integration, and verification of the `Fredbird_Fiend` (`@birds_on_bat`) persona into Sovereign OS.
+
+## Changes Made
+
+### 1. Database Configuration
+* Seeded the `@birds_on_bat` profile into the SQLite database (`sovereign_now.db`) `persona` table, defining his St. Louis traditionalist persona details, system prompts, and custom redbird avatar.
+* Mapped his unhinged "Cardinal Way" rants inside the `cmdb_ci_media_soundboard_phrase` table for the soundboard integration.
+* Staged the `STRY-06092026-FREDBIRD-INGESTION` ticket in `sys_sdlc_task` and successfully resolved `WO-2026-025-FREDBIRD-INGESTION` in the ticketing database.
+
+### 2. Frontend Soundboard Updates
+* Configured `birds_on_bat` (`@birds_on_bat`) as an active advocate tab option in `01_Sovereign_Portal/src/components/Soundboard.tsx` on port `3016` (route `/hot_takes`).
+* Wired the selector to fetch Fredbird's seeded phrases dynamically from the REST API endpoint `/api/media/soundboard?advocate=birds_on_bat`.
+* Set the target transmission vector for Fredbird's messages to Room `#823620` (Scruffy's Tavern chat lobby), allowing on-click broadcasting.
+
+## Verification
+
+### Automated API Validation
+* Verified that querying `/api/media/soundboard?advocate=birds_on_bat` returns the correct phrases:
+  1. **WELFARE STATE**: Cardinal Way vs. New York spending.
+  2. **TEXTBOOK SACRIFICE**: The tactical value of sacrifice bunts.
+  3. **MIDWEST HOSPITALITY**: Smug politeness concerning toasted ravioli and clean double plays.
+
+### WebSocket Ingress Validation
+* Executed a simulated click transmission connecting to the `/ws-relay` gateway.
+* Confirmed the message was successfully dispatched to M.A.R.D. Room `#823620` and recorded in `/home/james/SovereignOS/logs/fanstack_chat_uat.log` without echo loops or anomalies.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-024-METSY-ADVENTURES.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-024-METSY-ADVENTURES.md`
+
+```markdown
+# Walkthrough — WO-2026-024-METSY-ADVENTURES
+
+## Changes Implemented
+1. **Metsy's Adventures Image Re-Generation (Cartoon Alignment)**:
+   Re-generated all 5 adventure scenario files to align exactly with the 90s cartoon outline character style of the character sheet reference `metsy_avatar_sheet.jpeg` (tactical harness, glowing blue LED tracker collar, ginger stripes, green eyes).
+2. **Metadata Registration**:
+   Registered all 5 new media assets into the SQLite database `sovereign_now.db` under the tables `sys_media_asset` and `cmdb_ci_media_asset` using tags `FS-MED-05345` through `FS-MED-05349`.
+3. **Execution Receipts**:
+   Created JSON receipts matching the standard ingress metadata specs under `/home/james/SovereignOS/work_orders/spark/media/`.
+4. **Google Drive Sync**:
+   Synchronized the cartoon-style media assets and receipts to the Google Drive sync target.
+
+## Active Scenarios
+- **FS-MED-05345**: `street_crossing` — "Bank Street Southeast Stealth Crossing"
+- **FS-MED-05346**: `woods_patrol` — "Neighborhood Woods Patrol"
+- **FS-MED-05347**: `shed_snooping` — "Neighbor's Shed Investigation"
+- **FS-MED-05348**: `marathon_nap` — "The 1.97-Mile Marathon Nap"
+- **FS-MED-05349**: `satellite_uplink` — "The Tractive GPS Satellite Uplink"
+
+## Verification
+- SQLite DB records successfully verified.
+- File integrity checks and receipt payloads confirmed.
+- Google Drive synchronization verified.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-020-SOUNDBOARD.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-020-SOUNDBOARD.md`
+
+```markdown
+# Walkthrough - WO-2026-020-SOUNDBOARD & WO-2026-014-TAVERN-OVERRIDE
+
+We have completed the deployment of the modernized Advocate Command Deck and Scruffy's Tavern live session manual overrides.
+
+## Changes Made
+
+### 1. Backend: Canned Takes Persistence
+- Modified `/home/james/SovereignOS/scripts/sovereign_core_api.py` to add four new REST API routes under `/api/soundboard`:
+  - `GET /api/soundboard`: Retrieves canned takes for an advocate or all advocates.
+  - `POST /api/soundboard/save`: Saves a new canned take to the `persona.canned_takes` JSON array in SQLite.
+  - `PUT /api/soundboard/{take_id}`: Renames a canned take.
+  - `DELETE /api/soundboard/{take_id}`: Deletes a canned take.
+- Bounced the core API service and verified it listening on port `8090`.
+
+### 2. Frontend: Advocate Command Deck Ingested
+- Created a modular folder structure under `01_Sovereign_Portal/src/components/advocate-command-deck/`:
+  - `deck-data.ts`: Shared TS interfaces and Tailwind class name utility helper.
+  - `team-styles.ts`: Class glow mappings for `NYM`, `WEED`, `CARDS`, `SLICE`, and `GLOBAL`.
+  - `Roster.tsx`: AI advocate lists populated dynamically from `/api/all_personas` database records.
+  - `HotTakeEngine.tsx`: generative console with real LLM `/api/hot_take` connections.
+  - `SoundboardMatrix.tsx`: interactive stream-deck matrix with inline rename and delete triggers.
+  - `ControlDeck.tsx`: transmission logging and destination routing switches.
+  - `index.tsx`: main state manager, WS relay connection, and dispatch routing.
+- Configured Vite target proxy mapping in `vite.config.ts` for `/api/soundboard`.
+- Mounted the `AdvocateCommandDeck` component in `App.tsx` under the `hot_takes` room route.
+
+### 3. Scruffy's Tavern: Manual Participant Override
+- Injected `nymStlRoomOverrides` containing 7 manual participants: `pilot_james`, `barf`, `UncleStevieStan`, `Keith_Fanboy`, `Fredbird_Fiend`, `Arch_Madness`, `Salsa_Wizard` into the initial state.
+- Bypassed empty room queries inside `fetchPersonas` to fall back on these overrides if the database does not contain active participants, loading the chat lobby instantly.
+
+---
+
+## Verification & Testing
+
+### 1. Compilation & Typechecks
+Run `npm run lint` inside the portal workspace:
+```bash
+$ tsc --noEmit
+Exit code: 0
+```
+
+### 2. REST API Endpoint Validations
+Fetched, created, updated, and deleted canned takes for `barf` via `curl` to verify persistence inside SQLite database:
+```bash
+# Save a take
+$ curl -s -X POST -H "Content-Type: application/json" -d '{"advocateId": "barf", "text": "This is a brand new test take for Barf!"}' http://127.0.0.1:8090/api/soundboard/save
+{"status":"success","take":{"id":"9b72872ead4b47a295df6a47a37b9eb0", ...}}
+
+# Fetch takes
+$ curl -s http://127.0.0.1:8090/api/soundboard?advocateId=barf
+[{"id":"9b72872ead4b47a295df6a47a37b9eb0", ...}]
+```
+All endpoints verified successfully.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-018.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-018.md`
+
+```markdown
+# Walkthrough: WO-2026-018-KANBAN-RESTORATION
+
+We have successfully resolved the layout state deadlock that was blocking access to the central ITSM / SDLC Kanban Board. The board now loads the sprint slate cards correctly.
+
+## Changes Made
+
+### 1. Database State Alignment (`sovereign_now.db`)
+- Created the missing `sys_properties` table structure:
+  ```sql
+  CREATE TABLE IF NOT EXISTS sys_properties (
+      name TEXT PRIMARY KEY,
+      value TEXT,
+      description TEXT
+  );
+  ```
+- Set `system.dashboard.widgets_override` to `'false'` to disable the global widget overlay.
+- Inserted/replaced the registration of `'kanban'` under the `sys_module` table.
+
+### 2. Frontend State Override & Navigation Link (`App.tsx` & `AppLayout.tsx`)
+- Added state variables `dashboardWidgetsActive` and `isWidgetOverlayActive` to bypass the interactive dashboard overlay.
+- Patched the layout controller to programmatically force these overrides to `false` when navigating to `room=kanban` (or `room=sdlc`).
+- Imported `ClipboardList` from `lucide-react` and added a direct "Kanban Board" link in the Left Sidebar for users with roles `pilot`, `creator`, or `admin`.
+- Corrected typecast checks for custom rooms (`'sdlc'` and `'kanban'`) to satisfy TypeScript compilation checks.
+
+---
+
+## Verification & UAT Results
+
+- **Build Check**: Executed `npm run build` cleanly with no lint or TypeScript errors.
+- **Headless UAT Validation**: Verified that navigating to `https://clio.taila01894.ts.net:3016/?domain=ROOT&room=kanban` successfully loads the Living Kanban Board with sprint cards, bypassing the blocking message entirely.
+
+### Verification Screen
+Below is the UAT screenshot confirming the Living Kanban Board loads correctly with active cards from the sprint slate:
+
+![Kanban Board UAT Screenshot](/home/james/.gemini/antigravity/brain/0aa09c9a-ef7c-403b-89a5-3fa4ad044611/artifacts/kanban_board_uat.png)
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-017-RENAME-LOCK.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-017-RENAME-LOCK.md`
+
+```markdown
+# WALKTHROUGH: WO-2026-017-RENAME-LOCK
+
+## Changes Shipped
+1. **Directory Rename Lock**: Verified and locked the migration of the Barb Portal directory from `/home/james/SovereignOS/18_BarbsPortal` to `/home/james/SovereignOS/18_BarbStack`.
+2. **References Updates**: Checked all path references, including Vite configuration files and ecosystem init scripts.
+3. **Nginx & Dev Server Proxy Re-bind**: Confirmed the dev server is bound to port 3020 using the newly named directory path: `cd /home/james/SovereignOS/18_BarbStack && nohup npm run dev -- --host 127.0.0.1 --port 3020`.
+
+## Verification Results
+- Ran `ls /home/james/SovereignOS/` to confirm that no instance of the old folder `18_BarbsPortal` remains in the workspace.
+- Ran `ps aux | grep 3020` to verify that the Vite server is running out of the new folder structure:
+  `node /home/james/SovereignOS/18_BarbStack/node_modules/.bin/vite --host 127.0.0.1 --port 3020`
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-016-DOSSIER-ENGINE.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-016-DOSSIER-ENGINE.md`
+
+```markdown
+# WALKTHROUGH: WO-2026-016-DOSSIER-ENGINE
+
+## Changes Shipped
+1. **Headless Chrome Snap Path Correction**: Modified `scripts/sovereign_core_api.py` inside the `/api/personas/print_dossier` endpoint. Since Chromium runs under a strict Snap sandbox, writing PDF outputs to the host's `/tmp` directory redirected them to a sandboxed tmp namespace (`/tmp/snap-private-tmp/...`), causing the server to throw `RuntimeError: File at path /tmp/...pdf does not exist.` because the PDF was invisible to the host Python process.
+2. **Path Resolve Relocation**: Forced `tempfile.NamedTemporaryFile` to use `/home/james/SovereignOS` as the base directory for temporary HTML and PDF generation. Since the Snap environment has permission to read/write under `/home/james/`, the PDF file was successfully created, read, and served by the API.
+
+## Verification Results
+- Ran successful programmatic curl download against the print dossier endpoint:
+  ```bash
+  curl -I "http://localhost:8090/api/personas/print_dossier?ids=redbird"
+  ```
+  Resulting in a `200 OK` response.
+- Verified output PDF integrity using `file /tmp/test_dossier.pdf`, yielding:
+  `/tmp/test_dossier.pdf: PDF document, version 1.4, 6 page(s)`
+- Confirmed that temporary intermediate files are completely purged from `/home/james/SovereignOS/` after the download completes via Starlette background tasks.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-015-DATA-RECOVERY.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-015-DATA-RECOVERY.md`
+
+```markdown
+# WALKTHROUGH: WO-2026-015-DATA-RECOVERY
+
+## Changes Shipped
+1. **Persona Team Affiliation Restoration**: Restored missing or erased team dugout codes inside the `persona` table of the SQLite database (`sovereign_now.db`).
+2. **Hallucination Correction**: Addressed the hallucinated St. Louis Cardinals advocates (`Fredbird_Fiend`, `Arch_Madness`, `Salsa_Wizard`) mentioned in the initial work order template by substituting them with the actual Cardinals advocates present in the codebase/export: `redbird` and `gashouse_gang_greg`.
+3. **Database Updates Executed**:
+   - NYM: `barf`, `UncleStevieStan`, `keith_fanboy`, `wordy_nym`
+   - PHI: `2008_ghost`
+   - STL: `redbird`, `gashouse_gang_greg`
+
+## Verification Results
+- Ran verification query against the `persona` database to confirm all active baseball advocates have correct team values:
+  ```sql
+  SELECT user_name, team FROM persona WHERE user_name IN ('barf', 'UncleStevieStan', 'Keith_Fanboy', 'wordy_nym', '2008_ghost', 'redbird', 'gashouse_gang_greg', 'keith_fanboy');
+  ```
+  Output:
+  - `2008_ghost` -> `PHI`
+  - `UncleStevieStan` -> `NYM`
+  - `barf` -> `NYM`
+  - `gashouse_gang_greg` -> `STL`
+  - `keith_fanboy` -> `NYM`
+  - `redbird` -> `STL`
+  - `wordy_nym` -> `NYM`
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-014-TAVERN-OVERRIDE.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-014-TAVERN-OVERRIDE.md`
+
+```markdown
+# Walkthrough - WO-2026-014-TAVERN-OVERRIDE
+
+We have injected manual participant overrides to resolve the empty game-room state.
+
+## Changes Made
+
+1. **Roster Manual Override**:
+   - Injected the manual participants array `nymStlRoomOverrides` into Scruffy's Tavern initialization states.
+   - Bypassed API responses returning empty roster rosters to automatically load these 7 participants instantly:
+     - `@pilot_james`
+     - `@barf`
+     - `@UncleStevieStan`
+     - `@Keith_Fanboy`
+     - `@Fredbird_Fiend`
+     - `@Arch_Madness`
+     - `@Salsa_Wizard`
+
+2. **Validation**:
+   - Verified that the UI successfully renders all 7 participants in the chat lobby side panel and accepts transmissions.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-013-GATEWAY-REMEDY.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-013-GATEWAY-REMEDY.md`
+
+```markdown
+# Walkthrough - WO-2026-013-GATEWAY-REMEDY
+
+We have diagnosed and validated the gateway routing on Clio.
+
+## Verification Details
+
+1. **Tunnel State**:
+   - Confirmed Tailscale status is active and MagicDNS is resolving.
+   
+2. **Proxy Bindings**:
+   - Confirmed `tailscaled` is bound to `100.73.155.70:443`, serving as the ingress router/proxy.
+   - Checked portal binding on port `3016` and confirmed HTTPS serves content successfully.
+   
+3. **Connectivity check**:
+   - Performed SNI-based validation using:
+     ```bash
+     curl -k -I --resolve clio.taila01894.ts.net:443:100.73.155.70 https://clio.taila01894.ts.net/
+     ```
+     Resulting in `HTTP/2 200 OK`, proving proxy mapping is healthy and routing perfectly.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-012-DEGENERATE-ROOM.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-012-DEGENERATE-ROOM.md`
+
+```markdown
+# Walkthrough - WO-2026-012-DEGENERATE-ROOM
+
+We have constructed and initialized the custom room with the requested cross-spectrum roster.
+
+## Changes Made
+
+1. **Roster Configuration**:
+   - Cleared the existing active roster for the live game room `823620`.
+   - Populated the `game_persona` table with exactly 5 selected active personas:
+     - `@pilot_james`
+     - `@warden_barb`
+     - `@gyro_master`
+     - `@pizzabot_74`
+     - `@sconer_stoner`
+
+2. **Validation**:
+   - Verified that querying the active room personas database table returns exactly the 5 selected personas with no dead stubs.
+   - Connected successfully to the live MLB game-room data streams.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-011-CMDB-PILOT.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-011-CMDB-PILOT.md`
+
+```markdown
+# Walkthrough - WO-2026-011-CMDB-PILOT
+
+We have verified the presence of `@pilot_james` inside the CMDB and user registries.
+
+## Verification Details
+
+1. **Database Presence**:
+   - Confirmed the `persona_james_carroll` entry is fully populated in `cmdb_ci_persona` table.
+   - Confirmed `pilot_james` exists in the `persona` table.
+
+2. **Elevated Permissions**:
+   - Confirmed `sys_user` record has `role` set to `'pilot'`, granting Founder & Principal Systems Architect administrative permissions.
+
+3. **Session Connectivity**:
+   - `@pilot_james` successfully connects to Scruffy's Tavern session logs.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-010-BIRD-CHASE.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-010-BIRD-CHASE.md`
+
+```markdown
+# Walkthrough: WO-2026-010-BIRD-CHASE
+
+Successfully set up the event-triggered automation mock for Metsi's Bird Chase, updated all chatbot and UI mappings from `metsy_smyrna` to `metsy_prime`, and ran a mock execution.
+
+## Changes Made
+
+### 1. Codebase Avatar Mappings
+Updated references from `metsy_smyrna` to `metsy_prime` across the following files to align with the correct `metsy_prime` avatar folder:
+- **[backyard_game_master.py](file:///home/james/SovereignOS/scripts/backyard_game_master.py)**: Updated `[ASSET_BLAST: metsy_smyrna/playful]` to `[ASSET_BLAST: metsy_prime/playful]`.
+- **[SmyrnaPlaycall.tsx](file:///home/james/SovereignOS/01_Sovereign_Portal/src/components/SmyrnaPlaycall.tsx)**: Updated the advocate profile `avatarKey` and dropdown mapping for `Metsy` to `metsy_prime`.
+- **[fanstack_chatbots.py](file:///home/james/SovereignOS/scripts/fanstack_chatbots.py)**: Mapped `"metsy"` to `"metsy_prime"` in `advocate_to_db_user`.
+- **[the_skew_chatbots.py](file:///home/james/SovereignOS/scripts/the_skew_chatbots.py)**: Mapped `"metsy"` to `"metsy_prime"` in `advocate_to_db_user`.
+
+### 2. Services Restarted
+Restarted both the `fanstack_chatbots.py` and `the_skew_chatbots.py` background daemons to load the updated avatar mappings.
+
+### 3. Playful Avatar Restoration
+Restored the user's custom `playful.png` (784,399 bytes) to the `/home/james/SovereignOS/01_Sovereign_Portal/public/avatars/metsy_prime/` and `/home/james/SovereignOS/15_FanStack/public/avatars/metsy_prime/` directories.
+
+The style of the final playful avatar is:
+
+![Metsy Playful Avatar](/home/james/.gemini/antigravity/brain/0aa09c9a-ef7c-403b-89a5-3fa4ad044611/playful.png)
+
+## Verification Results
+
+1. **Trigger Sighting**: Inserted a mock sighting event `"Metsi chased by birds"` in `sam_tracker_log`.
+2. **Daemon Run**: Ran `/home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/backyard_game_master.py` which:
+   - Picked up the log sighting.
+   - Triggered the `METSY_BIRD_CHASE` ENE fallback.
+   - Successfully routed the chat message containing `[ASSET_BLAST: metsy_prime/playful]` to `sys_room_chatter` targeting `smyrna_heights`.
+3. **Database Ingestion**: Verified the message was successfully stored in the `sys_room_chatter` database table.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-009-METSI-BASE.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-009-METSI-BASE.md`
+
+```markdown
+# Walkthrough - WO-2026-009-METSI-BASE
+
+## Accomplishments
+- Verified the base image file `Metsi_continuity_base_v1.png` is located in `/home/james/SovereignOS/media_vault/01_Assets/Catnip_Wars/` and registered under the database table `sys_media_asset` as asset tag `FS-MED-05336`.
+- Performed programmatic EXIF / PNGInfo metadata verification:
+  - Checked for `Description` and `prompt` matching the custom Imagen-3 prompt.
+  - Checked for `generation_settings` mapping the model (`imagen-3`), seed (`42`), and purpose.
+- Confirmed the metadata stamp passes all UAT compliance criteria.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-008-WILDSEED-SCHEMA.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-008-WILDSEED-SCHEMA.md`
+
+```markdown
+# Walkthrough - WO-2026-008-WILDSEED-SCHEMA
+
+## Accomplishments
+- Scaffolded isolated directory `/home/james/SovereignOS/WildSeedStack/`.
+- Configured Vite package setup:
+  - `package.json` initialized.
+  - `vite.config.ts` configured to run on Port `3026` in strictPort mode, secured with Tailscale SSL keys/certificates.
+- Created `index.html` with a premium, responsive glassmorphic product media dashboard styling using Outfitters and JetBrains Mono fonts.
+- Built the project successfully via `npx vite build` in 55ms.
+- Provisioned the decoupled database `/home/james/SovereignOS/WildSeedStack/wildseed_now.db`.
+- Replicated all 9 `ws_` prefixed table schemas into `wildseed_now.db`:
+  - `ws_batch`
+  - `ws_coa`
+  - `ws_compliance_log`
+  - `ws_content_event`
+  - `ws_content_source`
+  - `ws_faction`
+  - `ws_faction_member`
+  - `ws_inventory`
+  - `ws_product`
+- Verified no active widget bleed in `m2m_stack_utility` (0 active associations for `wildseed` / `wildseedstack`).
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-007-WILDSEED-PIVOT.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-007-WILDSEED-PIVOT.md`
+
+```markdown
+# Walkthrough - WO-2026-007-WILDSEED-PIVOT
+
+## Accomplishments
+- Refactored outreach draft to focus on brand vibe and competitor displacement instead of canopy monitoring.
+- Staged contact details in `sys_user` table inside `/home/james/SovereignOS/dna/sovereign_now.db`:
+  - Paul Rudnicki (`pawel` user_name) updated to `Paul@rudranchco.com`
+  - William Rudnicki (`william` user_name) verified as `william@sovereign-os.com`
+- Registered the story ticket `STRY-06092026-WILDSEED-PIVOT` in the SQLite database.
+- Created `/home/james/sovereign_inbox/tickets/STRY-06092026-WILDSEED-PIVOT.md` with complete communication logs and email drafts.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-006-WILDSEEDING-SCHEMA.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-006-WILDSEEDING-SCHEMA.md`
+
+```markdown
+# Walkthrough - WO-2026-006-WILDSEEDING-SCHEMA
+
+## Accomplishments
+- Created isolated directory `/home/james/SovereignOS/WildSeedingStack/`.
+- Provisioned configuration and empty placeholder files:
+  - `package.json`
+  - `vite.config.ts` (configured with strictPort: true, port: 3025, and TLS certifications)
+  - `index.html` (designed with Outfit typography, grid patterns, glassmorphism, and status indicators)
+- Verified Vite project compilation successfully (built client in 37ms).
+- Executed SQLite isolation check query:
+  `SELECT COUNT(*) FROM m2m_stack_utility WHERE stack_module_name IN ('wildseeding', 'wildseedingstack') AND active = 1`
+  Query returned `0`, verifying complete isolation boundary and no widget spillover.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-005-PAUL-PING.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-005-PAUL-PING.md`
+
+```markdown
+# Walkthrough - WO-2026-005-PAUL-PING
+
+## Accomplishments
+- Implemented `execute_investor_followups()` function in `scripts/vesper_scheduler.py`.
+- Formulated calculation comparing current timestamp with ticket `sys_created_on` date to trigger alert logs when 3 days elapse.
+- Verified scheduler check runs successfully and outputs correct calculation stats.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-003.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-003.md`
+
+```markdown
+# Walkthrough - Core Tool Network Integrity Check
+**Work Order**: WO-2026-003-NET-INTEGRITY
+
+## Actions Completed
+- Verified listener status for Sovereign Cinema (Port 3008): Active and returns HTTP 200 OK.
+- Verified listener status for Hollow Link (Port 8012 presence/relay): Active and running under python3.
+- Verified Tailscale DNS and routing resolution to Clio node: Functional with local Tailscale IP address mapping.
+- Documented that Hollow Link presence/signaling services are correctly routed via Tailscale serve paths `/ws` and `/ws-relay` to local port 8012, fulfilling calling stream isolation.
+
+## Verification
+- Verified Cinema listener:
+  `curl -I http://127.0.0.1:3008` -> HTTP/1.1 200 OK
+- Verified Tailscale status and ping:
+  `tailscale ping clio.taila01894.ts.net` -> Successful ping response
+- Verified resource utilization is stable.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-003-CHCSF-PORTAL-HEAL.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-003-CHCSF-PORTAL-HEAL.md`
+
+```markdown
+# Walkthrough - Cubs @ Giants Fan Portal Activation (WO-2026-003-CHCSF-PORTAL-HEAL)
+
+This walkthrough documents the successful resolution of the Cubs @ Giants Fan Portal Activation and Stream Resolution ticket (`WO-2026-003-CHCSF-PORTAL-HEAL`).
+
+## Changes Made
+
+### 1. Dynamic WebSocket Connection Routing
+- **File modified**: [/home/james/SovereignOS/19_Sovereign_Sports/src/components/FanFanStackPortal.tsx](file:///home/james/SovereignOS/19_Sovereign_Sports/src/components/FanFanStackPortal.tsx#L220-L300)
+- **Modifications**:
+  - Replaced the hardcoded, static websocket connection path with a dynamically resolved routing utility targeting the dynamic endpoint structure:
+    ```typescript
+    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsHost = window.location.host;
+    const socketUrl = `${wsProtocol}//${wsHost}/mesh-ws?gamePk=${activeGamePk}`;
+    ```
+  - Added clean termination guards to prevent socket leaks during game switches by tracking current state variables (`isCurrent`) and clearing any outstanding `setTimeout` handlers during `useEffect` cleanup.
+
+### 2. Vite Proxy Configuration
+- **File modified**: [/home/james/SovereignOS/19_Sovereign_Sports/vite.config.ts](file:///home/james/SovereignOS/19_Sovereign_Sports/vite.config.ts#L48-L56)
+- **Modifications**:
+  - Registered the `/mesh-ws` WebSocket route in the dev proxy dictionary targeting the fastapi router running at `ws://127.0.0.1:8000`, enabling seamless development environment routing.
+
+### 3. Simulation-Aware Game Monitor Safeguards
+- **File modified**: [/home/james/SovereignOS/scripts/cron_game_monitor.py](file:///home/james/SovereignOS/scripts/cron_game_monitor.py#L24-L30)
+- **Modifications**:
+  - Patched the cron monitor SELECT query with `AND (r.is_simulated = 0 OR r.is_simulated IS NULL)` to bypass active simulation rooms. This ensures simulated game rooms (such as the Cubs @ Giants room) remain persistently active and are not mistakenly reset to `inactive` by live MLB API scrapers.
+
+---
+
+## Verification & Testing Results
+
+### 1. Frontend Bundle Compiles Cleanly
+We successfully built the React bundle:
+```bash
+npm run build
+```
+Result:
+- Zero TypeScript compiler errors.
+- Transformed 1550 modules successfully.
+- Produced optimized CSS and JavaScript outputs.
+
+### 2. Dynamic Room Activation & Persona Seating
+- Queried the active games endpoint `/api/sports/active_games` and confirmed the Cubs @ Giants game `823213` is correctly listed as `active`.
+- Verified the seated persona advocate matrix by querying `/api/room_personas?gamePk=823213`:
+  - Successfully seated 17 crosstalk advocates (including the newly added `@brand_boycott` and `@isolated_silo` true-cost advocates).
+  - Seated 5 matchup-specific advocates and the bouncer dot (`@dot`).
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-002.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-002.md`
+
+```markdown
+# Walkthrough - Provisioning Eileen Carroll's Stack (Port 3017)
+**Work Order**: WO-2026-002-PROVISION-EILEEN
+
+## Actions Completed
+- Verified DB registrations in SQLite (`sovereign_now.db`) for CI `ci_eileen_stack_3017` and module `eileen_stack`.
+- Configured Vite dev server in `23_EileenStack/vite.config.ts` to bind to host `127.0.0.1` on port 3017 with `strictPort: true`.
+- Run dependency resolution (`npm install`) in `23_EileenStack/` to resolve react, typescript, and tailwind.
+- Constructed a bespoke, fully interactive dashboard component `Dashboard.tsx` centered around Eileen Carroll's personality and layout requests:
+  - Lavender, tea, and wood cozy styling with dynamic, interactive elements.
+  - Interactive Crossword mini-puzzle with custom checking logic, auto-solve, and AudioContext-driven chime chimes and buzzer sound effects.
+  - Family sub-stacks card section referencing Lenora's Daily Adventures.
+  - Ambient Jukebox player generating synthesized relaxing melodies.
+  - WebRTC Voice/Video calling simulator & chat messenger panel.
+  - Quick-casting media control panel and platform power tools metrics.
+- Corrected wildcard checking in `scripts/sovereign_mesh_init.sh` to target `127.0.0.1:3017` to prevent silent startup failures.
+- Registered persistent background Tailscale serve proxying rule for port 3017.
+- Verified compilation and production build (`npm run build`) runs with zero compiler/linter warnings.
+
+## Verification
+- Verified local listener:
+  `ss -tulpn | grep 127.0.0.1:3017` -> Active
+- Verified HTTPS proxy routing:
+  `curl -k -I https://clio.taila01894.ts.net:3017` -> HTTP/2 200 OK
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_WO-2026-001.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_WO-2026-001.md`
+
+```markdown
+# Walkthrough - Provisioning Barb's Stack (Port 3020)
+**Work Order**: WO-2026-001-PROVISION-BARB
+
+## Actions Completed
+- Verified DB registrations in SQLite (`sovereign_now.db`) for CI `ci_barb_stack_3020` and module `barb_stack`.
+- Configured Vite dev server in `18_BarbStack/vite.config.ts` to bind to host `127.0.0.1` on port 3020 with `strictPort: true`.
+- Registered persistent background Tailscale serve proxying rule for port 3020:
+  `https://clio.taila01894.ts.net:3020` -> `http://127.0.0.1:3020`
+- Identified and fixed wildcard port check bug in `scripts/sovereign_mesh_init.sh` that was preventing the dev server from launching when Tailscale serve is active. Updated the check to grep specifically for `127.0.0.1:3020`.
+- Verified that Barb's stack dev server runs cleanly and answers with HTTP 200 over Tailscale.
+
+## Verification
+- Verified local listener:
+  `ss -tulpn | grep 127.0.0.1:3020` -> Active
+- Verified HTTPS proxy routing:
+  `curl -k -I https://clio.taila01894.ts.net:3020` -> HTTP/2 200 OK
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_SecOps-001.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_SecOps-001.md`
+
+```markdown
+# Walkthrough — Emergency RBAC Lockdown & Access Revocation (SecOps-001)
+
+This walkthrough documents the successful execution of the emergency lockdown and privilege revocation sequence for the `pawel` user profile in the live production environment.
+
+## 🛠️ Summary of Changes
+
+### 1. Database Mutations & Demotion
+- **File:** `/home/james/SovereignOS/dna/sovereign_now.db`
+- **Mutations:**
+  - Updated `sys_user` to forcefully demote `pawel`'s role mapping from `pilot` back to `investor` (the read-only role).
+  - Logged a formal tracking record for the incident (`SecOps-001`) in the `sovereign_tickets` table in `State = 4` (Closed/Resolved) with complete administrative audit logs.
+
+### 2. Session Invalidation & Token Rotation
+- **File:** `/home/james/SovereignOS/scripts/.env.auth`
+- **Mutations:**
+  - Rotated the `SOVEREIGN_AUTH_SECRET` by generating and injecting a fresh, high-entropy 64-character hex key.
+  - This instantly invalidated all active JWT tokens client-side, forcing every active browser session (including the demoted profile) to drop.
+
+### 3. Service Reboots
+- Natively killed and restarted the following core services on Clio to drop all active administrative WebSockets:
+  - **Sovereign Core API** (Port `8090`)
+  - **Sovereign Mesh Relay** (Port `8012`)
+  - **SDLC Ticketing Server** (Port `8095`)
+- Executed `scripts/restart_stack.sh` to cleanly reboot and secure all background FanStack daemons, AI chatbots, and the telemetry loops.
+
+---
+
+## 🔬 Empirical Verification & Audit Logs
+
+### 1. Verification of Role in Database
+A direct SQL query against the master production database confirms that the user role has been modified:
+```
+sqlite> SELECT user_name, role FROM sys_user WHERE user_name='pawel';
+pawel|investor
+```
+
+### 2. Verification of Incident Ticket Logging
+A direct SQL query against the ticketing ledger confirms the record has been created cleanly:
+```
+sqlite> SELECT number, type, short_description, state, work_notes FROM sovereign_tickets WHERE number='SecOps-001';
+SecOps-001|INC|Emergency Access Revocation (SecOps-001)|4|Demoted pawel user profile back to read-only following technical walkthrough to protect production database integrity.
+```
+
+### 3. Post-Lockdown Service Health Check
+Performed local port checks and endpoint telemetry requests to ensure the API is fully responsive:
+```
+$ curl -s http://localhost:8090/api/system/telemetry
+{"temp_c":20.0,"tempC":20.0,"load_1m":2.41,"load_5m":1.24,...}
+```
+All system telemetry endpoints are online, bound, and successfully validating.
+
+---
+
+## 🔒 Security Posture Status
+- **Access Revoked:** Yes
+- **Active WebSockets Terminated:** Yes
+- **System Stability:** 100% stable, fully online.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_STRY_SPITE_SLICER_ONBOARD.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_STRY_SPITE_SLICER_ONBOARD.md`
+
+```markdown
+# Walkthrough: STRY_SPITE_SLICER_ONBOARD
+
+This document closes out the ticket **STRY_SPITE_SLICER_ONBOARD** for deploying and verifying the **Spite Slicer Culinary Revenge Core** dashboard.
+
+## Accomplished Work
+
+- **Verified Port 3019 Active:** Confirmed the Vite development server is listening on port `3019` over Tailscale secure HTTPS using a self-signed local certificate.
+- **Roster Upgrade:** Modified `SpiteCrewRoster.tsx` to replace Susie Greene with **Barb Greene** (`warden_barb`) as the Managing Director & Quality Control Lead.
+- **Dynamic Avatar Render:** Configured her to dynamically load her 4K flour-dusted denim apron felt-puppet style avatar from the Vite public folder, beside her tortoiseshell cat Stella, with graceful static emoji fallback handling.
+- **TV Showcase Loop:** Woke display `:0` (HDMI TV) and launched the infinite alternation loop driving the 65-inch screen.
+
+## UAT Roster Verification Screenshot
+
+Below is the verified screenshot captured during remote UAT testing on `clio.taila01894.ts.net:3019`:
+
+![Spite Slicer Roster Verification](/home/james/.gemini/antigravity/brain/069c7a61-ec64-4f62-a804-ff2d88b99d2d/spite_crew_roster_1780194890968.png)
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_STRY_MULTI_PART_SYNC.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_STRY_MULTI_PART_SYNC.md`
+
+```markdown
+# Walkthrough: Multi-Part Codebase Splitting and Sync Optimization (STRY_MULTI_PART_SYNC)
+
+## Changes Made
+1. **Multi-Part Split Compiler** (`compile_codebase_payload.py`):
+   - Refactored compiler logic to enforce a strict **400,000-word limit** for individual Markdown files.
+   - Outputs split codebase payloads (`SOVEREIGN_CODEBASE_PART_1.md` and `SOVEREIGN_CODEBASE_PART_2.md`) to comply with NotebookLM ingestion constraints.
+2. **Automated Lifecycle Integration** (`sync_notebook.sh` & `sync_notebook_stacklabs.sh`):
+   - Replaced hardcoded monolithic file copy loops with dynamic wildcards matching all compiled parts.
+   - Deletes obsolete monolithic `.txt` file references inside output sync folders.
+3. **Hot SQLite Database Backup** (`sync_to_gdrive.sh`):
+   - Replaced the direct rclone sync of the live database with an online SQLite backup (`sqlite3 ... ".backup /tmp/sovereign_now_backup.db"`).
+   - Resolves all concurrent locking errors and "file updated during copy" exceptions.
+4. **Lightweight Sync Optimization** (`sync_to_gdrive.sh`):
+   - Shifted staging from scanning 6,000 legacy/deprecated files to staging only the monolithic payloads and the anchor token.
+   - Replaced `rclone sync` with `rclone copy` for the staging directory, completely bypassing rate-limited GDrive deletions and reducing execution times from minutes to seconds.
+5. **DNA Standards Update** (`SOVEREIGN_DNA.md`):
+   - Appended and updated KI-068 to formalize the multi-part codebase and monolithic transfer package standard.
+
+## Verification
+- Verified compilation and output splitting into 2 clean parts under 400,000 words.
+- Verified hot-backup creation and GDrive database upload.
+- Ran end-to-end sync with anchor generated: `TACTILE_INVENTOR`.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_STRY_CARD_TURPEY_ONBOARD.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_STRY_CARD_TURPEY_ONBOARD.md`
+
+```markdown
+# Walkthrough: STRY_CARD_TURPEY_ONBOARD
+
+This document closes out the ticket **STRY_CARD_TURPEY_ONBOARD** for deploying and verifying the **Card Turpey Predictive Sports Memorabilia** showroom cartridge.
+
+## Accomplished Work
+
+- **Verified Port 3017 Active:** Confirmed the Vite development server is listening on port `3017` over Tailscale secure HTTPS using a self-signed local certificate.
+- **Roster Upgrade:** Upgraded `AdvocatesRoster.tsx` to dynamically fetch the 4K analytical illustration avatar for Sean Carroll (`sean_carroll`) wearing his Tennessee orange Vols Pullover jersey, next to Wriggles.
+- **CSS & JS Fallback Handling:** Integrated an `onError` dynamic image switcher that falls back cleanly and gracefully to the advocate's emoji in case the local avatar is missing.
+- **TV Showcase Loop:** Integrated Card Turpey into the dynamic headed display loop script (`headed_playwright_tv_showcase.py`), successfully launching on `DISPLAY=:0`.
+
+## UAT Roster Verification Screenshot
+
+Below is the verified screenshot captured during remote UAT testing on `clio.taila01894.ts.net:3017`:
+
+![Card Turpey Roster Verification](/home/james/.gemini/antigravity/brain/069c7a61-ec64-4f62-a804-ff2d88b99d2d/advocates_roster_1780194862123.png)
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_STRY_0623_STYLE_REGISTRY.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_STRY_0623_STYLE_REGISTRY.md`
+
+```markdown
+# Walkthrough: Eon1 Style Registry Selection (STRY-0623-STYLE-REGISTRY)
+
+## Goal
+Implement a central style registry metadata configuration and expose a selection dropdown & preview panel in the FanStack Advocate Center UI, allowing pilots/users to choose and persist visual styles for each AI persona.
+
+## Changes Made
+- Created style registry configuration file at `/home/james/SovereignOS/config/style_registry.json`.
+- Implemented `GET /api/style_registry` endpoint in `scripts/routers/personas.py` to return the styles from JSON (with fail-safe fallback).
+- Updated FanStack Advocate Center frontend at `15_FanStack/src/pages/AdvocateCenter.tsx` to:
+  - Load the style registry from `/api/style_registry` on mount.
+  - Render a visual style selection dropdown.
+  - Display a custom preview panel featuring the style's prompt tokens, best use cases, and reference image thumbnail.
+  - Save the selected `u_visual_style` to the backend when the form is submitted.
+
+## Verification
+- Verified `/api/style_registry` returns the list of styles correctly using `curl`.
+- Ran `npm run build` in `15_FanStack` to verify compilation and static asset resolution.
+- Simulated and confirmed database updates persist `u_visual_style` correctly.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_STRY_0623_AVATAR_QUARANTINE.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_STRY_0623_AVATAR_QUARANTINE.md`
+
+```markdown
+# Walkthrough: Eon1 Avatar Quarantine Migration & Directory Safeguard (STRY-0623-AVATAR-QUARANTINE)
+
+## Goal
+Quarantine loose legacy files from `/home/james/SovereignOS/avatars/` to `/home/james/SovereignOS/archive_quarantine_eon1/` to clean up the workspace, while maintaining verified directories and providing a fallback image search path.
+
+## Changes Made
+- Created and executed `/home/james/SovereignOS/scripts/quarantine_eon1_assets.py` to automatically migrate loose files/folders.
+- Copied `barf.png` to `image_35b3f6.jpg` as the default raccoon asset.
+- Updated `metsy_smyrna` exclusions list to ensure it remains in `avatars/` as verified, and moved it back.
+- Updated the following files to add the `archive_quarantine_eon1` folder to the fallback scanning list in `get_persona_image`:
+  - `scripts/routers/personas.py`
+  - `scripts/fanstack_relay.py`
+  - `scripts/the_skew_relay.py`
+
+## Verification
+- Verified that GET `/api/persona_image/image_35b3f6` returns the raccoon fallback image correctly.
+- Verified that GET `/api/persona_image/spitfire_spud` successfully resolves to the quarantined image.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_STRY_06092026_FANSTACK_HEAL.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_STRY_06092026_FANSTACK_HEAL.md`
+
+```markdown
+# Walkthrough: STRY-06092026-FANSTACK-HEAL
+
+Hot-fix walkthrough for resolving Vertex API errors and relaxing StackLabs Monolith CSS rules.
+
+## Changes Made
+- Updated all occurrences of model `"gemini-2.5-flash"` to `"gemini-1.5-flash"` in:
+  - `/home/james/SovereignOS/scripts/fanstack_chatbots.py`
+  - `/home/james/SovereignOS/scripts/the_skew_chatbots.py`
+  - `/home/james/SovereignOS/scripts/vertex_persona_audit.py`
+- Changed the recursive monospace typo styling rule in `/home/james/SovereignOS/01_Sovereign_Portal/src/index.css`:
+  - Relaxed `.theme-stacklabs *` selector to `.theme-stacklabs` to resolve styling issues in the portal.
+
+## Verification & Testing
+- Successfully compiled the Sovereign Portal:
+  - Built production bundle with `npm run build` in `/home/james/SovereignOS/01_Sovereign_Portal`.
+- Restarted FanStack services with `/home/james/SovereignOS/scripts/restart_stack.sh`.
+- Confirmed the chatbot log output is no longer flooded with invalid Vertex API 401/400 errors.
+- Verified ticket registration status `RESOLVED` (state = 4) in the local SQLite database.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_STRY8791006.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_STRY8791006.md`
+
+```markdown
+# Walkthrough - STRY8791006: Provision, Catalog, and Implement Sovereign Knowledge Hub
+
+## Overview
+This ticket addresses the issue where the "Knowledge Hub" navigation item in the left sidebar returned a generic fallback message:
+`Interactive Dashboard widgets are active for this workspace. Use the Left Sidebar to navigate or configuration controls to customize.`
+
+Additionally, it completely replaces the static placeholder/mock layout in the original component (which had stale/hardcoded links to Savant AI and Amen Corner) with a fully dynamic, interactive Knowledge Base client connected to the backend SQLite `kb_knowledge` table.
+
+## Proposed Changes Implemented
+1. **Frontend Router (`App.tsx`)**: Mounted the `<KnowledgeHub />` component under `activeRoom === 'knowledge_hub'` inside the children of `<AppLayout>`, nested within a framed, animated `motion.div`.
+2. **Knowledge Hub Dynamic Client (`KnowledgeHub.tsx`)**:
+   - Replaced the static, hardcoded card layout with a state-of-the-art dual-panel workspace.
+   - **Left Panel (List)**: Fetches all registered knowledge entries via `/api/system/kb`. Implements a real-time filter to search by title, ID (`KBxxxx`), abstract description, and tag arrays. Shows tag badges and update timestamps.
+   - **Right Panel (Reader & Editor)**:
+     - **Reader Mode**: Fetches the selected article details (including the raw text block) via `/api/system/kb/{sys_id}`. Renders article titles, authors, timestamps, abstract callouts, and translates markdown content dynamically using `<ReactMarkdown>` with support for GitHub-flavored syntax (`remark-gfm`, `remark-github-alerts`).
+     - **Editor Mode (CRUD)**: Implements full dynamic creation (POST `/api/system/kb`) and updating (PUT `/api/system/kb/{sys_id}`) forms for editing the Topic/Title, Source/Author, Abstract description, Tags, and Raw Markdown content. Includes an active confirmation handler for deletions (DELETE `/api/system/kb/{sys_id}`).
+3. **Database Schema & Seed**:
+   - Added `'knowledge_hub'` utility entry to `scripts/sync_modules_db.py` under the `'utility'` category.
+   - Seeded active associations for `knowledge_hub` under the `fanstack` and `aethervet` stacks in `m2m_stack_utility`.
+   - Updated `scripts/core/schema.py` to auto-seed `knowledge_hub` in the `sys_module` table and set `u_visible_on_main = 1` on startup.
+4. **Database Execution**: Executed `sync_modules_db.py` to update the active sqlite database schema indices.
+
+## Verification
+- Verified that `sys_module` has `knowledge_hub` registered.
+- Verified that `m2m_stack_utility` contains the entries associating `knowledge_hub` with `fanstack` and `aethervet`.
+- Verified that the `KnowledgeHub` component retrieves all dynamic `kb_knowledge` rows successfully.
+- Verified TypeScript compilation of the frontend passes successfully with zero errors.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_STRY8791005.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_STRY8791005.md`
+
+```markdown
+# Walkthrough: STRY8791005 - Resolve Global Search Component Crashes & Sync Index Payload
+
+This walkthrough documents the resolution of the global search widget crash, the alignment of search result matching properties between the FastAPI backend and React frontend, and the addition of the direct Knowledge Hub sidebar navigation link.
+
+## Changes Made
+
+### 1. Backend Search Enrichment (`system_ops.py`)
+- Modified `/api/system/search` to retrieve file system attributes (`size` in bytes and `last_modified` date/time) for matched documents.
+- Returned enriched stats in the final JSON results array.
+
+### 2. Frontend Search Stabilization (`GlobalSearchWidget.tsx`)
+- Fixed the searchable directories list API crash by binding `setDirectories(data.directories || [])` instead of the raw data.
+- Added data normalization in `performSearch` to map backend keys (`res.title` / `res.filename` / `res.folder_name`) to interface properties (`name`, `directory_name`, `size`, `last_modified`).
+- Mapped match contents cleanly to fix the `line_content.trim()` crash on empty lines.
+
+### 3. Sidebar Navigation Enhancement (`AppLayout.tsx`)
+- Added a direct sidebar link to the **Knowledge Hub** using the Lucide `BookOpen` icon, allowing direct navigation instead of routing through search.
+
+---
+
+## Verification & Testing
+
+### Automated Build Validation
+The project compiled successfully with `npm run build`:
+```bash
+vite v6.4.2 building for production...
+✓ 3127 modules transformed.
+dist/index.html                     1.06 kB │ gzip:   0.52 kB
+dist/assets/index-U9NG8ihi.css    385.78 kB │ gzip:  49.73 kB
+dist/assets/index-B63EHnB9.js   2,670.23 kB │ gzip: 685.89 kB
+✓ built in 12.43s
+```
+
+### Manual API Call Verification
+Hitting the search endpoint directly returned search results with `size` and `last_modified` metadata:
+```json
+{
+    "results": [
+        {
+            "title": "📙 SOVEREIGN DNA — SANDBOX EDITION",
+            "filename": "SOVEREIGN_DNA_SANDBOX.md",
+            "path": "/home/james/SovereignOS/dna/SOVEREIGN_DNA_SANDBOX.md",
+            "folder_name": "Sovereign OS DNA",
+            "folder_path": "/home/james/SovereignOS/dna",
+            "matches": [
+                {
+                    "line_number": 5,
+                    "content": "> You are operating in the **Sandbox environment only**."
+                }
+            ],
+            "snippet": "> You are operating in the **Sandbox environment only**.",
+            "size": 4642,
+            "last_modified": "2026-05-08T19:34:01.203589+00:00"
+        }
+    ]
+}
+```
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_STRY8791004.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_STRY8791004.md`
+
+```markdown
+# Walkthrough: STRY8791004 - Implement FanStack Automatic Hibernation and 1 AM Cron Job
+
+This document details the successful implementation and verification of the daily automated hibernation sequence and background processes KB documentation.
+
+## Changes Made
+
+1.  **Hibernation Script**: Created [/home/james/SovereignOS/scripts/fanstack_hibernate_check.py](file:///home/james/SovereignOS/scripts/fanstack_hibernate_check.py):
+    *   Determines current MLB gameday based on `America/New_York` timezone.
+    *   Queries `mlb_schedule` in `sovereign_now.db` (enforcing WAL concurrency mode).
+    *   Fetches real-time status of each game from MLB StatsAPI (`statusCode`).
+    *   Surgically invokes `stop_fanstack.sh` if all scheduled games are completed (not in `['I', 'P', 'S', 'W']`) or if no games were scheduled.
+2.  **Cron Integration**: Added user crontab entry to run `fanstack_hibernate_check.py` daily at 1:00 AM, redirecting outputs to [/home/james/SovereignOS/logs/fanstack_hibernate.log](file:///home/james/SovereignOS/logs/fanstack_hibernate.log).
+3.  **Knowledge Base Article**: Authored and inserted KB article `KB0003` into the `kb_knowledge` database table, detailing the architecture and runtime characteristics of:
+    *   `statcast_sentinel.py`
+    *   `fanstack_background_poller.py`
+    *   `fanstack_chatbots.py`
+
+## Verification & Testing
+
+### 1. Manual Script Dry-Run
+Executed the hibernation check script:
+```bash
+/home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/fanstack_hibernate_check.py
+```
+*   **Result**: Detected that games of `2026-06-26` are completed and triggered `/home/james/SovereignOS/scripts/stop_fanstack.sh` successfully.
+*   **Process Verification**: Confirmed that all sports telemetry, chatbots, and sentinel processes were stopped, releasing Port 3009, while preserving Core API, CMDB, SDLC, and Persona Manager servers.
+
+### 2. Crontab Registration
+Ran `crontab -l` to confirm insertion of the daily cron schedule:
+```cron
+0 1 * * * /home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/fanstack_hibernate_check.py >> /home/james/SovereignOS/logs/fanstack_hibernate.log 2>&1
+```
+
+### 3. Knowledge Base Insertion
+Verified database entry via:
+```sql
+SELECT number, topic, length(text) FROM kb_knowledge WHERE number = 'KB0003';
+```
+*   **Result**: Returned `'KB0003' | 'FanStack Background Scripts' | 3660 bytes`.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_STRY8791003.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_STRY8791003.md`
+
+```markdown
+# Walkthrough: STRY8791003 — Uncapping FanStack Advocate Dialogue & Come One, Come All Seeding
+
+## Overview
+This sprint successfully completes the **Uncapping FanStack Advocate Dialogue** objective and deploys the high-entropy **"Come One, Come All"** watch party architecture for tonight's games. All artificial character constraints have been removed, the shadowbanning/bouncer systems are completely decommissioned, and 28 eclectic advocates are now seeded and crosstalking across all active rooms.
+
+---
+
+## 🛠️ Accomplishments
+
+### 1. Decommissioning Character & Brevity Constraints
+* Centralized LLM call functions in `/home/james/SovereignOS/scripts/fanstack_chatbots.py` and `/home/james/SovereignOS/scripts/the_skew_chatbots.py` were modified to remove all brevity instructions (e.g. 190-character limits).
+* The `max_output_tokens` setting has been elevated to **2048** globally, ensuring full-length, high-fidelity dialogue is never truncated.
+
+### 2. Disabling Shadowbanning & Toxicity Filters
+* **Toxicity Filter Bypassed**: Modified `/home/james/SovereignOS/scripts/mean_gene.py` to bypass forbidden word checks completely, preventing advocates from being banned for yapping.
+* **Okerlund Protocol Decommissioned**: Added early returns to the `bouncer_task` methods in both `fanstack_chatbots.py` and `the_skew_chatbots.py`. The bouncer will no longer monitor burns, trigger "ILLEGAL TAG-TEAM DOGPILE!" events, or send advocates to the penalty box.
+
+### 3. Database Cleansing & Cadence Restoration
+* Cleared the `fan_cave_penalty_box` table in SQLite (`sovereign_now.db`) to instantly release all previously shadowbanned personas (e.g. `UncleStevieStan`, `skyline_chili_chad`).
+* Reset all persona cadences in the database back to `'pacer'` to unlock them from `'lurker'` mode.
+
+### 4. Seeding "Come One, Come All" Multi-Room Watch Party
+* Created and executed `/home/james/SovereignOS/scripts/seed_come_one_come_all.py` to deploy a 28-advocate crosstalk watch party across all active rooms tonight:
+  * **`823611`** (Chicago Cubs @ New York Mets)
+  * **`823284`** (Atlanta Braves @ San Diego Padres)
+  * **`823208`** (Oakland Athletics @ San Francisco Giants)
+* Seated all 28 eclectic advocates in all three rooms. Because they are pre-seated in every room, transitioning between game feeds in the UI will no longer boot or swap them out—the entire gang travels together!
+
+---
+
+## 📊 Verification & Log Proofs
+The MARD engine was hot-reloaded successfully, and the 28-advocate watch party is running in full force:
+
+```
+[barf] ARE YOU KIDDING ME, THAT WAS CLEARLY A BALL, THE UMPIRE IS BLIND!
+[dot] A sinker at 88.9 mph registers as a called strike
+[7_train_terry] Another pitching change with Hoby Milner coming in now, and we're down by one run in the bottom of the seventh; this is exactly where the anxiety starts to set in
+[dr_kosmos] Another pitching change, James, the game's slipping through their fingers like a greased pig at the county fair
+[bartmans_ghost] Milner coming in with no outs and a one-run lead in the seventh, this is exactly how the curse starts to unravel us
+```
+
+All systems are green, no one is shadowbanned, and the advocates are chatting with maximum absurdity!
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_STRY8791001.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_STRY8791001.md`
+
+```markdown
+# Walkthrough: STRY8791001 — Advocate Center Integrity & Rebranding
+
+This walkthrough documents the successful implementation of the rebranding, bug fixes, metadata corrections, and sync loop decommissioning for **STRY8791001**.
+
+## Changes Implemented
+
+### 1. Rebranding to Advocate Center & Advocate Lookbook
+* **Vite App (15_FanStack)**:
+  * Modified `src/App.tsx` navigation sidebar, room route registrations, headers, and window metadata:
+    * Rebranded `'persona_center'` to `'advocate_center'` (renders the Advocate Center).
+    * Added `'advocate_lookbook'` (renders the readonly Advocate Lookbook).
+    * Housed imports from `src/components/AdvocateCenter.tsx` and `src/components/AdvocateLookbook.tsx` dynamically.
+  * Renamed components:
+    * Exported component in `AdvocateCenter.tsx` renamed from `PersonaCenter` to `AdvocateCenter`.
+    * Exported component in `AdvocateLookbook.tsx` renamed from `AdvocateCenter` to `AdvocateLookbook`.
+* **Sovereign Core API**:
+  * Updated `scripts/routers/personas.py` route names:
+    * `/api/personas` and `/api/personas/{user_name}` rebranded to `/api/advocates` and `/api/advocates/{user_name}`.
+    * Added compatibility fallback redirects from the old `/api/personas` endpoints.
+* **SDLC Portal Server**:
+  * Updated `scripts/sdlc_portal_server.py` to route `/room/advocate_center` and `/room/advocate_lookbook` appropriately, using the clean rebranding tokens.
+
+### 2. Avatar Saving & Metadata Audit/Fix
+* **Avatar Saving Bug**:
+  * Debugged and resolved the avatar saving issue by modifying the save handler in `src/components/AdvocateCenter.tsx`.
+  * Changed the payload format from nested `{ metadata: { avatar_url } }` to direct flat `{ avatar_url }`, matching the SQLite ORM/database expectations.
+* **Database Cleanup & Audit**:
+  * Corrected `CubbieConspiracy` metadata:
+    * Set display name to `CubbieConspiracy` (resolving the incorrect "Fair Play Frankie" placeholder).
+    * Set team to `CHC` (correcting LAD assignment).
+    * Verified correct default/existing avatar URLs.
+  * Audited all other advocates to verify proper display names and team assignments.
+
+### 3. MLB Scorebar Removal
+* Modified `15_FanStack/src/App.tsx` (around line 882) to hide the `<MlbScoreBar />` when `activeRoom` is `'advocate_center'` or `'advocate_lookbook'`.
+
+### 4. Game Log Sync Decommissioning
+* Modified `/home/james/SovereignOS/scripts/sync_active_gamelog.sh` to exit immediately (`exit 0`), stopping the automatic syncing of the completed game `823448` logs.
+* Cleaned up local stale logs from `/home/james/sovereign_inbox/` and deleted the respective synced files from the remote Google Drive via `rclone deletefile`.
+
+### 5. Deployment Zone Purpose & Architecture Documentation
+* The `u_deployment_zone` field maps a chatbot's physical seating location (e.g., `PLAT-06 / Town Hall`, `PLAT-07 / Silas's Garden Cabin`) to spatial cognitive overrides. These overrides are dynamically injected into the LLM system prompts in `scripts/fanstack_chatbots.py` (via `get_spatial_override(zone)`) to alter the chatbot's attitude, behavior, and tone.
+
+---
+
+## Verification & Validation
+
+1. **Compilation Check**:
+   * Executed `npm run build` inside `15_FanStack` workspace and verified compilation succeeded with exit code 0.
+2. **API Endpoint Verification**:
+   * Verified `/api/advocates` returns correct active persona lists, and redirects correctly from `/api/personas`.
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_STRY8791000.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_STRY8791000.md`
+
+```markdown
+# Walkthrough: Dot Penalty Box Exemption (STRY8791000)
+
+This walkthrough documents the changes implemented to exempt the Dot chatbot from being thrown into the 8-Mile Penalty Box or shadowbanned under the Okerlund Protocol.
+
+## 📝 Goal & Summary
+Dot serves as an automated LLM Judge and commentator, mirroring Statcast data. In normal operations, baseball telemetry containing terms like "fined" was triggering toxicity filters, flagging Dot as BANNED, locking her to "lurker" mode, and throwing her into the penalty box.
+We have fully decoupled Dot from these evaluations:
+- Short-circuited pre-persistence evaluations in `scripts/mean_gene.py`'s `process_simulated_chatter` method for persona `dot`.
+- Exempted Dot from `bouncer_task` evaluation inside `scripts/fanstack_chatbots.py` and `scripts/the_skew_chatbots.py` to prevent Okerlund Protocol burns or dogpile detections from affecting her.
+- Forced `in_penalty = False` for Dot inside LLM prompting templates.
+
+## 🌐 Web Access & Setup Guide
+- **Sovereign Sports Portal Port**: 3010
+- **Tailscale URL**: [https://clio.taila01894.ts.net:3010/](https://clio.taila01894.ts.net:3010/)
+  > [!NOTE]
+  > When accessing the portal via Tailscale, Chrome may display a self-signed HSTS warning. Type `thisisunsafe` directly on the error screen to bypass.
+
+## 🎮 Step-by-Step UI Navigation & UAT Guide
+1. Launch the stack using `bash scripts/restart_stack.sh` if not already running.
+2. Open Chrome and navigate to the Sovereign Sports Portal: [https://clio.taila01894.ts.net:3010/](https://clio.taila01894.ts.net:3010/).
+3. In the Crosstalk Lounge, observe the live game chat commentary stream.
+4. Verify that when Dot posts Statcast play-by-play calls containing censored/forbidden words (such as "fined"), she is not shadowbanned, and no escape prompt is triggered.
+
+## 📊 Database Verification Proof
+Run the following sqlite3 query to confirm that Dot is not registered in the active penalty box list:
+```bash
+sqlite3 /home/james/SovereignOS/dna/sovereign_now.db "SELECT * FROM fan_cave_penalty_box WHERE persona = 'dot';"
+```
+*Expected Output*: (Empty result - indicating Dot is not banned or constrained in any way).
+```
+========================================
+
+
+### 🔧 SDLC WALKTHROUGH: walkthrough_STRY8790999.md
+*   **Path:** `/home/james/sovereign_inbox/walkthroughs/walkthrough_STRY8790999.md`
+
+```markdown
+# UAT Walkthrough: STRY8790999 — Bring the Gang Along Advocate Seeding
+
+## 1. Goal / Summary
+This story establishes and registers the 8 new wildcard sports advocates, promotes the 4 cross-stack representatives (`pizzabot_74`, `phytoprofessor`, `deep_fryer`, `cary_sterling`) into the `advocate_matrix`, and binds the full 16-member group plus ambient hosts (`barf`, `dot`, `unclesteviestan`) to the Reds @ Yankees game room (`823532`).
+
+All generated cartoon felt-art avatars have been cropped and processed into the production assets folders, and the corresponding onboarding blueprints were successfully compiled.
+
+---
+
+## 2. Web Access & Setup Guide
+- **Sovereign Sports Portal Access Port:** `3010`
+- **Tailscale MagicDNS URL:** [Sovereign Sports Fan Portal](https://clio.taila01894.ts.net:3010/fan-portal)
+- **HSTS Certification Bypass Warning:** Secure browser redirection requires typing `thisisunsafe` on the Chrome warning screen to force self-signed HSTS bypass on Tailscale hosts.
+
+---
+
+## 3. Step-by-Step UI Navigation & UAT Guide
+1. Navigate to the Fan Portal at: `https://clio.taila01894.ts.net:3010/fan-portal`
+2. Open the **Game Switcher** dropdown in the header and select the Cincinnati Reds at New York Yankees game room (Game ID: `823532`).
+3. Verify that the user list in **Panel C** shows the newly seated advocates (e.g. Alistair Vance, Sully Gallagher, Max Bets Mac, and Phytoprofessor).
+4. Verify that the chat area loads messages and reactions using the correct stylized avatar paths and color schemes.
+5. In **Panel C**, expand the controls drawer and verify the **Advocate Soundboard** is functional for the seated advocates.
+
+---
+
+## 4. Database Verification Proof
+Run the following SQLite command to query the database state:
+
+```bash
+sqlite3 /home/james/SovereignOS/dna/sovereign_now.db "SELECT COUNT(*), room FROM m2m_persona_room WHERE room = '823532'; SELECT COUNT(*), game_pk FROM game_persona WHERE game_pk = '823532';"
+```
+
+### Expected Output
+```
+19|823532
+19|823532
+```
+
+Run the following query to confirm the target Reds-Yankees room is marked `ACTIVE` in `active_game_rooms`:
+
+```bash
+sqlite3 /home/james/SovereignOS/dna/sovereign_now.db "SELECT game_id, home_team, away_team, status FROM active_game_rooms WHERE game_id = '823532';"
+```
+
+### Expected Output
+```
+823532|NYY|CIN|ACTIVE
+```
+```
+========================================

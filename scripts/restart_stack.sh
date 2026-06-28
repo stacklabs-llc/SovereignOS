@@ -136,6 +136,9 @@ _pkill_daemon "fanstack_background_poller" "fanstack_background_poller.py"
 _pkill_daemon "fanstack_chatbots"          "fanstack_chatbots.py"
 _pkill_daemon "statcast_sentinel"          "statcast_sentinel.py"
 _pkill_daemon "tmi_daemon"                 "tmi_daemon.py"
+_pkill_daemon "sovereign_stream_relay"      "sovereign_stream_relay.py"
+_pkill_daemon "pga_ingest_daemon"           "pga_ingest_daemon.py"
+_pkill_daemon "precog_pipeline"              "precog_pipeline.py"
 
 # Preservation rule: Do not kill port 8000/8008 (fanstack_relay) if it is already healthy,
 # to avoid dropping active live streaming WebSockets for other parallel sessions.
@@ -176,6 +179,9 @@ _pkill9_daemon "fanstack_background_poller" "fanstack_background_poller.py"
 _pkill9_daemon "fanstack_chatbots"          "fanstack_chatbots.py"
 _pkill9_daemon "statcast_sentinel"          "statcast_sentinel.py"
 _pkill9_daemon "tmi_daemon"                 "tmi_daemon.py"
+_pkill9_daemon "sovereign_stream_relay"      "sovereign_stream_relay.py"
+_pkill9_daemon "pga_ingest_daemon"           "pga_ingest_daemon.py"
+_pkill9_daemon "precog_pipeline"              "precog_pipeline.py"
 
 if ss -tlnp 2>/dev/null | grep -q ':8000'; then
     log_info "Preserving healthy fanstack_relay (Port 8000 is active). Skipping relay SIGKILL."
@@ -195,7 +201,7 @@ _pkill9_daemon "mando_watchdog"              "mando_watchdog.py"
 
 # Release all Vite/React frontend port bindings if held
 log_info "Releasing frontend port bindings..."
-for port in 3000 3004 3006 3008 3009 3010 3015 3016 3017 3020 7300; do
+for port in 3000 3004 3006 3008 3009 3010 3015 3016 3017 3020 3022 3024 7300; do
     if fuser ${port}/tcp &>/dev/null; then
         log_warn "Port ${port} still bound. Releasing..."
         fuser -k ${port}/tcp 2>/dev/null || true
@@ -306,6 +312,21 @@ nohup "${VENV_PYTHON}" -u "${SCRIPTS_DIR}/cron_game_monitor.py" \
     >> "${LOG_DIR}/cron_game_monitor.log" 2>&1 &
 log_ok "cron_game_monitor.py → PID $! → ${LOG_DIR}/cron_game_monitor.log"
 
+log_info "Launching sovereign_stream_relay.py (Port 8097)..."
+nohup "${VENV_PYTHON}" -u "${SCRIPTS_DIR}/sovereign_stream_relay.py" \
+    >> "${LOG_DIR}/sovereign_stream_relay.log" 2>&1 &
+log_ok "sovereign_stream_relay.py → PID $! → ${LOG_DIR}/sovereign_stream_relay.log"
+
+log_info "Launching pga_ingest_daemon.py (Port 4005)..."
+nohup "${VENV_PYTHON}" -u "${SCRIPTS_DIR}/pga_ingest_daemon.py" \
+    >> "${LOG_DIR}/pga_ingest_daemon.log" 2>&1 &
+log_ok "pga_ingest_daemon.py → PID $! → ${LOG_DIR}/pga_ingest_daemon.log"
+
+log_info "Launching precog_pipeline.py in daemon mode..."
+nohup "${VENV_PYTHON}" -u "${SCRIPTS_DIR}/precog_pipeline.py" --daemon \
+    >> "${LOG_DIR}/precog_daemon.log" 2>&1 &
+log_ok "precog_pipeline.py (daemon) → PID $! → ${LOG_DIR}/precog_daemon.log"
+
 
 # =============================================================================
 # PHASE 6: FANSTACK VITE FRONTEND (Port 3009)
@@ -367,7 +388,7 @@ _launch_vite() {
 
 _launch_vite "StackLabs Monolith" "${SOVEREIGN_HOME}/16_StackLabsLLC" "3000" "--host 0.0.0.0" "vite_stacklabs.log"
 _launch_vite "Sovereign OS Portal" "${SOVEREIGN_HOME}/01_Sovereign_Portal" "3016" "--host 0.0.0.0" "vite_portal.log"
-_launch_vite "SamTracker Frontend" "${SOVEREIGN_HOME}/14_SamTracker" "3004" "" "vite_sam.log"
+_launch_vite "SamTracker Frontend" "${SOVEREIGN_HOME}/14_SamTracker" "3024" "" "vite_sam.log"
 _launch_vite "Sovereign Media" "${SOVEREIGN_HOME}/02_Sovereign_Media" "3008" "--host 0.0.0.0" "vite_cinema.log"
 _launch_vite "Sovereign Sports" "${SOVEREIGN_HOME}/19_Sovereign_Sports" "3010" "--host 0.0.0.0" "vite_sports.log"
 _launch_vite "Aether Vet Telemedicine" "${SOVEREIGN_HOME}/20_AetherVet" "3015" "--host 0.0.0.0" "aether_vet.log"
@@ -375,13 +396,14 @@ _launch_vite "Storybook Station" "${SOVEREIGN_HOME}/23_EileenStack" "3017" "" "v
 _launch_vite "Barb's Stack" "${SOVEREIGN_HOME}/18_BarbStack" "3020" "" "vite_barb.log"
 _launch_vite "Catnip Wars Sandbox" "/home/james/SovereignOS-sandbox/catnip-wars" "7300" "" "vite_catnip_wars.log"
 _launch_vite "BistroPortal" "${SOVEREIGN_HOME}/16_BistroPortal" "3006" "" "vite_bistro.log"
+_launch_vite "Clio Cockpit Dashboard" "${SOVEREIGN_HOME}/apps/clio_cockpit" "3022" "--host 0.0.0.0" "vite_clio.log"
 
 # =============================================================================
 # PHASE 6.3: MANDO WATCHDOG DAEMON
 # =============================================================================
 log_phase "PHASE 6.3: MANDO WATCHDOG DAEMON"
 log_info "Launching mando_watchdog.py..."
-nohup python3 "${SCRIPTS_DIR}/mando_watchdog.py" >> "${LOG_DIR}/mando_watchdog.log" 2>&1 &
+nohup python3 -u "${SCRIPTS_DIR}/mando_watchdog.py" >> "${LOG_DIR}/mando_watchdog.log" 2>&1 &
 log_ok "mando_watchdog.py → PID $! → ${LOG_DIR}/mando_watchdog.log"
 
 # =============================================================================
@@ -420,6 +442,9 @@ _check_proc "stream_sniper_daemon.py"       "stream_sniper_daemon.py"
 _check_proc "dvr_controller_v2.py"          "dvr_controller_v2.py"
 _check_proc "gameday_continuous_sync.py"    "gameday_continuous_sync.py"
 _check_proc "cron_game_monitor.py"          "cron_game_monitor.py"
+_check_proc "sovereign_stream_relay.py"     "sovereign_stream_relay.py"
+_check_proc "pga_ingest_daemon.py"          "pga_ingest_daemon.py"
+_check_proc "precog_pipeline.py"            "precog_pipeline.py"
 _check_proc "sovereign_core_api.py"         "sovereign_core_api.py"
 _check_proc "sdlc_portal_server.py"         "sdlc_portal_server.py"
 _check_proc "sam_tracker_server.py"         "sam_tracker_server.py"
@@ -429,7 +454,7 @@ _check_proc "mando_watchdog.py"             "mando_watchdog.py"
 echo ""
 echo -e "${BLD}  PORT BINDINGS${RST}"
 echo -e "  ─────────────────────────────────────────────────"
-for port in 8008 3009 8082 8090 8095 8083 8085 3000 3016 3004 3008 3010 3015 3017 3020 7300; do
+for port in 8008 3009 8082 8090 8095 8083 8085 8097 3000 3016 3004 3008 3010 3015 3017 3020 3022 7300; do
     if ss -tlnp 2>/dev/null | grep -q ":${port}"; then
         echo -e "  ${GRN}✓${RST} Port ${port} is bound"
     else
@@ -461,6 +486,9 @@ _tail_log "sentinel" "${LOG_DIR}/statcast_sentinel.log"
 _tail_log "vite"     "${LOG_DIR}/vite.log"
 _tail_log "sync"     "${LOG_DIR}/gameday_sync.log"
 _tail_log "monitor"  "${LOG_DIR}/cron_game_monitor.log"
+_tail_log "stream_relay" "${LOG_DIR}/sovereign_stream_relay.log"
+_tail_log "precog_daemon" "${LOG_DIR}/precog_daemon.log"
+_tail_log "vite_clio" "${LOG_DIR}/vite_clio.log"
 
 echo ""
 echo -e "${BLD}  INBOX SYMLINK${RST}"

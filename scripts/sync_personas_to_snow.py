@@ -47,7 +47,7 @@ def main():
             "title": prompt[:150] + "..." if len(prompt) > 150 else prompt,
             "introduction": lore_content[:4000],  # Use introduction for the Lore payload
             "city": zone,
-            "department": persona.get("u_llm_engine", "gemini"),
+            "department": "gemini",
             "active": "true"
         }
 

@@ -77,6 +77,14 @@ const CONFIG_CARDS: ConfigCard[] = [
     room: 'sys_rules',
   },
   {
+    id: 'sys_docs',
+    title: 'System Docs',
+    subtitle: 'Platform Playbooks',
+    color: '#38bdf8',
+    icon: <BookOpen size={24} />,
+    room: 'sys_docs',
+  },
+  {
     id: 'oracle_guardrails',
     title: 'Oracle Guardrails',
     subtitle: 'Data-Driven Directives',

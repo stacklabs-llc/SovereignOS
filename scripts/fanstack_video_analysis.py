@@ -2,7 +2,7 @@
 import os
 import time
 import json
-import google.generativeai as genai
+from google import genai
 
 # Sovereign OS Target Paths
 SESSION_DIR = "/home/james/SovereignOS/dna/agents/CLAUDE/active_sessions/fa2c2765-235e-46d6-b08a-9cce95a0b65a"
@@ -12,13 +12,13 @@ VIDEO_FILES = [
 ]
 OUTPUT_JSON = os.path.join(SESSION_DIR, "temporal_delta_analysis.json")
 
-def wait_for_video_processing(file_ref):
+def wait_for_video_processing(client, file_ref):
     print(f"Waiting for {file_ref.name} to process...")
-    processed_ref = genai.get_file(file_ref.name)
+    processed_ref = client.files.get(name=file_ref.name)
     while processed_ref.state.name == "PROCESSING":
         print(".", end="", flush=True)
         time.sleep(10)
-        processed_ref = genai.get_file(file_ref.name)
+        processed_ref = client.files.get(name=file_ref.name)
     if processed_ref.state.name == "FAILED":
         raise ValueError(f"Video processing failed for {file_ref.name}")
     print("\nProcessing complete.")
@@ -30,13 +30,8 @@ def analyze_videos():
         print("ERROR: GEMINI_API_KEY environment variable not set. Please export it before running.")
         return
 
-    # Workaround for older SDK: explicitly set both just in case
-    genai.configure(api_key=api_key)
-    
+    client = genai.Client(api_key=api_key)
     analysis_results = []
-    
-    # Use gemini-2.5-flash for best video understanding fallback since 1.5-pro 404s
-    model = genai.GenerativeModel("gemini-2.5-flash")
 
     prompt = """
     You are an expert patent attorney and technical analyst. 
@@ -69,12 +64,15 @@ def analyze_videos():
             continue
             
         print(f"\nUploading {video_name} to Gemini File API...")
-        uploaded_file = genai.upload_file(path=video_path, display_name=video_name)
-        ready_file = wait_for_video_processing(uploaded_file)
+        uploaded_file = client.files.upload(file=video_path)
+        ready_file = wait_for_video_processing(client, uploaded_file)
         
         print(f"Analyzing {video_name}...")
         try:
-            response = model.generate_content([ready_file, prompt])
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[ready_file, prompt]
+            )
             # Parse JSON - assuming the model outputs valid JSON based on strict instructions
             parts_text = []
             if response and response.candidates and len(response.candidates) > 0:
@@ -105,7 +103,7 @@ def analyze_videos():
             print(f"Error during analysis of {video_name}: {e}")
             
         # Clean up the file from Gemini storage to save quota
-        genai.delete_file(uploaded_file.name)
+        client.files.delete(name=uploaded_file.name)
         print(f"Cleaned up {uploaded_file.name} from Gemini File API.")
 
     if analysis_results:

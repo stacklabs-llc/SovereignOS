@@ -8,6 +8,9 @@ import {
   Terminal, Trash2, RefreshCw, ChevronDown, ChevronRight
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
+import { JinxOverlay } from './JinxOverlay';
+import { SpideyMetOverlay } from './SpideyMetOverlay';
+
 
 interface InningDetail {
   num: number;
@@ -53,6 +56,605 @@ interface ChatMessage {
   image?: string;
 }
 
+function playSystemAudio(filename: string) {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const osc = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    osc.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(1500, audioContext.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.15);
+    
+    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
+    
+    osc.start();
+    osc.stop(audioContext.currentTime + 0.15);
+  } catch (audioErr) {
+    console.warn("Dynamic Web Audio fallback failed:", audioErr);
+  }
+
+  try {
+    const audio = new Audio(`/sounds/${filename}`);
+    audio.play().catch(() => {});
+  } catch (e) {
+    // Silent catch
+  }
+}
+
+function triggerSpideyTakeover() {
+  const portalContainer = document.getElementById('main-dashboard-viewport');
+  if (!portalContainer) return;
+  
+  portalContainer.classList.add('tmi-window-shatter');
+  
+  const existingOverlay = document.getElementById('spidey-overlay-layer');
+  if (existingOverlay) {
+    existingOverlay.remove();
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.id = 'spidey-overlay-layer';
+  canvas.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; pointer-events:none;";
+  document.body.appendChild(canvas);
+  
+  try {
+    playSystemAudio('thwip_loud.mp3');
+  } catch (e) {
+    console.warn("[TMI SYSTEM] Audio asset failed or benched. Proceeding with visual-only sequence.");
+  }
+  
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    let frame = 0;
+    const maxFrames = 75;
+    
+    function drawWebBlast() {
+      if (!ctx || !document.getElementById('spidey-overlay-layer')) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const progress = Math.min(frame / maxFrames, 1.0);
+      const alpha = 1.0 - progress;
+      ctx.strokeStyle = `rgba(240, 240, 245, ${alpha * 0.85})`;
+      ctx.lineWidth = (3 + Math.sin(frame * 0.5) * 2) * (1.0 - progress * 0.5);
+      
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      
+      ctx.beginPath();
+      ctx.moveTo(0, 0); ctx.lineTo(centerX * progress, centerY * progress);
+      ctx.moveTo(canvas.width, 0); ctx.lineTo(canvas.width - (canvas.width - centerX) * progress, centerY * progress);
+      ctx.moveTo(0, canvas.height); ctx.lineTo(centerX * progress, canvas.height - (canvas.height - centerY) * progress);
+      ctx.moveTo(canvas.width, canvas.height); ctx.lineTo(canvas.width - (canvas.width - centerX) * progress, canvas.height - (canvas.height - centerY) * progress);
+      ctx.stroke();
+
+      ctx.beginPath();
+      for (let r = 1; r <= 4; r++) {
+        const radius = (canvas.width * 0.1 * r) * progress;
+        ctx.moveTo(centerX + radius, centerY);
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      }
+      ctx.stroke();
+      
+      frame++;
+      if (frame < maxFrames) {
+        requestAnimationFrame(drawWebBlast);
+      }
+    }
+    drawWebBlast();
+  }
+  
+  setTimeout(() => {
+    portalContainer.classList.remove('tmi-window-shatter');
+    canvas.remove();
+    console.log("[TMI SYSTEM] Spidey-Sense Takeover concluded successfully. Environment normalized.");
+  }, 2500);
+}
+
+function triggerAirBenderTakeover() {
+  const portalContainer = document.getElementById('main-dashboard-viewport');
+  if (!portalContainer) return;
+  
+  portalContainer.classList.add('tmi-airbender-shatter');
+  
+  const existingOverlay = document.getElementById('airbender-overlay-layer');
+  if (existingOverlay) {
+    existingOverlay.remove();
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.id = 'airbender-overlay-layer';
+  canvas.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; pointer-events:none;";
+  document.body.appendChild(canvas);
+  
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const bufferSize = audioContext.sampleRate * 2.0;
+    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      data[i] = Math.random() * 2 - 1;
+    }
+    
+    const noise = audioContext.createBufferSource();
+    noise.buffer = buffer;
+    
+    const filter = audioContext.createBiquadFilter();
+    filter.type = 'bandpass';
+    filter.frequency.value = 400;
+    filter.Q.value = 2.0;
+    
+    const gainNode = audioContext.createGain();
+    
+    noise.connect(filter);
+    filter.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    const now = audioContext.currentTime;
+    filter.frequency.setValueAtTime(400, now);
+    filter.frequency.exponentialRampToValueAtTime(1200, now + 0.6);
+    filter.frequency.exponentialRampToValueAtTime(300, now + 1.5);
+    
+    gainNode.gain.setValueAtTime(0.01, now);
+    gainNode.gain.linearRampToValueAtTime(0.25, now + 0.2);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 1.8);
+    
+    noise.start();
+    noise.stop(now + 2.0);
+  } catch (err) {
+    console.warn("Web Audio wind synthesis failed:", err);
+  }
+  
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    let frame = 0;
+    const maxFrames = 150;
+    
+    const img = new Image();
+    img.src = '/images/devin_williams_airbender.png';
+    
+    const particles: Array<{
+      angle: number;
+      radius: number;
+      speed: number;
+      size: number;
+      color: string;
+    }> = [];
+    
+    for (let i = 0; i < 40; i++) {
+      particles.push({
+        angle: Math.random() * Math.PI * 2,
+        radius: 100 + Math.random() * 300,
+        speed: 0.05 + Math.random() * 0.05,
+        size: 2 + Math.random() * 4,
+        color: Math.random() > 0.5 ? 'rgba(186, 230, 253, 0.8)' : 'rgba(255, 255, 255, 0.9)'
+      });
+    }
+    
+    function drawAirBender() {
+      if (!ctx || !document.getElementById('airbender-overlay-layer')) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const progress = Math.min(frame / maxFrames, 1.0);
+      const alpha = progress < 0.2 ? progress / 0.2 : (progress > 0.8 ? (1.0 - progress) / 0.2 : 1.0);
+      
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      
+      particles.forEach(p => {
+        p.angle += p.speed;
+        p.radius -= 1.0;
+        if (p.radius < 10) {
+          p.radius = 300 + Math.random() * 100;
+        }
+        
+        const px = centerX + Math.cos(p.angle) * p.radius;
+        const py = centerY + Math.sin(p.angle) * p.radius * 0.6;
+        
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(px, py, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.globalAlpha = 1.0;
+      
+      if (img.complete) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        const scale = 0.8 + Math.sin(frame * 0.1) * 0.05;
+        const imgW = 260 * scale;
+        const imgH = 260 * scale;
+        
+        ctx.beginPath();
+        ctx.arc(centerX, centerY - 40, imgW / 2, 0, Math.PI * 2);
+        ctx.clip();
+        
+        ctx.drawImage(img, centerX - imgW / 2, centerY - 40 - imgH / 2, imgW, imgH);
+        ctx.restore();
+        
+        ctx.strokeStyle = '#00FFCC';
+        ctx.lineWidth = 4;
+        ctx.shadowColor = '#00FFCC';
+        ctx.shadowBlur = 15;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY - 40, imgW / 2, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+      
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.font = "bold 2.5rem Inter, system-ui";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "#00FFCC";
+      ctx.shadowBlur = 15;
+      ctx.fillText("🌪️ DEVON WILLIAMS 🌪️", centerX, centerY + 140);
+      
+      ctx.font = "italic 1.5rem Inter, system-ui";
+      ctx.fillStyle = "#00FFCC";
+      ctx.fillText("THE AIR BENDER PITCHES!", centerX, centerY + 180);
+      ctx.restore();
+      
+      frame++;
+      if (frame < maxFrames) {
+        requestAnimationFrame(drawAirBender);
+      }
+    }
+    
+    drawAirBender();
+  }
+  
+  setTimeout(() => {
+    portalContainer.classList.remove('tmi-airbender-shatter');
+    canvas.remove();
+    console.log("[TMI SYSTEM] Air Bender Takeover concluded. Environment normalized.");
+  }, 4000);
+}
+
+function triggerMetsBlowItTakeover() {
+  const portalContainer = document.getElementById('main-dashboard-viewport');
+  if (!portalContainer) return;
+  
+  portalContainer.classList.add('tmi-window-shatter');
+  
+  const existingOverlay = document.getElementById('mets-blow-it-overlay-layer');
+  if (existingOverlay) {
+    existingOverlay.remove();
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.id = 'mets-blow-it-overlay-layer';
+  canvas.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; pointer-events:none;";
+  document.body.appendChild(canvas);
+  
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const bufferSize = audioContext.sampleRate * 2.5;
+    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
+    for (let i = 0; i < bufferSize; i++) {
+      const t = i / audioContext.sampleRate;
+      const freq = 500 - (t * 120) + Math.sin(t * Math.PI * 8) * 60;
+      data[i] = Math.sin(2 * Math.PI * freq * t) * 0.25 * (1.0 - t/2.5);
+    }
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioContext.destination);
+    source.start();
+  } catch (err) {
+    console.warn("Mets Blow It audio synthesis failed:", err);
+  }
+
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    let frame = 0;
+    const maxFrames = 180;
+    
+    function drawBlowIt() {
+      if (!ctx || !document.getElementById('mets-blow-it-overlay-layer')) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const progress = Math.min(frame / maxFrames, 1.0);
+      const alpha = progress < 0.15 ? progress / 0.15 : (progress > 0.85 ? (1.0 - progress) / 0.15 : 1.0);
+      
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      
+      const flashAlpha = Math.sin(frame * 0.15) * 0.25 + 0.25;
+      ctx.fillStyle = `rgba(239, 68, 68, ${flashAlpha * alpha})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      const stripeHeight = 35;
+      ctx.fillStyle = `rgba(251, 191, 36, ${alpha})`;
+      ctx.fillRect(0, 0, canvas.width, stripeHeight);
+      ctx.fillRect(0, canvas.height - stripeHeight, canvas.width, stripeHeight);
+      
+      ctx.fillStyle = `rgba(0, 0, 0, ${alpha})`;
+      const stripeWidth = 20;
+      for (let x = -stripeHeight; x < canvas.width + stripeHeight; x += stripeWidth * 2) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + stripeWidth, 0);
+        ctx.lineTo(x + stripeWidth - 15, stripeHeight);
+        ctx.lineTo(x - 15, stripeHeight);
+        ctx.closePath();
+        ctx.fill();
+        
+        ctx.beginPath();
+        ctx.moveTo(x, canvas.height - stripeHeight);
+        ctx.lineTo(x + stripeWidth, canvas.height - stripeHeight);
+        ctx.lineTo(x + stripeWidth - 15, canvas.height);
+        ctx.lineTo(x - 15, canvas.height);
+        ctx.closePath();
+        ctx.fill();
+      }
+      
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.translate(centerX, centerY - 60);
+      
+      ctx.fillStyle = "#FBBF24";
+      ctx.beginPath();
+      ctx.arc(0, 0, 80, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#D97706";
+      ctx.stroke();
+      
+      ctx.strokeStyle = "#451A03";
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.arc(0, 45, 25, Math.PI, 0, false);
+      ctx.stroke();
+      
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(-30, -15);
+      ctx.quadraticCurveTo(-20, -25, -10, -15);
+      ctx.moveTo(10, -15);
+      ctx.quadraticCurveTo(20, -25, 30, -15);
+      ctx.stroke();
+      
+      ctx.fillStyle = "#60A5FA";
+      ctx.beginPath();
+      ctx.arc(-20, 10 + Math.sin(frame * 0.1) * 5, 8, 0, Math.PI * 2);
+      ctx.arc(20, 15 + Math.sin(frame * 0.1 + 1) * 5, 8, 0, Math.PI * 2);
+      ctx.fill();
+      
+      ctx.strokeStyle = "#3B82F6";
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.moveTo(-20, -10);
+      ctx.lineTo(-20, 50);
+      ctx.moveTo(20, -10);
+      ctx.lineTo(20, 50);
+      ctx.stroke();
+      
+      ctx.restore();
+      
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.font = "bold 3rem Impact, Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#ffffff";
+      ctx.shadowColor = "#EF4444";
+      ctx.shadowBlur = 20;
+      
+      const glitchX = (Math.random() - 0.5) * 4;
+      const glitchY = (Math.random() - 0.5) * 4;
+      ctx.fillText("🚨 METS BLOW IT OVERLAY 🚨", centerX + glitchX, centerY + 90 + glitchY);
+      
+      ctx.font = "bold 2rem Inter, sans-serif";
+      ctx.fillStyle = "#FBBF24";
+      ctx.shadowBlur = 10;
+      ctx.fillText("9TH INNING COLLAPSE IN PROGRESS!", centerX, centerY + 145);
+      
+      ctx.font = "italic 1.4rem Inter, sans-serif";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText("OMG OMG WE ARE GOING TO BLOW THE LEAD!!!", centerX, centerY + 190);
+      ctx.restore();
+      
+      frame++;
+      if (frame < maxFrames) {
+        requestAnimationFrame(drawBlowIt);
+      }
+    }
+    
+    drawBlowIt();
+  }
+  
+  setTimeout(() => {
+    portalContainer.classList.remove('tmi-window-shatter');
+    canvas.remove();
+    console.log("[TMI SYSTEM] Mets Blow It Takeover concluded. Environment normalized.");
+  }, 4000);
+}
+
+function triggerMetsWinTakeover() {
+  const portalContainer = document.getElementById('main-dashboard-viewport');
+  if (!portalContainer) return;
+  
+  portalContainer.classList.add('tmi-ghost-shatter');
+  
+  const existingOverlay = document.getElementById('mets-win-overlay-layer');
+  if (existingOverlay) {
+    existingOverlay.remove();
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.id = 'mets-win-overlay-layer';
+  canvas.style.cssText = "position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:9999; pointer-events:none;";
+  document.body.appendChild(canvas);
+  
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const bufferSize = audioContext.sampleRate * 3.0;
+    const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
+    
+    for (let i = 0; i < bufferSize; i++) {
+      const t = i / audioContext.sampleRate;
+      if (t < 1.0) {
+        data[i] = Math.sin(2 * Math.PI * 1200 * t) * 0.15;
+      } else {
+        const localT = (t - 1.0) % 0.6;
+        if (localT < 0.1) {
+          data[i] = Math.sin(2 * Math.PI * 60 * localT) * 0.5 * Math.exp(-localT * 40);
+        } else if (localT > 0.15 && localT < 0.25) {
+          const lT2 = localT - 0.15;
+          data[i] = Math.sin(2 * Math.PI * 55 * lT2) * 0.4 * Math.exp(-lT2 * 40);
+        } else {
+          data[i] = 0;
+        }
+      }
+    }
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioContext.destination);
+    source.start();
+  } catch (err) {
+    console.warn("Mets Win audio synthesis failed:", err);
+  }
+
+  const ctx = canvas.getContext('2d');
+  if (ctx) {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    let frame = 0;
+    const maxFrames = 240;
+    
+    const img = new Image();
+    img.src = '/images/mets_cardiac_win.png';
+    
+    const ecgPoints: Array<{x: number, y: number}> = [];
+    for (let x = 0; x < canvas.width; x += 5) {
+      let y = 0;
+      const centerX = canvas.width / 2;
+      const dist = Math.abs(x - centerX);
+      if (dist < 100 && dist > 80) {
+        y = Math.sin(x * 0.1) * 30;
+      } else if (dist <= 80 && dist > 40) {
+        y = -Math.sin(x * 0.2) * 120;
+      } else if (dist <= 40 && dist > 20) {
+        y = Math.sin(x * 0.3) * 60;
+      }
+      ecgPoints.push({ x, y });
+    }
+    
+    function drawWin() {
+      if (!ctx || !document.getElementById('mets-win-overlay-layer')) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const progress = Math.min(frame / maxFrames, 1.0);
+      const alpha = progress < 0.15 ? progress / 0.15 : (progress > 0.85 ? (1.0 - progress) / 0.15 : 1.0);
+      
+      const centerX = canvas.width / 2;
+      const centerY = canvas.height / 2;
+      
+      const pulse = Math.sin(frame * 0.2) * 0.15 + 0.15;
+      ctx.fillStyle = `rgba(252, 92, 29, ${pulse * alpha})`;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.strokeStyle = '#00D4FF';
+      ctx.lineWidth = 4;
+      ctx.shadowColor = '#00D4FF';
+      ctx.shadowBlur = 20;
+      ctx.beginPath();
+      ecgPoints.forEach((pt, idx) => {
+        const drawX = pt.x;
+        const drawY = centerY + pt.y + Math.sin(frame * 0.1 + pt.x * 0.01) * 10;
+        if (idx === 0) ctx.moveTo(drawX, drawY);
+        else ctx.lineTo(drawX, drawY);
+      });
+      ctx.stroke();
+      ctx.restore();
+      
+      if (img.complete) {
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        const scale = 0.95 + Math.sin(frame * 0.15) * 0.04;
+        const imgW = 320 * scale;
+        const imgH = 320 * scale;
+        
+        ctx.beginPath();
+        ctx.arc(centerX, centerY - 60, imgW / 2, 0, Math.PI * 2);
+        ctx.clip();
+        
+        ctx.drawImage(img, centerX - imgW / 2, centerY - 60 - imgH / 2, imgW, imgH);
+        ctx.restore();
+        
+        ctx.strokeStyle = '#FC5C1D';
+        ctx.lineWidth = 5;
+        ctx.shadowColor = '#FC5C1D';
+        ctx.shadowBlur = 25;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY - 60, imgW / 2, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+      }
+      
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.font = "bold 3.5rem Impact, Inter, sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#ffffff";
+      ctx.strokeStyle = "#002D62";
+      ctx.lineWidth = 2;
+      ctx.shadowColor = "#FC5C1D";
+      ctx.shadowBlur = 15;
+      
+      const glitchX = (Math.random() - 0.5) * 3;
+      ctx.fillText("🎉 METS WIN! 🎉", centerX + glitchX, centerY + 140);
+      ctx.strokeText("🎉 METS WIN! 🎉", centerX + glitchX, centerY + 140);
+      
+      ctx.font = "bold 2.2rem Inter, sans-serif";
+      ctx.fillStyle = "#00D4FF";
+      ctx.fillText("QUEENS CARDIAC ARREST SPECIAL!", centerX, centerY + 190);
+      
+      ctx.font = "italic 1.5rem Inter, sans-serif";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText("I survived the 9th inning heart attack!", centerX, centerY + 235);
+      ctx.restore();
+      
+      frame++;
+      if (frame < maxFrames) {
+        requestAnimationFrame(drawWin);
+      }
+    }
+    
+    drawWin();
+  }
+  
+  setTimeout(() => {
+    portalContainer.classList.remove('tmi-ghost-shatter');
+    canvas.remove();
+    console.log("[TMI SYSTEM] Mets Win Takeover concluded. Environment normalized.");
+  }, 4500);
+}
+
+const checkLinguisticOverlap = (_textA: string, _textB: string): boolean => {
+  return false;
+};
 
 export default function VideoPlayer() {
   const { decorumLevel, setDecorumLevel } = useTheme();
@@ -61,6 +663,27 @@ export default function VideoPlayer() {
   const navigate = useNavigate();
   const wsRef = useRef<WebSocket | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [activeJinx, setActiveJinx] = useState<{ userA: string; userB: string; timestamp: string } | null>(null);
+  const [silencedUsers, setSilencedUsers] = useState<{ [username: string]: number }>({});
+  const [spideyOverlayActive, setSpideyOverlayActive] = useState(false);
+
+  const startSpideyTakeover = () => {
+    triggerSpideyTakeover();
+    setSpideyOverlayActive(true);
+  };
+
+  const startAirBenderTakeover = () => {
+    triggerAirBenderTakeover();
+  };
+
+  const startMetsBlowItTakeover = () => {
+    triggerMetsBlowItTakeover();
+  };
+
+  const startMetsWinTakeover = () => {
+    triggerMetsWinTakeover();
+  };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -137,16 +760,19 @@ export default function VideoPlayer() {
   ]);
   const [inputText, setInputText] = useState('');
   const [roomPersonas, setRoomPersonas] = useState<string[]>(['@barf', '@dot', '@uncle_stevie', '@coach_shrubbs', '@scruffy', '@wardy']);
-  const [showMentions, setShowMentions] = useState(false);
-  const [filteredPersonas, setFilteredPersonas] = useState<string[]>([]);
+  const [mentionState, setMentionState] = useState({ active: false, filter: '', cursorIndex: -1, selectedIndex: 0 });
   const [isSending, setIsSending] = useState(false);
   const [activeRoster, setActiveRoster] = useState<any[]>([]);
   const [roomGeminiTokens, setRoomGeminiTokens] = useState<number>(0);
   const [roomLocalTokens, setRoomLocalTokens] = useState<number>(0);
   const [roomSysTokens, setRoomSysTokens] = useState<number>(0);
   const [showRosterHover, setShowRosterHover] = useState(false);
-  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(0);
   const chatInputRef = useRef<HTMLInputElement>(null);
+
+  const filteredPersonas = (activeRoster && activeRoster.length > 0
+    ? activeRoster.map(u => `@${u.user_name}`)
+    : roomPersonas
+  ).filter(p => p.toLowerCase().includes(mentionState.filter));
 
   // HoloLink WebRTC Calling states
   const [activeCall, setActiveCall] = useState(false);
@@ -330,8 +956,174 @@ export default function VideoPlayer() {
               if (prev.some(m => m.text === newMsg.text && m.user === newMsg.user && m.image === newMsg.image)) {
                 return prev;
               }
+
+              // Check if we have a Jinx trigger: eligible users post overlapping tokens in the same second
+              const isEligibleUser = (username: string) => {
+                return username && username !== 'SYSTEM' && !username.toLowerCase().includes('pilot') && !username.toLowerCase().includes('james');
+              };
+
+              if (isEligibleUser(newMsg.user)) {
+                const jinxMatch = prev.find(m => 
+                  m.time === newMsg.time && 
+                  isEligibleUser(m.user) && 
+                  m.user !== newMsg.user && 
+                  checkLinguisticOverlap(m.text, newMsg.text)
+                );
+
+                if (jinxMatch) {
+                  console.log(`[JINX DETECTED] ${jinxMatch.user} and ${newMsg.user} at ${newMsg.time}`);
+                  setTimeout(() => {
+                    setActiveJinx({
+                      userA: jinxMatch.user,
+                      userB: newMsg.user,
+                      timestamp: newMsg.time
+                    });
+
+                    // Silence userB (slower agent) for 30 seconds
+                    setSilencedUsers(prevSilenced => ({
+                      ...prevSilenced,
+                      [newMsg.user]: Date.now() + 30000
+                    }));
+
+                    // Insert local SYSTEM message notifying room
+                    setMessages(messagesPrev => [...messagesPrev, {
+                      id: `jinx-sys-${Date.now()}`,
+                      user: "SYSTEM",
+                      text: `🚫 [SILENCED BY COKE FACTOR] @${newMsg.user} has been locked out for 30 seconds for duplicate tag-teaming!`,
+                      time: newMsg.time,
+                      color: "#FF5910",
+                      isPersona: true
+                    }]);
+                  }, 50);
+                }
+              }
+
               return [...prev, newMsg];
             });
+          } else if (msg.type === 'webslinger_trigger') {
+            const eventName = msg.event_name;
+            const eventData = msg.data || {};
+            
+            if (eventName === 'SPIDEY_THWIP_OVERLAY' || eventData.animation === 'web_blast' || eventName === 'EMIT_CHAT_FLASH_SPIDY') {
+              startSpideyTakeover();
+              const newMsg: ChatMessage = {
+                id: Date.now().toString() + Math.random().toString(),
+                user: "SYSTEM",
+                text: eventName === 'EMIT_CHAT_FLASH_SPIDY'
+                  ? "💥 Spidy Blast triggered! Swinging through the chat!"
+                  : "🕸️ Spidey Web Blast activated! Multi-mesh overlay active.",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                color: "#38BDF8",
+                isPersona: true
+              };
+              setMessages(prev => [...prev, newMsg]);
+            } else if (eventName === 'OUTRAGE_PROXY_ALERT' || eventData.animation === 'screen_shake') {
+              try {
+                playSystemAudio('dirt_kick_loud.mp3');
+              } catch (e) {
+                console.warn("[TMI SYSTEM] Audio asset failed. Proceeding with visual-only sequence.");
+              }
+              
+              const portalContainer = document.getElementById('main-dashboard-viewport');
+              if (portalContainer) {
+                portalContainer.classList.add('tmi-window-shatter');
+                setTimeout(() => {
+                  portalContainer.classList.remove('tmi-window-shatter');
+                }, 3000);
+              }
+              
+              const newMsg: ChatMessage = {
+                id: Date.now().toString() + Math.random().toString(),
+                user: "SYSTEM",
+                text: "🚨 Umpire Outrage Proxy Alert! Visual and Audio stethoscopes triggered mesh-wide.",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                color: "#EF4444",
+                isPersona: true
+              };
+              setMessages(prev => [...prev, newMsg]);
+            } else if (eventName === 'SIREN_PHYSICAL_OVERRIDE') {
+              try {
+                playSystemAudio('siren_alert.mp3');
+              } catch (e) {
+                console.warn("[TMI SYSTEM] Audio asset failed.");
+              }
+              const portalContainer = document.getElementById('main-dashboard-viewport');
+              if (portalContainer) {
+                portalContainer.classList.add('tmi-siren-flash');
+                setTimeout(() => {
+                  portalContainer.classList.remove('tmi-siren-flash');
+                }, 4000);
+              }
+              const newMsg: ChatMessage = {
+                id: Date.now().toString() + Math.random().toString(),
+                user: "SYSTEM",
+                text: "🚨 SIREN OVERRIDE TRIGGERED: Govee smart bulbs flashing mesh-wide!",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                color: "#EF4444",
+                isPersona: true
+              };
+              setMessages(prev => [...prev, newMsg]);
+            } else if (eventName === 'EMIT_CHAT_AUDIO_GHOST' || eventName === 'EMIT_CHAT_GHOST_OVERLAY') {
+              try {
+                playSystemAudio('ghost_fx.mp3');
+              } catch (e) {
+                console.warn("[TMI SYSTEM] Audio asset failed.");
+              }
+              const newMsg: ChatMessage = {
+                id: Date.now().toString() + Math.random().toString(),
+                user: "SYSTEM",
+                text: "👻 Ghost Protocol Senga Active! Forkball splitter coordinates synchronized.",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                color: "#A78BFA",
+                isPersona: true
+              };
+              setMessages(prev => [...prev, newMsg]);
+            } else if (eventName === 'AIRBENDER_OVERLAY' || eventData.animation === 'airbender') {
+              try {
+                startAirBenderTakeover();
+              } catch (e) {
+                console.error("[TMI SYSTEM] Air Bender Takeover animation failed:", e);
+              }
+              const newMsg: ChatMessage = {
+                id: Date.now().toString() + Math.random().toString(),
+                user: "SYSTEM",
+                text: "🌪️ Devon Williams Air Bender Overlay activated!",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                color: "#00FFCC",
+                isPersona: true
+              };
+              setMessages(prev => [...prev, newMsg]);
+            } else if (eventName === 'METS_BLOW_IT_OVERLAY' || eventData.animation === 'mets_blow_it') {
+              try {
+                startMetsBlowItTakeover();
+              } catch (e) {
+                console.error("[TMI SYSTEM] Mets Blow It Takeover animation failed:", e);
+              }
+              const newMsg: ChatMessage = {
+                id: Date.now().toString() + Math.random().toString(),
+                user: "SYSTEM",
+                text: "🔥 Mets 9th Inning meltdown in progress! PANIC IN QUEENS! 🔥",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                color: "#FF5910",
+                isPersona: true
+              };
+              setMessages(prev => [...prev, newMsg]);
+            } else if (eventName === 'METS_WIN_OVERLAY' || eventData.animation === 'mets_win') {
+              try {
+                startMetsWinTakeover();
+              } catch (e) {
+                console.error("[TMI SYSTEM] Mets Win Takeover animation failed:", e);
+              }
+              const newMsg: ChatMessage = {
+                id: Date.now().toString() + Math.random().toString(),
+                user: "SYSTEM",
+                text: "🎉 Mets Win! Queens Cardiac Arrest Special triggered! 🎉",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                color: "#FC5C1D",
+                isPersona: true
+              };
+              setMessages(prev => [...prev, newMsg]);
+            }
           }
         } catch (e) {
           console.error('Error parsing M.A.R.D state message', e);
@@ -510,7 +1302,7 @@ export default function VideoPlayer() {
 
     const text = inputText;
     setInputText('');
-    setShowMentions(false);
+    setMentionState(prev => ({ ...prev, active: false }));
 
     // 1. Add user message locally
     const userMsg: ChatMessage = {
@@ -550,56 +1342,57 @@ export default function VideoPlayer() {
     const val = e.target.value;
     setInputText(val);
 
-    const cursorPosition = e.target.selectionStart || 0;
-    const textBeforeCursor = val.slice(0, cursorPosition);
-    const mentionMatch = textBeforeCursor.match(/@(\w*)$/);
-    
-    if (mentionMatch) {
-      const searchString = mentionMatch[1].toLowerCase();
-      let matches: string[] = [];
-      if (activeRoster && activeRoster.length > 0) {
-        matches = activeRoster
-          .filter(user => (user.user_name || '').toLowerCase().includes(searchString))
-          .map(user => `@${user.user_name}`);
-      } else {
-        matches = roomPersonas.filter(p => p.toLowerCase().includes(searchString));
-      }
-      setFilteredPersonas(matches);
-      setShowMentions(matches.length > 0);
-      setActiveSuggestionIndex(0);
+    const cursor = e.target.selectionStart || 0;
+    const textBeforeCursor = val.slice(0, cursor);
+    const match = textBeforeCursor.match(/@([a-zA-Z0-9_ -]*)$/);
+
+    if (match) {
+      setMentionState({
+        active: true,
+        filter: match[1].toLowerCase(),
+        cursorIndex: match.index as number,
+        selectedIndex: 0
+      });
     } else {
-      setShowMentions(false);
+      setMentionState({
+        active: false,
+        filter: '',
+        cursorIndex: -1,
+        selectedIndex: 0
+      });
     }
   };
 
   const selectMention = (persona: string) => {
     const cleanPersona = persona.startsWith('@') ? persona : `@${persona}`;
-    const updated = inputText.replace(/@\w*$/, `${cleanPersona} `);
+    const before = inputText.slice(0, mentionState.cursorIndex);
+    const after = inputText.slice(mentionState.cursorIndex + mentionState.filter.length + 1);
+    const updated = `${before}${cleanPersona} ${after}`;
     setInputText(updated);
-    setShowMentions(false);
+    setMentionState({ active: false, filter: '', cursorIndex: -1, selectedIndex: 0 });
     setTimeout(() => {
       if (chatInputRef.current) {
         chatInputRef.current.focus();
-        const len = updated.length;
-        chatInputRef.current.setSelectionRange(len, len);
+        const cursorPoint = before.length + cleanPersona.length + 1;
+        chatInputRef.current.setSelectionRange(cursorPoint, cursorPoint);
       }
     }, 50);
   };
 
   const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (showMentions && filteredPersonas.length > 0) {
+    if (mentionState.active && filteredPersonas.length > 0) {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
-        setActiveSuggestionIndex(prev => (prev + 1) % filteredPersonas.length);
+        setMentionState(prev => ({ ...prev, selectedIndex: (prev.selectedIndex + 1) % filteredPersonas.length }));
       } else if (e.key === 'ArrowUp') {
         e.preventDefault();
-        setActiveSuggestionIndex(prev => (prev - 1 + filteredPersonas.length) % filteredPersonas.length);
+        setMentionState(prev => ({ ...prev, selectedIndex: (prev.selectedIndex - 1 + filteredPersonas.length) % filteredPersonas.length }));
       } else if (e.key === 'Enter') {
         e.preventDefault();
-        selectMention(filteredPersonas[activeSuggestionIndex]);
+        selectMention(filteredPersonas[mentionState.selectedIndex]);
       } else if (e.key === 'Escape') {
         e.preventDefault();
-        setShowMentions(false);
+        setMentionState({ active: false, filter: '', cursorIndex: -1, selectedIndex: 0 });
       }
     }
   };
@@ -717,7 +1510,7 @@ export default function VideoPlayer() {
   };
 
   return (
-    <div className="sports-live-hub" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '1rem', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
+    <div id="main-dashboard-viewport" className="sports-live-hub" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', padding: '1rem', color: '#fff', fontFamily: 'Inter, sans-serif' }}>
       
       {/* Upper Navigation / Environment Header Bar */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '1rem' }}>
@@ -746,7 +1539,7 @@ export default function VideoPlayer() {
               <span style={{ fontSize: '0.65rem', background: '#FF3366', color: '#fff', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 'bold' }}>PROD</span>
             </div>
             <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>
-              Sovereign Oracle Predictive Engine
+              Sovereign Sports Predictive Engine
             </span>
           </div>
         </div>
@@ -759,7 +1552,11 @@ export default function VideoPlayer() {
               onChange={(e) => {
                 const newPk = e.target.value;
                 console.log(`[STATE SYNC] Swapping game PK to: ${newPk}`);
-                navigate(`/stream/${newPk}`);
+                if (!newPk) {
+                  navigate('/mlb');
+                } else {
+                  navigate(`/stream/${newPk}`);
+                }
               }}
               style={{
                 background: 'rgba(255,255,255,0.05)',
@@ -774,9 +1571,12 @@ export default function VideoPlayer() {
                 fontFamily: 'monospace'
               }}
             >
+              <option value="" style={{ background: '#1e293b', color: '#fff' }}>
+                -- Select a Game Room --
+              </option>
               {availableGames.map((game: any) => (
                 <option 
-                  key={game.game_pk} 
+                   key={game.game_pk} 
                   value={game.game_pk}
                   style={{ background: '#1e293b', color: '#fff' }}
                 >
@@ -1674,7 +2474,7 @@ export default function VideoPlayer() {
 
             {/* Message Area */}
             <div style={{ flex: 1, padding: '1rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '420px' }}>
-              {messages.map((m) => (
+              {messages.filter(m => m.user !== 'SYSTEM').map((m) => (
                 <div 
                   key={m.id}
                   style={{
@@ -1686,7 +2486,7 @@ export default function VideoPlayer() {
                   }}
                 >
                   <span style={{ fontSize: '0.65rem', color: m.color || 'rgba(255,255,255,0.4)', marginBottom: '2px', fontWeight: 'bold' }}>
-                    {m.user} &bull; {m.time}
+                    {m.user} &bull; {m.time} {silencedUsers[m.user] && silencedUsers[m.user] > Date.now() && <span style={{ color: '#EF4444' }}>(silenced)</span>}
                   </span>
                   <div 
                     style={{
@@ -1729,7 +2529,7 @@ export default function VideoPlayer() {
             <form onSubmit={handleSendMessage} style={{ padding: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.06)', position: 'relative' }}>
               
               {/* Autocomplete mention list overlay */}
-              {showMentions && filteredPersonas.length > 0 && (
+              {mentionState.active && filteredPersonas.length > 0 && (
                 <div style={{
                   position: 'absolute',
                   bottom: '100%',
@@ -1752,11 +2552,11 @@ export default function VideoPlayer() {
                         cursor: 'pointer',
                         fontSize: '0.8rem',
                         color: '#fff',
-                        background: idx === activeSuggestionIndex ? 'rgba(0, 255, 204, 0.15)' : 'transparent',
+                        background: idx === mentionState.selectedIndex ? 'rgba(0, 255, 204, 0.15)' : 'transparent',
                         borderBottom: idx < filteredPersonas.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none'
                       }}
                       onMouseEnter={() => {
-                        setActiveSuggestionIndex(idx);
+                        setMentionState(prev => ({ ...prev, selectedIndex: idx }));
                       }}
                     >
                       {p}
@@ -1849,6 +2649,8 @@ export default function VideoPlayer() {
 
       </div>
 
+      <SpideyMetOverlay triggerEvent={spideyOverlayActive} onAnimationComplete={() => setSpideyOverlayActive(false)} />
+      <JinxOverlay activeJinx={activeJinx} onClear={() => setActiveJinx(null)} />
     </div>
   );
 }

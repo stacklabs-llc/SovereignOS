@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { SovereignConfig } from '../config/SovereignConfig';
 import LogArchiveModal from './LogArchiveModal';
 interface FanStackPortalProps {
-  onSelectDomain: (domain: 'MLB' | 'NBA' | 'NFL' | 'PGA' | 'SKEW' | 'HOLODEX' | 'ARGUS' | 'EDGE_DVR' | 'STREAM_SNIPER' | 'TELEMETRY' | 'VAULT' | 'STORYBOARD' | 'CMDB' | 'SAVANT' | 'VOCAL' | 'SOVEREIGN_CSS' | 'SCRUFFYS' | 'KANBAN' | 'ROLL_CALL' | 'DREADNOUGHT' | 'HOT_TAKES' | 'ROM_GALLERY' | 'OPTICAL_INGEST' | 'PROMO_INBOX' | 'TOKEN_LEDGER' | 'TMI_NEWS_DESK') => void;
+  onSelectDomain: (domain: 'MLB' | 'NBA' | 'NFL' | 'PGA' | 'SKEW' | 'HOLODEX' | 'ARGUS' | 'EDGE_DVR' | 'STREAM_SNIPER' | 'TELEMETRY' | 'VAULT' | 'STORYBOARD' | 'CMDB' | 'SAVANT' | 'VOCAL' | 'SOVEREIGN_CSS' | 'KANBAN' | 'ROLL_CALL' | 'DREADNOUGHT' | 'HOT_TAKES' | 'ROM_GALLERY' | 'OPTICAL_INGEST' | 'PROMO_INBOX' | 'TOKEN_LEDGER' | 'TMI_NEWS_DESK' | 'ADVOCATE_CENTER' | 'COCKPIT') => void;
 }
 
 export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) {
@@ -24,7 +24,7 @@ export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) 
   const isHomeTheme = osTheme === 'sovereign-home';
 
   return (
-    <div className={`min-h-screen bg-[#0B0E14] text-gray-200 font-['Inter',sans-serif] selection:bg-[#38bdf8]/30 theme-${osTheme} overflow-x-hidden`}>
+    <div className={`h-screen flex flex-col bg-[#0B0E14] text-gray-200 font-['Inter',sans-serif] selection:bg-[#38bdf8]/30 theme-${osTheme} overflow-hidden`}>
       {isLogArchiveOpen && <LogArchiveModal onClose={() => setIsLogArchiveOpen(false)} />}
       
       {/* Minimal Context Header & Theme Selector */}
@@ -41,6 +41,8 @@ export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) 
         </div>
       </header>
       {isLogArchiveOpen && <LogArchiveModal onClose={() => setIsLogArchiveOpen(false)} />}
+
+      <div className="flex-1 overflow-y-auto no-scrollbar pb-10">
 
       {/* Domain Quick Links */}
       <div className="os-panel border-b border-white/5 py-6 lg:py-10 relative">
@@ -102,10 +104,6 @@ export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) 
              <span className="font-['Outfit'] text-xs text-[#8A8A93] tracking-[0.15em] uppercase">Live Operations & Interaction</span>
           </div>
           <div className="flex flex-col space-y-2">
-            <button onClick={() => onSelectDomain('SCRUFFYS')} className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg">
-               <div className="font-['Outfit'] font-bold text-[13px] text-[#38bdf8] group-hover:text-white transition-colors tracking-wide">Scruffy's Tavern</div>
-               <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed">LIVE CHAT & PERSONA INTERACTIONS</div>
-            </button>
             <button onClick={() => onSelectDomain('SKEW')} className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg">
                <div className="font-['Outfit'] font-bold text-[13px] text-[#a855f7] group-hover:text-white transition-colors tracking-wide">The Skew (Live)</div>
                <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed">DAYTIME SPORTS TALK & DEBATE</div>
@@ -176,6 +174,14 @@ export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) 
                <div className="font-['Outfit'] font-bold text-[13px] text-[#38bdf8] group-hover:text-white transition-colors tracking-wide flex items-center gap-2"> Persona Command Center</div>
                <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed uppercase">Manage Personas & Teams</div>
             </button>
+            <button onClick={() => onSelectDomain('ADVOCATE_CENTER')} className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg border border-teal-500/20 bg-teal-500/5">
+               <div className="font-['Outfit'] font-bold text-[13px] text-teal-400 group-hover:text-white transition-colors tracking-wide flex items-center gap-2"> Advocate Center &amp; Lookbook</div>
+               <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed uppercase">Media Library &amp; Lookbook Printing</div>
+            </button>
+            <button onClick={() => onSelectDomain('COCKPIT')} className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg border border-red-500/20 bg-red-500/5">
+               <div className="font-['Outfit'] font-bold text-[13px] text-red-500 group-hover:text-white transition-colors tracking-wide flex items-center gap-2">🛠️ Clio Cockpit Dashboard</div>
+               <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed uppercase">System Telemetry &amp; Controls</div>
+            </button>
             <button onClick={() => onSelectDomain('SAVANT')} className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer rounded-lg">
                <div className="font-['Outfit'] font-bold text-[13px] text-white tracking-wide">Savant Oracle Analytics</div>
                <div className="font-mono text-[#38bdf8] text-[9px] tracking-widest mt-1.5">SQL MLB QUERY ENGINE</div>
@@ -196,6 +202,7 @@ export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) 
           </div>
         </div>
 
+      </div>
       </div>
     </div>
   );

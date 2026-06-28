@@ -22,8 +22,8 @@ DB_PATH = os.path.join(SVR_ROOT, "dna/sovereign_now.db")
 
 # Target Folders inside Inbox Staging
 ROUTES = {
-    "ticket": os.path.join(INBOX_DIR, "tickets"),
-    "config": os.path.join(INBOX_DIR, "configs"),
+    "ticket": os.path.join(INBOX_DIR, "executed"),
+    "config": os.path.join(INBOX_DIR, "executed"),
     "walkthrough": os.path.join(INBOX_DIR, "walkthroughs"),
     "implementation_plan": os.path.join(INBOX_DIR, "implementation_plans"),
     "kb": os.path.join(INBOX_DIR, "kb"),
@@ -53,7 +53,7 @@ def sniff_text_content(content):
         "config": [r"recipe", r"manifest", r"aesthetic style", r"flow prompts", r"3x3 matrix", r"coordinate key"],
         "walkthrough": [r"walkthrough", r"changes made", r"defect tracking"],
         "implementation_plan": [r"implementation plan", r"proposed changes", r"verification plan", r"implementation plan specification"],
-        "kb": [r"backstory", r"deep lore", r"glossary", r"ecosystem specification", r"origin trauma", r"feline rescue fund", r"architectural blueprint", r"base contract", r"implementation specification", r"design specification", r"design dossier"]
+        "kb": [r"backstory", r"deep lore", r"glossary", r"ecosystem specification", r"origin trauma", r"feline rescue fund", r"architectural blueprint", r"base contract", r"implementation specification", r"design specification", r"design dossier", r"knowledge base", r"standards", r"code quality", r"development standards"]
     }
 
     # Score content
@@ -89,7 +89,7 @@ def extract_ticket_meta(content, filename=None):
     meta = {
         "id": "INC" + str(int(h, 16) % 10000000),
         "type": "INC",
-        "state": "STAGED",
+        "state": None,
         "desc": "Semantically Routed Document"
     }
 
@@ -121,7 +121,7 @@ def extract_ticket_meta(content, filename=None):
             meta["type"] = "STRY"
 
     # Extract State/Status (allowing optional colons and multi-line whitespace)
-    state_match = re.search(r'(State|Status)\s*:?\s*`?([A-Za-z_ ]+)`?', content, re.IGNORECASE)
+    state_match = re.search(r'\b(State|Status)\s*:\s*`?([A-Za-z_ ]+)`?', content, re.IGNORECASE)
     if state_match:
         meta["state"] = state_match.group(2).strip()
 
@@ -154,7 +154,7 @@ def extract_ticket_meta(content, filename=None):
     return meta
 
 
-def log_to_sqlite(meta, filename):
+def log_to_sqlite(meta, filename, dest_path=None):
     """
     Maintains ITSM database parity by registering a ticket record.
     """
@@ -164,28 +164,56 @@ def log_to_sqlite(meta, filename):
 
     try:
         import uuid
+        import hashlib
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
 
         # Check if ticket already exists by number
-        cursor.execute("SELECT sys_id FROM sovereign_tickets WHERE number = ?", (meta["id"],))
+        cursor.execute("SELECT sys_id, state FROM sovereign_tickets WHERE number = ?", (meta["id"],))
         row = cursor.fetchone()
         
-        description_text = f"Sovereign Inbox Decision Derby automatically categorized and moved a file.\n\n- File Name: {filename}\n- Source: /home/james/sovereign_inbox/{filename}"
+        existing_sys_id = row[0] if row else None
+        existing_state = row[1] if row else None
         
-        # Determine numeric state for sovereign_tickets
-        num_state = 1  # Default to STAGED
-        if meta["state"].lower() in ["wip", "work in progress", "open"]:
-            num_state = 2
-        elif meta["state"].lower() in ["resolved", "closed", "complete"]:
-            num_state = 4
+        # Read the file description if dest_path exists
+        if dest_path and os.path.exists(dest_path):
+            try:
+                with open(dest_path, 'r', encoding='utf-8', errors='ignore') as wf:
+                    description_text = wf.read()
+            except Exception as read_err:
+                print(f"Failed to read file body: {read_err}")
+                description_text = f"Sovereign Inbox Decision Derby automatically categorized and moved a file.\n\n- File Name: {filename}\n- Source: /home/james/sovereign_inbox/{filename}"
+        else:
+            description_text = f"Sovereign Inbox Decision Derby automatically categorized and moved a file.\n\n- File Name: {filename}\n- Source: /home/james/sovereign_inbox/{filename}"
+        
+        # Determine numeric state and string state
+        if meta["state"] is None:
+            if existing_state is not None:
+                num_state = existing_state
+                # Map numeric state to string state
+                if num_state == 2:
+                    sdlc_state = 'WIP'
+                elif num_state in [4, 5]:
+                    sdlc_state = 'RESOLVED'
+                else:
+                    sdlc_state = 'STAGED'
+            else:
+                num_state = 1
+                sdlc_state = 'STAGED'
+        else:
+            # Determine numeric state for sovereign_tickets
+            num_state = 1  # Default to STAGED
+            if meta["state"].lower() in ["wip", "work in progress", "open"]:
+                num_state = 2
+            elif meta["state"].lower() in ["resolved", "closed", "complete"]:
+                num_state = 4
 
-        # Determine string state for sys_sdlc_task
-        sdlc_state = 'STAGED'
-        if meta["state"].lower() in ["wip", "work in progress", "open"]:
-            sdlc_state = 'WIP'
-        elif meta["state"].lower() in ["resolved", "closed", "complete"]:
-            sdlc_state = 'RESOLVED'
+            # Determine string state for sys_sdlc_task
+            sdlc_state = 'STAGED'
+            if meta["state"].lower() in ["wip", "work in progress", "open"]:
+                sdlc_state = 'WIP'
+            elif meta["state"].lower() in ["resolved", "closed", "complete"]:
+                sdlc_state = 'RESOLVED'
 
         if row:
             sys_id = row[0]
@@ -220,12 +248,126 @@ def log_to_sqlite(meta, filename):
             """, (meta["id"], meta["type"].lower() if meta["type"] == "STRY" else "story", sdlc_state, 'portal_core', meta["desc"]))
         print(f"  [✔] Synced SDLC task: {meta['id']} in state {sdlc_state}")
 
+        # BOM Preservation Safeguard for all tickets
+        if dest_path and os.path.exists(dest_path):
+            file_size = os.path.getsize(dest_path)
+            try:
+                with open(dest_path, 'rb') as f:
+                    md5_hash = hashlib.md5(f.read()).hexdigest()
+            except:
+                md5_hash = None
+
+            # Check if attachment already exists
+            cursor.execute("""
+                SELECT sys_id FROM sys_attachment 
+                WHERE table_name = 'work_order_history' AND table_sys_id = ? AND file_name = ?
+            """, (sys_id, filename))
+            att_row = cursor.fetchone()
+            if att_row:
+                cursor.execute("""
+                    UPDATE sys_attachment 
+                    SET file_path = ?, file_size = ?, md5_hash = ?, sys_updated_on = CURRENT_TIMESTAMP
+                    WHERE sys_id = ?
+                """, (dest_path, file_size, md5_hash, att_row[0]))
+                print(f"  [✔] Updated work_order_history attachment for {meta['id']}")
+            else:
+                att_sys_id = uuid.uuid4().hex
+                cursor.execute("""
+                    INSERT INTO sys_attachment (sys_id, table_name, table_sys_id, file_name, content_type, file_path, file_size, md5_hash, sys_updated_on)
+                    VALUES (?, 'work_order_history', ?, ?, 'text/markdown', ?, ?, ?, CURRENT_TIMESTAMP)
+                """, (att_sys_id, sys_id, filename, dest_path, file_size, md5_hash))
+                print(f"  [✔] Created work_order_history attachment for {meta['id']}")
+
         conn.commit()
         conn.close()
     except Exception as e:
         print(f"  [❌] Failed database write: {e}")
 
+def clean_title_slug(title):
+    import re
+    slug = title.lower()
+    slug = re.sub(r'[^a-z0-9]+', '_', slug)
+    slug = slug.strip('_')
+    return slug
+
+def register_kb_file(filepath, filename):
+    """
+    Registers a KB markdown file by creating a structured knowledge item directory
+    under KNOWLEDGE_DIR so that sync_knowledge_rules can pick it up.
+    """
+    try:
+        import json
+        import hashlib
+        from datetime import datetime
+        
+        with open(filepath, 'r', encoding='utf-8', errors='ignore') as f:
+            content = f.read()
+        content = content.lstrip("\ufeff")
+        
+        # 1. Parse Title
+        title = "Untitled Knowledge Item"
+        for line in content.splitlines()[:5]:
+            if line.strip().startswith("#"):
+                title = line.strip().lstrip("#").strip()
+                break
+        
+        # 2. Parse Document ID / Rule ID
+        doc_id_match = re.search(r'\b(Document ID|Doc ID|ID)\b[\s*:\`]*([A-Za-z0-9\-_]+)', content, re.IGNORECASE)
+        if doc_id_match:
+            doc_id = doc_id_match.group(2).strip().lower().replace("-", "_")
+        else:
+            # Generate a short hash based on title
+            doc_id = "gen_" + hashlib.md5(title.encode('utf-8')).hexdigest()[:8]
+            
+        # 3. Create Slug
+        clean_title = clean_title_slug(title)
+        dir_name = f"ki_{doc_id}_{clean_title}"
+        dir_name = dir_name[:100]
+        
+        # 4. Create target directory structure
+        ki_dir = os.path.join("/home/james/.gemini/antigravity/knowledge", dir_name)
+        artifacts_dir = os.path.join(ki_dir, "artifacts")
+        os.makedirs(artifacts_dir, exist_ok=True)
+        
+        # 5. Extract Summary
+        summary = "No summary provided."
+        summary_match = re.search(r'##\s*(?:1\.\s*)?(?:Executive Summary|Summary|Diagnostic)[\s\S]*?(?=##|\Z)', content, re.IGNORECASE)
+        if summary_match:
+            summary_text = summary_match.group(0).strip()
+            summary_lines = [l for l in summary_text.splitlines() if not l.strip().startswith("#") and l.strip()]
+            if summary_lines:
+                summary = " ".join(summary_lines[:3])[:200] + "..."
+                
+        # 6. Write metadata.json
+        metadata = {
+            "summary": summary,
+            "ArtifactType": "rule",
+            "references": []
+        }
+        with open(os.path.join(ki_dir, "metadata.json"), 'w') as f:
+            json.dump(metadata, f, indent=2)
+            
+        # 7. Write timestamps.json
+        timestamps = {
+            "created": datetime.now().isoformat() + "Z",
+            "updated": datetime.now().isoformat() + "Z"
+        }
+        with open(os.path.join(ki_dir, "timestamps.json"), 'w') as f:
+            json.dump(timestamps, f, indent=2)
+            
+        # 8. Copy file contents as rule.md
+        with open(os.path.join(artifacts_dir, "rule.md"), 'w') as f:
+            f.write(content)
+            
+        print(f"  [✔] Registered Knowledge Item: {dir_name}")
+    except Exception as e:
+        print(f"  [❌] Failed to register KB file: {e}")
+
 def organize_file(filepath):
+    # Skip directories and symlinks to prevent parsing/moving issues (e.g. broken links)
+    if os.path.islink(filepath) or os.path.isdir(filepath):
+        return
+
     filename = os.path.basename(filepath)
     filename_lower = filename.lower()
     
@@ -243,6 +385,12 @@ def organize_file(filepath):
             content = f.read()
         content = content.lstrip("\ufeff")
 
+        # Normalize filename by replacing separators with spaces for clean word boundary matching
+        normalized_name = filename_lower.replace('_', ' ').replace('-', ' ')
+        has_kb_keyword = re.search(r'\b(kb|lore|spec|specification|knowledge|standards?)\b', normalized_name) is not None
+        _, ext = os.path.splitext(filename_lower)
+        is_doc_ext = ext in ['.md', '.txt']
+
         # Prioritize filename-based classification
         if "walkthrough" in filename_lower:
             category = "walkthrough"
@@ -252,12 +400,15 @@ def organize_file(filepath):
             category = "report"
         elif "config" in filename_lower or "recipe" in filename_lower:
             category = "config"
-        elif "kb" in filename_lower or "lore" in filename_lower or "spec" in filename_lower or "specification" in filename_lower:
+        elif is_doc_ext and has_kb_keyword:
             category = "kb"
         elif any(filename_lower.startswith(p) for p in ["wo-", "stry", "inc", "dfct", "enhc"]):
             category = "ticket"
         else:
             category = sniff_text_content(content)
+            # Failsafe: restrict kb classification strictly to document extensions
+            if category == "kb" and not is_doc_ext:
+                category = "report"
             
         dest_folder = ROUTES[category]
         dest_path = os.path.join(dest_folder, filename)
@@ -269,7 +420,9 @@ def organize_file(filepath):
         # If classified as a ticket or configuration, write ITSM ledger
         if category in ["ticket", "config"]:
             meta = extract_ticket_meta(content, filename)
-            log_to_sqlite(meta, filename)
+            log_to_sqlite(meta, filename, dest_path=dest_path)
+        elif category == "kb":
+            register_kb_file(dest_path, filename)
 
     except Exception as e:
         print(f"[❌] Error parsing {filename}: {e}")
@@ -377,10 +530,21 @@ def validate_wireframes():
 
 def run_sorting_hat():
     print("[*] Initiating Semantic Sorting Hat Sweep...")
-    # Scan inbox directory root
+    # Execute pending migrations
+    try:
+        import sys
+        scripts_dir = os.path.dirname(os.path.abspath(__file__))
+        if scripts_dir not in sys.path:
+            sys.path.append(scripts_dir)
+        import sovereign_migrator
+        print("[*] Checking for pending database migrations...")
+        sovereign_migrator.run_migrations()
+    except Exception as mig_err:
+        print(f"[❌] Database migration execution failed: {mig_err}")
+
+    # Scan root of inbox directory only (no recursion into subfolders or project dirs)
     for entry in os.scandir(INBOX_DIR):
         if entry.is_file():
-            # Skip hidden files or system swap files
             if entry.name.startswith('.') or entry.name.endswith('.swp'):
                 continue
             organize_file(entry.path)

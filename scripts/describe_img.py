@@ -1,4 +1,4 @@
-import google.generativeai as genai
+from google import genai
 import os
 import sys
 
@@ -15,8 +15,10 @@ if not key:
     print("NO API KEY!")
     sys.exit(1)
 
-genai.configure(api_key=key)
-model = genai.GenerativeModel('gemini-flash-latest')
-sample = genai.upload_file('/home/james/SovereignOS/dna/screenshots/artemis/2026-03-29 16_27_32-.png')
-resp = model.generate_content(['Describe this image. What application is open?', sample])
+client = genai.Client(api_key=key)
+sample = client.files.upload(file='/home/james/SovereignOS/dna/screenshots/artemis/2026-03-29 16_27_32-.png')
+resp = client.models.generate_content(
+    model='gemini-2.5-flash',
+    contents=['Describe this image. What application is open?', sample]
+)
 print(resp.text)

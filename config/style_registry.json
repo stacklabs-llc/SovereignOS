@@ -1,0 +1,46 @@
+{
+  "styles": [
+    {
+      "id": "90s_cardboard_comic",
+      "display_name": "90s Cardboard Comic",
+      "prompt_tokens": "Hand-drawn ink line-art contours, Calvin and Hobbes style, soft watercolor washes, hand-drawn dialogue bubbles, cardboard and duct tape textures, cozy 90s treehouse aesthetic",
+      "reference_asset": "image_35b3f6.jpg",
+      "best_use_case": "Core FanStack advocate series & Smyrna Heights neighborhood sandbox"
+    },
+    {
+      "id": "unhinged_sticker_pop",
+      "display_name": "Unhinged Sticker Pop",
+      "prompt_tokens": "Chunky white border, die-cut sticker silhouette, saturated colors, pop-art halftone dots, graffiti street art vibes, high contrast cartoon style",
+      "reference_asset": "spitfire_spud.png",
+      "best_use_case": "Reactant agitators & bullpen hecklers"
+    },
+    {
+      "id": "bleacher_realism",
+      "display_name": "Bleacher Realism",
+      "prompt_tokens": "Coarse newspaper print halftone, high contrast photorealistic pencil sketch, sports page illustration, authentic stadium grit, gritty hand-shaded textures",
+      "reference_asset": "the_chicken_man_az.png",
+      "best_use_case": "Veteran traditionalists & historical recap purists"
+    },
+    {
+      "id": "mascot_matrix",
+      "display_name": "Mascot Matrix",
+      "prompt_tokens": "Glitchy green terminal lines, CRT monitor overlay, pixelated mascot iconography, vintage cybernetic console aesthetic, 80s arcade screen design",
+      "reference_asset": "cream_city_crusher.png",
+      "best_use_case": "Data-heavy statcast analysts & automated room announcers"
+    },
+    {
+      "id": "classic_botanical_ink",
+      "display_name": "Classic Botanical Ink",
+      "prompt_tokens": "Vintage pen and ink etching, botanical engraving lines, parchment texture, sepia tones, meticulously detailed cross-hatching, classic 19th-century scientific illustration",
+      "reference_asset": "420_linda.jpeg",
+      "best_use_case": "Artisan craft growers & traditional living-soil purists"
+    },
+    {
+      "id": "corporate_lounge",
+      "display_name": "Corporate Lounge",
+      "prompt_tokens": "Sleek minimalist flat vector, startup corporate Memphis style, corporate blue and warm gray palette, modern clean lines, friendly cartoon tech illustration",
+      "reference_asset": "420_linda.png",
+      "best_use_case": "Compliance advocates & institutional board members"
+    }
+  ]
+}

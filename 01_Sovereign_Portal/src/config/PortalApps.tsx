@@ -1,5 +1,5 @@
 import React from 'react';
-import { Bug, Video, Server, Leaf, UtensilsCrossed, LayoutGrid, FileText, Stethoscope, Shield, Mic, Users, Database, Cpu } from 'lucide-react';
+import { Bug, Video, Server, Leaf, UtensilsCrossed, LayoutGrid, FileText, Stethoscope, Shield, Mic, Users, Database, Cpu, MessageSquare } from 'lucide-react';
 
 export interface PortalAppDef {
   id: string;
@@ -234,7 +234,7 @@ export const PORTAL_APPS: PortalAppDef[] = [
     onClick: (onNavigate) => onNavigate('GLOBAL', 'stack_seeder'),
     defaultVisibleInMain: true,
     defaultVisibleInDirectory: false,
-    category: 'config'
+    category: 'utility'
   },
   // Ensure this clean structure is active for your dynamic launcher card block:
   {
@@ -317,6 +317,28 @@ export const PORTAL_APPS: PortalAppDef[] = [
     color: '#10b981',
     icon: <Cpu size={28} className="text-[#10b981]" />,
     onClick: (onNavigate) => onNavigate('GLOBAL', 'asset_backlog'),
+    defaultVisibleInMain: true,
+    defaultVisibleInDirectory: true,
+    category: 'utility'
+  },
+  {
+    id: 'studio',
+    title: 'Sovereign Studio',
+    subtitle: 'Database Console',
+    color: '#A78BFA',
+    icon: <Database size={28} className="text-[#A78BFA]" />,
+    onClick: (onNavigate) => onNavigate('GLOBAL', 'data'),
+    defaultVisibleInMain: true,
+    defaultVisibleInDirectory: true,
+    category: 'utility'
+  },
+  {
+    id: 'comet_messenger',
+    title: 'Comet Messenger',
+    subtitle: 'Secure Messaging Hub',
+    color: '#38bdf8',
+    icon: <MessageSquare size={28} className="text-[#38bdf8]" />,
+    onClick: (onNavigate) => onNavigate('ROOT', 'starter'),
     defaultVisibleInMain: true,
     defaultVisibleInDirectory: true,
     category: 'utility'

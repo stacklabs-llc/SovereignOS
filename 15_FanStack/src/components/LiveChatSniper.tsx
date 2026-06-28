@@ -51,7 +51,12 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
 
   // Load full persona system prompts from DB on mount
   useEffect(() => {
-    fetch('/api/all_personas').then(r => r.json()).then(d => {
+    const token = localStorage.getItem('sovereign_session_token') || '';
+    fetch('/api/all_personas', {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    }).then(r => r.json()).then(d => {
       const map: Record<string, {system_prompt: string, deep_lore: string, behavior_notes: string}> = {};
       (d.personas || []).forEach((p: any) => {
         map[p.user_name.toLowerCase()] = { system_prompt: p.system_prompt || '', deep_lore: p.deep_lore || '', behavior_notes: p.behavior_notes || '' };
@@ -303,9 +308,13 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
                                   setYoutubeVideoId(vid);
                                   setIsTailing(true);
                                   try {
+                                      const token = localStorage.getItem('sovereign_session_token') || '';
                                       const res = await fetch('/api/snipe/tail', {
                                           method: 'POST',
-                                          headers: {'Content-Type': 'application/json'},
+                                          headers: {
+                                              'Content-Type': 'application/json',
+                                              'Authorization': `Bearer ${token}`
+                                          },
                                           body: JSON.stringify({video_id: vid})
                                       });
                                        const data = await res.json();
@@ -565,9 +574,13 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
                                                     setReplyTarget(null);
                                                     setUserChatInput('');
                                                     try {
+                                                        const token = localStorage.getItem('sovereign_session_token') || '';
                                                         const res = await fetch('/api/hot_take_sniper', {
                                                             method: 'POST',
-                                                            headers: { 'Content-Type': 'application/json' },
+                                                            headers: { 
+                                                                'Content-Type': 'application/json',
+                                                                'Authorization': `Bearer ${token}`
+                                                            },
                                                             body: JSON.stringify({
                                                                 voice: voice,
                                                                 prompt: prompt

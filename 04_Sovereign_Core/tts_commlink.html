@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sovereign OS: Antigravity Vocal Matrix</title>
+    <!-- Preconnect for fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Outfit:wght@400;600;800&family=Playfair+Display:ital,wght@0,700;1,700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Base / Theme Custom CSS Variables default to sovereign-home */
+        :root {
+            --sov-bg: #0f172a;
+            --sov-accent: #38bdf8;
+            --sov-border: rgba(56, 189, 248, 0.2);
+            --sov-glow: rgba(56, 189, 248, 0.4);
+            --sov-text: #f8fafc;
+            --sov-font: 'Outfit', sans-serif;
+            --sov-card-bg: rgba(15, 23, 42, 0.6);
+            --sov-input-bg: rgba(0, 0, 0, 0.3);
+            --sov-muted: rgba(255, 255, 255, 0.5);
+            --sov-pulse-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+        }
+
+        body {
+            font-family: var(--sov-font);
+            background: var(--sov-bg);
+            color: var(--sov-text);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--sov-border);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--sov-accent);
+        }
+
+        header {
+            width: 100%;
+            max-width: 1200px;
+            text-align: left;
+            margin-bottom: 24px;
+            border-bottom: 1px solid var(--sov-border);
+            padding-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-shadow: 0 0 10px var(--sov-glow);
+        }
+
+        .subtitle {
+            font-size: 12px;
+            font-family: 'JetBrains Mono', monospace;
+            color: var(--sov-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            margin-top: 4px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+            width: 100%;
+            max-width: 1200px;
+            flex: 1;
+        }
+
+        @media (min-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .panel-card {
+            background: var(--sov-card-bg);
+            border: 1px solid var(--sov-border);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            position: relative;
+            min-height: 480px;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--sov-border);
+            padding-bottom: 10px;
+            color: var(--sov-accent);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* Status LED indicator styling */
+        .status-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .status-led {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--sov-accent);
+            box-shadow: 0 0 8px var(--sov-accent);
+        }
+
+        .status-led.pulse {
+            animation: statusPulse 2s infinite;
+        }
+
+        @keyframes statusPulse {
+            0% { opacity: 0.5; box-shadow: 0 0 4px var(--sov-pulse-color); background-color: var(--sov-pulse-color); }
+            50% { opacity: 1; box-shadow: 0 0 12px var(--sov-pulse-color); background-color: var(--sov-pulse-color); }
+            100% { opacity: 0.5; box-shadow: 0 0 4px var(--sov-pulse-color); background-color: var(--sov-pulse-color); }
+        }
+
+        /* Toggle switch */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 10px 16px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .toggle-label {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--sov-border);
+            transition: .3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--sov-text);
+            transition: .3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--sov-accent);
+            box-shadow: 0 0 10px var(--sov-glow);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Logs container styling */
+        .log-container {
+            flex: 1;
+            background: var(--sov-input-bg);
+            border: 1px solid var(--sov-border);
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            min-height: 250px;
+            max-height: 350px;
+        }
+
+        .log-entry {
+            border-left: 3px solid var(--sov-accent);
+            padding-left: 12px;
+            margin-bottom: 8px;
+            animation: slideIn 0.3s ease;
+        }
+
+        .log-time {
+            font-size: 10px;
+            color: var(--sov-muted);
+            margin-bottom: 2px;
+        }
+
+        .log-text {
+            line-height: 1.5;
+        }
+
+        .empty-state {
+            color: var(--sov-muted);
+            text-align: center;
+            margin: auto;
+            font-style: italic;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Form elements for Synthesizer */
+        .input-group {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        label {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--sov-muted);
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            background: var(--sov-input-bg);
+            border: 1px solid var(--sov-border);
+            color: var(--sov-text);
+            font-family: var(--sov-font);
+            font-size: 14px;
+            border-radius: 12px;
+            padding: 12px;
+            resize: none;
+            outline: none;
+        }
+
+        textarea:focus {
+            border-color: var(--sov-accent);
+            box-shadow: 0 0 10px var(--sov-glow);
+        }
+
+        select {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--sov-input-bg);
+            border: 1px solid var(--sov-border);
+            color: var(--sov-text);
+            border-radius: 10px;
+            outline: none;
+            font-family: var(--sov-font);
+            font-size: 13px;
+        }
+
+        select:focus {
+            border-color: var(--sov-accent);
+        }
+
+        .slider-control {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .slider-control input[type="range"] {
+            flex: 1;
+            accent-color: var(--sov-accent);
+            background: rgba(255, 255, 255, 0.1);
+            height: 6px;
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .slider-val {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            min-width: 40px;
+            text-align: right;
+        }
+
+        /* Button configurations */
+        .button-bar {
+            display: flex;
+            gap: 12px;
+            margin-top: auto;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 18px;
+            border-radius: 10px;
+            border: none;
+            font-family: var(--sov-font);
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            outline: none;
+        }
+
+        .btn-primary {
+            background: var(--sov-accent);
+            color: var(--sov-bg);
+            box-shadow: 0 0 10px var(--sov-glow);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--sov-border);
+            color: var(--sov-text);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        /* Pixel Theme Custom borders */
+        .theme-pixel .panel-card,
+        .theme-pixel select,
+        .theme-pixel textarea {
+            border: 2px solid var(--sov-accent);
+            border-radius: 0;
+            box-shadow: 4px 4px 0 var(--sov-border);
+        }
+
+        .theme-pixel .slider {
+            border-radius: 0;
+            border: 2px solid var(--sov-accent);
+        }
+
+        .theme-pixel .slider:before {
+            border-radius: 0;
+        }
+
+        .theme-pixel .btn {
+            border-radius: 0;
+            border: 2px solid var(--sov-text);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>🎙️ Vocal Matrix</h1>
+            <div class="subtitle" id="themeName">Antigravity Synthesizer Proxy</div>
+        </div>
+        <div class="status-container">
+            <span class="status-led" id="pulseLed"></span>
+            <span id="statusText">STANDBY</span>
+        </div>
+    </header>
+
+    <main class="dashboard-grid">
+        
+        <!-- BROADCAST RECEIVER PANEL -->
+        <section class="panel-card" id="broadcastCard">
+            <h2 class="panel-title">
+                Broadcast Receiver
+            </h2>
+            
+            <div class="toggle-container">
+                <span class="toggle-label">Enable Voice Synthesizer</span>
+                <label class="switch">
+                    <input type="checkbox" id="autoSynthesize" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="log-container" id="transcriptLog">
+                <div class="empty-state">Initialize connection to load transcripts...</div>
+            </div>
+
+            <div class="button-bar" style="margin-top: 20px;">
+                <button class="btn btn-primary" id="initBtn" onclick="initAudio()">Initialize Stream</button>
+            </div>
+        </section>
+
+        <!-- MANUAL SPEECH SYNTHESIZER PANEL -->
+        <section class="panel-card" id="manualCard">
+            <h2 class="panel-title">
+                Manual Synthesizer
+            </h2>
+
+            <div class="input-group">
+                <label for="textInput">Text to Speak</label>
+                <textarea id="textInput" placeholder="Enter or paste text here to read aloud..."></textarea>
+            </div>
+
+            <div class="input-group">
+                <label for="voiceSelect">Voice Engine</label>
+                <select id="voiceSelect"></select>
+            </div>
+
+            <div class="dashboard-grid" style="grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+                <div class="input-group">
+                    <label for="rateInput">Speed</label>
+                    <div class="slider-control">
+                        <input type="range" id="rateInput" min="0.5" max="2.0" step="0.1" value="1.0">
+                        <span class="slider-val" id="rateVal">1.0x</span>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="pitchInput">Pitch</label>
+                    <div class="slider-control">
+                        <input type="range" id="pitchInput" min="0.5" max="1.5" step="0.1" value="1.0">
+                        <span class="slider-val" id="pitchVal">1.0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-bar">
+                <button class="btn btn-primary" onclick="speakManual()">Speak</button>
+                <button class="btn btn-secondary" onclick="pauseSpeech()">Pause</button>
+                <button class="btn btn-secondary" onclick="resumeSpeech()">Resume</button>
+                <button class="btn btn-secondary" onclick="clearManual()" style="flex: 0 0 auto; min-width: 50px;">Clear</button>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Theme preset definition
+        const THEME_PRESETS = {
+            'sovereign-home': {
+                bg: '#0f172a',
+                accent: '#38bdf8',
+                border: 'rgba(56, 189, 248, 0.2)',
+                glow: 'rgba(56, 189, 248, 0.4)',
+                text: '#f8fafc',
+                font: "'Outfit', sans-serif",
+                cardBg: 'rgba(15, 23, 42, 0.6)',
+                inputBg: 'rgba(0, 0, 0, 0.3)',
+                muted: 'rgba(255, 255, 255, 0.5)',
+                pulseColor: '#ef4444'
+            },
+            'stacklabs': {
+                bg: '#030305',
+                accent: '#00d4ff',
+                border: 'rgba(0, 212, 255, 0.2)',
+                glow: 'rgba(0, 212, 255, 0.4)',
+                text: '#f3f4f6',
+                font: "'JetBrains Mono', monospace",
+                cardBg: 'rgba(3, 3, 5, 0.7)',
+                inputBg: 'rgba(0, 0, 0, 0.5)',
+                muted: 'rgba(255, 255, 255, 0.4)',
+                pulseColor: '#00d4ff'
+            },
+            'espn': {
+                bg: '#f8f9fa',
+                accent: '#cc0000',
+                border: 'rgba(204, 0, 0, 0.2)',
+                glow: 'rgba(204, 0, 0, 0.1)',
+                text: '#111827',
+                font: "'Outfit', sans-serif",
+                cardBg: '#ffffff',
+                inputBg: '#f1f5f9',
+                muted: 'rgba(0, 0, 0, 0.5)',
+                pulseColor: '#cc0000'
+            },
+            'pixel': {
+                bg: '#000000',
+                accent: '#00fa1b',
+                border: 'rgba(0, 250, 27, 0.4)',
+                glow: 'rgba(0, 250, 27, 0.4)',
+                text: '#00fa1b',
+                font: "'JetBrains Mono', monospace",
+                cardBg: '#000000',
+                inputBg: '#000000',
+                muted: 'rgba(0, 250, 27, 0.6)',
+                pulseColor: '#00fa1b'
+            },
+            'linux': {
+                bg: '#020202',
+                accent: '#00ff00',
+                border: '#00ff00',
+                glow: 'rgba(0, 255, 0, 0.5)',
+                text: '#00ff00',
+                font: "'Courier New', Courier, monospace",
+                cardBg: '#020202',
+                inputBg: '#000000',
+                muted: 'rgba(0, 255, 0, 0.6)',
+                pulseColor: '#00ff00'
+            },
+            'steamboat': {
+                bg: '#dfdcd4',
+                accent: '#111111',
+                border: '#333333',
+                glow: 'transparent',
+                text: '#111111',
+                font: "'Playfair Display', serif",
+                cardBg: 'rgba(223, 220, 212, 0.8)',
+                inputBg: 'rgba(255, 255, 255, 0.5)',
+                muted: 'rgba(17, 17, 17, 0.6)',
+                pulseColor: '#111111'
+            },
+            'aether-vet': {
+                bg: '#f8fafc',
+                accent: '#a78bfa',
+                border: 'rgba(167, 139, 250, 0.2)',
+                glow: 'rgba(167, 139, 250, 0.3)',
+                text: '#0f172a',
+                font: "'Outfit', sans-serif",
+                cardBg: '#ffffff',
+                inputBg: '#f1f5f9',
+                muted: 'rgba(15, 23, 42, 0.5)',
+                pulseColor: '#ef4444'
+            },
+            'gardenstack': {
+                bg: '#fefce8',
+                accent: '#65a30d',
+                border: 'rgba(101, 163, 13, 0.2)',
+                glow: 'rgba(101, 163, 13, 0.3)',
+                text: '#1e293b',
+                font: "'Outfit', sans-serif",
+                cardBg: '#ffffff',
+                inputBg: '#fefcee',
+                muted: 'rgba(30, 41, 59, 0.5)',
+                pulseColor: '#ea580c'
+            },
+            'storybook-sapphire': {
+                bg: '#0f172a',
+                accent: '#38bdf8',
+                border: '#38bdf8',
+                glow: 'rgba(56, 189, 248, 0.5)',
+                text: '#f8fafc',
+                font: "'Outfit', sans-serif",
+                cardBg: 'rgba(15, 23, 42, 0.8)',
+                inputBg: 'rgba(0, 0, 0, 0.4)',
+                muted: 'rgba(255, 255, 255, 0.5)',
+                pulseColor: '#ef4444'
+            }
+        };
+
+        // Parse query parameter and apply theme
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeTheme = urlParams.get('theme') || 'sovereign-home';
+        const config = THEME_PRESETS[activeTheme] || THEME_PRESETS['sovereign-home'];
+
+        // Apply theme variables
+        document.documentElement.style.setProperty('--sov-bg', config.bg);
+        document.documentElement.style.setProperty('--sov-accent', config.accent);
+        document.documentElement.style.setProperty('--sov-border', config.border);
+        document.documentElement.style.setProperty('--sov-glow', config.glow);
+        document.documentElement.style.setProperty('--sov-text', config.text);
+        document.documentElement.style.setProperty('--sov-font', config.font);
+        document.documentElement.style.setProperty('--sov-card-bg', config.cardBg);
+        document.documentElement.style.setProperty('--sov-input-bg', config.inputBg);
+        document.documentElement.style.setProperty('--sov-muted', config.muted);
+        document.documentElement.style.setProperty('--sov-pulse-color', config.pulseColor);
+
+        // Add class to body
+        document.body.classList.add(`theme-${activeTheme}`);
+        document.getElementById('themeName').innerText = `Antigravity Proxy // Theme: ${activeTheme.replace('-', ' ')}`;
+
+        // Web Speech synthesis logic
+        let voices = [];
+        let lastPayloadId = null;
+        let isInitialized = false;
+
+        function populateVoiceList() {
+            voices = speechSynthesis.getVoices();
+            const voiceSelect = document.getElementById('voiceSelect');
+            const selectedVal = voiceSelect.value;
+            voiceSelect.innerHTML = '';
+            
+            voices.forEach((voice, i) => {
+                const option = document.createElement('option');
+                option.textContent = `${voice.name} (${voice.lang})`;
+                option.value = i;
+                
+                // Select British Male voice, Microsoft Guy/David/Daniel if matches
+                if (voice.name.includes("UK English Male") || voice.name.includes("David") || voice.name.includes("Guy") || voice.name.includes("Daniel")) {
+                    option.selected = true;
+                }
+                voiceSelect.appendChild(option);
+            });
+
+            // Retain previous value if it exists
+            if (selectedVal !== "") {
+                voiceSelect.value = selectedVal;
+            }
+        }
+
+        populateVoiceList();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoiceList;
+        }
+
+        // Handle Slider inputs display
+        const rateInput = document.getElementById('rateInput');
+        const rateVal = document.getElementById('rateVal');
+        rateInput.addEventListener('input', () => {
+            rateVal.innerText = `${rateInput.value}x`;
+        });
+
+        const pitchInput = document.getElementById('pitchInput');
+        const pitchVal = document.getElementById('pitchVal');
+        pitchInput.addEventListener('input', () => {
+            pitchVal.innerText = pitchInput.value;
+        });
+
+        // Initialize Audio Connection
+        function initAudio() {
+            isInitialized = true;
+            document.getElementById('statusText').innerText = "LISTENING";
+            document.getElementById('pulseLed').classList.add('pulse');
+            document.getElementById('initBtn').innerText = "Reconnect Matrix";
+            
+            const logBox = document.getElementById('transcriptLog');
+            logBox.innerHTML = '<div class="log-entry"><div class="log-time">' + new Date().toLocaleTimeString() + '</div><div class="log-text">Matrix connection initialized. Listening for audio payloads...</div></div>';
+
+            // Speak a short test to unlock audio context
+            const testMsg = new SpeechSynthesisUtterance("Vocal matrix initialized.");
+            const voiceIdx = document.getElementById('voiceSelect').value;
+            if (voices[voiceIdx]) {
+                testMsg.voice = voices[voiceIdx];
+            }
+            testMsg.pitch = parseFloat(pitchInput.value);
+            testMsg.rate = parseFloat(rateInput.value);
+            window.speechSynthesis.speak(testMsg);
+        }
+
+        // Poll for new broadcast texts
+        async function checkPayload() {
+            if (!isInitialized) return;
+            try {
+                const response = await fetch('tts_payload.json?t=' + new Date().getTime());
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.id !== lastPayloadId && data.id !== null) {
+                        lastPayloadId = data.id;
+
+                        // Add to log view
+                        const logBox = document.getElementById('transcriptLog');
+                        const emptyState = logBox.querySelector('.empty-state');
+                        if (emptyState) emptyState.remove();
+
+                        const newEntry = document.createElement('div');
+                        newEntry.className = 'log-entry';
+                        newEntry.innerHTML = `<div class="log-time">${new Date().toLocaleTimeString()}</div><div class="log-text">${data.text}</div>`;
+                        logBox.appendChild(newEntry);
+                        logBox.scrollTop = logBox.scrollHeight;
+
+                        // Only speak if autoSynthesize toggle is enabled
+                        const autoSynthesize = document.getElementById('autoSynthesize').checked;
+                        if (autoSynthesize) {
+                            document.getElementById('statusText').innerText = "SPEAKING";
+                            
+                            const msg = new SpeechSynthesisUtterance(data.text);
+                            const voiceIdx = document.getElementById('voiceSelect').value;
+                            if (voices[voiceIdx]) {
+                                msg.voice = voices[voiceIdx];
+                            }
+                            
+                            msg.pitch = parseFloat(pitchInput.value);
+                            msg.rate = parseFloat(rateInput.value);
+
+                            msg.onend = function() {
+                                document.getElementById('statusText').innerText = "LISTENING";
+                            };
+
+                            window.speechSynthesis.speak(msg);
+                        }
+                    }
+                }
+            } catch (err) {
+                console.warn("Retrying payload connection...");
+            }
+        }
+
+        // Poll every 2 seconds
+        setInterval(checkPayload, 2000);
+
+        // Manual controls
+        function speakManual() {
+            const text = document.getElementById('textInput').value.trim();
+            if (!text) return;
+
+            window.speechSynthesis.cancel(); // Terminate existing speech
+
+            const msg = new SpeechSynthesisUtterance(text);
+            const voiceIdx = document.getElementById('voiceSelect').value;
+            if (voices[voiceIdx]) {
+                msg.voice = voices[voiceIdx];
+            }
+            msg.pitch = parseFloat(pitchInput.value);
+            msg.rate = parseFloat(rateInput.value);
+
+            document.getElementById('statusText').innerText = "SPEAKING";
+            msg.onend = function() {
+                document.getElementById('statusText').innerText = isInitialized ? "LISTENING" : "STANDBY";
+            };
+
+            window.speechSynthesis.speak(msg);
+        }
+
+        function pauseSpeech() {
+            window.speechSynthesis.pause();
+            document.getElementById('statusText').innerText = "PAUSED";
+        }
+
+        function resumeSpeech() {
+            window.speechSynthesis.resume();
+            document.getElementById('statusText').innerText = "SPEAKING";
+        }
+
+        function clearManual() {
+            document.getElementById('textInput').value = '';
+        }
+    </script>
+</body>
+</html>

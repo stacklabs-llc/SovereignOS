@@ -158,7 +158,16 @@ export default function WatchPartyConsole() {
             <div className="h-10 bg-[#18181b] border-b border-white/5 flex items-center px-4 shrink-0 justify-between">
                 <span className="text-xs font-bold text-gray-300 tracking-wider">LIVE CHAT</span>
                 <button 
-                  onClick={() => setIsRoomBuilderOpen(true)}
+                  onClick={() => {
+                    const params = new URLSearchParams(window.location.search);
+                    params.set('domain', 'GLOBAL');
+                    params.set('room', 'room_builder');
+                    if (isRomLoaded && activeRom.gamePk) {
+                      params.set('_game_room', activeRom.gamePk);
+                    }
+                    window.history.pushState({}, '', '?' + params.toString());
+                    window.dispatchEvent(new PopStateEvent('popstate'));
+                  }}
                   className="bg-[#38bdf8]/10 hover:bg-[#38bdf8]/20 border border-[#38bdf8]/30 rounded px-2 py-0.5 text-[9px] font-bold tracking-widest text-[#38bdf8] uppercase font-mono"
                 >BUILD ROOM</button>
             </div>

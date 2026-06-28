@@ -308,6 +308,11 @@ async def websocket_handler(request):
                             os.makedirs(os.path.dirname(filepath_dist), exist_ok=True)
                             await asyncio.to_thread(save_file, filepath_dist, img_data)
                             
+                        # Also copy to raw_uploads to trigger style transfer watcher
+                        raw_upload_path = f"/home/james/SovereignOS/apps/samtracker/storage/raw_uploads/{filename}"
+                        os.makedirs(os.path.dirname(raw_upload_path), exist_ok=True)
+                        await asyncio.to_thread(save_file, raw_upload_path, img_data)
+                        
                         msg += f" ||| IMG:/media/{filename}"
                     except Exception as e:
                         print("Error saving image:", e)
@@ -624,6 +629,16 @@ async def handle_internal_cat_alert(request):
     except Exception as e:
         return web.json_response({"status": "error", "message": str(e)}, status=500)
 
+async def handle_internal_reload_state(request):
+    try:
+        events, config_data = await asyncio.to_thread(db_load_events)
+        state["last_events"] = events
+        state.update(config_data)
+        await broadcast_state()
+        return web.json_response({"status": "success"})
+    except Exception as e:
+        return web.json_response({"status": "error", "message": str(e)}, status=500)
+
 async def index_handler(request):
     headers = {
         "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
@@ -644,6 +659,9 @@ async def main():
     
     app.router.add_post('/sam/api/internal/cat_alert', handle_internal_cat_alert)
     app.router.add_post('/api/internal/cat_alert', handle_internal_cat_alert)
+    
+    app.router.add_post('/sam/api/internal/reload_state', handle_internal_reload_state)
+    app.router.add_post('/api/internal/reload_state', handle_internal_reload_state)
     
     app.router.add_get('/sam/ws', websocket_handler)
     app.router.add_get('/ws', websocket_handler)

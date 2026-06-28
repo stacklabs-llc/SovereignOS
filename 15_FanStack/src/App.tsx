@@ -9,7 +9,6 @@ import SovereignCinemaRemote from "./components/SovereignCinemaRemote";
 import PersonaConsole from "./components/PersonaConsole";
 import GodModeInjector from "./components/GodModeInjector";
 import UhfStudio from "./components/UhfStudio";
-import MobileHololink from "./components/MobileHololink";
 import RoomConfigurator from "./components/RoomConfigurator";
 import CaptureDeck from "./components/CaptureDeck";
 import WatchPartyConsole from "./components/WatchPartyConsole";
@@ -32,8 +31,6 @@ import KnowledgeHub from "./components/KnowledgeHub";
 import ServiceOperationsWorkspace from "./components/ServiceOperationsWorkspace";
 import { CypherCellModal } from "./components/CypherCellModal";
 import { VocalMatrixPayload } from "./components/VocalMatrixPayload";
-import HololinkModal from "./components/HololinkModal";
-import HololinkHub from "./components/HololinkHub";
 import PayloadCourier from "./components/PayloadCourier";
 import SovereignHelpAgent from "./components/SovereignHelpAgent";
 import UmpireJakeModal from "./components/UmpireJakeModal";
@@ -51,11 +48,13 @@ import StreamSniperConsole from "./components/StreamSniperConsole";
 import HighlightHeistConsole from "./components/HighlightHeistConsole";
 import SovereignThemeLab from "./components/SovereignThemeLab";
 import ArgusNexusConsole from "./components/ArgusNexusConsole";
+import InteractiveCockpit from "./components/InteractiveCockpit";
 import TMINewsDesk from "./components/TMINewsDesk";
 import StoryboardGallery from "./components/StoryboardGallery";
 import RollCallDashboard from "./components/RollCallDashboard";
 import SovereignThemeManager from "./components/SovereignThemeManager";
-import PersonaCenter from "./components/PersonaCenter";
+import AdvocateCenter from "./components/AdvocateCenter";
+import AdvocateLookbook from "./components/AdvocateLookbook";
 
 import SovereignOsPortal from "./components/SovereignOsPortal";
 import FanLobby from "./components/FanLobby";
@@ -65,7 +64,6 @@ import DreadnoughtConsole from "./components/DreadnoughtConsole";
 import NewTicketModal from "./components/NewTicketModal";
 import HotTakesConsole from "./components/HotTakesConsole";
 import ModelArena from "./components/ModelArena";
-import ScruffysTavern from "./components/ScruffysTavern";
 import RoomBuilder from "./components/RoomBuilder";
 import FanStackRoom from "./components/FanStackRoom";
 import OpticalIngestConsole from "./components/OpticalIngestConsole";
@@ -172,10 +170,10 @@ export default function App() {
   const [agentAvatar, setAgentAvatar] = useState(() => localStorage.getItem('sovereign_agent_avatar') || '/avatars/Sovereign_OS_Logo.jpg');
   // STRY1779338878 — deep-link ticket number
   const [deepLinkTicket, setDeepLinkTicket] = useState<string | null>(null);
-  const [activeRoom, setActiveRoom] = useState<"starter" | "claude" | "scruffys" | "auditor" | "void" | "data" | "pegasus" | "persona_console" | "uhf_studio" | "god_mode" | "rom_gallery" | "configurator" | "log_viewer" | "playcall_desk" | "tmi_news_desk" | "the_skew" | "shatcast_vision" | "persona_center" | "knowledge_hub" | "sow" | "courier" | "promo_inbox" | "nexus_telemetry" | "artifact_gallery" | "fanstack_sandbox" | "savant_query" | "vocal_matrix" | "storyboard_deck" | "holodex" | "edge_dvr" | "stream_sniper" | "highlight_heist" | "live_chat_sniper" | "sovereign_css" | "factory_dashboard" | "aether_vet" | "kanban" | "roll_call" | "dreadnought" | "theme_manager" | "argus_nexus" | "hot_takes" | "model_arena" | "optical_ingest" | "user_mgmt" | "portal_layout" | "pixel_dropzone" | "system_config" | "user_management" | "amen_corner" | "sys_rules" | "fan_lobby" | "weedstack" | "prospectus" | "stacklabs" | "token_ledger" | "game_log_export" | "room_builder">(() => {
+  const [activeRoom, setActiveRoom] = useState<"starter" | "claude" | "auditor" | "void" | "data" | "pegasus" | "persona_console" | "uhf_studio" | "god_mode" | "rom_gallery" | "configurator" | "log_viewer" | "playcall_desk" | "tmi_news_desk" | "the_skew" | "shatcast_vision" | "advocate_center" | "advocate_lookbook" | "knowledge_hub" | "sow" | "courier" | "promo_inbox" | "nexus_telemetry" | "artifact_gallery" | "fanstack_sandbox" | "savant_query" | "vocal_matrix" | "storyboard_deck" | "holodex" | "edge_dvr" | "stream_sniper" | "highlight_heist" | "live_chat_sniper" | "sovereign_css" | "factory_dashboard" | "aether_vet" | "kanban" | "roll_call" | "dreadnought" | "theme_manager" | "argus_nexus" | "hot_takes" | "model_arena" | "optical_ingest" | "user_mgmt" | "portal_layout" | "pixel_dropzone" | "system_config" | "user_management" | "amen_corner" | "sys_rules" | "fan_lobby" | "weedstack" | "prospectus" | "stacklabs" | "token_ledger" | "game_log_export" | "room_builder" | "cockpit">(() => {
     const params = new URLSearchParams(window.location.search);
     const room = params.get('room');
-    const validRooms = ["starter", "claude", "scruffys", "auditor", "void", "data", "pegasus", "persona_console", "uhf_studio", "god_mode", "rom_gallery", "configurator", "log_viewer", "playcall_desk", "tmi_news_desk", "the_skew", "shatcast_vision", "persona_center", "knowledge_hub", "sow", "courier", "promo_inbox", "nexus_telemetry", "artifact_gallery", "fanstack_sandbox", "savant_query", "vocal_matrix", "storyboard_deck", "holodex", "edge_dvr", "stream_sniper", "highlight_heist", "live_chat_sniper", "sovereign_css", "factory_dashboard", "aether_vet", "kanban", "roll_call", "dreadnought", "theme_manager", "argus_nexus", "hot_takes", "model_arena", "optical_ingest", "portal_layout", "fan_lobby", "weedstack", "prospectus", "stacklabs", "room_builder"];
+    const validRooms = ["starter", "claude", "auditor", "void", "data", "pegasus", "persona_console", "uhf_studio", "god_mode", "rom_gallery", "configurator", "log_viewer", "playcall_desk", "tmi_news_desk", "the_skew", "shatcast_vision", "advocate_center", "advocate_lookbook", "knowledge_hub", "sow", "courier", "promo_inbox", "nexus_telemetry", "artifact_gallery", "fanstack_sandbox", "savant_query", "vocal_matrix", "storyboard_deck", "holodex", "edge_dvr", "stream_sniper", "highlight_heist", "live_chat_sniper", "sovereign_css", "factory_dashboard", "aether_vet", "kanban", "roll_call", "dreadnought", "theme_manager", "argus_nexus", "hot_takes", "model_arena", "optical_ingest", "portal_layout", "fan_lobby", "weedstack", "prospectus", "stacklabs", "room_builder", "cockpit"];
     if (room && validRooms.includes(room)) return room as any;
     return "starter";
   });
@@ -262,7 +260,6 @@ export default function App() {
   const [usePegasusFeed, setUsePegasusFeed] = useState(false);
   const [isMobileRemote, setIsMobileRemote] = useState(false);
   const [isCinemaRemote, setIsCinemaRemote] = useState(false);
-  const [isMobileHololink, setIsMobileHololink] = useState(false);
   const [isTicketModalOpen, setIsTicketModalOpen] = useState(false);
 
   const [fanstackTheme, setFanstackTheme] = useState<"synthwave" | "steamboat" | "pixel">("synthwave");
@@ -286,7 +283,7 @@ export default function App() {
     if (room === 'the_skew' || room === 'hot_takes') return 'SKEW';
     if (room === 'holodex') return 'HOLODEX';
     if (room === 'argus_nexus') return 'ARGUS';
-    if (room === 'scruffys' || room === 'savant_query' || room === 'tmi_news_desk') return 'MLB';
+    if (room === 'savant_query' || room === 'tmi_news_desk') return 'MLB';
     
     return "PORTAL";
   });
@@ -305,13 +302,13 @@ export default function App() {
   
   useEffect(() => {
     if (isFan) {
-      // Force fans out of the creator portal and into the MLB matrix
+      // Force fans out of the creator portal and into the Command Center
       if (activeDomain !== 'MLB' && activeDomain !== 'PGA') {
         setActiveDomain('MLB');
-        window.history.replaceState({}, '', '?domain=MLB&room=scruffys');
+        window.history.replaceState({}, '', '?domain=MLB&room=starter');
       }
-      if (activeRoom !== 'scruffys' && activeRoom !== 'amen_corner') {
-        setActiveRoom('scruffys');
+      if (activeRoom !== 'starter' && activeRoom !== 'amen_corner') {
+        setActiveRoom('starter');
       }
     }
   }, [isFan, activeRoom, activeDomain]);
@@ -398,10 +395,7 @@ export default function App() {
         setIsCinemaRemote(true);
         return;
       }
-      if (viewParam === 'mobile_hololink') {
-        setIsMobileHololink(true);
-        return;
-      }
+      // Hololink disabled
 
       const domainParam = params.get('domain');
       if (domainParam === 'ROOT') {
@@ -419,13 +413,13 @@ export default function App() {
       if (domainParam === 'ARGUS') {
         setActiveDomain('ARGUS');
         const roomParam = params.get('room');
-        const validRooms = ['starter', 'claude', 'scruffys', 'auditor', 'pegasus', 'uhf_studio', 'persona_console', 'god_mode', 'rom_gallery', 'configurator', 'log_viewer', 'playcall_desk', 'tmi_news_desk', 'the_skew', 'hot_takes', 'shatcast_vision', 'persona_center', 'knowledge_hub', 'sow', 'courier', 'promo_inbox', 'nexus_telemetry', 'amen_corner', 'artifact_gallery', 'fanstack_sandbox', 'savant_query', 'vocal_matrix', 'storyboard_deck', 'holodex', 'edge_dvr', 'stream_sniper', 'highlight_heist', 'live_chat_sniper', 'sovereign_css', 'factory_dashboard', 'aether_vet', 'roll_call', 'kanban', 'dreadnought', 'theme_manager', 'argus_nexus', 'model_arena', 'optical_ingest', 'user_management', 'system_config', 'portal_layout', 'sys_rules', 'pixel_dropzone', 'fan_lobby', 'weedstack', 'prospectus', 'stacklabs', 'room_builder'];
+        const validRooms = ['starter', 'claude', 'auditor', 'pegasus', 'uhf_studio', 'persona_console', 'god_mode', 'rom_gallery', 'configurator', 'log_viewer', 'playcall_desk', 'tmi_news_desk', 'the_skew', 'hot_takes', 'shatcast_vision', 'advocate_center', 'advocate_lookbook', 'knowledge_hub', 'sow', 'courier', 'promo_inbox', 'nexus_telemetry', 'amen_corner', 'artifact_gallery', 'fanstack_sandbox', 'savant_query', 'vocal_matrix', 'storyboard_deck', 'holodex', 'edge_dvr', 'stream_sniper', 'highlight_heist', 'live_chat_sniper', 'sovereign_css', 'factory_dashboard', 'aether_vet', 'roll_call', 'kanban', 'dreadnought', 'theme_manager', 'argus_nexus', 'model_arena', 'optical_ingest', 'user_management', 'system_config', 'portal_layout', 'sys_rules', 'pixel_dropzone', 'fan_lobby', 'weedstack', 'prospectus', 'stacklabs', 'room_builder', 'cockpit'];
         if (roomParam && validRooms.includes(roomParam)) {
           setActiveRoom(roomParam as any);
           // Force domain based on some rooms
-          if (roomParam === 'savant_query' || roomParam === 'scruffys' || roomParam === 'tmi_news_desk') {
+          if (roomParam === 'savant_query' || roomParam === 'tmi_news_desk') {
             setActiveDomain('MLB');
-          } else if (roomParam === 'edge_dvr' || roomParam === 'stream_sniper' || roomParam === 'highlight_heist' || roomParam === 'sovereign_css' || roomParam === 'sow' || roomParam === 'dreadnought' || roomParam === 'theme_manager' || roomParam === 'model_arena' || roomParam === 'user_management' || roomParam === 'system_config' || roomParam === 'portal_layout' || roomParam === 'sys_rules') {
+          } else if (roomParam === 'cockpit' || roomParam === 'edge_dvr' || roomParam === 'stream_sniper' || roomParam === 'highlight_heist' || roomParam === 'sovereign_css' || roomParam === 'sow' || roomParam === 'dreadnought' || roomParam === 'theme_manager' || roomParam === 'model_arena' || roomParam === 'user_management' || roomParam === 'system_config' || roomParam === 'portal_layout' || roomParam === 'sys_rules') {
             setActiveDomain('GLOBAL');
           } else if (roomParam === 'kanban') {
             setActiveDomain('ROOT');
@@ -452,12 +446,12 @@ export default function App() {
       }
 
       const roomParam = params.get('room');
-      const validRooms = ['starter', 'claude', 'scruffys', 'auditor', 'pegasus', 'uhf_studio', 'persona_console', 'god_mode', 'rom_gallery', 'configurator', 'log_viewer', 'playcall_desk', 'tmi_news_desk', 'the_skew', 'hot_takes', 'shatcast_vision', 'persona_center', 'knowledge_hub', 'sow', 'courier', 'promo_inbox', 'nexus_telemetry', 'amen_corner', 'artifact_gallery', 'fanstack_sandbox', 'savant_query', 'vocal_matrix', 'storyboard_deck', 'holodex', 'edge_dvr', 'stream_sniper', 'highlight_heist', 'live_chat_sniper', 'sovereign_css', 'factory_dashboard', 'aether_vet', 'roll_call', 'kanban', 'dreadnought', 'theme_manager', 'argus_nexus', 'model_arena', 'optical_ingest', 'user_management', 'system_config', 'portal_layout', 'sys_rules', 'pixel_dropzone', 'fan_lobby', 'weedstack', 'prospectus', 'stacklabs', 'room_builder'];
+      const validRooms = ['starter', 'claude', 'auditor', 'pegasus', 'uhf_studio', 'persona_console', 'god_mode', 'rom_gallery', 'configurator', 'log_viewer', 'playcall_desk', 'tmi_news_desk', 'the_skew', 'hot_takes', 'shatcast_vision', 'advocate_center', 'advocate_lookbook', 'knowledge_hub', 'sow', 'courier', 'promo_inbox', 'nexus_telemetry', 'amen_corner', 'artifact_gallery', 'fanstack_sandbox', 'savant_query', 'vocal_matrix', 'storyboard_deck', 'holodex', 'edge_dvr', 'stream_sniper', 'highlight_heist', 'live_chat_sniper', 'sovereign_css', 'factory_dashboard', 'aether_vet', 'roll_call', 'kanban', 'dreadnought', 'theme_manager', 'argus_nexus', 'model_arena', 'optical_ingest', 'user_management', 'system_config', 'portal_layout', 'sys_rules', 'pixel_dropzone', 'fan_lobby', 'weedstack', 'prospectus', 'stacklabs', 'room_builder', 'cockpit'];
       if (roomParam && validRooms.includes(roomParam)) {
         setActiveRoom(roomParam as any);
         if (roomParam === 'amen_corner') {
           setActiveDomain('PGA');
-        } else if (roomParam === 'edge_dvr' || roomParam === 'stream_sniper' || roomParam === 'highlight_heist' || roomParam === 'sovereign_css' || roomParam === 'sow' || roomParam === 'dreadnought' || roomParam === 'theme_manager' || roomParam === 'model_arena' || roomParam === 'user_management' || roomParam === 'system_config' || roomParam === 'portal_layout' || roomParam === 'sys_rules') {
+        } else if (roomParam === 'cockpit' || roomParam === 'edge_dvr' || roomParam === 'stream_sniper' || roomParam === 'highlight_heist' || roomParam === 'sovereign_css' || roomParam === 'sow' || roomParam === 'dreadnought' || roomParam === 'theme_manager' || roomParam === 'model_arena' || roomParam === 'user_management' || roomParam === 'system_config' || roomParam === 'portal_layout' || roomParam === 'sys_rules') {
           setActiveDomain('GLOBAL');
         } else if (roomParam === 'kanban') {
           setActiveDomain('ROOT');
@@ -505,7 +499,7 @@ export default function App() {
       url.searchParams.set('domain', activeDomain);
       url.searchParams.set('room', activeRoom);
       
-      if ((activeDomain === 'MLB' || activeRoom === 'scruffys') && activeGamedayPk) {
+      if ((activeDomain === 'MLB' && activeRoom === 'starter') && activeGamedayPk) {
         url.searchParams.set('_game_room', activeGamedayPk);
       } else {
         url.searchParams.delete('_game_room');
@@ -534,9 +528,8 @@ export default function App() {
 
     if (url.searchParams.get('view') === 'remote') url.searchParams.delete('view');
     if (url.searchParams.get('view') === 'cinema_remote') url.searchParams.delete('view');
-    if (url.searchParams.get('view') === 'mobile_hololink') url.searchParams.delete('view');
     window.history.replaceState({}, '', url);
-  }, [activeRoom, activeDomain, isMobileRemote, isCinemaRemote, isMobileHololink, activeGamedayPk]);
+  }, [activeRoom, activeDomain, isMobileRemote, isCinemaRemote, activeGamedayPk]);
 
   useEffect(() => {
     fetch("/personas.json")
@@ -627,9 +620,7 @@ export default function App() {
     return <SovereignCinemaRemote />;
   }
 
-  if (isMobileHololink) {
-    return <MobileHololink />;
-  }
+  // Hololink view check removed
 
   return (
     <div className={`min-h-screen md:h-screen p-2 md:p-3 flex flex-col gap-2 transition-all duration-1000 bg-[#0B0E14] text-gray-200 selection:bg-[#3B82F6]/30 relative md:overflow-hidden overflow-y-auto theme-${osTheme} border-t-[6px] ${currentEnv.borderColor}`}>
@@ -652,7 +643,6 @@ export default function App() {
           </button>
           {(activeDomain === 'MLB' || activeDomain === 'GLOBAL') && (
             <>
-              <button onClick={() => { setActiveDomain('MLB'); setActiveRoom('scruffys'); }} className={`vm-nav-item shrink-0 ${activeRoom === 'scruffys' ? 'active border-b-2 border-[#f59e0b] text-[#f59e0b]' : 'text-[#f59e0b]/60 hover:text-[#f59e0b]'}`}>🍺 Live Game Room</button>
                <button onClick={() => { setActiveDomain('MLB'); setActiveRoom('weedstack'); }} className={`vm-nav-item shrink-0 ${activeRoom === 'weedstack' ? 'active border-b-2 border-emerald-400 text-emerald-400 font-bold' : 'text-emerald-400/60 hover:text-emerald-400'}`}>🌿 WeedStack Community</button>
               <button onClick={() => { setActiveDomain('MLB'); setActiveRoom('fan_lobby'); }} className={`vm-nav-item shrink-0 ${activeRoom === 'fan_lobby' ? 'active border-b-2 border-cyan-400 text-cyan-400' : 'text-cyan-400/60 hover:text-cyan-400'}`}>🎮 Fan Lobby</button>
             </>
@@ -701,7 +691,6 @@ export default function App() {
             <>
               <button onClick={() => { setActiveDomain('MLB'); setActiveRoom('starter'); }} className={`vm-nav-item shrink-0 ${activeDomain === 'MLB' && activeRoom === 'starter' ? 'active  border-b-2 border-cyan-500 text-cyan-500' : 'text-white/50 hover:text-cyan-400'}`}>Command Center</button>
               <button onClick={() => { setActiveDomain('MLB'); setActiveRoom('playcall_desk'); }} className={`vm-nav-item shrink-0 text-[#FF5910] hover:text-[#FF5910]/80 ${activeRoom === 'playcall_desk' ? 'border-b-2 border-[#FF5910] pb-1' : ''}`}>Playcall Desk</button>
-              <button onClick={() => { setActiveDomain('MLB'); setActiveRoom('scruffys'); }} className={`vm-nav-item shrink-0 ${activeRoom === 'scruffys' ? 'active border-b-2 border-[#f59e0b] text-[#f59e0b]' : 'text-[#f59e0b]/60 hover:text-[#f59e0b]'}`}>🍺 Scruffy's</button>
               <button onClick={() => { setActiveDomain('MLB'); setActiveRoom('tmi_news_desk'); }} className={`vm-nav-item shrink-0 ${activeRoom === 'tmi_news_desk' ? 'active  border-b-2 border-[#ef4444] text-[#ef4444]' : 'text-white/50 hover:text-white'}`}>🚨 TMI Triage</button>
               <button onClick={() => { setActiveDomain('MLB'); setActiveRoom('savant_query'); }} className={`vm-nav-item shrink-0 ${activeRoom === 'savant_query' ? 'active  border-b-2 border-[#22c55e] text-[#22c55e]' : 'text-[#22c55e]/60 hover:text-[#22c55e]'}`}>🧠 Savant Query</button>
               <button onClick={() => { setActiveDomain('GLOBAL'); setActiveRoom('storyboard_deck'); }} className={`vm-nav-item shrink-0 ${activeRoom === 'storyboard_deck' ? 'active  border-b-2 border-[#8b5cf6] text-[#8b5cf6]' : 'text-[#8b5cf6]/60 hover:text-[#8b5cf6]'}`}>Storyboard Deck</button>
@@ -795,9 +784,9 @@ export default function App() {
           activeGamedayPk={activeGamedayPk}
           onSelectGame={(pk) => {
             setActiveGamedayPk(pk);
-            setActiveRoom('scruffys');
+            setActiveRoom('starter');
             setActiveDomain('MLB');
-            window.history.pushState({}, '', `?domain=MLB&room=scruffys&_game_room=${pk}`);
+            window.history.pushState({}, '', `?domain=MLB&room=starter&_game_room=${pk}`);
           }}
         />
       ) : activeDomain === 'CMDB' && !isPatron ? (
@@ -812,7 +801,7 @@ export default function App() {
           }
           setActiveDomain(domain);
           if (room) {
-            if (room === 'sow' || room === 'persona_center' || room === 'nexus_telemetry' || room === 'theme_manager' || room === 'model_arena' || room === 'user_management' || room === 'system_config' || room === 'portal_layout' || room === 'sys_rules' || room === 'stacklabs') {
+            if (room === 'sow' || room === 'advocate_center' || room === 'advocate_lookbook' || room === 'nexus_telemetry' || room === 'theme_manager' || room === 'model_arena' || room === 'user_management' || room === 'system_config' || room === 'portal_layout' || room === 'sys_rules' || room === 'stacklabs') {
               setActiveDomain('GLOBAL');
             } else if (room === 'kanban') {
               setActiveDomain('ROOT');
@@ -827,7 +816,6 @@ export default function App() {
           else if (domain === 'SKEW') { setActiveDomain('SKEW'); setActiveRoom('the_skew'); }
           else if (domain === 'ARGUS') { setActiveDomain('ARGUS'); }
           else if (domain === 'HOLODEX') { setActiveDomain('HOLODEX'); setActiveRoom('holodex'); }
-          else if (domain === 'SCRUFFYS') { setActiveDomain('MLB'); setActiveRoom('scruffys'); }
           else if (domain === 'EDGE_DVR') { setActiveDomain('GLOBAL'); setActiveRoom('edge_dvr'); }
           else if (domain === 'STREAM_SNIPER') { setActiveDomain('GLOBAL'); setActiveRoom('stream_sniper'); }
           else if (domain === 'ROM_GALLERY') { setActiveDomain('MLB'); setActiveRoom('rom_gallery'); }
@@ -836,7 +824,8 @@ export default function App() {
           else if (domain === 'VAULT') { setActiveDomain('GLOBAL'); setActiveRoom('artifact_gallery'); }
           else if (domain === 'STORYBOARD') { setActiveDomain('GLOBAL'); setActiveRoom('storyboard_deck'); }
           else if (domain === 'CMDB') { setActiveDomain('CMDB'); }
-          else if (domain === 'PERSONA_CENTER' as any) { setActiveDomain('GLOBAL'); setActiveRoom('persona_center'); }
+          else if (domain === 'PERSONA_CENTER' as any) { setActiveDomain('GLOBAL'); setActiveRoom('advocate_center'); }
+          else if (domain === 'ADVOCATE_CENTER' as any) { setActiveDomain('GLOBAL'); setActiveRoom('advocate_lookbook'); }
           else if (domain === 'SAVANT') { setActiveDomain('MLB'); setActiveRoom('savant_query'); }
           else if (domain === 'VOCAL') { setActiveDomain('GLOBAL'); setActiveRoom('vocal_matrix'); }
           else if (domain === 'SOVEREIGN_CSS') { setActiveDomain('GLOBAL'); setActiveRoom('sovereign_css'); }
@@ -849,6 +838,7 @@ export default function App() {
           else if (domain === 'TOKEN_LEDGER' as any) { setActiveDomain('GLOBAL'); setActiveRoom('token_ledger'); }
           else if (domain === 'GAME_LOG_EXPORT' as any) { setActiveDomain('GLOBAL'); setActiveRoom('game_log_export'); }
           else if (domain === 'TMI_NEWS_DESK' as any) { setActiveDomain('MLB'); setActiveRoom('tmi_news_desk'); }
+          else if (domain === 'COCKPIT' as any) { setActiveDomain('GLOBAL'); setActiveRoom('cockpit' as any); }
           else {
             alert(`The ${domain} matrix is currently locked offline. Reverting to MLB Command Center.`);
             setActiveDomain('MLB');
@@ -860,7 +850,7 @@ export default function App() {
       ) : (
         <>
 
-       {(activeRoom as string) !== 'rom_gallery' && (activeRoom as string) !== 'the_skew' && (activeRoom as string) !== 'kanban' && (activeRoom as string) !== 'sow' && (activeRoom as string) !== 'system_config' && (activeRoom as string) !== 'user_management' && (activeRoom as string) !== 'scruffys' && (activeRoom as string) !== 'fan_lobby' && (
+       {(activeRoom as string) !== 'rom_gallery' && (activeRoom as string) !== 'the_skew' && (activeRoom as string) !== 'kanban' && (activeRoom as string) !== 'sow' && (activeRoom as string) !== 'system_config' && (activeRoom as string) !== 'user_management' && (activeRoom as string) !== 'fan_lobby' && (
         <header className="flex flex-col items-center justify-center mb-1">
           <h1 className={`text-center m-0 drop-shadow-lg ${
               activeRoom === 'savant_query' ? 'text-3xl md:text-4xl font-display font-bold uppercase tracking-wider text-white' :
@@ -868,13 +858,13 @@ export default function App() {
                 activeRoom === 'amen_corner' ? 'text-3xl md:text-4xl font-serif font-bold text-[#E0BC68] tracking-widest uppercase' :
                   'text-3xl md:text-4xl font-mono font-bold text-status-cyan tracking-wide'
             }`}>
-            {(activeRoom as string) === 'starter' ? "The Command Center" : (activeRoom as string) === 'scruffys' ? "MLB Game Room" : (activeRoom as string) === 'pegasus' ? "Pegasus Matrix" : (activeRoom as string) === 'uhf_studio' ? "UHF Studio" : (activeRoom as string) === 'holodex' ? "Sovereign HoloDex" : (activeRoom as string) === 'shatcast_vision' ? "Shatcast Vision Matrix" : (activeRoom as string) === 'log_viewer' ? "CSV Ingestion Engine" : (activeRoom as string) === 'playcall_desk' ? "Playcall Desk" : (activeRoom as string) === 'persona_console' ? "FanStack Service Portal" : (activeRoom as string) === 'auditor' ? "Umpire's Review" : (activeRoom as string) === 'persona_center' ? "Persona Center" : (activeRoom as string) === "knowledge_hub" ? "Knowledge Hub" : (activeRoom as string) === "courier" ? "Agent Courier" : (activeRoom as string) === "promo_inbox" ? "The Cosmic Sieve" : (activeRoom as string) === "nexus_telemetry" ? "Nexus Telemetry" : (activeRoom as string) === "artifact_gallery" ? "Media Vault Matrix" : (activeRoom as string) === "vocal_matrix" ? "Vocal Matrix" : (activeRoom as string) === "storyboard_deck" ? "Storyboard Deck" : (activeRoom as string) === "fanstack_sandbox" ? "FanStack Sandbox" : (activeRoom as string) === "savant_query" ? "Savant Oracle" : (activeRoom as string) === "amen_corner" ? "Amen Corner (PGA)" : (activeRoom as string) === "factory_dashboard" ? "Flowmercial Factory" : (activeRoom as string) === "aether_vet" ? "Aether Vet Telemetry" : (activeRoom as string) === "model_arena" ? "Model Battle Arena" : (activeRoom as string) === "optical_ingest" ? "Optical Ingest Console" : (activeRoom as string) === "user_mgmt" ? "User Management" : ""}
+            {(activeRoom as string) === 'starter' ? "The Command Center" : (activeRoom as string) === 'pegasus' ? "Pegasus Matrix" : (activeRoom as string) === 'uhf_studio' ? "UHF Studio" : (activeRoom as string) === 'holodex' ? "Sovereign HoloDex" : (activeRoom as string) === 'shatcast_vision' ? "Shatcast Vision Matrix" : (activeRoom as string) === 'log_viewer' ? "CSV Ingestion Engine" : (activeRoom as string) === 'playcall_desk' ? "Playcall Desk" : (activeRoom as string) === 'persona_console' ? "FanStack Service Portal" : (activeRoom as string) === 'auditor' ? "Umpire's Review" : (activeRoom as string) === 'advocate_center' ? "Advocate Center" : (activeRoom as string) === 'advocate_lookbook' ? "Advocate Lookbook" : (activeRoom as string) === "knowledge_hub" ? "Knowledge Hub" : (activeRoom as string) === "courier" ? "Agent Courier" : (activeRoom as string) === "promo_inbox" ? "The Cosmic Sieve" : (activeRoom as string) === "nexus_telemetry" ? "Nexus Telemetry" : (activeRoom as string) === "artifact_gallery" ? "Media Vault Matrix" : (activeRoom as string) === "vocal_matrix" ? "Vocal Matrix" : (activeRoom as string) === "storyboard_deck" ? "Storyboard Deck" : (activeRoom as string) === "fanstack_sandbox" ? "FanStack Sandbox" : (activeRoom as string) === "savant_query" ? "Savant Oracle" : (activeRoom as string) === "amen_corner" ? "Amen Corner (PGA)" : (activeRoom as string) === "factory_dashboard" ? "Flowmercial Factory" : (activeRoom as string) === "aether_vet" ? "Aether Vet Telemetry" : (activeRoom as string) === "model_arena" ? "Model Battle Arena" : (activeRoom as string) === "optical_ingest" ? "Optical Ingest Console" : (activeRoom as string) === "user_mgmt" ? "User Management" : (activeRoom as string) === "cockpit" ? "System Cockpit" : ""}
           </h1>
         </header>
       )}
 
       <main className="flex-1 w-full px-8 mx-auto relative overflow-hidden flex flex-col min-h-0">
-        {(activeDomain === 'MLB' || activeRoom === 'scruffys') && <MlbScoreBar activeGamedayPk={activeGamedayPk} onSelectGame={setActiveGamedayPk} />}
+        {activeDomain === 'MLB' && (activeRoom === 'starter' || (activeRoom as string) === 'fan_lobby') && <MlbScoreBar activeGamedayPk={activeGamedayPk} onSelectGame={setActiveGamedayPk} />}
         <AnimatePresence>
           {samSighting && (
             <motion.div
@@ -898,6 +888,10 @@ export default function App() {
         </AnimatePresence>
 
         <div className="flex-1 flex flex-col w-full relative min-h-0">
+          {activeRoom === 'cockpit' && (
+            <InteractiveCockpit onNavigate={(route) => setActiveRoom(route as any)} />
+          )}
+
           {activeRoom === 'claude' && (
             <StarterShack />
           )}
@@ -914,13 +908,15 @@ export default function App() {
             <ModelArena />
           )}
 
-          {activeRoom === 'persona_center' && (
-            <PersonaCenter />
+          {activeRoom === 'advocate_center' && (
+            <AdvocateCenter />
           )}
 
-          {activeRoom === 'scruffys' && (
-            <ScruffysTavern activeGamedayPk={activeGamedayPk} />
+          {activeRoom === 'advocate_lookbook' && (
+            <AdvocateLookbook />
           )}
+
+          {/* ScruffysTavern render removed */}
 
           {activeRoom === 'room_builder' && (
             <RoomBuilder activeGamedayPk={activeGamedayPk} onSelectGame={setActiveGamedayPk} />
@@ -934,7 +930,7 @@ export default function App() {
             <motion.div
               key="starter"
               initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }}
-              className={`grid ${activeGamedayPk ? 'grid-cols-1 lg:grid-cols-12 gap-4 h-full min-h-[80vh] p-4 bg-[#0a0c10]' : 'grid-cols-1 gap-0 w-full bg-white relative rounded-xl overflow-hidden shadow-2xl h-full min-h-0'}`}
+              className={`grid ${activeGamedayPk ? 'grid-cols-1 lg:grid-cols-12 gap-4 h-full min-h-[80vh] p-4 bg-[#0a0c10]' : 'grid-cols-1 gap-0 w-full bg-[#0a0c10] relative border border-white/5 rounded-xl overflow-hidden shadow-2xl h-full min-h-0'}`}
             >
               {activeGamedayPk ? ( (() => {
                 const gameStatus = liveBoxScore?.gameData?.status?.statusCode;
@@ -1900,9 +1896,7 @@ export default function App() {
         />
       )}
 
-      {/* HOLOLINK RECEIVER */}
-      <HololinkModal />
-      {auth && <HololinkHub user={auth} wsRelayUrl="/ws-relay" />}
+      {/* Hololink Receiver elements removed */}
     </div>
   );
 }

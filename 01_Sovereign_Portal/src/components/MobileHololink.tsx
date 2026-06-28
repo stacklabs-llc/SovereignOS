@@ -54,7 +54,7 @@ export default function MobileHololink() {
     appBorderClass = "border-purple-500";
     appBgClass = "bg-purple-500";
   } else if (branding === 'gardenstack') {
-    appName = "GardenStack";
+    appName = "Eileen's Stack";
     appColorClass = "text-emerald-400";
     appBorderClass = "border-emerald-500";
     appBgClass = "bg-emerald-500";

@@ -16,7 +16,7 @@ interface Game {
   away_score?: number;
 }
 
-export default function GameGrid() {
+export default function GameGrid({ sportType = 'mlb' }: { sportType?: 'mlb' | 'pga' | 'footy' }) {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -24,16 +24,16 @@ export default function GameGrid() {
   useEffect(() => {
     const fetchGames = async () => {
       try {
-        const response = await axios.get('/api/sports/mlb');
+        const response = await axios.get(`/api/sports/${sportType}`);
         setGames(response.data);
       } catch (err) {
-        console.error('Failed to fetch MLB games', err);
+        console.error(`Failed to fetch ${sportType} games`, err);
       } finally {
         setLoading(false);
       }
     };
     fetchGames();
-  }, []);
+  }, [sportType]);
 
   if (loading) {
     return (
@@ -50,7 +50,7 @@ export default function GameGrid() {
         <div 
           key={game.id} 
           className="vm-panel-glass clickable game-card"
-          onClick={() => navigate(`/stream/${game.id}`)}
+          onClick={() => navigate(sportType === 'footy' ? `/stream/footy/${game.id}` : `/stream/${game.id}`)}
           style={{ 
             position: 'relative',
             overflow: 'hidden',
@@ -78,7 +78,9 @@ export default function GameGrid() {
               fontWeight: 600, 
               letterSpacing: '1px',
               textTransform: 'uppercase'
-            }}>MLB Regular Season</span>
+            }}>
+              {sportType === 'mlb' ? 'MLB Regular Season' : sportType === 'pga' ? 'PGA Tour Major' : 'FootyStack / World Cup'}
+            </span>
             <span style={{ 
               fontSize: '0.8rem', 
               color: 'rgba(255, 255, 255, 0.5)', 
@@ -146,7 +148,7 @@ export default function GameGrid() {
         </div>
       ))}
       {games.length === 0 && (
-        <p>No active MLB games found.</p>
+        <p>No active {sportType === 'mlb' ? 'MLB' : sportType === 'pga' ? 'PGA' : 'FootyStack'} games found.</p>
       )}
     </div>
   );

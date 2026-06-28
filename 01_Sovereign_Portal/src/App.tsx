@@ -23,9 +23,11 @@ import ShatcastVisionStudio from "./components/ShatcastVisionStudio";
 import FactoryDashboard from "./components/FactoryDashboard";
 import HoloDex from "./components/HoloDex";
 import SovereignCmdb from "./components/SovereignCmdb";
+import SovereignStudio from "./components/SovereignStudio";
 import { HardwareTelemetryDashboard } from "./components/HardwareTelemetryDashboard";
 import PromoInbox from "./components/PromoInbox";
 import PixelDropZone from "./components/PixelDropZone";
+import GlobalDropZone from "./components/GlobalDropZone";
 import { getApiHost, getWsUrl } from "./api-host";
 import KnowledgeHub from "./components/KnowledgeHub";
 import ServiceOperationsWorkspace from "./components/ServiceOperationsWorkspace";
@@ -48,6 +50,7 @@ import EdgeDvrConsole from "./components/EdgeDvrConsole";
 import StreamSniperConsole from "./components/StreamSniperConsole";
 import HighlightHeistConsole from "./components/HighlightHeistConsole";
 import SovereignThemeLab from "./components/SovereignThemeLab";
+import PgaAmenCornerLookBook from "./components/PgaAmenCornerLookBook";
 import ArgusNexusConsole from "./components/ArgusNexusConsole";
 import TMINewsDesk from "./components/TMINewsDesk";
 import StoryboardGallery from "./components/StoryboardGallery";
@@ -64,12 +67,12 @@ import SovereignOsPortal from "./components/SovereignOsPortal";
 import FanLobby from "./components/FanLobby";
 import LivingKanbanBoard from "./components/LivingKanbanBoard";
 import GlobalSystemBar from "./components/GlobalSystemBar";
+import GlobalSearchWidget from "./components/GlobalSearchWidget";
 import DreadnoughtConsole from "./components/DreadnoughtConsole";
 import NewTicketModal from "./components/NewTicketModal";
 import HotTakesConsole from "./components/HotTakesConsole";
 import AdvocateCommandDeck from "./components/advocate-command-deck";
 import ModelArena from "./components/ModelArena";
-import ScruffysTavern from "./components/ScruffysTavern";
 import OpticalIngestConsole from "./components/OpticalIngestConsole";
 import { useAuth } from "./contexts/AuthContext";
 import UserManagementConsole from "./components/UserManagementConsole";
@@ -82,10 +85,13 @@ import AssetBacklog from "./components/AssetBacklog";
 import PortalLayoutConfig from "./components/PortalLayoutConfig";
 import InteractiveCockpit from "./components/InteractiveCockpit";
 import SysRulesPanel from "./components/SysRulesPanel";
+import SysDocsPanel from "./components/SysDocsPanel";
 import VoiceHeal from "./components/VoiceHeal";
 import OracleGuardrailsConfig from "./components/OracleGuardrailsConfig";
 import GardenStackDashboard from './components/GardenStackDashboard';
 import InvestorProspectus from "./components/InvestorProspectus";
+import MetsyAdventuresWorkspace from "./components/MetsyAdventuresWorkspace";
+import PromptPreviewConsole from "./components/PromptPreviewConsole";
 import { SovereignConfig } from "./config/SovereignConfig";
 
 const AMEN_CORNER_IMAGES = [
@@ -173,6 +179,7 @@ const getRoomTitle = (room: string) => {
     theme_manager: 'Theme Manager',
     portal_layout: 'Portal Layout',
     sys_rules: 'System Rules',
+    sys_docs: 'System Docs',
     user_management: 'User Management',
     user_mgmt: 'User Management',
     sovereign_css: 'Sovereign CSS',
@@ -192,7 +199,8 @@ const getRoomTitle = (room: string) => {
     town_simulation: 'Town Square',
     catnip_wars: 'Catnip Wars',
     prospectus: 'Investor Prospectus',
-    hate_mail_inbox: 'Detractor Mailbag'
+    hate_mail_inbox: 'Detractor Mailbag',
+    data: 'Sovereign Studio'
   };
   return titles[room] || room;
 };
@@ -206,6 +214,7 @@ export default function App() {
   const [eventName, setEventName] = useState("MLB FanStack");
   const [samSighting, setSamSighting] = useState(false);
   const [isVocalMatrixOpen, setIsVocalMatrixOpen] = useState(false);
+  const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [vmActiveTab, setVmActiveTab] = useState<'agent' | 'commlink' | 'settings'>('agent');
   const [agentName, setAgentName] = useState(() => localStorage.getItem('sovereign_agent_name') || 'Sovereign Oracle');
   const [isUmpireJakeOpen, setIsUmpireJakeOpen] = useState(false);
@@ -255,12 +264,12 @@ export default function App() {
     return () => window.removeEventListener('click', handleOutsideClick);
   }, []);
 
-  const [activeRoom, setActiveRoom] = useState<"starter" | "claude" | "scruffys" | "auditor" | "void" | "data" | "pegasus" | "persona_console" | "uhf_studio" | "god_mode" | "rom_gallery" | "configurator" | "log_viewer" | "playcall_desk" | "tmi_news_desk" | "the_skew" | "shatcast_vision" | "persona_center" | "knowledge_hub" | "sow" | "courier" | "promo_inbox" | "nexus_telemetry" | "artifact_gallery" | "fanstack_sandbox" | "savant_query" | "vocal_matrix" | "storyboard_deck" | "holodex" | "edge_dvr" | "stream_sniper" | "highlight_heist" | "live_chat_sniper" | "sovereign_css" | "factory_dashboard" | "aether_vet" | "kanban" | "roll_call" | "dreadnought" | "theme_manager" | "argus_nexus" | "hot_takes" | "model_arena" | "optical_ingest" | "user_mgmt" | "portal_layout" | "pixel_dropzone" | "system_config" | "user_management" | "bistro" | "amen_corner" | "sys_rules" | "fan_lobby" | "wildseed" | "prospectus" | "stack_seeder" | "hate_mail_inbox" | "catnip_wars" | "town_simulation" | "cockpit" | "voice" | "post_genesis" | "app_directory" | "presence" | "oracle_guardrails" | "cmdb" | "asset_backlog" | "active_stacks" | "power_tools">(() => {
+  const [activeRoom, setActiveRoom] = useState<"starter" | "claude" | "auditor" | "void" | "data" | "pegasus" | "persona_console" | "uhf_studio" | "god_mode" | "rom_gallery" | "configurator" | "log_viewer" | "playcall_desk" | "tmi_news_desk" | "the_skew" | "shatcast_vision" | "persona_center" | "knowledge_hub" | "sow" | "courier" | "promo_inbox" | "nexus_telemetry" | "artifact_gallery" | "fanstack_sandbox" | "savant_query" | "vocal_matrix" | "storyboard_deck" | "holodex" | "holodex_matrix" | "tesseract_stage" | "edge_dvr" | "stream_sniper" | "highlight_heist" | "live_chat_sniper" | "sovereign_css" | "factory_dashboard" | "aether_vet" | "kanban" | "roll_call" | "dreadnought" | "theme_manager" | "argus_nexus" | "hot_takes" | "model_arena" | "optical_ingest" | "user_mgmt" | "portal_layout" | "pixel_dropzone" | "system_config" | "user_management" | "bistro" | "amen_corner" | "sys_rules" | "sys_docs" | "fan_lobby" | "wildseed" | "prospectus" | "stack_seeder" | "hate_mail_inbox" | "catnip_wars" | "town_simulation" | "cockpit" | "voice" | "post_genesis" | "app_directory" | "presence" | "oracle_guardrails" | "cmdb" | "asset_backlog" | "active_stacks" | "metsy_adventures" | "prompt_preview" | "power_tools">(() => {
     const params = new URLSearchParams(window.location.search);
     const room = params.get('room');
-    const validRooms = ["starter", "claude", "scruffys", "auditor", "void", "data", "pegasus", "persona_console", "uhf_studio", "god_mode", "rom_gallery", "configurator", "log_viewer", "playcall_desk", "tmi_news_desk", "the_skew", "shatcast_vision", "persona_center", "knowledge_hub", "sow", "courier", "promo_inbox", "nexus_telemetry", "artifact_gallery", "fanstack_sandbox", "savant_query", "vocal_matrix", "storyboard_deck", "holodex", "edge_dvr", "stream_sniper", "highlight_heist", "live_chat_sniper", "sovereign_css", "factory_dashboard", "aether_vet", "kanban", "roll_call", "dreadnought", "theme_manager", "argus_nexus", "hot_takes", "model_arena", "optical_ingest", "portal_layout", "fan_lobby", "wildseed", "prospectus", "stack_seeder", "hate_mail_inbox", "catnip_wars", "town_simulation", "cockpit", "voice", "post_genesis", "app_directory", "presence", "oracle_guardrails", "cmdb", "sys_rules", "system_config", "user_management", "user_mgmt", "bistro", "amen_corner", "asset_backlog", "active_stacks", "power_tools"];
+    const validRooms = ["starter", "claude", "auditor", "void", "data", "pegasus", "persona_console", "uhf_studio", "god_mode", "rom_gallery", "configurator", "log_viewer", "playcall_desk", "tmi_news_desk", "the_skew", "shatcast_vision", "persona_center", "knowledge_hub", "sow", "courier", "promo_inbox", "nexus_telemetry", "artifact_gallery", "fanstack_sandbox", "savant_query", "vocal_matrix", "storyboard_deck", "holodex", "holodex_matrix", "tesseract_stage", "edge_dvr", "stream_sniper", "highlight_heist", "live_chat_sniper", "sovereign_css", "factory_dashboard", "aether_vet", "kanban", "roll_call", "dreadnought" , "theme_manager", "argus_nexus", "hot_takes", "model_arena", "optical_ingest", "portal_layout", "fan_lobby", "wildseed", "prospectus", "stack_seeder", "hate_mail_inbox", "catnip_wars", "town_simulation", "cockpit", "voice", "post_genesis", "app_directory", "presence", "oracle_guardrails", "cmdb", "sys_rules", "sys_docs", "system_config", "user_management", "user_mgmt", "bistro", "amen_corner", "asset_backlog", "active_stacks", "metsy_adventures", "prompt_preview", "power_tools"];
     if (room && validRooms.includes(room)) return room as any;
-    return "starter";
+    return "cockpit";
   });
   const [activeGamedayPk, setActiveGamedayPk] = useState<string | null>(() => {
     const params = new URLSearchParams(window.location.search);
@@ -420,13 +429,13 @@ export default function App() {
     const room = params.get('room');
     if (room && room !== 'starter') {
       if (room === 'amen_corner') return 'PGA';
-      if (['edge_dvr', 'stream_sniper', 'highlight_heist', 'sovereign_css', 'sow', 'dreadnought', 'theme_manager', 'model_arena', 'user_management', 'user_mgmt', 'system_config', 'portal_layout', 'sys_rules', 'stack_seeder', 'hate_mail_inbox', 'catnip_wars', 'town_simulation', 'voice', 'persona_center', 'nexus_telemetry', 'prospectus', 'wildseed', 'oracle_guardrails', 'asset_backlog'].includes(room)) return 'GLOBAL';
+      if (['edge_dvr', 'stream_sniper', 'highlight_heist', 'sovereign_css', 'sow', 'dreadnought', 'theme_manager', 'model_arena', 'user_management', 'user_mgmt', 'system_config', 'portal_layout', 'sys_rules', 'sys_docs', 'stack_seeder', 'hate_mail_inbox', 'catnip_wars', 'town_simulation', 'voice', 'persona_center', 'nexus_telemetry', 'prospectus', 'wildseed', 'oracle_guardrails', 'asset_backlog', 'metsy_adventures', 'prompt_preview'].includes(room)) return 'GLOBAL';
       if (room === 'kanban' || room === 'cockpit' || room === 'pixel_dropzone' || room === 'app_directory') return 'ROOT';
       if (room === 'the_skew' || room === 'hot_takes') return 'SKEW';
-      if (room === 'holodex') return 'HOLODEX';
+      if (room === 'holodex' || room === 'holodex_matrix') return 'HOLODEX';
       if (room === 'argus_nexus') return 'ARGUS';
       if (room === 'cmdb') return 'CMDB';
-      if (room === 'savant_query' || room === 'scruffys' || room === 'tmi_news_desk') return 'MLB';
+      if (room === 'savant_query' || room === 'tmi_news_desk') return 'MLB';
       return 'MLB';
     }
     return "ROOT";
@@ -533,24 +542,24 @@ export default function App() {
       // If there's a specific room in the URL, let the room determine the routing, 
       // EXCEPT if the room is 'starter', where the domain parameter decides.
       if (roomParam && roomParam !== 'starter') {
-        const validRooms = ['starter', 'claude', 'scruffys', 'auditor', 'void', 'data', 'pegasus', 'persona_console', 'uhf_studio', 'god_mode', 'rom_gallery', 'configurator', 'log_viewer', 'playcall_desk', 'tmi_news_desk', 'the_skew', 'shatcast_vision', 'persona_center', 'knowledge_hub', 'sow', 'courier', 'promo_inbox', 'nexus_telemetry', 'amen_corner', 'artifact_gallery', 'fanstack_sandbox', 'savant_query', 'vocal_matrix', 'storyboard_deck', 'holodex', 'edge_dvr', 'stream_sniper', 'highlight_heist', 'live_chat_sniper', 'sovereign_css', 'factory_dashboard', 'aether_vet', 'roll_call', 'kanban', 'dreadnought', 'theme_manager', 'argus_nexus', 'model_arena', 'optical_ingest', 'user_management', 'user_mgmt', 'system_config', 'portal_layout', 'sys_rules', 'pixel_dropzone', 'fan_lobby', 'wildseed', 'prospectus', 'stack_seeder', 'hate_mail_inbox', 'catnip_wars', 'town_simulation', 'cockpit', 'voice', 'post_genesis', 'app_directory', 'presence', 'oracle_guardrails', 'cmdb', 'bistro', 'asset_backlog'];
+        const validRooms = ['starter', 'claude', 'auditor', 'void', 'data', 'pegasus', 'persona_console', 'uhf_studio', 'god_mode', 'rom_gallery', 'configurator', 'log_viewer', 'playcall_desk', 'tmi_news_desk', 'the_skew', 'shatcast_vision', 'persona_center', 'knowledge_hub', 'sow', 'courier', 'promo_inbox', 'nexus_telemetry', 'amen_corner', 'artifact_gallery', 'fanstack_sandbox', 'savant_query', 'vocal_matrix', 'storyboard_deck', 'holodex', 'holodex_matrix', 'tesseract_stage', 'edge_dvr', 'stream_sniper', 'highlight_heist', 'live_chat_sniper', 'sovereign_css', 'factory_dashboard', 'aether_vet', 'roll_call', 'kanban', 'dreadnought', 'theme_manager', 'argus_nexus', 'model_arena', 'optical_ingest', 'user_management', 'user_mgmt', 'system_config', 'portal_layout', 'sys_rules', 'sys_docs', 'pixel_dropzone', 'fan_lobby', 'wildseed', 'prospectus', 'stack_seeder', 'hate_mail_inbox', 'catnip_wars', 'town_simulation', 'cockpit', 'voice', 'post_genesis', 'app_directory', 'presence', 'oracle_guardrails', 'cmdb', 'bistro', 'asset_backlog', 'metsy_adventures', 'prompt_preview'];
         if (validRooms.includes(roomParam)) {
           setActiveRoom(roomParam as any);
           if (roomParam === 'amen_corner') {
             setActiveDomain('PGA');
-          } else if (['edge_dvr', 'stream_sniper', 'highlight_heist', 'sovereign_css', 'sow', 'dreadnought', 'theme_manager', 'model_arena', 'user_management', 'user_mgmt', 'system_config', 'portal_layout', 'sys_rules', 'stack_seeder', 'hate_mail_inbox', 'catnip_wars', 'town_simulation', 'voice', 'persona_center', 'nexus_telemetry', 'prospectus', 'wildseed', 'oracle_guardrails', 'asset_backlog'].includes(roomParam)) {
+          } else if (['edge_dvr', 'stream_sniper', 'highlight_heist', 'sovereign_css', 'sow', 'dreadnought', 'theme_manager', 'model_arena', 'user_management', 'user_mgmt', 'system_config', 'portal_layout', 'sys_rules', 'sys_docs', 'stack_seeder', 'hate_mail_inbox', 'catnip_wars', 'town_simulation', 'voice', 'persona_center', 'nexus_telemetry', 'prospectus', 'wildseed', 'oracle_guardrails', 'asset_backlog', 'data', 'metsy_adventures', 'tesseract_stage', 'prompt_preview'].includes(roomParam)) {
             setActiveDomain('GLOBAL');
           } else if (roomParam === 'kanban' || roomParam === 'cockpit' || roomParam === 'pixel_dropzone' || roomParam === 'app_directory') {
             setActiveDomain('ROOT');
           } else if (roomParam === 'the_skew' || roomParam === 'hot_takes') {
             setActiveDomain('SKEW');
-          } else if (roomParam === 'holodex') {
+          } else if (roomParam === 'holodex' || roomParam === 'holodex_matrix') {
             setActiveDomain('HOLODEX');
           } else if (roomParam === 'argus_nexus') {
             setActiveDomain('ARGUS');
           } else if (roomParam === 'cmdb') {
             setActiveDomain('CMDB');
-          } else if (roomParam === 'savant_query' || roomParam === 'scruffys' || roomParam === 'tmi_news_desk') {
+          } else if (roomParam === 'savant_query' || roomParam === 'tmi_news_desk') {
             setActiveDomain('MLB');
           } else {
             setActiveDomain('MLB');
@@ -562,38 +571,38 @@ export default function App() {
       // If no specific room (or room is 'starter'), fallback to domain parameters
       if (domainParam === 'ROOT') {
         setActiveDomain('ROOT');
-        setActiveRoom('starter');
+        setActiveRoom(roomParam === 'starter' ? 'starter' : 'cockpit');
         return;
       }
       if (domainParam === 'PORTAL') {
         setActiveDomain('PORTAL');
-        setActiveRoom('starter');
+        setActiveRoom(roomParam === 'starter' ? 'starter' : 'starter');
         return;
       }
       if (domainParam === 'CMDB') {
         setActiveDomain('CMDB');
-        setActiveRoom('starter');
+        setActiveRoom(roomParam === 'starter' ? 'starter' : 'starter');
         return;
       }
       if (domainParam === 'ARGUS') {
         setActiveDomain('ARGUS');
-        setActiveRoom('starter');
+        setActiveRoom(roomParam === 'starter' ? 'starter' : 'starter');
         return;
       }
       if (domainParam === 'MLB') {
         setActiveDomain('MLB');
-        setActiveRoom('starter');
+        setActiveRoom(roomParam === 'starter' ? 'starter' : 'starter');
         return;
       }
       if (domainParam === 'GLOBAL') {
         setActiveDomain('GLOBAL');
-        setActiveRoom('starter');
+        setActiveRoom(roomParam === 'starter' ? 'starter' : 'starter');
         return;
       }
 
       // Default fallback
       setActiveDomain('ROOT');
-      setActiveRoom('starter');
+      setActiveRoom(roomParam === 'starter' ? 'starter' : 'cockpit');
     };
     
     // Run on initial mount
@@ -609,11 +618,11 @@ export default function App() {
     const url = new URL(window.location.href);
     let title = "Sovereign OS";
 
-    if (activeDomain === 'ROOT' && (!activeRoom || activeRoom === 'starter')) {
+    if (activeDomain === 'ROOT' && (!activeRoom || activeRoom === 'cockpit')) {
       url.searchParams.delete('room');
       url.searchParams.delete('domain');
       url.searchParams.delete('filter');
-      title = "Sovereign OS | Root Control";
+      title = "Sovereign OS | Command Center";
     } else if (activeDomain === 'PORTAL') {
       url.searchParams.delete('room');
       url.searchParams.set('domain', 'PORTAL');
@@ -735,6 +744,11 @@ export default function App() {
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'f') {
         setIsFeedbackMode(prev => !prev);
       }
+      // Ctrl+/ to toggle global search widget
+      if (e.ctrlKey && e.key === '/') {
+        e.preventDefault();
+        setIsGlobalSearchOpen(prev => !prev);
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
@@ -758,7 +772,7 @@ export default function App() {
 
   // OnboardingWizard prerequisite check removed as requested.
 
-  const isAdminOrRootRoom = ['starter', 'app_directory', 'system_config', 'theme_manager', 'portal_layout', 'sys_rules', 'user_management', 'user_mgmt', 'sovereign_css', 'oracle_guardrails', 'nexus_telemetry', 'cmdb', 'stack_seeder'].includes(activeRoom as string);
+  const isAdminOrRootRoom = ['starter', 'app_directory', 'system_config', 'theme_manager', 'portal_layout', 'sys_rules', 'sys_docs', 'user_management', 'user_mgmt', 'sovereign_css', 'oracle_guardrails', 'nexus_telemetry', 'cmdb', 'stack_seeder'].includes(activeRoom as string);
 
   return (
     <div className={`min-h-screen p-2 md:p-3 flex flex-col gap-2 transition-all duration-1000 bg-[#0B0E14] text-gray-200 selection:bg-[#3B82F6]/30 relative overflow-y-visible theme-${osTheme}`}>
@@ -789,7 +803,7 @@ export default function App() {
               <button 
                 onClick={() => { 
                   setActiveDomain('ROOT'); 
-                  setActiveRoom('starter'); 
+                  setActiveRoom('cockpit'); 
                   window.history.pushState({}, '', '/'); 
                   window.dispatchEvent(new Event('os_root_clicked')); 
                 }} 
@@ -928,7 +942,7 @@ export default function App() {
           )}
 
           <div className="shrink-0 flex items-center">
-            <GlobalSystemBar osTheme={osTheme} setOsTheme={setOsTheme} accessLocale={accessLocale} setAccessLocale={setAccessLocale} isVocalMatrixOpen={isVocalMatrixOpen} setIsVocalMatrixOpen={setIsVocalMatrixOpen} activeDomain={activeDomain} activeRoom={activeRoom} globalRoomBoggsOverride={globalRoomBoggsOverride} setGlobalRoomBoggsOverride={setGlobalRoomBoggsOverride} onNavigateRoom={(room) => { _setActiveDomain('GLOBAL'); setActiveRoom(room as any); }} />
+            <GlobalSystemBar osTheme={osTheme} setOsTheme={setOsTheme} accessLocale={accessLocale} setAccessLocale={setAccessLocale} isVocalMatrixOpen={isVocalMatrixOpen} setIsVocalMatrixOpen={setIsVocalMatrixOpen} activeDomain={activeDomain} activeRoom={activeRoom} globalRoomBoggsOverride={globalRoomBoggsOverride} setGlobalRoomBoggsOverride={setGlobalRoomBoggsOverride} onNavigateRoom={(room) => { _setActiveDomain('GLOBAL'); setActiveRoom(room as any); }} onToggleSearch={() => setIsGlobalSearchOpen(prev => !prev)} />
           </div>
         </div>
       </div>
@@ -1027,6 +1041,15 @@ export default function App() {
               {activeRoom === 'fanstack_sandbox' && <FanStackSandbox />}
               {activeRoom === 'model_arena' && <ModelArena />}
               {activeRoom === 'persona_center' && <PersonaCenter />}
+              {activeRoom === 'knowledge_hub' && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="h-[75vh] w-full rounded-xl overflow-hidden"
+                >
+                  <KnowledgeHub />
+                </motion.div>
+              )}
               {activeRoom === 'user_management' || activeRoom === 'user_mgmt' ? (
                 <UserManagementConsole />
               ) : activeRoom === 'system_config' || activeRoom === 'app_directory' ? (
@@ -1042,7 +1065,7 @@ export default function App() {
                 <PortalLayoutConfig onClose={() => setActiveRoom('system_config')} />
               ) : activeRoom === 'wildseed' ? (
                 <GardenStackDashboard onEnterPortal={() => {
-                  setActiveRoom('starter');
+                  setActiveRoom('cockpit');
                   setActiveDomain('ROOT');
                   window.history.pushState({}, '', '/');
                 }} />
@@ -1076,6 +1099,8 @@ export default function App() {
                 <SovereignThemeManager />
               ) : activeRoom === 'sys_rules' ? (
                 <SysRulesPanel />
+              ) : activeRoom === 'sys_docs' ? (
+                <SysDocsPanel />
               ) : activeRoom === 'oracle_guardrails' ? (
                 <OracleGuardrailsConfig />
               ) : activeRoom === 'nexus_telemetry' ? (
@@ -1084,6 +1109,23 @@ export default function App() {
                 <AssetBacklog />
               ) : activeRoom === 'stack_seeder' ? (
                 <StackSeeder />
+              ) : activeRoom === 'metsy_adventures' ? (
+                <MetsyAdventuresWorkspace />
+              ) : activeRoom === 'prompt_preview' ? (
+                <PromptPreviewConsole />
+              ) : (activeRoom === 'holodex' || activeRoom === 'holodex_matrix') ? (
+                <div className="min-h-[85vh] w-full rounded-xl border border-[#38bdf8]/30 flex flex-col">
+                  <HoloDex />
+                </div>
+              ) : activeRoom === 'tesseract_stage' ? (
+                <div className="min-h-[85vh] w-full rounded-xl border border-[#38bdf8]/30 flex flex-col overflow-hidden bg-black/60 backdrop-blur-xl shadow-[0_0_30px_rgba(56,189,248,0.15)] relative">
+                  <iframe
+                    src="/tesseract-stack/"
+                    className="w-full flex-grow border-0 min-h-[750px]"
+                    title="4D Tesseract Baseball Card"
+                    allow="autoplay; fullscreen"
+                  />
+                </div>
               ) : activeRoom === 'persona_console' ? (
                 <PersonaConsole />
               ) : (activeRoom === 'kanban' || (activeRoom as string) === 'sdlc') && !dashboardWidgetsActive ? (
@@ -1096,7 +1138,7 @@ export default function App() {
                       New Ticket
                     </button>
                     <button 
-                      onClick={() => { setActiveDomain('ROOT'); setActiveRoom('starter'); window.history.pushState({}, '', '/'); }} 
+                      onClick={() => { setActiveDomain('ROOT'); setActiveRoom('cockpit'); window.history.pushState({}, '', '/'); }} 
                       className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg font-mono text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-colors"
                     >
                       Close Kanban
@@ -1105,8 +1147,60 @@ export default function App() {
                   <LivingKanbanBoard />
                   <NewTicketModal isOpen={isTicketModalOpen} onClose={() => setIsTicketModalOpen(false)} />
                 </div>
+              ) : activeRoom === 'pixel_dropzone' ? (
+                <div className="cardboard-panel-dark p-6 min-h-[550px] cardboard-texture-dark crt-scanlines border border-cyan-500/30 rounded-lg shadow-[0_0_15px_rgba(0,212,255,0.1)]">
+                  <div className="flex items-center justify-between mb-4 border-b border-cyan-500/20 pb-2">
+                    <div>
+                      <h2 className="text-xl font-mono text-cyan-400 flex items-center gap-2">
+                        <span className="text-cyan-500 animate-pulse">☁️</span> PIXEL DROP ZONE INGRESS
+                      </h2>
+                      <p className="text-xs text-slate-400 font-mono">Secure Core Storage Staging Pipeline</p>
+                    </div>
+                    <div className="text-xs font-mono bg-cyan-950/40 text-cyan-400 px-3 py-1 rounded border border-cyan-800/30">
+                      STAGING: /home/james/sovereign_inbox/
+                    </div>
+                  </div>
+                  <GlobalDropZone />
+                </div>
+              ) : activeRoom === 'data' ? (
+                <SovereignStudio />
+              ) : activeRoom === 'amen_corner' ? (
+                <PgaAmenCornerLookBook />
               ) : activeRoom === 'cmdb' || activeDomain === 'CMDB' ? (
                 <SovereignCmdb />
+              ) : activeRoom === 'cockpit' ? (
+                <div className="h-full w-full min-h-[80vh] flex flex-col items-center justify-start p-4 bg-[#09090e] overflow-y-auto no-scrollbar rounded-xl">
+                  <InteractiveCockpit onNavigate={(room) => {
+                    if (room === 'wildseed') {
+                      _setActiveDomain('GLOBAL');
+                      setActiveRoom('wildseed');
+                    } else if (room === 'aether_vet') {
+                      _setActiveDomain('GLOBAL');
+                      setActiveRoom('aether_vet');
+                    } else if (room === 'log_viewer') {
+                      _setActiveDomain('GLOBAL');
+                      setActiveRoom('log_viewer');
+                    } else if (room === 'system_config') {
+                      _setActiveDomain('GLOBAL');
+                      setActiveRoom('system_config');
+                    } else if (room === 'starter') {
+                      _setActiveDomain('ROOT');
+                      setActiveRoom('starter');
+                    } else if (room === 'live_chat_sniper') {
+                      _setActiveDomain('GLOBAL');
+                      setActiveRoom('live_chat_sniper');
+                    } else if (room === 'uhf_studio') {
+                      _setActiveDomain('GLOBAL');
+                      setActiveRoom('uhf_studio');
+                    } else if (room === 'nexus_telemetry') {
+                      _setActiveDomain('GLOBAL');
+                      setActiveRoom('nexus_telemetry');
+                    } else if (room === 'user_management') {
+                      _setActiveDomain('GLOBAL');
+                      setActiveRoom('user_management');
+                    }
+                  }} />
+                </div>
               ) : (
                 <div className="p-4 text-xs font-mono text-white/50">
                   Interactive Dashboard widgets are active for this workspace. Use the Left Sidebar to navigate or configuration controls to customize.
@@ -1120,15 +1214,28 @@ export default function App() {
           activeGamedayPk={activeGamedayPk}
           onSelectGame={(pk) => {
             setActiveGamedayPk(pk);
-            setActiveRoom('scruffys');
+            setActiveRoom('playcall_desk');
             setActiveDomain('MLB');
-            window.history.pushState({}, '', '?domain=MLB&room=scruffys');
+            window.history.pushState({}, '', '?domain=MLB&room=playcall_desk');
           }}
         />
       ) : activeDomain === 'CMDB' ? (
         <SovereignCmdb />
-      ) : activeDomain === 'ROOT' && activeRoom === 'pixel_dropzone' ? (
-        <PixelDropZone />
+      ) : activeRoom === 'pixel_dropzone' ? (
+        <div className="cardboard-panel-dark p-6 min-h-[550px] cardboard-texture-dark crt-scanlines border border-cyan-500/30 rounded-lg shadow-[0_0_15px_rgba(0,212,255,0.1)] animate-fade-in">
+          <div className="flex items-center justify-between mb-4 border-b border-cyan-500/20 pb-2">
+            <div>
+              <h2 className="text-xl font-mono text-cyan-400 flex items-center gap-2">
+                <span className="text-cyan-500 animate-pulse">☁️</span> PIXEL DROP ZONE INGRESS
+              </h2>
+              <p className="text-xs text-slate-400 font-mono">Secure Core Storage Staging Pipeline</p>
+            </div>
+            <div className="text-xs font-mono bg-cyan-950/40 text-cyan-400 px-3 py-1 rounded border border-cyan-800/30">
+              STAGING: /home/james/sovereign_inbox/
+            </div>
+          </div>
+          <GlobalDropZone />
+        </div>
       ) : activeDomain === 'ROOT' && (activeRoom === 'starter') ? (
         <SovereignOsPortal 
           initialView="main"
@@ -1142,7 +1249,7 @@ export default function App() {
               const globalRooms = [
                 'edge_dvr', 'stream_sniper', 'highlight_heist', 'sovereign_css', 'sow', 
                 'dreadnought', 'theme_manager', 'model_arena', 'user_management', 'user_mgmt',
-                'system_config', 'portal_layout', 'sys_rules', 'stack_seeder', 'hate_mail_inbox', 
+                'system_config', 'portal_layout', 'sys_rules', 'sys_docs', 'stack_seeder', 'hate_mail_inbox', 
                 'catnip_wars', 'town_simulation', 'voice', 'persona_center', 'nexus_telemetry'
               ];
               if (globalRooms.includes(room)) {
@@ -1161,7 +1268,6 @@ export default function App() {
           else if (domain === 'SKEW') { setActiveDomain('SKEW'); setActiveRoom('the_skew'); }
           else if (domain === 'ARGUS') { setActiveDomain('ARGUS'); }
           else if (domain === 'HOLODEX') { setActiveDomain('HOLODEX'); setActiveRoom('holodex'); }
-          else if (domain === 'SCRUFFYS') { setActiveDomain('MLB'); setActiveRoom('scruffys'); }
           else if (domain === 'EDGE_DVR') { setActiveDomain('GLOBAL'); setActiveRoom('edge_dvr'); }
           else if (domain === 'STREAM_SNIPER') { setActiveDomain('GLOBAL'); setActiveRoom('stream_sniper'); }
           else if (domain === 'ROM_GALLERY') { setActiveDomain('MLB'); setActiveRoom('rom_gallery'); }
@@ -1192,7 +1298,7 @@ export default function App() {
       ) : (
         <>
 
-      {activeRoom !== 'rom_gallery' && activeRoom !== 'the_skew' && activeRoom !== 'kanban' && activeRoom !== 'sow' && activeRoom !== 'system_config' && activeRoom !== 'user_management' && activeRoom !== 'user_mgmt' && activeRoom !== 'bistro' && activeRoom !== 'scruffys' && (activeRoom as string) !== 'stack_seeder' && activeRoom !== 'hate_mail_inbox' && activeRoom !== 'catnip_wars' && activeRoom !== 'town_simulation' && activeRoom !== 'voice' && (
+      {activeRoom !== 'rom_gallery' && activeRoom !== 'the_skew' && activeRoom !== 'kanban' && activeRoom !== 'sow' && activeRoom !== 'system_config' && activeRoom !== 'user_management' && activeRoom !== 'user_mgmt' && activeRoom !== 'bistro' && (activeRoom as string) !== 'stack_seeder' && activeRoom !== 'hate_mail_inbox' && activeRoom !== 'catnip_wars' && activeRoom !== 'town_simulation' && activeRoom !== 'voice' && activeRoom !== 'data' && (
         <header className="flex flex-col items-center justify-center mb-1">
           <h1 className={`text-center m-0 drop-shadow-lg ${activeRoom === 'savant_query' ? 'text-3xl md:text-4xl font-display font-bold uppercase tracking-wider text-white' :
               activeRoom === 'starter' || activeRoom === 'playcall_desk' ? 'text-3xl md:text-4xl vm-header vm-accent-glow font-bold pb-1 tracking-wide' :
@@ -1205,7 +1311,7 @@ export default function App() {
       )}
 
       <main className="flex-1 w-full px-4 md:px-8 mx-auto relative overflow-y-visible flex flex-col min-h-0">
-        {(activeDomain === 'MLB' || activeRoom === 'scruffys') && <MlbScoreBar activeGamedayPk={activeGamedayPk} onSelectGame={setActiveGamedayPk} />}
+        {activeDomain === 'MLB' && activeRoom === 'starter' && <MlbScoreBar activeGamedayPk={activeGamedayPk} onSelectGame={setActiveGamedayPk} />}
         <AnimatePresence>
           {samSighting && (
             <motion.div
@@ -1291,10 +1397,6 @@ export default function App() {
             >
               <TownSimulation />
             </motion.div>
-          )}
-
-          {activeRoom === 'scruffys' && (
-            <ScruffysTavern activeGamedayPk={activeGamedayPk} />
           )}
 
           {activeRoom === 'starter' && (
@@ -1668,17 +1770,7 @@ export default function App() {
             </motion.div>
           )}
 
-          {activeRoom === 'holodex' && (
-            <motion.div
-              key="holodex"
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="h-[85vh] w-full rounded-xl overflow-hidden  border border-[#38bdf8]/30"
-            >
-              <HoloDex />
-            </motion.div>
-          )}
+
 
           {activeRoom === 'factory_dashboard' && (
             <motion.div
@@ -1701,6 +1793,18 @@ export default function App() {
               className="h-[85vh] w-full rounded-xl overflow-hidden shadow-2xl relative"
             >
               <SysRulesPanel />
+            </motion.div>
+          )}
+
+          {activeRoom === 'sys_docs' && (
+            <motion.div
+              key="sys_docs"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="h-[85vh] w-full rounded-xl overflow-hidden shadow-2xl relative"
+            >
+              <SysDocsPanel />
             </motion.div>
           )}
 
@@ -1861,21 +1965,9 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="w-full flex flex-col items-center justify-center p-8 bg-[#020617] rounded-xl border border-[#E0BC68]/30  relative overflow-hidden"
+              className="w-full h-[80vh] flex flex-col"
             >
-              <div className="absolute top-10 left-[-60px] w-[300px] bg-red-600 text-white font-black text-center py-2 -rotate-45 z-50 uppercase tracking-[0.3em]  border-y border-white/50 text-[11px]">
-                Alpha Stage • Work In Progress
-              </div>
-              <div className="flex overflow-x-auto snap-x snap-mandatory w-full gap-8 pb-8 no-scrollbar" style={{ scrollBehavior: 'smooth' }}>
-                {AMEN_CORNER_IMAGES.map((img, i) => (
-                  <div key={i} className="snap-center shrink-0 w-full md:w-[80%] flex justify-center">
-                    <img src={`/amen_corner_images/${img}`} alt="Amen Corner Flow" className="max-h-[70vh] rounded-xl shadow-2xl object-contain drop-shadow-lg border border-[#E0BC68]/20" />
-                  </div>
-                ))}
-              </div>
-              <div className="absolute bottom-4 text-[#E0BC68]/50 text-sm font-mono tracking-widest uppercase animate-pulse">
-                « SWIPE / SCROLL FOR MORE »
-              </div>
+              <PgaAmenCornerLookBook />
             </motion.div>
           )}
 
@@ -2007,7 +2099,7 @@ export default function App() {
                   New Ticket
                 </button>
                 <button 
-                  onClick={() => { setActiveDomain('ROOT'); setActiveRoom('starter'); window.history.pushState({}, '', '/'); }} 
+                  onClick={() => { setActiveDomain('ROOT'); setActiveRoom('cockpit'); window.history.pushState({}, '', '/'); }} 
                   className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg font-mono text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-colors"
                 >
                   Close Kanban
@@ -2037,7 +2129,7 @@ export default function App() {
               className="w-full h-full overflow-y-auto relative z-[900] pb-24"
             >
               <GardenStackDashboard onEnterPortal={() => {
-                setActiveRoom('starter');
+                setActiveRoom('cockpit');
                 setActiveDomain('ROOT');
                 window.history.pushState({}, '', '/');
               }} />
@@ -2323,6 +2415,12 @@ export default function App() {
 
       {/* HOLOLINK RECEIVER */}
       <HololinkHub user={auth} wsRelayUrl="/ws-relay" />
+
+      {/* GLOBAL SEARCH WIDGET OVERLAY */}
+      <GlobalSearchWidget 
+        isOpen={isGlobalSearchOpen} 
+        onClose={() => setIsGlobalSearchOpen(false)} 
+      />
     </div>
   );
 }

@@ -48,13 +48,19 @@ def deploy_personas(game_pk, chaos_mode):
         home_aliases = [home]
         if home in ['oak', 'ath']: home_aliases.extend(['oak', 'ath'])
 
-        away_placeholders = ",".join(["?"] * len(away_aliases))
-        cur.execute(f"SELECT name FROM cmdb_ci WHERE assigned_to COLLATE NOCASE IN ({away_placeholders}) AND sys_class_name='cmdb_ci_ai_persona' LIMIT 3", away_aliases)
-        away_fans = [row[0] for row in cur.fetchall()]
+        if 'nym' in [a.lower() for a in away_aliases]:
+            away_fans = ['barf', 'UncleStevieStan', 'keith_fanboy', '7_train_terry']
+        else:
+            away_placeholders = ",".join(["?"] * len(away_aliases))
+            cur.execute(f"SELECT name FROM cmdb_ci WHERE assigned_to COLLATE NOCASE IN ({away_placeholders}) AND sys_class_name='cmdb_ci_ai_persona' AND name NOT LIKE '%barf_prime%' AND name NOT LIKE '%barf prime%' LIMIT 3", away_aliases)
+            away_fans = [row[0] for row in cur.fetchall()]
 
-        home_placeholders = ",".join(["?"] * len(home_aliases))
-        cur.execute(f"SELECT name FROM cmdb_ci WHERE assigned_to COLLATE NOCASE IN ({home_placeholders}) AND sys_class_name='cmdb_ci_ai_persona' LIMIT 3", home_aliases)
-        home_fans = [row[0] for row in cur.fetchall()]
+        if 'nym' in [h.lower() for h in home_aliases]:
+            home_fans = ['barf', 'UncleStevieStan', 'keith_fanboy', '7_train_terry']
+        else:
+            home_placeholders = ",".join(["?"] * len(home_aliases))
+            cur.execute(f"SELECT name FROM cmdb_ci WHERE assigned_to COLLATE NOCASE IN ({home_placeholders}) AND sys_class_name='cmdb_ci_ai_persona' AND name NOT LIKE '%barf_prime%' AND name NOT LIKE '%barf prime%' LIMIT 3", home_aliases)
+            home_fans = [row[0] for row in cur.fetchall()]
 
         selected_personas = away_fans + home_fans
 
@@ -95,6 +101,10 @@ def deploy_personas(game_pk, chaos_mode):
             print(f"  [m2m] Inserted {persona_name} ({persona_sys_id}) into room {game_pk}")
 
     cur.execute(f"UPDATE cmdb_ci_ai_persona SET u_deployment_zone = ? WHERE sys_id IN (SELECT sys_id FROM cmdb_ci WHERE name IN ({sp_placeholders}))", [game_pk] + selected_personas)
+    cur.execute("UPDATE mlb_schedule SET room_state = 'staged' WHERE game_pk != ? AND room_state = 'active'", (game_pk,))
+    cur.execute("UPDATE cmdb_ci_fanstack_room SET room_state = 'staged' WHERE game_pk != ? AND room_state = 'active'", (game_pk,))
+    cur.execute("UPDATE mlb_schedule SET room_state = 'active' WHERE game_pk = ?", (game_pk,))
+    cur.execute("UPDATE cmdb_ci_fanstack_room SET room_state = 'active' WHERE game_pk = ?", (game_pk,))
 
     con.commit()
     con.close()

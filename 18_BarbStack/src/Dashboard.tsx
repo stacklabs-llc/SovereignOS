@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import SovereignCinemaRequest from './components/SovereignCinemaRequest';
+import WildcardAdvocateGenerator from './components/WildcardAdvocateGenerator';
 
 // TypeScript Declarations for Leaflet
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 declare const L: any;
 
 interface Advocate {
@@ -67,7 +69,9 @@ export default function Dashboard() {
 
   // Leaflet Map states
   const [mapMode, setMapMode] = useState<string>('sim'); // 'sim' or 'gps'
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const truckMarkerRef = useRef<any>(null);
 
   // Accessible Stacks list (Barb's Active Mission Stacks)
@@ -94,6 +98,7 @@ export default function Dashboard() {
   // Native Synthesizer Audio Sweep
   const playSlideWhistle = () => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioContext) return;
       const ctx = new AudioContext();
@@ -120,6 +125,7 @@ export default function Dashboard() {
 
   const playForgeChime = () => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioContext) return;
       const ctx = new AudioContext();
@@ -158,8 +164,8 @@ export default function Dashboard() {
     const midX2 = 380, midY2 = 220;  // SpiteSlice
     const endX = 560, endY = 150;    // Wild Paws Rescue
 
-    let currentX = startX;
-    let currentY = startY;
+    let currentX: number;
+    let currentY: number;
 
     if (val <= 33) {
       const t = val / 33;
@@ -188,8 +194,8 @@ export default function Dashboard() {
         [33.8821, -84.5098], 
         [33.8851, -84.5305]  
       ];
-      let lat = routePoints[0][0];
-      let lng = routePoints[0][1];
+      let lat: number;
+      let lng: number;
       
       if (val <= 33) {
         const t = val / 33;
@@ -276,6 +282,7 @@ export default function Dashboard() {
     if (mapMode === 'gps' && mapRef.current) {
       setTimeout(() => mapRef.current.invalidateSize(), 50);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mapMode, activeTab]);
 
   const triggerSpiteFlare = () => {
@@ -359,6 +366,9 @@ export default function Dashboard() {
           </button>
           <button onClick={() => setActiveTab('cinema')} className={`px-4 py-2 text-xs font-bold uppercase rounded border transition-all cursor-pointer ${activeTab === 'cinema' ? 'bg-[#00c878] border-[#00a868] text-stone-900 font-black shadow-lg' : 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700'}`}>
             🎬 Sovereign Cinema
+          </button>
+          <button onClick={() => setActiveTab('generator')} className={`px-4 py-2 text-xs font-bold uppercase rounded border transition-all cursor-pointer ${activeTab === 'generator' ? 'bg-[#0ea5e9] border-[#0284c7] text-stone-950 font-black shadow-lg' : 'bg-stone-800 border-stone-700 text-stone-300 hover:bg-stone-700'}`}>
+            🎨 Sprite Generator
           </button>
         </div>
       </header>
@@ -790,6 +800,9 @@ export default function Dashboard() {
           )}
           {activeTab === 'cinema' && (
             <SovereignCinemaRequest />
+          )}
+          {activeTab === 'generator' && (
+            <WildcardAdvocateGenerator />
           )}
 
         </main>

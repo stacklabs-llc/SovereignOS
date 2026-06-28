@@ -1,7 +1,7 @@
 import sqlite3
 import time
 import os
-import google.generativeai as genai
+from google import genai
 
 # Database Paths
 CMDB_DB_PATH = '/home/james/SovereignOS/sovereign_core.db'
@@ -12,8 +12,7 @@ if not api_key:
     print("[FLOW GENERATOR] ERROR: No GEMINI_API_KEY set.")
     exit(1)
 
-genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-flash-latest')
+client = genai.Client(api_key=api_key)
 
 PROMPT_TEMPLATE = """
 You are Vanguard, the elite AI Video Production Assistant for the Sovereign FanStack Broadcast Engine.
@@ -57,7 +56,10 @@ def process_flow_tickets():
             
             # Generate Prompts
             try:
-                response = model.generate_content(PROMPT_TEMPLATE.format(state=state_text))
+                response = client.models.generate_content(
+                    model='gemini-2.5-flash',
+                    contents=PROMPT_TEMPLATE.format(state=state_text)
+                )
                 new_desc = f"✅ FLOW VIDEO PROMPTS GENERATED\n\n[LIVE MATCHUP: {state_text}]\n\n{response.text}"
                 
                 # Update DB

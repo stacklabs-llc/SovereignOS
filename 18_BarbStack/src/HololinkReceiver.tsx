@@ -49,7 +49,7 @@ export default function HololinkReceiver() {
         else if (msg.type === 'HOLOLINK_END') {
           endCall();
         }
-      } catch (e) {
+      } catch {
         // ignore non-json
       }
     };
@@ -60,18 +60,18 @@ export default function HololinkReceiver() {
     };
   }, []);
 
-  const startCall = async (callerId: string = 'clio') => {
+  async function startCall(callerId: string = 'clio') {
     try {
       let stream: MediaStream | null = null;
       try {
         // First try grabbing both camera and mic (works for Grogu with Suzie Q mic)
         stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      } catch (mediaErr) {
+      } catch {
         // If it failed, it's likely because Hobbes doesn't have a mic attached. Try Video Only!
         try {
           stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
           setStatus('Camera initialized without microphone.');
-        } catch (videoOnlyErr) {
+        } catch {
           setStatus('Hardware Node Camera/Mic not found. Proceeding in Receive-Only Mode.');
         }
       }
@@ -128,7 +128,7 @@ export default function HololinkReceiver() {
     } catch (err) {
       setStatus('Critical WebRTC Failure: ' + err);
     }
-  };
+  }
 
   useEffect(() => {
     if (isInCall && localStream && localVideoRef.current) {
@@ -136,7 +136,7 @@ export default function HololinkReceiver() {
     }
   }, [isInCall, localStream]);
 
-  const endCall = () => {
+  function endCall() {
     setIsInCall(false);
     setStatus('Listening for Hololink Pings...');
     if (peerConnectionRef.current) {
@@ -149,7 +149,7 @@ export default function HololinkReceiver() {
       localVideoRef.current.srcObject = null;
     }
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
-  };
+  }
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col items-center justify-center relative overflow-hidden">

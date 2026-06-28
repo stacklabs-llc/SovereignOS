@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Activity, Server, ShieldAlert, ClipboardList, Video } from 'lucide-react';
 import { PORTAL_APPS, getDefaultAppOrder, getEnvDetails } from '../config/PortalApps';
 import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, rectSortingStrategy } from '@dnd-kit/sortable';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+
+declare const L: any;
 
 const SortableAppCard = ({ id, app, onNavigate }: any) => {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id });
@@ -61,6 +63,160 @@ export default function SovereignOsPortal({ onNavigate, globalBoggsOverride = 'N
   const [drilldownNode, setDrilldownNode] = useState<any>(null);
   const [cardOrder, setCardOrder] = useState<string[]>(getDefaultAppOrder());
   const [activeModules, setActiveModules] = useState<any[]>([]);
+
+  // Telemetry Delivery Tracker States
+  const [progress, setProgress] = useState<number>(0);
+  const mapRef = useRef<any>(null);
+  const truckMarkerRef = useRef<any>(null);
+
+  const updateTruckPosition = (val: number) => {
+    if (typeof L === 'undefined' || !truckMarkerRef.current) return;
+
+    const routePoints = [
+      [33.8950, -84.5220], // Da Vinci's Pizza
+      [33.8901, -84.5123], // Gonzas Store
+      [33.8821, -84.5098], // SpiteSlice
+      [33.8851, -84.5305]  // Wild Paws Rescue
+    ];
+    
+    let lat = routePoints[0][0];
+    let lng = routePoints[0][1];
+    
+    if (val <= 33) {
+      const t = val / 33;
+      lat = routePoints[0][0] + (routePoints[1][0] - routePoints[0][0]) * t;
+      lng = routePoints[0][1] + (routePoints[1][1] - routePoints[0][1]) * t;
+    } else if (val <= 66) {
+      const t = (val - 33) / 33;
+      lat = routePoints[1][0] + (routePoints[2][0] - routePoints[1][0]) * t;
+      lng = routePoints[1][1] + (routePoints[2][1] - routePoints[1][1]) * t;
+    } else {
+      const t = (val - 66) / 34;
+      lat = routePoints[2][0] + (routePoints[3][0] - routePoints[2][0]) * t;
+      lng = routePoints[2][1] + (routePoints[3][1] - routePoints[2][1]) * t;
+    }
+    
+    truckMarkerRef.current.setLatLng([lat, lng]);
+  };
+
+  const playSlideWhistle = () => {
+    try {
+      const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioContext) return;
+      const ctx = new AudioContext();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      
+      const now = ctx.currentTime;
+      osc.frequency.setValueAtTime(900, now);
+      osc.frequency.exponentialRampToValueAtTime(80, now + 1.6);
+      
+      gain.gain.setValueAtTime(0.35, now);
+      gain.gain.linearRampToValueAtTime(0.35, now + 1.2);
+      gain.gain.linearRampToValueAtTime(0.01, now + 1.6);
+      
+      osc.start(now);
+      osc.stop(now + 1.6);
+    } catch(e) {
+      console.error("Audio synth error:", e);
+    }
+  };
+
+  const handleProgressChange = (val: number) => {
+    setProgress(val);
+    updateTruckPosition(val);
+    if (val === 100) {
+      playSlideWhistle();
+    }
+  };
+
+  useEffect(() => {
+    let mapCreated = false;
+    
+    const initMap = () => {
+      if (typeof L === 'undefined' || mapCreated || mapRef.current) return;
+      
+      const baseCoords: [number, number] = [33.8732, -84.5226];       
+      const gonzasCoords: [number, number] = [33.8901, -84.5123];     
+      const spitesliceCoords: [number, number] = [33.8821, -84.5098];   
+      const wildpawsCoords: [number, number] = [33.8851, -84.5305];    
+      const davinciCoords: [number, number] = [33.8950, -84.5220];      
+
+      const map = L.map('leaflet-map-canvas').setView([33.885, -84.520], 13);
+      mapRef.current = map;
+
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+
+      function createCustomIcon(emoji: string, text: string, isNemesis: boolean = false) {
+        const borderClass = isNemesis ? 'border-rose-500' : 'border-[#6e473b]';
+        const bgClass = isNemesis ? 'bg-rose-950/90 text-rose-200' : 'bg-amber-950/90 text-amber-200';
+        return L.divIcon({
+          className: 'custom-leaflet-marker',
+          html: `<div class="${bgClass} border-2 ${borderClass} px-2 py-1 rounded shadow-md text-xs font-mono font-bold flex items-center space-x-1 whitespace-nowrap">
+                   <span>${emoji}</span>
+                   <span>${text}</span>
+                 </div>`,
+          iconSize: [100, 30],
+          iconAnchor: [50, 15]
+        });
+      }
+
+      L.marker(baseCoords, { icon: createCustomIcon('🏠', "BARB'S BASE") }).addTo(map);
+      L.marker(gonzasCoords, { icon: createCustomIcon('🏪', 'GONZAS STORE') }).addTo(map);
+      L.marker(spitesliceCoords, { icon: createCustomIcon('🍕', 'SPITESLICE') }).addTo(map);
+      L.marker(wildpawsCoords, { icon: createCustomIcon('🐶', 'WILD PAWS RESCUE') }).addTo(map);
+      L.marker(davinciCoords, { icon: createCustomIcon('🏢', "DA VINCI'S PIZZA", true) }).addTo(map);
+
+      const routePoints = [
+        davinciCoords,
+        gonzasCoords,
+        spitesliceCoords,
+        wildpawsCoords
+      ];
+
+      L.polyline(routePoints, {
+        color: '#f97316',
+        weight: 5,
+        dashArray: '10, 5',
+        opacity: 0.8
+      }).addTo(map);
+
+      const truckIcon = L.divIcon({
+        className: 'custom-leaflet-truck',
+        html: `<div class="w-8 h-8 rounded-full bg-orange-500 border-2 border-white flex items-center justify-center text-sm shadow-lg" style="transform: translate(-25%, -25%); font-size: 16px; line-height: 32px; text-align: center;">🚚</div>`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16]
+      });
+
+      truckMarkerRef.current = L.marker(davinciCoords, { icon: truckIcon }).addTo(map);
+      mapCreated = true;
+
+      // Initialize truck position
+      updateTruckPosition(progress);
+
+      setTimeout(() => {
+        map.invalidateSize();
+      }, 500);
+    };
+
+    // Try immediately
+    initMap();
+
+    // Check periodically if not loaded
+    const interval = setInterval(() => {
+      if (typeof L !== 'undefined') {
+        initMap();
+        clearInterval(interval);
+      }
+    }, 250);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchActiveModules = () => {
     fetch('/api/now/table/sys_module')
@@ -285,6 +441,31 @@ export default function SovereignOsPortal({ onNavigate, globalBoggsOverride = 'N
               </DndContext>
             );
           })()}
+
+          {/* SMYRNA HEIGHTS SENTINEL MAP & DELIVERY TRACKER */}
+          <div className="w-full bg-[#1e293b]/40 backdrop-blur-md border border-white/10 p-6 rounded-2xl flex flex-col gap-4 shadow-xl">
+            <h2 className="text-lg font-bold text-white uppercase tracking-wider flex justify-between items-center">
+              <span>🗺️ Smyrna Heights Sentinel Map</span>
+              <span className="text-xs bg-orange-500/20 text-orange-400 border border-orange-500/30 px-2.5 py-0.5 rounded font-mono">DELIVERY SYSTEM (GPX)</span>
+            </h2>
+            
+            <div id="leaflet-map-canvas" className="w-full h-[350px] rounded-xl border border-white/10 relative overflow-hidden" style={{ zIndex: 1 }}></div>
+
+            <div className="p-4 bg-white/5 border border-white/10 rounded-xl">
+              <label className="block text-xs font-mono font-bold text-white/70 uppercase mb-2 flex justify-between">
+                <span>🚚 ROUTE PROGRESS CONTROLLER (DRAG TO ANIMATE REVENGE SHIPMENT)</span>
+                <span className="text-orange-400 font-bold">{progress}% COMPLETED</span>
+              </label>
+              <input 
+                type="range" 
+                min="0" 
+                max="100" 
+                value={progress} 
+                onChange={(e) => handleProgressChange(parseInt(e.target.value))} 
+                className="w-full h-2 bg-white/10 rounded-lg appearance-none cursor-pointer focus:outline-none accent-orange-500" 
+              />
+            </div>
+          </div>
 
         </div>
       </div>

@@ -11,7 +11,7 @@ services:
       - /home/james/SovereignOS/03_Media_Stack/sabnzbd/config:/config
       - /home/james/SovereignOS/media_vault:/media_vault
     ports:
-      - 8080:8080
+      - 8081:8080
     deploy:
       resources:
         limits:
