@@ -30,6 +30,15 @@ interface SovereignSportsDashboardProps {
   };
   triggerOverlayChange?: (overlayName: string, active: boolean) => void;
   roster?: any[];
+  selectedAdvocate: string | null;
+  setSelectedAdvocate: (user: string | null) => void;
+  soundboardPhrases: any[];
+  triggerSoundboardPhrase: (phrase: any) => void;
+  volumeLevel: number;
+  keithTakeover: any;
+  personalityMode?: string;
+  pinEngineActive?: boolean;
+  setPinEngineActive?: (active: boolean) => void;
 }
 
 const TEAM_NAMES: Record<string, string> = {
@@ -98,6 +107,68 @@ const TEAM_COLORS: Record<string, { primary: string, secondary: string }> = {
   "BOS": { primary: "#BD3039", secondary: "#0C2340" }
 };
 
+interface TeamLogoProps {
+  teamCode: string;
+  size?: number;
+  border?: string;
+}
+
+const TeamLogo: React.FC<TeamLogoProps> = ({ teamCode, size = 28, border }) => {
+  const code = (teamCode || 'AWY').toUpperCase();
+  const colors = TEAM_COLORS[code] || { primary: "#1E293B", secondary: "#94A3B8" };
+  const [hasError, setHasError] = useState(false);
+  const logoUrl = `https://a.espncdn.com/i/teamlogos/mlb/500/scoreboard/${code.toLowerCase()}.png`;
+
+  useEffect(() => {
+    setHasError(false);
+  }, [teamCode]);
+
+  return (
+    <div 
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.02) 70%)',
+        border: border || `1.5px solid ${colors.secondary || 'rgba(255,255,255,0.2)'}`,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        overflow: 'visible',
+        boxShadow: '0 0 10px rgba(255, 255, 255, 0.1)',
+        flexShrink: 0
+      }}
+    >
+      {!hasError ? (
+        <img 
+          src={logoUrl} 
+          alt={code} 
+          onError={() => setHasError(true)}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            padding: '2px',
+            boxSizing: 'border-box',
+            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6)) drop-shadow(0 0 3px rgba(255,255,255,0.5))'
+          }}
+        />
+      ) : (
+        <span 
+          style={{ 
+            fontSize: `${size * 0.4}px`, 
+            fontWeight: '900', 
+            color: '#FFF', 
+            fontFamily: 'monospace' 
+          }}
+        >
+          {code.slice(0, 2)}
+        </span>
+      )}
+    </div>
+  );
+};
+
 export default function SovereignSportsDashboard({
   gameState,
   messages,
@@ -106,10 +177,113 @@ export default function SovereignSportsDashboard({
   activeGamePk,
   activeOverlays = {},
   roster = [],
+  selectedAdvocate,
+  setSelectedAdvocate,
+  soundboardPhrases,
+  triggerSoundboardPhrase,
+  volumeLevel,
+  keithTakeover,
+  personalityMode = 'Matchup Focus',
+  pinEngineActive = false,
+  setPinEngineActive,
 }: SovereignSportsDashboardProps) {
   const [inputText, setInputText] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [feedMode, setFeedMode] = useState<'stream' | 'card'>('card');
+
+  interface Pin {
+    id: number;
+    game_pk: string;
+    x_pct: number;
+    y_pct: number;
+    author: string;
+    comment: string;
+    timestamp: string;
+    status: string;
+  }
+
+  const [pins, setPins] = useState<Pin[]>([]);
+  const [activePlacement, setActivePlacement] = useState<{ x_pct: number, y_pct: number } | null>(null);
+  const [pinComment, setPinComment] = useState('');
+
+  const fetchPins = async () => {
+    try {
+      const res = await fetch(`/api/pins?game_pk=${activeGamePk}`);
+      const data = await res.json();
+      if (data.status === 'success') {
+        setPins(data.pins);
+      }
+    } catch (err) {
+      console.error('[PinEngine] Failed to fetch pins:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchPins();
+  }, [activeGamePk]);
+
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('.pin-interactive-element')) {
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setActivePlacement({ x_pct: x, y_pct: y });
+    setPinComment('');
+  };
+
+  const handleSavePin = async () => {
+    if (!activePlacement || !pinComment.trim()) return;
+    try {
+      const res = await fetch('/api/pins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          game_pk: activeGamePk,
+          x_pct: activePlacement.x_pct,
+          y_pct: activePlacement.y_pct,
+          author: 'james',
+          comment: pinComment.trim()
+        })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setActivePlacement(null);
+        setPinComment('');
+        fetchPins();
+      }
+    } catch (err) {
+      console.error('[PinEngine] Failed to save pin:', err);
+    }
+  };
+
+  const handleDeletePin = async (pinId: number) => {
+    try {
+      const res = await fetch(`/api/pins/${pinId}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        fetchPins();
+      }
+    } catch (err) {
+      console.error('[PinEngine] Failed to delete pin:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (personalityMode === 'Matchup Focus') {
+      setFeedMode('card');
+    } else if (personalityMode === 'Lounge') {
+      setFeedMode('stream');
+    }
+  }, [personalityMode]);
+
+  // Unused props references for linter compliance
+  if (false && selectedAdvocate && setSelectedAdvocate && soundboardPhrases && triggerSoundboardPhrase && volumeLevel && setPinEngineActive) {
+    console.log(selectedAdvocate, setSelectedAdvocate, soundboardPhrases, triggerSoundboardPhrase, volumeLevel, setPinEngineActive);
+  }
   
   // WeedStack countdown state (420 seconds)
   const [weedSeconds, setWeedSeconds] = useState(420);
@@ -199,8 +373,34 @@ export default function SovereignSportsDashboard({
 
   const awayTeam = (gameState.away_team || 'AWY').toUpperCase();
   const homeTeam = (gameState.home_team || 'HME').toUpperCase();
-  const awayColor = TEAM_COLORS[awayTeam] || { primary: "#1E293B", secondary: "#94A3B8" };
-  const homeColor = TEAM_COLORS[homeTeam] || { primary: "#1E293B", secondary: "#94A3B8" };
+
+  const leftColWidth = 
+    personalityMode === 'Matchup Focus' ? '60%' :
+    personalityMode === 'Lounge' ? '50%' :
+    personalityMode === 'Analytics' ? '65%' :
+    personalityMode === 'Gameday Sim' ? '50%' :
+    personalityMode === 'Pennant Race' ? '60%' : '60%';
+
+  const rightColWidth = 
+    personalityMode === 'Matchup Focus' ? '40%' :
+    personalityMode === 'Lounge' ? '50%' :
+    personalityMode === 'Analytics' ? '35%' :
+    personalityMode === 'Gameday Sim' ? '50%' :
+    personalityMode === 'Pennant Race' ? '40%' : '40%';
+
+  const panelAHeight = 
+    personalityMode === 'Matchup Focus' ? '60%' :
+    personalityMode === 'Lounge' ? '100%' :
+    personalityMode === 'Analytics' ? '50%' :
+    personalityMode === 'Gameday Sim' ? '40%' :
+    personalityMode === 'Pennant Race' ? '50%' : '60%';
+
+  const panelBHeight = 
+    personalityMode === 'Matchup Focus' ? '40%' :
+    personalityMode === 'Lounge' ? '0%' :
+    personalityMode === 'Analytics' ? '50%' :
+    personalityMode === 'Gameday Sim' ? '60%' :
+    personalityMode === 'Pennant Race' ? '50%' : '40%';
 
   return (
     <div 
@@ -385,7 +585,7 @@ export default function SovereignSportsDashboard({
                   animation: 'pulseLive 2s infinite'
                 }}
               >
-                <Radio size={10} style={{ animation: 'pulseLive 1s infinite' }} /> M.A.R.D. LIVE
+                <Radio size={10} style={{ animation: 'pulseLive 1s infinite' }} /> LIVE
               </span>
             ) : (
               <span 
@@ -430,25 +630,7 @@ export default function SovereignSportsDashboard({
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             {/* Away Team */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div 
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '50%',
-                  background: awayColor.primary,
-                  border: `2px solid ${awayColor.secondary}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: '900',
-                  fontSize: '0.7rem',
-                  color: '#FFF',
-                  fontFamily: 'monospace',
-                  boxShadow: `0 0 8px ${awayColor.primary}`
-                }}
-              >
-                {awayTeam.slice(0, 2)}
-              </div>
+              <TeamLogo teamCode={awayTeam} size={28} />
               <span style={{ fontSize: '1.1rem', fontWeight: '900', letterSpacing: '0.5px', color: '#FFF' }}>
                 {awayTeam}
               </span>
@@ -484,25 +666,7 @@ export default function SovereignSportsDashboard({
               <span style={{ fontSize: '1.1rem', fontWeight: '900', letterSpacing: '0.5px', color: '#FFF' }}>
                 {homeTeam}
               </span>
-              <div 
-                style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '50%',
-                  background: homeColor.primary,
-                  border: `2px solid ${homeColor.secondary}`,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontWeight: '900',
-                  fontSize: '0.7rem',
-                  color: '#FFF',
-                  fontFamily: 'monospace',
-                  boxShadow: `0 0 8px ${homeColor.primary}`
-                }}
-              >
-                {homeTeam.slice(0, 2)}
-              </div>
+              <TeamLogo teamCode={homeTeam} size={28} />
             </div>
           </div>
 
@@ -603,19 +767,21 @@ export default function SovereignSportsDashboard({
       >
         {/* Left Column (60% width): Panel A (Video) + Panel B (Field Vector) */}
         <div 
+          id="sports-dashboard-left-col"
           style={{
-            width: '60%',
+            width: leftColWidth,
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
             borderRight: '1px solid rgba(255, 255, 255, 0.08)',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            position: 'relative'
           }}
         >
           {/* Panel A (Top Left: 60% height): Live Video Player */}
           <div 
             style={{
-              height: '60%',
+              height: panelAHeight,
               width: '100%',
               background: '#000',
               position: 'relative',
@@ -955,11 +1121,12 @@ export default function SovereignSportsDashboard({
           {/* Panel B (Bottom Left: 40% height): CitiFieldVector */}
           <div 
             style={{
-              height: '40%',
+              height: panelBHeight,
               width: '100%',
-              padding: '0.5rem',
+              padding: panelBHeight === '0%' ? '0' : '0.5rem',
               boxSizing: 'border-box',
-              position: 'relative'
+              position: 'relative',
+              display: panelBHeight === '0%' ? 'none' : 'block'
             }}
           >
             {/* Fundies Grid (Neon Green Arcade Grid over Vector Field) */}
@@ -987,13 +1154,262 @@ export default function SovereignSportsDashboard({
               lastPlayEvent={gameState.status_msg}
               homeTeam={gameState?.home_team || ''}
             />
+
+            {/* Pin Engine Overlay Layer */}
+            {pinEngineActive && (
+              <div 
+                className="pin-engine-overlay-container"
+                onClick={handleOverlayClick}
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 210,
+                  cursor: 'crosshair',
+                  borderRadius: '12px',
+                  overflow: 'hidden'
+                }}
+              >
+                {/* Visual indicator glow for active placement mode */}
+                <div style={{
+                  position: 'absolute',
+                  inset: 0,
+                  border: '1px solid rgba(253, 90, 30, 0.4)',
+                  boxShadow: 'inset 0 0 15px rgba(253, 90, 30, 0.08)',
+                  pointerEvents: 'none',
+                  animation: 'pinOverlayPulse 2s infinite alternate'
+                }} />
+
+                {/* Render Saved Pins */}
+                {pins.map((pin) => (
+                  <div 
+                    key={pin.id}
+                    className="pin-interactive-element"
+                    style={{
+                      position: 'absolute',
+                      left: `${pin.x_pct}%`,
+                      top: `${pin.y_pct}%`,
+                      transform: 'translate(-50%, -50%)',
+                      zIndex: 220
+                    }}
+                  >
+                    {/* Glowing Pin Dot */}
+                    <div 
+                      className="pin-marker-dot"
+                      style={{
+                        width: '12px',
+                        height: '12px',
+                        borderRadius: '50%',
+                        background: '#FD5A1E',
+                        border: '2px solid #FFF',
+                        boxShadow: '0 0 8px #FD5A1E',
+                        cursor: 'pointer',
+                        transition: 'transform 0.15s'
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'scale(1.2)'; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.transform = 'scale(1)'; }}
+                    />
+                    
+                    {/* Pin Tooltip */}
+                    <div 
+                      className="pin-tooltip"
+                      style={{
+                        position: 'absolute',
+                        bottom: '18px',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: 'rgba(15, 23, 42, 0.95)',
+                        border: '1px solid rgba(253, 90, 30, 0.4)',
+                        padding: '6px 10px',
+                        borderRadius: '6px',
+                        color: '#FFF',
+                        fontSize: '0.75rem',
+                        whiteSpace: 'nowrap',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.5)',
+                        pointerEvents: 'auto',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '4px',
+                        minWidth: '120px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', alignItems: 'center' }}>
+                        <span style={{ fontWeight: 'bold', color: '#FD5A1E' }}>@{pin.author}</span>
+                        <button
+                          onClick={() => handleDeletePin(pin.id)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: '#EF4444',
+                            cursor: 'pointer',
+                            fontSize: '0.7rem',
+                            padding: 0
+                          }}
+                        >
+                          delete
+                        </button>
+                      </div>
+                      <div style={{ color: 'rgba(255,255,255,0.85)' }}>{pin.comment}</div>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Render active placement form */}
+                {activePlacement && (
+                  <div 
+                    className="pin-interactive-element"
+                    style={{
+                      position: 'absolute',
+                      left: `${activePlacement.x_pct}%`,
+                      top: `${activePlacement.y_pct}%`,
+                      transform: 'translate(-50%, -50%)',
+                      zIndex: 230
+                    }}
+                  >
+                    {/* Temporary Marker Dot */}
+                    <div style={{
+                      width: '12px',
+                      height: '12px',
+                      borderRadius: '50%',
+                      background: '#00FFCC',
+                      border: '2px solid #FFF',
+                      boxShadow: '0 0 8px #00FFCC'
+                    }} />
+
+                    {/* Form Popup */}
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '18px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: 'rgba(15, 23, 42, 0.98)',
+                      border: '1px solid #00FFCC',
+                      padding: '8px',
+                      borderRadius: '8px',
+                      boxShadow: '0 6px 20px rgba(0,0,0,0.6)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '6px',
+                      minWidth: '160px'
+                    }}>
+                      <input 
+                        type="text"
+                        placeholder="Add annotation..."
+                        value={pinComment}
+                        onChange={(e) => setPinComment(e.target.value)}
+                        style={{
+                          background: 'rgba(0,0,0,0.4)',
+                          border: '1px solid rgba(255,255,255,0.15)',
+                          borderRadius: '4px',
+                          color: '#FFF',
+                          fontSize: '0.7rem',
+                          padding: '4px 6px',
+                          outline: 'none'
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleSavePin();
+                        }}
+                        autoFocus
+                      />
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px' }}>
+                        <button
+                          onClick={() => setActivePlacement(null)}
+                          style={{
+                            background: 'rgba(255,255,255,0.08)',
+                            border: 'none',
+                            borderRadius: '4px',
+                            color: '#AAA',
+                            fontSize: '0.65rem',
+                            padding: '2px 6px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={handleSavePin}
+                          style={{
+                            background: 'linear-gradient(90deg, #FD5A1E, #FF7A00)',
+                            border: 'none',
+                            borderRadius: '4px',
+                            color: '#FFF',
+                            fontSize: '0.65rem',
+                            padding: '2px 6px',
+                            cursor: 'pointer',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {keithTakeover && keithTakeover.active && (
+              <div 
+                className="keith-takeover-layer"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  zIndex: 250,
+                  pointerEvents: 'none',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-end',
+                  alignItems: 'center',
+                  borderRadius: '12px'
+                }}
+              >
+                <video 
+                  src={keithTakeover.mediaUrl} 
+                  autoPlay 
+                  muted 
+                  loop 
+                  playsInline 
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    zIndex: 5,
+                    opacity: 0.85
+                  }}
+                />
+                <img 
+                  src={keithTakeover.spriteUrl} 
+                  alt="Go Sit Down!" 
+                  style={{
+                    height: '80%',
+                    objectFit: 'contain',
+                    zIndex: 10,
+                    animation: 'slideUpAndDown 4.5s cubic-bezier(0.25, 1, 0.5, 1) forwards'
+                  }}
+                />
+                <style dangerouslySetInnerHTML={{__html: `
+                  @keyframes slideUpAndDown {
+                    0% { transform: translateY(100%); }
+                    15% { transform: translateY(0); }
+                    85% { transform: translateY(0); }
+                    100% { transform: translateY(100%); }
+                  }
+                `}} />
+              </div>
+            )}
           </div>
         </div>
 
         {/* Right Column (40% width, 100% height): Panel C (Chat Reactor) */}
         <div 
           style={{
-            width: '40%',
+            width: rightColWidth,
             height: '100%',
             display: 'flex',
             flexDirection: 'column',

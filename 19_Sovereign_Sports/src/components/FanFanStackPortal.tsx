@@ -1,13 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { 
-  Trophy, Radio, Activity, Send, Flame, Volume2
+  Trophy, Radio, Activity, Send, Flame, Volume2, ShieldAlert
 } from 'lucide-react';
 
 import { CypherCellModal } from './CypherCellModal';
 import { JinxOverlay } from './JinxOverlay';
 import { SpideyMetOverlay } from './SpideyMetOverlay';
 import SovereignSportsDashboard from './SovereignSportsDashboard';
+import { useTheme } from '../context/ThemeContext';
 
 const checkLinguisticOverlap = (_textA: string, _textB: string): boolean => {
   return false;
@@ -61,11 +62,14 @@ interface SoundboardPhrase {
 const GAME_ID = "823955"; // Mets vs. Braves room
 const SPIDEY_OVERLAY_ACTIVE = true;
 
+let portalVolume = 0.5;
+
 /**
  * Synthesizes a high-quality "thwip" audio signal using the browser's Web Audio API.
  * This serves as a reliable fallback in case thwip_loud.mp3 is not present in the static sounds directory.
  */
 function playSystemAudio(filename: string) {
+  const volume = portalVolume;
   try {
     const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
     const osc = audioContext.createOscillator();
@@ -78,7 +82,7 @@ function playSystemAudio(filename: string) {
     osc.frequency.setValueAtTime(1500, audioContext.currentTime);
     osc.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.15);
     
-    gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(volume, audioContext.currentTime);
     gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.15);
     
     osc.start();
@@ -89,6 +93,7 @@ function playSystemAudio(filename: string) {
 
   try {
     const audio = new Audio(`/sounds/${filename}`);
+    audio.volume = volume;
     audio.play().catch(() => {});
   } catch (e) {
     // Silent catch
@@ -388,7 +393,7 @@ function triggerAirBenderTakeover() {
     const maxFrames = 150;
     
     const img = new Image();
-    img.src = '/images/devin_williams_airbender.png';
+    img.src = '/images/francisco_lindor_airbender.png';
     
     const particles: Array<{
       angle: number;
@@ -468,11 +473,11 @@ function triggerAirBenderTakeover() {
       ctx.fillStyle = "#ffffff";
       ctx.shadowColor = "#00FFCC";
       ctx.shadowBlur = 15;
-      ctx.fillText("🌪️ DEVON WILLIAMS 🌪️", centerX, centerY + 140);
+      ctx.fillText("🌪️ FRANCISCO LINDOR 🌪️", centerX, centerY + 140);
       
       ctx.font = "italic 1.5rem Inter, system-ui";
       ctx.fillStyle = "#00FFCC";
-      ctx.fillText("THE AIR BENDER PITCHES!", centerX, centerY + 180);
+      ctx.fillText("THE AIR BENDER HIT!", centerX, centerY + 180);
       ctx.restore();
       
       frame++;
@@ -820,6 +825,12 @@ function triggerMetsWinTakeover() {
 }
 
 export default function FanFanStackPortal() {
+  const { activeTheme, setActiveTheme } = useTheme();
+  const [volumeLevel, setVolumeLevel] = useState<number>(0.5);
+
+  useEffect(() => {
+    portalVolume = volumeLevel;
+  }, [volumeLevel]);
 
   const wsRef = useRef<WebSocket | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
@@ -837,6 +848,12 @@ export default function FanFanStackPortal() {
   const [activeJinx, setActiveJinx] = useState<{ userA: string; userB: string; timestamp: string } | null>(null);
   const [silencedUsers, setSilencedUsers] = useState<{ [username: string]: number }>({});
   const [spideyOverlayActive, setSpideyOverlayActive] = useState(false);
+  const [keithTakeover, setKeithTakeover] = useState<{
+    active: boolean;
+    mediaUrl: string;
+    spriteUrl: string;
+    duration: number;
+  } | null>(null);
 
   // Outrage Proxy / RaaS states
   const [proxies, setProxies] = useState<any[]>([]);
@@ -961,10 +978,14 @@ export default function FanFanStackPortal() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isSwappingStream, setIsSwappingStream] = useState(false);
   const isHotSwappingRef = useRef(false);
+  const lastTelemetryUpdate = useRef<number>(0);
   const [inputText, setInputText] = useState('');
   const [mentionState, setMentionState] = useState({ active: false, filter: '', cursorIndex: -1, selectedIndex: 0 });
   const chatInputRef = useRef<HTMLInputElement>(null);
   const [injectedSvg, setInjectedSvg] = useState<string | null>(null);
+  const [personalityMode, setPersonalityMode] = useState('Matchup Focus');
+  const [pinEngineActive, setPinEngineActive] = useState(false);
+
 
   // TMI Anomaly (Cypher Cell Burn Tracker) states
   const [anomalies, setAnomalies] = useState<TmiAnomaly[]>([]);
@@ -988,6 +1009,18 @@ export default function FanFanStackPortal() {
     weedstackProtocol: false,
     stacklabsProtocol: false
   });
+
+  // Sync fundiesGrid state to body class for global components (like Sidebar) to react
+  useEffect(() => {
+    if (activeOverlays.fundiesGrid) {
+      document.body.classList.add('fundies-grid-active');
+    } else {
+      document.body.classList.remove('fundies-grid-active');
+    }
+    return () => {
+      document.body.classList.remove('fundies-grid-active');
+    };
+  }, [activeOverlays.fundiesGrid]);
 
   // Fetch and evaluate overlay rules from sys_overlay_registry every 5 seconds
   useEffect(() => {
@@ -1014,7 +1047,7 @@ export default function FanFanStackPortal() {
               let triggered = false;
               if (op === '=') {
                 triggered = String(currentVal) === String(ruleVal);
-              } else if (op === 'contains') {
+              } else if (op && op.toLowerCase() === 'contains') {
                 triggered = String(currentVal).toLowerCase().includes(String(ruleVal).toLowerCase());
               } else if (op === '>') {
                 triggered = Number(currentVal) > Number(ruleVal);
@@ -1160,6 +1193,7 @@ export default function FanFanStackPortal() {
 
   // Fetch game_state when active game changes to re-hydrate the UI immediately
   useEffect(() => {
+    lastTelemetryUpdate.current = 0;
     if (!activeGamePk) {
       setGameState({
         game_pk: "",
@@ -1184,8 +1218,13 @@ export default function FanFanStackPortal() {
       return;
     }
     const fetchGameState = async () => {
+      const fetchStartTime = Date.now();
       try {
-        const res = await axios.get(`/api/sports/game_state/${activeGamePk}`);
+        const res = await axios.get(`/api/sports/game_state/${activeGamePk}?t=${Date.now()}`);
+        if (lastTelemetryUpdate.current > fetchStartTime) {
+          console.log("[TMI] REST hydration ignored: newer WebSocket update already active.");
+          return;
+        }
         const matchingGame = availableGames.find((g: any) => String(g.game_pk) === String(activeGamePk));
         const fallbackAway = matchingGame?.away_team || "AWAY";
         const fallbackHome = matchingGame?.home_team || "HOME";
@@ -1427,7 +1466,7 @@ export default function FanFanStackPortal() {
               const newMsg: ChatMessage = {
                 id: Date.now().toString() + Math.random().toString(),
                 user: "SYSTEM",
-                text: "🌪️ Devon Williams Air Bender Overlay activated!",
+                text: "🌪️ Francisco Lindor Air Bender Overlay activated!",
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 color: "#00FFCC"
               };
@@ -1521,8 +1560,44 @@ export default function FanFanStackPortal() {
             return;
           }
 
+          // Handle CMD_SIT_DOWN overlay trigger
+          if (msg.type === 'CMD_SIT_DOWN' && String(msg.game_pk) === activeGamePk) {
+            console.log("[TMI SYSTEM] Keith Hernandez 'Go Sit Down' takeover command received!", msg);
+            if (window.speechSynthesis) {
+              window.speechSynthesis.cancel();
+            }
+            setKeithTakeover({
+              active: true,
+              mediaUrl: msg.media_url,
+              spriteUrl: msg.sprite_url,
+              duration: msg.duration_ms || 4500
+            });
+            setTimeout(() => {
+              setKeithTakeover(null);
+            }, msg.duration_ms || 4500);
+
+            const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const newBarfMsg: ChatMessage = {
+              id: `barf-${Date.now()}-${Math.random()}`,
+              user: "barf",
+              text: "Beautiful. Emphatic called strike. Go sit down! The automated system doesn't care about your feelings, Goldschmidt!",
+              time: timestamp,
+              color: "#FF5910"
+            };
+            const newTropMsg: ChatMessage = {
+              id: `trop-${Date.now()}-${Math.random()}`,
+              user: "trop",
+              text: "ABS confirmation delta: 0.00 seconds. Curvature of the sweeper verified completely within standard geometric bounds. Take a seat.",
+              time: timestamp,
+              color: "#00FFCC"
+            };
+            setMessages(prev => [...prev, newBarfMsg, newTropMsg]);
+            return;
+          }
+
           // Handle STATE_UPDATE for Scoreboard
           if (msg.type === 'STATE_UPDATE' && String(msg.target_game_pk || msg.data?.game_pk) === activeGamePk && msg.data) {
+            lastTelemetryUpdate.current = Date.now();
             setGameState(prev => ({
               ...prev,
               ...msg.data,
@@ -1800,7 +1875,7 @@ export default function FanFanStackPortal() {
   };
 
   return (
-    <div id="main-dashboard-viewport" className="sports-live-hub" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: 'calc(100vh - 4rem)', overflow: 'hidden' }}>
+    <div id="main-dashboard-viewport" className="sports-live-hub" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', height: '100%', overflow: 'hidden' }}>
       <SpideyMetOverlay triggerEvent={spideyOverlayActive} onAnimationComplete={() => setSpideyOverlayActive(false)} />
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes sirenFlash {
@@ -1820,32 +1895,112 @@ export default function FanFanStackPortal() {
       )}
       
       {/* Title / Info Bar */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '0.75rem' }}>
-        <div>
-          <h2 style={{ margin: 0, fontSize: '1.5rem', fontWeight: 500, color: '#fff' }}>
-            {gameState.away_team} @ {gameState.home_team} — Crosstalk Lounge
+      <div style={{ 
+        display: 'flex', 
+        height: '48px', 
+        borderBottom: '1px solid rgba(255,255,255,0.06)', 
+        alignItems: 'center', 
+        flexShrink: 0,
+        boxSizing: 'border-box'
+      }}>
+        {/* Left Column of Info Bar: auto-sized */}
+        <div style={{
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
+          padding: '0 1rem',
+          borderRight: '1px solid rgba(255, 255, 255, 0.08)',
+          boxSizing: 'border-box',
+          flexShrink: 0
+        }}>
+          <h2 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 700, letterSpacing: '0.05em', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}>
+            🎙️ CROSSTALK LOUNGE
           </h2>
-          <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>
-            Decentralized multi-tenant game lobby & telemetry board
-          </span>
+
+          {/* Coordinate Grid Toggle Button */}
+          <button
+            id="fundies-grid-toggle-btn"
+            onClick={() => setActiveOverlays(prev => ({ ...prev, fundiesGrid: !prev.fundiesGrid }))}
+            style={{
+              background: activeOverlays.fundiesGrid ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+              border: activeOverlays.fundiesGrid ? '1px solid #00F0FF' : '1px solid rgba(255, 255, 255, 0.15)',
+              color: activeOverlays.fundiesGrid ? '#00F0FF' : 'rgba(255, 255, 255, 0.7)',
+              borderRadius: '6px',
+              padding: '0.25rem 0.5rem',
+              fontSize: '0.7rem',
+              fontWeight: 'bold',
+              fontFamily: 'monospace',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'all 0.2s ease-in-out',
+              boxShadow: activeOverlays.fundiesGrid ? '0 0 10px rgba(0, 240, 255, 0.3)' : 'none',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            📐 GRID: {activeOverlays.fundiesGrid ? 'ON' : 'OFF'}
+          </button>
+
+          {/* Pin Engine Toggle Button */}
+          <button
+            id="pin-engine-toggle-btn"
+            onClick={() => setPinEngineActive(prev => !prev)}
+            style={{
+              background: pinEngineActive ? 'rgba(253, 90, 30, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+              border: pinEngineActive ? '1px solid #FD5A1E' : '1px solid rgba(255, 255, 255, 0.15)',
+              color: pinEngineActive ? '#FD5A1E' : 'rgba(255, 255, 255, 0.7)',
+              borderRadius: '6px',
+              padding: '0.25rem 0.5rem',
+              fontSize: '0.7rem',
+              fontWeight: 'bold',
+              fontFamily: 'monospace',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              transition: 'all 0.2s ease-in-out',
+              boxShadow: pinEngineActive ? '0 0 10px rgba(253, 90, 30, 0.3)' : 'none',
+              whiteSpace: 'nowrap',
+              marginLeft: '0.5rem'
+            }}
+          >
+            📌 PINS: {pinEngineActive ? 'ON' : 'OFF'}
+          </button>
         </div>
-        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+
+        {/* Right Column of Info Bar: occupies remaining width without shrinking or overlapping */}
+        <div style={{
+          flex: '0 0 auto',
+          marginLeft: 'auto',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          padding: '0 1rem',
+          gap: '0.5rem',
+          boxSizing: 'border-box',
+          minWidth: 'max-content',
+          flexShrink: 0
+        }}>
           {availableGames.length > 0 && (
             <>
               <label 
                 style={{ 
                   display: 'flex', 
                   alignItems: 'center', 
-                  gap: '0.4rem', 
+                  gap: '0.3rem', 
                   color: 'rgba(255, 255, 255, 0.8)', 
-                  fontSize: '0.75rem', 
+                  fontSize: '0.7rem', 
                   cursor: 'pointer', 
                   userSelect: 'none',
                   background: 'rgba(255, 255, 255, 0.03)',
                   border: '1px solid rgba(255, 255, 255, 0.08)',
                   borderRadius: '6px',
-                  padding: '0.4rem 0.6rem',
-                  transition: 'all 0.2s ease-in-out'
+                  padding: '0.25rem 0.5rem',
+                  transition: 'all 0.2s ease-in-out',
+                  whiteSpace: 'nowrap'
                 }}
                 className="bring-gang-toggle"
                 onMouseEnter={(e) => { 
@@ -1908,8 +2063,8 @@ export default function FanFanStackPortal() {
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: '6px',
                   color: '#fff',
-                  fontSize: '0.75rem',
-                  padding: '0.4rem 0.8rem',
+                  fontSize: '0.7rem',
+                  padding: '0.25rem 0.5rem',
                   outline: 'none',
                   cursor: 'pointer',
                   fontWeight: 'bold'
@@ -1918,7 +2073,7 @@ export default function FanFanStackPortal() {
                 onBlur={(e) => e.target.style.borderColor = 'rgba(255,255,255,0.1)'}
               >
                 <option value="" style={{ background: '#1e293b', color: '#fff' }}>
-                  -- Select a Game Room --
+                  -- Select Game --
                 </option>
                 {availableGames.map((game: any) => (
                   <option 
@@ -1932,26 +2087,103 @@ export default function FanFanStackPortal() {
               </select>
             </>
           )}
-          <span className="badge-live">
-            <Activity size={14} style={{ marginRight: '0.25rem' }} /> CROSSTALK ACTIVE
-          </span>
-          <span 
-            style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              gap: '0.5rem', 
-              background: wsConnected ? 'rgba(0,255,204,0.1)' : 'rgba(255,102,102,0.1)',
-              color: wsConnected ? '#00FFCC' : '#FF6666',
-              border: wsConnected ? '1px solid rgba(0,255,204,0.2)' : '1px solid rgba(255,102,102,0.2)',
-              fontSize: '0.75rem',
-              fontWeight: 'bold',
-              borderRadius: '6px',
-              padding: '0.4rem 0.8rem' 
-            }}
-          >
-            <Radio size={14} />
-            {wsConnected ? 'RELAY CONNECTED' : 'RELAY DISCONNECTED'}
-          </span>
+          {wsConnected ? (
+            <span 
+              className="badge-live"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '0.2rem 0.5rem',
+                fontSize: '0.7rem',
+                color: '#00FFCC',
+                fontWeight: 'bold',
+                whiteSpace: 'nowrap',
+                animation: 'pulse-live 2s infinite'
+              }}
+            >
+              <Radio size={12} /> LIVE
+            </span>
+          ) : (
+            <span 
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                padding: '0.2rem 0.5rem',
+                borderRadius: '6px',
+                fontSize: '0.7rem',
+                color: '#EF4444',
+                fontWeight: 'bold', whiteSpace: 'nowrap'
+              }}
+            >
+              <ShieldAlert size={12} /> OFFLINE
+            </span>
+          )}
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '0.25rem 0.5rem', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', fontFamily: 'monospace', color: 'rgba(255, 255, 255, 0.6)' }}>MODE:</span>
+            <select 
+              value={personalityMode} 
+              onChange={(e) => setPersonalityMode(e.target.value)}
+              style={{
+                background: '#090e1a',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#fff',
+                borderRadius: '4px',
+                padding: '2px 4px',
+                outline: 'none',
+                fontSize: '0.7rem',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              <option value="Matchup Focus">Matchup Focus</option>
+              <option value="Lounge">Lounge</option>
+              <option value="Analytics">Analytics</option>
+              <option value="Gameday Sim">Gameday Sim</option>
+              <option value="Pennant Race">Pennant Race</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '0.25rem 0.5rem', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', fontFamily: 'monospace', color: 'rgba(255, 255, 255, 0.6)' }}>THEME:</span>
+            <select 
+              value={activeTheme} 
+              onChange={(e) => setActiveTheme(e.target.value)}
+              style={{
+                background: '#090e1a',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#fff',
+                borderRadius: '4px',
+                padding: '2px 4px',
+                outline: 'none',
+                fontSize: '0.7rem',
+                cursor: 'pointer',
+                fontWeight: 'bold'
+              }}
+            >
+              <option value="sovereign-cyan">Sovereign Cyan</option>
+              <option value="retro-16bit">16-Bit Retro</option>
+              <option value="the-show-sim">The Show Sim</option>
+              <option value="sny-cinematic">SNY Cinematic</option>
+              <option value="muppet-hell">Muppet Hell</option>
+            </select>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '0.25rem 0.5rem', borderRadius: '6px', whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 'bold', fontFamily: 'monospace', color: '#fff' }}>VOL: {Math.round(volumeLevel * 100)}%</span>
+            <input 
+              type="range" 
+              min="0" 
+              max="100" 
+              value={volumeLevel * 100} 
+              onChange={(e) => setVolumeLevel(parseFloat(e.target.value) / 100)} 
+              style={{ width: '60px', cursor: 'pointer', height: '4px' }}
+            />
+          </div>
 
         </div>
       </div>
@@ -1992,6 +2224,15 @@ export default function FanFanStackPortal() {
             isSwappingStream={isSwappingStream}
             activeOverlays={activeOverlays}
             roster={roster}
+            selectedAdvocate={selectedAdvocate}
+            setSelectedAdvocate={setSelectedAdvocate}
+            soundboardPhrases={soundboardPhrases}
+            triggerSoundboardPhrase={triggerSoundboardPhrase}
+            volumeLevel={volumeLevel}
+            keithTakeover={keithTakeover}
+            personalityMode={personalityMode}
+            pinEngineActive={pinEngineActive}
+            setPinEngineActive={setPinEngineActive}
           />
         </div>
       )}
