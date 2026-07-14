@@ -20,8 +20,9 @@ export default function ActiveStacksGrid() {
         if (!res.ok) throw new Error('Failed to fetch active stacks');
         return res.json();
       })
-      .then((data) => {
-        setStacks(data);
+      .then((data: ActiveStack[]) => {
+        const filtered = data.filter(stack => stack.port !== 3016);
+        setStacks(filtered);
         setLoading(false);
       })
       .catch((err) => {

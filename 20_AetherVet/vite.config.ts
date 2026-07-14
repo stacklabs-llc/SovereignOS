@@ -21,7 +21,7 @@ export default defineConfig(({mode}) => {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true' && env.DISABLE_HMR !== 'true',
-      port: 3015,
+      port: 8443,
       allowedHosts: true,
       https: {
         key: fs.readFileSync('./clio.taila01894.ts.net.key'),

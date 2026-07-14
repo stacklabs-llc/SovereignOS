@@ -6,15 +6,15 @@ import StarterShack from "./components/StarterShack";
 import PegasusDreadnought from "./components/PegasusDreadnought";
 import MobileRemote from "./components/MobileRemote";
 import SovereignCinemaRemote from "./components/SovereignCinemaRemote";
-import PersonaConsole from "./components/PersonaConsole";
 import GodModeInjector from "./components/GodModeInjector";
 import UhfStudio from "./components/UhfStudio";
 import RoomConfigurator from "./components/RoomConfigurator";
 import CaptureDeck from "./components/CaptureDeck";
 import WatchPartyConsole from "./components/WatchPartyConsole";
 import SovereignLogViewer from "./components/SovereignLogViewer";
-import PlaycallDesk from "./components/PlaycallDesk";
+import PlaycallDesk from "./components/PlaycallDeskConsolidated";
 import MlbScoreBar from "./components/MlbScoreBar";
+import GamedayScoreboard from "./components/GamedayScoreboard";
 import TheSkewStudio from "./components/TheSkewStudio";
 import LiveChatSniper from "./components/LiveChatSniper";
 import ShatcastVisionStudio from "./components/ShatcastVisionStudio";
@@ -54,10 +54,9 @@ import StoryboardGallery from "./components/StoryboardGallery";
 import RollCallDashboard from "./components/RollCallDashboard";
 import SovereignThemeManager from "./components/SovereignThemeManager";
 import AdvocateCenter from "./components/AdvocateCenter";
-import AdvocateLookbook from "./components/AdvocateLookbook";
-
 import SovereignOsPortal from "./components/SovereignOsPortal";
 import FanLobby from "./components/FanLobby";
+import NavigationRail from "./components/sandbox/NavigationRail";
 import LivingKanbanBoard from "./components/LivingKanbanBoard";
 import GlobalSystemBar from "./components/GlobalSystemBar";
 import DreadnoughtConsole from "./components/DreadnoughtConsole";
@@ -77,6 +76,8 @@ import InvestorProspectus from "./components/InvestorProspectus";
 import StackLabsHub from "./components/StackLabsHub";
 import TokenLedger from "./components/TokenLedger";
 import GameLogExport from "./components/GameLogExport";
+import MamTmiConsole from "./components/MamTmiConsole";
+import SovereignCardSimulator from "./components/SovereignCardSimulator";
 
 const AMEN_CORNER_IMAGES = [
   "FanStack_PGA_Amen_202604221005.jpeg",
@@ -170,10 +171,13 @@ export default function App() {
   const [agentAvatar, setAgentAvatar] = useState(() => localStorage.getItem('sovereign_agent_avatar') || '/avatars/Sovereign_OS_Logo.jpg');
   // STRY1779338878 — deep-link ticket number
   const [deepLinkTicket, setDeepLinkTicket] = useState<string | null>(null);
-  const [activeRoom, setActiveRoom] = useState<"starter" | "claude" | "auditor" | "void" | "data" | "pegasus" | "persona_console" | "uhf_studio" | "god_mode" | "rom_gallery" | "configurator" | "log_viewer" | "playcall_desk" | "tmi_news_desk" | "the_skew" | "shatcast_vision" | "advocate_center" | "advocate_lookbook" | "knowledge_hub" | "sow" | "courier" | "promo_inbox" | "nexus_telemetry" | "artifact_gallery" | "fanstack_sandbox" | "savant_query" | "vocal_matrix" | "storyboard_deck" | "holodex" | "edge_dvr" | "stream_sniper" | "highlight_heist" | "live_chat_sniper" | "sovereign_css" | "factory_dashboard" | "aether_vet" | "kanban" | "roll_call" | "dreadnought" | "theme_manager" | "argus_nexus" | "hot_takes" | "model_arena" | "optical_ingest" | "user_mgmt" | "portal_layout" | "pixel_dropzone" | "system_config" | "user_management" | "amen_corner" | "sys_rules" | "fan_lobby" | "weedstack" | "prospectus" | "stacklabs" | "token_ledger" | "game_log_export" | "room_builder" | "cockpit">(() => {
+  const [activeRoom, setActiveRoom] = useState<"starter" | "claude" | "auditor" | "void" | "data" | "pegasus" | "persona_console" | "uhf_studio" | "god_mode" | "rom_gallery" | "configurator" | "log_viewer" | "playcall_desk" | "tmi_news_desk" | "the_skew" | "shatcast_vision" | "advocate_center" | "advocate_lookbook" | "knowledge_hub" | "sow" | "courier" | "promo_inbox" | "nexus_telemetry" | "artifact_gallery" | "fanstack_sandbox" | "savant_query" | "vocal_matrix" | "storyboard_deck" | "holodex" | "edge_dvr" | "stream_sniper" | "highlight_heist" | "live_chat_sniper" | "sovereign_css" | "factory_dashboard" | "aether_vet" | "kanban" | "roll_call" | "dreadnought" | "theme_manager" | "argus_nexus" | "hot_takes" | "model_arena" | "optical_ingest" | "user_mgmt" | "portal_layout" | "pixel_dropzone" | "system_config" | "user_management" | "amen_corner" | "sys_rules" | "fan_lobby" | "weedstack" | "prospectus" | "stacklabs" | "token_ledger" | "game_log_export" | "room_builder" | "cockpit" | "mam_tmi_console" | "card_simulator">(() => {
     const params = new URLSearchParams(window.location.search);
-    const room = params.get('room');
-    const validRooms = ["starter", "claude", "auditor", "void", "data", "pegasus", "persona_console", "uhf_studio", "god_mode", "rom_gallery", "configurator", "log_viewer", "playcall_desk", "tmi_news_desk", "the_skew", "shatcast_vision", "advocate_center", "advocate_lookbook", "knowledge_hub", "sow", "courier", "promo_inbox", "nexus_telemetry", "artifact_gallery", "fanstack_sandbox", "savant_query", "vocal_matrix", "storyboard_deck", "holodex", "edge_dvr", "stream_sniper", "highlight_heist", "live_chat_sniper", "sovereign_css", "factory_dashboard", "aether_vet", "kanban", "roll_call", "dreadnought", "theme_manager", "argus_nexus", "hot_takes", "model_arena", "optical_ingest", "portal_layout", "fan_lobby", "weedstack", "prospectus", "stacklabs", "room_builder", "cockpit"];
+    let room = params.get('room');
+    if (room === 'persona_console' || room === 'advocate_lookbook') {
+      room = 'advocate_center';
+    }
+    const validRooms = ["starter", "claude", "auditor", "void", "data", "pegasus", "persona_console", "uhf_studio", "god_mode", "rom_gallery", "configurator", "log_viewer", "playcall_desk", "tmi_news_desk", "the_skew", "shatcast_vision", "advocate_center", "advocate_lookbook", "knowledge_hub", "sow", "courier", "promo_inbox", "nexus_telemetry", "artifact_gallery", "fanstack_sandbox", "savant_query", "vocal_matrix", "storyboard_deck", "holodex", "edge_dvr", "stream_sniper", "highlight_heist", "live_chat_sniper", "sovereign_css", "factory_dashboard", "aether_vet", "kanban", "roll_call", "dreadnought", "theme_manager", "argus_nexus", "hot_takes", "model_arena", "optical_ingest", "portal_layout", "fan_lobby", "weedstack", "prospectus", "stacklabs", "room_builder", "cockpit", "token_ledger", "game_log_export", "mam_tmi_console", "card_simulator"];
     if (room && validRooms.includes(room)) return room as any;
     return "starter";
   });
@@ -187,6 +191,90 @@ export default function App() {
   const [liveBoxScore, setLiveBoxScore] = useState<any>(null);
   const [dailyBriefing, setDailyBriefing] = useState<any>(null);
   const [envBadge, setEnvBadge] = useState<'PROD' | 'DEV' | 'UAT' | 'UNKNOWN'>('UNKNOWN');
+  const [fundiesGrid, setFundiesGrid] = useState(false);
+  const [pinEngineActive, setPinEngineActive] = useState(false);
+  const [pins, setPins] = useState<any[]>([]);
+  const [activePlacement, setActivePlacement] = useState<{ x_pct: number, y_pct: number } | null>(null);
+  const [pinComment, setPinComment] = useState('');
+
+  const fetchPins = async () => {
+    try {
+      const res = await fetch(`/api/pins?game_pk=${activeRoom}`);
+      const data = await res.json();
+      if (data.status === 'success') {
+        setPins(data.pins);
+      }
+    } catch (err) {
+      console.error('[PinEngine] Failed to fetch pins:', err);
+    }
+  };
+
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('.pin-interactive-element')) {
+      return;
+    }
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setActivePlacement({ x_pct: x, y_pct: y });
+    setPinComment('');
+  };
+
+  const handleSavePin = async () => {
+    if (!activePlacement || !pinComment.trim()) return;
+    try {
+      const res = await fetch('/api/pins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          game_pk: activeRoom,
+          x_pct: activePlacement.x_pct,
+          y_pct: activePlacement.y_pct,
+          author: 'james',
+          comment: pinComment.trim()
+        })
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setActivePlacement(null);
+        setPinComment('');
+        fetchPins();
+      }
+    } catch (err) {
+      console.error('[PinEngine] Failed to save pin:', err);
+    }
+  };
+
+  const handleDeletePin = async (pinId: number) => {
+    try {
+      const res = await fetch(`/api/pins/${pinId}`, {
+        method: 'DELETE'
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        fetchPins();
+      }
+    } catch (err) {
+      console.error('[PinEngine] Failed to delete pin:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (fundiesGrid) {
+      document.body.classList.add('fundies-grid-active');
+    } else {
+      document.body.classList.remove('fundies-grid-active');
+    }
+    return () => {
+      document.body.classList.remove('fundies-grid-active');
+    };
+  }, [fundiesGrid]);
+
+  useEffect(() => {
+    if (activeRoom) {
+      fetchPins();
+    }
+  }, [activeRoom]);
 
   useEffect(() => {
     const env = import.meta.env.VITE_SOVEREIGN_ENV;
@@ -279,7 +367,7 @@ export default function App() {
     const room = params.get('room');
     if (room === 'amen_corner') return 'PGA';
     if (room === 'kanban') return 'ROOT';
-    if (['edge_dvr', 'stream_sniper', 'highlight_heist', 'sovereign_css', 'sow', 'dreadnought', 'theme_manager', 'model_arena', 'user_management', 'system_config', 'portal_layout', 'sys_rules'].includes(room || '')) return 'GLOBAL';
+    if (['edge_dvr', 'stream_sniper', 'highlight_heist', 'sovereign_css', 'sow', 'dreadnought', 'theme_manager', 'model_arena', 'user_management', 'system_config', 'portal_layout', 'sys_rules', 'card_simulator'].includes(room || '')) return 'GLOBAL';
     if (room === 'the_skew' || room === 'hot_takes') return 'SKEW';
     if (room === 'holodex') return 'HOLODEX';
     if (room === 'argus_nexus') return 'ARGUS';
@@ -361,7 +449,7 @@ export default function App() {
   // Creator Ingress Tracker
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const apiHost = SovereignConfig.telemetryApi;
+    const apiHost = window.location.protocol === "https:" ? window.location.origin : SovereignConfig.telemetryApi;
 
     if (params.get("vip")?.toLowerCase() === "creator") {
       // Fire the tracking beacon
@@ -412,14 +500,16 @@ export default function App() {
       }
       if (domainParam === 'ARGUS') {
         setActiveDomain('ARGUS');
-        const roomParam = params.get('room');
-        const validRooms = ['starter', 'claude', 'auditor', 'pegasus', 'uhf_studio', 'persona_console', 'god_mode', 'rom_gallery', 'configurator', 'log_viewer', 'playcall_desk', 'tmi_news_desk', 'the_skew', 'hot_takes', 'shatcast_vision', 'advocate_center', 'advocate_lookbook', 'knowledge_hub', 'sow', 'courier', 'promo_inbox', 'nexus_telemetry', 'amen_corner', 'artifact_gallery', 'fanstack_sandbox', 'savant_query', 'vocal_matrix', 'storyboard_deck', 'holodex', 'edge_dvr', 'stream_sniper', 'highlight_heist', 'live_chat_sniper', 'sovereign_css', 'factory_dashboard', 'aether_vet', 'roll_call', 'kanban', 'dreadnought', 'theme_manager', 'argus_nexus', 'model_arena', 'optical_ingest', 'user_management', 'system_config', 'portal_layout', 'sys_rules', 'pixel_dropzone', 'fan_lobby', 'weedstack', 'prospectus', 'stacklabs', 'room_builder', 'cockpit'];
+        let roomParam = params.get('room');
+        if (roomParam === 'persona_console' || roomParam === 'advocate_lookbook') {
+          roomParam = 'advocate_center';
+        }
+        const validRooms = ['starter', 'claude', 'auditor', 'pegasus', 'uhf_studio', 'persona_console', 'god_mode', 'rom_gallery', 'configurator', 'log_viewer', 'playcall_desk', 'tmi_news_desk', 'the_skew', 'hot_takes', 'shatcast_vision', 'advocate_center', 'advocate_lookbook', 'knowledge_hub', 'sow', 'courier', 'promo_inbox', 'nexus_telemetry', 'amen_corner', 'artifact_gallery', 'fanstack_sandbox', 'savant_query', 'vocal_matrix', 'storyboard_deck', 'holodex', 'edge_dvr', 'stream_sniper', 'highlight_heist', 'live_chat_sniper', 'sovereign_css', 'factory_dashboard', 'aether_vet', 'roll_call', 'kanban', 'dreadnought', 'theme_manager', 'argus_nexus', 'model_arena', 'optical_ingest', 'user_management', 'system_config', 'portal_layout', 'sys_rules', 'pixel_dropzone', 'fan_lobby', 'weedstack', 'prospectus', 'stacklabs', 'room_builder', 'cockpit', 'token_ledger', 'game_log_export', 'card_simulator'];
         if (roomParam && validRooms.includes(roomParam)) {
           setActiveRoom(roomParam as any);
-          // Force domain based on some rooms
           if (roomParam === 'savant_query' || roomParam === 'tmi_news_desk') {
             setActiveDomain('MLB');
-          } else if (roomParam === 'cockpit' || roomParam === 'edge_dvr' || roomParam === 'stream_sniper' || roomParam === 'highlight_heist' || roomParam === 'sovereign_css' || roomParam === 'sow' || roomParam === 'dreadnought' || roomParam === 'theme_manager' || roomParam === 'model_arena' || roomParam === 'user_management' || roomParam === 'system_config' || roomParam === 'portal_layout' || roomParam === 'sys_rules') {
+          } else if (['cockpit', 'edge_dvr', 'stream_sniper', 'highlight_heist', 'sovereign_css', 'sow', 'dreadnought', 'theme_manager', 'model_arena', 'user_management', 'system_config', 'portal_layout', 'sys_rules', 'token_ledger', 'game_log_export', 'advocate_center', 'advocate_lookbook', 'live_chat_sniper', 'promo_inbox', 'artifact_gallery', 'fanstack_sandbox', 'holodex', 'vocal_matrix', 'nexus_telemetry', 'room_builder', 'card_simulator'].includes(roomParam)) {
             setActiveDomain('GLOBAL');
           } else if (roomParam === 'kanban') {
             setActiveDomain('ROOT');
@@ -430,7 +520,7 @@ export default function App() {
           } else if (roomParam === 'argus_nexus') {
             setActiveDomain('ARGUS');
           } else {
-            setActiveDomain('MLB');
+            setActiveDomain('ARGUS');
           }
         }
         return;
@@ -445,13 +535,16 @@ export default function App() {
         return;
       }
 
-      const roomParam = params.get('room');
-      const validRooms = ['starter', 'claude', 'auditor', 'pegasus', 'uhf_studio', 'persona_console', 'god_mode', 'rom_gallery', 'configurator', 'log_viewer', 'playcall_desk', 'tmi_news_desk', 'the_skew', 'hot_takes', 'shatcast_vision', 'advocate_center', 'advocate_lookbook', 'knowledge_hub', 'sow', 'courier', 'promo_inbox', 'nexus_telemetry', 'amen_corner', 'artifact_gallery', 'fanstack_sandbox', 'savant_query', 'vocal_matrix', 'storyboard_deck', 'holodex', 'edge_dvr', 'stream_sniper', 'highlight_heist', 'live_chat_sniper', 'sovereign_css', 'factory_dashboard', 'aether_vet', 'roll_call', 'kanban', 'dreadnought', 'theme_manager', 'argus_nexus', 'model_arena', 'optical_ingest', 'user_management', 'system_config', 'portal_layout', 'sys_rules', 'pixel_dropzone', 'fan_lobby', 'weedstack', 'prospectus', 'stacklabs', 'room_builder', 'cockpit'];
+      let roomParam = params.get('room');
+      if (roomParam === 'persona_console' || roomParam === 'advocate_lookbook') {
+        roomParam = 'advocate_center';
+      }
+      const validRooms = ['starter', 'claude', 'auditor', 'pegasus', 'uhf_studio', 'persona_console', 'god_mode', 'rom_gallery', 'configurator', 'log_viewer', 'playcall_desk', 'tmi_news_desk', 'the_skew', 'hot_takes', 'shatcast_vision', 'advocate_center', 'advocate_lookbook', 'knowledge_hub', 'sow', 'courier', 'promo_inbox', 'nexus_telemetry', 'amen_corner', 'artifact_gallery', 'fanstack_sandbox', 'savant_query', 'vocal_matrix', 'storyboard_deck', 'holodex', 'edge_dvr', 'stream_sniper', 'highlight_heist', 'live_chat_sniper', 'sovereign_css', 'factory_dashboard', 'aether_vet', 'roll_call', 'kanban', 'dreadnought', 'theme_manager', 'argus_nexus', 'model_arena', 'optical_ingest', 'user_management', 'system_config', 'portal_layout', 'sys_rules', 'pixel_dropzone', 'fan_lobby', 'weedstack', 'prospectus', 'stacklabs', 'room_builder', 'cockpit', 'token_ledger', 'game_log_export', 'card_simulator'];
       if (roomParam && validRooms.includes(roomParam)) {
         setActiveRoom(roomParam as any);
         if (roomParam === 'amen_corner') {
           setActiveDomain('PGA');
-        } else if (roomParam === 'cockpit' || roomParam === 'edge_dvr' || roomParam === 'stream_sniper' || roomParam === 'highlight_heist' || roomParam === 'sovereign_css' || roomParam === 'sow' || roomParam === 'dreadnought' || roomParam === 'theme_manager' || roomParam === 'model_arena' || roomParam === 'user_management' || roomParam === 'system_config' || roomParam === 'portal_layout' || roomParam === 'sys_rules') {
+        } else if (['cockpit', 'edge_dvr', 'stream_sniper', 'highlight_heist', 'sovereign_css', 'sow', 'dreadnought', 'theme_manager', 'model_arena', 'user_management', 'system_config', 'portal_layout', 'sys_rules', 'token_ledger', 'game_log_export', 'advocate_center', 'advocate_lookbook', 'live_chat_sniper', 'promo_inbox', 'artifact_gallery', 'fanstack_sandbox', 'holodex', 'vocal_matrix', 'nexus_telemetry', 'room_builder', 'card_simulator'].includes(roomParam)) {
           setActiveDomain('GLOBAL');
         } else if (roomParam === 'kanban') {
           setActiveDomain('ROOT');
@@ -623,91 +716,236 @@ export default function App() {
   // Hololink view check removed
 
   return (
-    <div className={`min-h-screen md:h-screen p-2 md:p-3 flex flex-col gap-2 transition-all duration-1000 bg-[#0B0E14] text-gray-200 selection:bg-[#3B82F6]/30 relative md:overflow-hidden overflow-y-auto theme-${osTheme} border-t-[6px] ${currentEnv.borderColor}`}>
-      
-      {!isPatron && currentEnv.label && (
-        <div className={`w-full font-bold text-center py-1 text-xs uppercase tracking-[0.3em] font-mono z-[9999] ${currentEnv.styles}`}>
-          {currentEnv.label}
-        </div>
-      )}
+    <div className={`h-screen w-screen flex flex-col transition-all duration-1000 bg-[#0B0E14] text-gray-200 selection:bg-[#3B82F6]/30 relative overflow-hidden theme-${osTheme} border-t-[6px] ${currentEnv.borderColor}`}>
 
-      {/* GLOBAL MATRIX NAVIGATOR */}
-      {activeRoom !== 'the_skew' && (
-      <div className="w-full px-8 mx-auto flex flex-col md:flex-row items-center justify-between mt-2 mb-2 gap-4">
-
-        {/* ── PATRON NAV ── */}
-        {isPatron && (
-        <div className="flex flex-wrap gap-y-2 border-b border-slate-800 bg-transparent p-0 w-full md:w-auto overflow-x-auto no-scrollbar pb-2">
-          <button onClick={() => { setActiveDomain('PORTAL'); window.history.pushState({}, '', '?domain=PORTAL'); }} className={`vm-nav-item shrink-0 font-bold border-r border-[#38bdf8]/30 mr-2 pr-4 pl-2 ${activeDomain === 'PORTAL' ? 'text-[#38bdf8] border-b-2 border-[#38bdf8]' : 'text-white/70 hover:text-[#38bdf8]'}`}>
-            ⬅ FanStack
-          </button>
-          {(activeDomain === 'MLB' || activeDomain === 'GLOBAL') && (
-            <>
-               <button onClick={() => { setActiveDomain('MLB'); setActiveRoom('weedstack'); }} className={`vm-nav-item shrink-0 ${activeRoom === 'weedstack' ? 'active border-b-2 border-emerald-400 text-emerald-400 font-bold' : 'text-emerald-400/60 hover:text-emerald-400'}`}>🌿 WeedStack Community</button>
-              <button onClick={() => { setActiveDomain('MLB'); setActiveRoom('fan_lobby'); }} className={`vm-nav-item shrink-0 ${activeRoom === 'fan_lobby' ? 'active border-b-2 border-cyan-400 text-cyan-400' : 'text-cyan-400/60 hover:text-cyan-400'}`}>🎮 Fan Lobby</button>
-            </>
-          )}
-          {activeRoom === 'aether_vet' && (
-            <button onClick={() => { setActiveDomain('GLOBAL'); setActiveRoom('aether_vet'); }} className="vm-nav-item shrink-0 active border-b-2 border-emerald-400 text-emerald-400">🐾 AetherVet</button>
-          )}
-          <a href={SovereignConfig.samtracker} target="_blank" rel="noreferrer" className="vm-nav-item shrink-0 text-violet-400/70 hover:text-violet-400">📊 SamTracker</a>
-        </div>
+      <div className="flex-1 flex overflow-hidden w-full h-full relative">
+        {activeDomain !== 'ARGUS' && (
+          <NavigationRail
+            activeRoom={activeRoom}
+            onSelectRoom={(room) => {
+              if (room === 'starter') {
+                setActiveDomain('MLB');
+                setActiveRoom('starter');
+                window.history.pushState({}, '', '?domain=MLB&room=starter');
+              } else if (room === 'playcall_desk') {
+                setActiveDomain('MLB');
+                setActiveRoom('playcall_desk');
+                window.history.pushState({}, '', '?domain=MLB&room=playcall_desk');
+              } else if (room === 'tmi_news_desk') {
+                setActiveDomain('MLB');
+                setActiveRoom('tmi_news_desk');
+                window.history.pushState({}, '', '?domain=MLB&room=tmi_news_desk');
+              } else if (room === 'savant_query') {
+                setActiveDomain('MLB');
+                setActiveRoom('savant_query');
+                window.history.pushState({}, '', '?domain=MLB&room=savant_query');
+              } else if (room === 'rom_gallery') {
+                setActiveDomain('MLB');
+                setActiveRoom('rom_gallery');
+                window.history.pushState({}, '', '?domain=MLB&room=rom_gallery');
+              } else if (room === 'the_skew') {
+                setActiveDomain('SKEW');
+                setActiveRoom('the_skew');
+                window.history.pushState({}, '', '?domain=SKEW&room=the_skew');
+              } else if (room === 'hot_takes') {
+                setActiveDomain('SKEW');
+                setActiveRoom('hot_takes');
+                window.history.pushState({}, '', '?domain=SKEW&room=hot_takes');
+              } else if (room === 'storyboard_deck') {
+                setActiveDomain('GLOBAL');
+                setActiveRoom('storyboard_deck');
+                window.history.pushState({}, '', '?domain=GLOBAL&room=storyboard_deck');
+              } else if (room === 'persona_console') {
+                setActiveDomain('GLOBAL');
+                setActiveRoom('persona_console');
+                window.history.pushState({}, '', '?domain=GLOBAL&room=persona_console');
+              } else if (room === 'roll_call') {
+                setActiveDomain('GLOBAL');
+                setActiveRoom('roll_call');
+                window.history.pushState({}, '', '?domain=GLOBAL&room=roll_call');
+              } else if (room === 'advocate_center') {
+                setActiveDomain('GLOBAL');
+                setActiveRoom('advocate_center');
+                window.history.pushState({}, '', '?domain=GLOBAL&room=advocate_center');
+              } else if (room === 'edge_dvr') {
+                setActiveDomain('GLOBAL');
+                setActiveRoom('edge_dvr');
+                window.history.pushState({}, '', '?domain=GLOBAL&room=edge_dvr');
+              } else if (['cockpit', 'stream_sniper', 'highlight_heist', 'live_chat_sniper', 'sovereign_css', 'sow', 'dreadnought', 'theme_manager', 'model_arena', 'user_management', 'system_config', 'portal_layout', 'sys_rules', 'token_ledger', 'game_log_export', 'promo_inbox', 'artifact_gallery', 'fanstack_sandbox', 'holodex', 'vocal_matrix', 'nexus_telemetry', 'room_builder', 'card_simulator'].includes(room)) {
+                setActiveDomain('GLOBAL');
+                setActiveRoom(room as any);
+                window.history.pushState({}, '', `?domain=GLOBAL&room=${room}`);
+              } else {
+                setActiveRoom(room as any);
+                window.history.pushState({}, '', `?domain=${activeDomain}&room=${room}`);
+              }
+            }}
+          />
         )}
 
-        {hasCreatorTools && (
-        <div className="flex flex-wrap gap-y-2 border-b border-slate-800 bg-transparent p-0 w-full md:w-auto overflow-x-auto no-scrollbar pb-2">
-          <button onClick={() => {
-            const hostname = window.location.hostname;
-            const protocol = window.location.protocol;
-            if (hostname === 'localhost' || hostname === '127.0.0.1') {
-              window.location.href = `${protocol}//${hostname}:3000/`;
-            } else {
-              window.location.href = `${protocol}//${hostname}/`;
-            }
-          }} className={`vm-nav-item shrink-0 text-white hover:text-[#38bdf8] border-r border-[#38bdf8]/30 mr-2 pr-4 pl-2 font-bold ${activeDomain === 'ROOT' ? 'text-[#38bdf8]  border-b-2 border-[#38bdf8]' : ''}`}>
-            ⏏ OS Root
-          </button>
+        <div className="flex-1 flex flex-col min-w-0 h-full overflow-y-auto p-4 md:p-6 relative">
           
-          {activeDomain !== 'ROOT' && activeRoom !== 'user_management' && activeRoom !== 'system_config' && (
-            <button onClick={() => { setActiveDomain('PORTAL'); window.history.pushState({}, '', '?domain=PORTAL'); }} className={`vm-nav-item shrink-0 text-white hover:text-white/80 border-r border-[#38bdf8]/30 mr-2 pr-4 pl-2 ${activeDomain === 'PORTAL' ? 'text-white  border-b-2 border-white' : 'text-white/50'}`}>
-              ⬅ FanStack
-            </button>
-          )}
+          {/* Permanent Top System Header Bar */}
+          <div className="flex items-center justify-between mb-6 border-b border-white/5 pb-3 shrink-0 select-none">
+            {/* Breadcrumbs / Path */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  setActiveDomain('PORTAL');
+                  window.history.pushState({}, '', '?domain=PORTAL');
+                }}
+                className="font-mono text-[10px] uppercase tracking-widest text-[#00b4d8] hover:text-white transition-colors bg-white/5 px-3 py-1.5 rounded border border-[#00b4d8]/30 flex items-center gap-1.5 cursor-pointer animate-fade-in"
+              >
+                🏠 Portal Home
+              </button>
+              <span className="text-white/20">/</span>
+              <span className="font-mono text-[9px] uppercase tracking-widest text-white/40">
+                {activeDomain}
+              </span>
+              {activeRoom && (
+                <>
+                  <span className="text-white/20">/</span>
+                  <span className="font-mono text-[9px] uppercase tracking-widest text-[#00b4d8] font-bold">
+                    {activeRoom.replace('_', ' ').toUpperCase()}
+                  </span>
+                </>
+              )}
+            </div>
 
-          {activeDomain === 'ROOT' && (
-            <button onClick={() => setActiveRoom('pixel_dropzone')} className={`vm-nav-item shrink-0 ${activeRoom === 'pixel_dropzone' ? 'active  border-b-2 border-[#38bdf8] text-[#38bdf8]' : 'text-[#38bdf8]/60 hover:text-[#38bdf8]'}`}>📥 Pixel Drop Zone</button>
-          )}
+            {/* Global Feature Toggles (Grid & Pins) */}
+            <div className="flex items-center gap-3">
+              <button
+                id="fundies-grid-toggle-btn"
+                onClick={() => setFundiesGrid(prev => !prev)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded border font-mono text-[10px] font-bold tracking-wider transition-all cursor-pointer ${
+                  fundiesGrid
+                    ? 'bg-[#00f0ff]/15 border-[#00f0ff] text-[#00f0ff] shadow-[0_0_10px_rgba(0,240,255,0.25)]'
+                    : 'bg-white/5 border-white/10 text-white/60 hover:text-white'
+                }`}
+              >
+                📐 GRID: {fundiesGrid ? 'ON' : 'OFF'}
+              </button>
 
-          {activeDomain === 'HOLODEX' && (
-            <button onClick={() => setActiveRoom('holodex')} className={`vm-nav-item shrink-0 ${activeRoom === 'holodex' ? 'active  border-b-2 border-[#38bdf8] text-[#38bdf8]' : 'text-[#38bdf8]/60 hover:text-[#38bdf8]'}`}>✨ HoloDex</button>
-          )}
-          {activeDomain === 'SKEW' && (
-            <button onClick={() => setActiveRoom('the_skew')} className={`vm-nav-item shrink-0 text-white/50 hover:text-white`}>The Skew</button>
-          )}
-          {activeDomain === 'ARGUS' && (
-            <button onClick={() => setActiveRoom('starter')} className={`vm-nav-item shrink-0 active  border-b-2 border-green-500 text-green-400`}>👁️ Argus Nexus</button>
-          )}
-          {(activeDomain === 'MLB' || activeDomain === 'GLOBAL') && activeRoom !== 'kanban' && activeRoom !== 'sow' && activeRoom !== 'system_config' && activeRoom !== 'user_management' && activeRoom !== 'theme_manager' && activeRoom !== 'sovereign_css' && activeRoom !== 'promo_inbox' && (
-            <>
-              <button onClick={() => { setActiveDomain('MLB'); setActiveRoom('starter'); }} className={`vm-nav-item shrink-0 ${activeDomain === 'MLB' && activeRoom === 'starter' ? 'active  border-b-2 border-cyan-500 text-cyan-500' : 'text-white/50 hover:text-cyan-400'}`}>Command Center</button>
-              <button onClick={() => { setActiveDomain('MLB'); setActiveRoom('playcall_desk'); }} className={`vm-nav-item shrink-0 text-[#FF5910] hover:text-[#FF5910]/80 ${activeRoom === 'playcall_desk' ? 'border-b-2 border-[#FF5910] pb-1' : ''}`}>Playcall Desk</button>
-              <button onClick={() => { setActiveDomain('MLB'); setActiveRoom('tmi_news_desk'); }} className={`vm-nav-item shrink-0 ${activeRoom === 'tmi_news_desk' ? 'active  border-b-2 border-[#ef4444] text-[#ef4444]' : 'text-white/50 hover:text-white'}`}>🚨 TMI Triage</button>
-              <button onClick={() => { setActiveDomain('MLB'); setActiveRoom('savant_query'); }} className={`vm-nav-item shrink-0 ${activeRoom === 'savant_query' ? 'active  border-b-2 border-[#22c55e] text-[#22c55e]' : 'text-[#22c55e]/60 hover:text-[#22c55e]'}`}>🧠 Savant Query</button>
-              <button onClick={() => { setActiveDomain('GLOBAL'); setActiveRoom('storyboard_deck'); }} className={`vm-nav-item shrink-0 ${activeRoom === 'storyboard_deck' ? 'active  border-b-2 border-[#8b5cf6] text-[#8b5cf6]' : 'text-[#8b5cf6]/60 hover:text-[#8b5cf6]'}`}>Storyboard Deck</button>
-              <button onClick={() => { setActiveDomain('GLOBAL'); setActiveRoom('room_builder'); }} className={`vm-nav-item shrink-0 ${activeRoom === 'room_builder' ? 'active border-b-2 border-cyan-400 text-cyan-400 font-bold' : 'text-cyan-400/60 hover:text-cyan-400'}`}>👑 Room Builder</button>
-              <button onClick={() => { setActiveDomain('HOLODEX'); setActiveRoom('holodex'); }} className={`vm-nav-item shrink-0 ${(activeDomain as string) === 'HOLODEX' && activeRoom === 'holodex' ? 'active  border-b-2 border-[#38bdf8] text-[#38bdf8]' : 'text-white/50 hover:text-[#38bdf8]'}`}>✨ HoloDex</button>
-              <button onClick={() => { setActiveDomain('GLOBAL'); setActiveRoom('highlight_heist'); }} className={`vm-nav-item shrink-0 ${activeRoom === 'highlight_heist' ? 'active  border-b-2 border-[#ec4899] text-[#ec4899]' : 'text-[#ec4899]/60 hover:text-[#ec4899]'}`}>✂️ Highlight Heist</button>
-            </>
-          )}
-        </div>
-        )}
-        
+              <button
+                id="pin-engine-toggle-btn"
+                onClick={() => setPinEngineActive(prev => !prev)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded border font-mono text-[10px] font-bold tracking-wider transition-all cursor-pointer ${
+                  pinEngineActive
+                    ? 'bg-[#fd5a1e]/15 border-[#fd5a1e] text-[#fd5a1e] shadow-[0_0_10px_rgba(253,90,30,0.25)]'
+                    : 'bg-white/5 border-white/10 text-white/60 hover:text-white'
+                }`}
+              >
+                📌 PINS: {pinEngineActive ? 'ON' : 'OFF'}
+              </button>
+            </div>
 
-        <div className="ml-auto shrink-0 flex items-center">
-          <GlobalSystemBar osTheme={osTheme} setOsTheme={setOsTheme} accessLocale={accessLocale} setAccessLocale={setAccessLocale} isVocalMatrixOpen={isVocalMatrixOpen} setIsVocalMatrixOpen={setIsVocalMatrixOpen} activeDomain={activeDomain} activeRoom={activeRoom} globalRoomBoggsOverride={globalRoomBoggsOverride} setGlobalRoomBoggsOverride={setGlobalRoomBoggsOverride} onNavigateRoom={(room) => { _setActiveDomain('GLOBAL'); setActiveRoom(room as any); }} />
-        </div>
-      </div>
-      )}
+            {/* System Info & Profile */}
+            <div className="flex items-center gap-4">
+              <GlobalSystemBar 
+                osTheme={osTheme} 
+                setOsTheme={setOsTheme} 
+                accessLocale={accessLocale} 
+                setAccessLocale={setAccessLocale} 
+                isVocalMatrixOpen={isVocalMatrixOpen} 
+                setIsVocalMatrixOpen={setIsVocalMatrixOpen} 
+                activeDomain={activeDomain} 
+                activeRoom={activeRoom} 
+                globalRoomBoggsOverride={globalRoomBoggsOverride} 
+                setGlobalRoomBoggsOverride={setGlobalRoomBoggsOverride} 
+                onNavigateRoom={(room) => { _setActiveDomain('GLOBAL'); setActiveRoom(room as any); }} 
+              />
+            </div>
+          </div>
+
+          {/* Pin Engine Overlay Layer */}
+          {pinEngineActive && (
+            <div 
+              className="pin-engine-overlay-container"
+              onClick={handleOverlayClick}
+              style={{
+                position: 'absolute',
+                inset: 0,
+                zIndex: 9998,
+                cursor: 'crosshair',
+                overflow: 'hidden'
+              }}
+            >
+              {/* Existing Pins */}
+              {pins.map((pin) => (
+                <div
+                  key={pin.id}
+                  className="absolute pin-interactive-element cursor-pointer group"
+                  style={{
+                    left: `${pin.x_pct}%`,
+                    top: `${pin.y_pct}%`,
+                    transform: 'translate(-50%, -50%)',
+                    zIndex: 9999
+                  }}
+                >
+                  {/* Glowing Pin Dot */}
+                  <div className="w-4 h-4 rounded-full bg-[#FD5A1E] border border-white flex items-center justify-center shadow-[0_0_10px_rgba(253,90,30,0.8)] animate-pulse" />
+                  
+                  {/* Tooltip on Hover */}
+                  <div className="absolute left-6 top-1/2 -translate-y-1/2 bg-[#0B0E14] border border-[#FD5A1E] text-white p-2.5 rounded-lg shadow-xl w-60 opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-auto">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-bold text-[10px] text-gray-400 font-mono">@{pin.author}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeletePin(pin.id);
+                        }}
+                        className="text-[9px] font-bold text-red-500 hover:text-red-400 font-mono tracking-widest cursor-pointer uppercase"
+                      >
+                        [Delete]
+                      </button>
+                    </div>
+                    <p className="text-[11px] text-gray-200 leading-relaxed font-sans">{pin.comment}</p>
+                  </div>
+                </div>
+              ))}
+
+              {/* Active Placement Dialog Input */}
+              {activePlacement && (
+                <div
+                  className="absolute pin-interactive-element bg-[#0B0E14] border border-[#FD5A1E] p-3 rounded-lg shadow-2xl z-[10000] w-64"
+                  style={{
+                    left: `${activePlacement.x_pct}%`,
+                    top: `${activePlacement.y_pct}%`,
+                    transform: activePlacement.x_pct > 75 ? 'translate(-105%, -50%)' : 'translate(10px, -50%)'
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h4 className="text-[#FD5A1E] font-bold text-[10px] uppercase tracking-widest mb-1.5 font-mono">Create Spot Pin</h4>
+                  <input
+                    type="text"
+                    autoFocus
+                    placeholder="Enter annotation..."
+                    className="w-full bg-black/60 border border-white/20 rounded px-2.5 py-1.5 text-white text-xs font-sans outline-none focus:border-[#FD5A1E] mb-2"
+                    value={pinComment}
+                    onChange={(e) => setPinComment(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSavePin();
+                      if (e.key === 'Escape') setActivePlacement(null);
+                    }}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={handleSavePin}
+                      className="flex-1 bg-[#FD5A1E]/20 hover:bg-[#FD5A1E]/30 border border-[#FD5A1E] text-[#FD5A1E] font-bold tracking-wider text-[9px] uppercase py-1.5 rounded cursor-pointer transition-all"
+                    >
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setActivePlacement(null)}
+                      className="flex-1 bg-white/5 hover:bg-white/10 border border-white/10 text-white/60 font-bold tracking-wider text-[9px] uppercase py-1.5 rounded cursor-pointer transition-all"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
       {/* SOVEREIGN FEEDBACK MODE OVERLAY */}
       {isFeedbackMode && (
@@ -850,7 +1088,7 @@ export default function App() {
       ) : (
         <>
 
-       {(activeRoom as string) !== 'rom_gallery' && (activeRoom as string) !== 'the_skew' && (activeRoom as string) !== 'kanban' && (activeRoom as string) !== 'sow' && (activeRoom as string) !== 'system_config' && (activeRoom as string) !== 'user_management' && (activeRoom as string) !== 'fan_lobby' && (
+       {(activeRoom as string) !== 'rom_gallery' && (activeRoom as string) !== 'the_skew' && (activeRoom as string) !== 'kanban' && (activeRoom as string) !== 'sow' && (activeRoom as string) !== 'system_config' && (activeRoom as string) !== 'user_management' && (activeRoom as string) !== 'fan_lobby' && (activeRoom as string) !== 'mam_tmi_console' && !(activeRoom === 'starter' && activeGamedayPk) && (
         <header className="flex flex-col items-center justify-center mb-1">
           <h1 className={`text-center m-0 drop-shadow-lg ${
               activeRoom === 'savant_query' ? 'text-3xl md:text-4xl font-display font-bold uppercase tracking-wider text-white' :
@@ -861,10 +1099,11 @@ export default function App() {
             {(activeRoom as string) === 'starter' ? "The Command Center" : (activeRoom as string) === 'pegasus' ? "Pegasus Matrix" : (activeRoom as string) === 'uhf_studio' ? "UHF Studio" : (activeRoom as string) === 'holodex' ? "Sovereign HoloDex" : (activeRoom as string) === 'shatcast_vision' ? "Shatcast Vision Matrix" : (activeRoom as string) === 'log_viewer' ? "CSV Ingestion Engine" : (activeRoom as string) === 'playcall_desk' ? "Playcall Desk" : (activeRoom as string) === 'persona_console' ? "FanStack Service Portal" : (activeRoom as string) === 'auditor' ? "Umpire's Review" : (activeRoom as string) === 'advocate_center' ? "Advocate Center" : (activeRoom as string) === 'advocate_lookbook' ? "Advocate Lookbook" : (activeRoom as string) === "knowledge_hub" ? "Knowledge Hub" : (activeRoom as string) === "courier" ? "Agent Courier" : (activeRoom as string) === "promo_inbox" ? "The Cosmic Sieve" : (activeRoom as string) === "nexus_telemetry" ? "Nexus Telemetry" : (activeRoom as string) === "artifact_gallery" ? "Media Vault Matrix" : (activeRoom as string) === "vocal_matrix" ? "Vocal Matrix" : (activeRoom as string) === "storyboard_deck" ? "Storyboard Deck" : (activeRoom as string) === "fanstack_sandbox" ? "FanStack Sandbox" : (activeRoom as string) === "savant_query" ? "Savant Oracle" : (activeRoom as string) === "amen_corner" ? "Amen Corner (PGA)" : (activeRoom as string) === "factory_dashboard" ? "Flowmercial Factory" : (activeRoom as string) === "aether_vet" ? "Aether Vet Telemetry" : (activeRoom as string) === "model_arena" ? "Model Battle Arena" : (activeRoom as string) === "optical_ingest" ? "Optical Ingest Console" : (activeRoom as string) === "user_mgmt" ? "User Management" : (activeRoom as string) === "cockpit" ? "System Cockpit" : ""}
           </h1>
         </header>
-      )}
+       )}
 
       <main className="flex-1 w-full px-8 mx-auto relative overflow-hidden flex flex-col min-h-0">
         {activeDomain === 'MLB' && (activeRoom === 'starter' || (activeRoom as string) === 'fan_lobby') && <MlbScoreBar activeGamedayPk={activeGamedayPk} onSelectGame={setActiveGamedayPk} />}
+        {activeRoom === 'starter' && activeGamedayPk && <GamedayScoreboard liveBoxScore={liveBoxScore} onClose={() => setActiveGamedayPk(null)} />}
         <AnimatePresence>
           {samSighting && (
             <motion.div
@@ -892,6 +1131,10 @@ export default function App() {
             <InteractiveCockpit onNavigate={(route) => setActiveRoom(route as any)} />
           )}
 
+          {activeRoom === 'mam_tmi_console' && (
+            <MamTmiConsole />
+          )}
+
           {activeRoom === 'claude' && (
             <StarterShack />
           )}
@@ -910,10 +1153,6 @@ export default function App() {
 
           {activeRoom === 'advocate_center' && (
             <AdvocateCenter />
-          )}
-
-          {activeRoom === 'advocate_lookbook' && (
-            <AdvocateLookbook />
           )}
 
           {/* ScruffysTavern render removed */}
@@ -951,6 +1190,7 @@ export default function App() {
                   <>
                 {/* Profile Widget */}
                 <div className="bg-black/60 backdrop-blur-xl border border-white/5 border-t-2 border-t-cyan-500 rounded-sm p-3 shadow-lg relative overflow-hidden">
+                  <div className="zone-badge" style={{ top: '6px', right: '6px' }}>[ZONE-1A] PLAYER PROFILE</div>
                   <div className="absolute top-0 right-0 w-16 h-16 bg-cyan-500/10 blur-xl"></div>
                   <div className="flex justify-between items-center mb-3">
                     <h3 className="text-cyan-400 font-mono text-[10px] tracking-widest uppercase font-bold">Player Profile</h3>
@@ -983,6 +1223,7 @@ export default function App() {
 
                 {/* Game Trends */}
                 <div className="bg-black/60 backdrop-blur-xl border border-white/5 border-t-2 border-t-slate-600 rounded-sm p-3 shadow-lg flex-1 relative overflow-hidden">
+                  <div className="zone-badge" style={{ top: '6px', right: '6px' }}>[ZONE-1B] GAME TRENDS</div>
                   <h3 className="text-slate-400 font-mono text-[10px] tracking-widest uppercase font-bold mb-3">Game Trends</h3>
                   <div className="flex justify-between items-center">
                     <div>
@@ -1001,6 +1242,7 @@ export default function App() {
               {/* CENTER PANE: VIDEO / GAMEDAY */}
               <div className="lg:col-span-6 flex flex-col gap-4">
                 <div className="bg-black/80 backdrop-blur-xl border border-white/10 rounded-sm shadow-2xl flex-1 overflow-hidden flex flex-col relative group">
+                  <div className="zone-badge" style={{ top: '38px', left: '12px' }}>[ZONE-2] GAMEDAY FEED</div>
                   
                   {/* Top Bar */}
                   <div className="h-8 bg-[#05080f] flex items-center justify-between px-3 border-b border-white/10">
@@ -1091,6 +1333,7 @@ export default function App() {
                 ) : (
                   <>
                 <div className="bg-black/60 backdrop-blur-xl border border-white/5 border-t-2 border-t-cyan-500 rounded-sm p-3 shadow-lg h-[55%] relative overflow-hidden">
+                  <div className="zone-badge" style={{ top: '6px', right: '6px' }}>[ZONE-3A] PITCH ANALYTICS</div>
                   <div className="flex justify-between items-center mb-3">
                     <h3 className="text-cyan-400 font-mono text-[10px] tracking-widest uppercase font-bold">Pitch Analytics</h3>
                     <div className="w-2 h-2 bg-green-500/20 border border-green-500 rounded-full animate-pulse"></div>
@@ -1129,6 +1372,7 @@ export default function App() {
 
                 {/* Strike Zone Visualizer */}
                 <div className="bg-black/60 backdrop-blur-xl border border-white/5 border-t-2 border-t-slate-600 rounded-sm p-3 shadow-lg h-[45%] flex flex-col relative overflow-hidden">
+                   <div className="zone-badge" style={{ top: '6px', right: '6px' }}>[ZONE-3B] STRIKE ZONE RADAR</div>
                    <h3 className="text-slate-400 font-mono text-[10px] tracking-widest uppercase font-bold mb-2">Strike Zone Radar</h3>
                    <div className="flex-1 rounded flex items-center justify-center relative bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-cyan-900/20 via-black to-black">
                       
@@ -1169,8 +1413,9 @@ export default function App() {
                   {/* Main Content Area */}
                   <div className="flex-1 w-full px-8 mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-8 min-h-0">
                     
-                    {/* Hero Section */}
-                    <div className="lg:col-span-8 flex flex-col group cursor-pointer min-h-0 h-full" onClick={() => dailyBriefing?.hero?.link && window.open(dailyBriefing.hero.link, '_blank')}>
+                     {/* Hero Section */}
+                    <div className="lg:col-span-8 flex flex-col group cursor-pointer min-h-0 h-full relative" onClick={() => dailyBriefing?.hero?.link && window.open(dailyBriefing.hero.link, '_blank')}>
+                      <div className="zone-badge" style={{ top: '12px', left: '12px' }}>[ZONE-1] HERO BRIEFING</div>
                       <div className="w-full rounded-2xl overflow-hidden mb-4 border border-white/10 relative flex-1 bg-black min-h-0">
                          <img src={dailyBriefing?.hero?.image} className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" />
                          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent pointer-events-none"></div>
@@ -1184,7 +1429,8 @@ export default function App() {
                     </div>
 
                     {/* Latest News Sidebar */}
-                    <div className="lg:col-span-4 flex flex-col min-h-0 h-full">
+                    <div className="lg:col-span-4 flex flex-col min-h-0 h-full relative">
+                      <div className="zone-badge" style={{ top: '12px', right: '12px' }}>[ZONE-2] STREAMING HEADLINES</div>
                       <h2 className="text-xl md:text-2xl font-black text-white mb-4 flex items-center gap-2 uppercase tracking-widest font-display border-b border-white/10 pb-3 shrink-0">
                         Latest News
                       </h2>
@@ -1235,18 +1481,6 @@ export default function App() {
 
           {activeRoom === 'pegasus' && (
             <PegasusDreadnought />
-          )}
-
-          {activeRoom === 'persona_console' && (
-            <motion.div
-              key="persona"
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -50 }}
-              className="h-full w-full border border-[#E0BC68]/30 rounded overflow-hidden"
-            >
-              <PersonaConsole />
-            </motion.div>
           )}
 
           {activeRoom === 'god_mode' && (
@@ -1390,6 +1624,18 @@ export default function App() {
               className="w-full rounded-xl overflow-hidden  border border-[#ff0033]/30"
             >
               <EdgeDvrConsole />
+            </motion.div>
+          )}
+
+          {activeRoom === 'card_simulator' && (
+            <motion.div
+              key="card_simulator"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full rounded-xl overflow-y-auto h-[calc(100vh-150px)]"
+            >
+              <SovereignCardSimulator />
             </motion.div>
           )}
 
@@ -1788,6 +2034,8 @@ export default function App() {
       </main>
         </>
       )}
+        </div>
+      </div>
       {/* SOVEREIGN ORACLE (VOCAL MATRIX) MODAL */}
       <AnimatePresence>
         {isVocalMatrixOpen && (

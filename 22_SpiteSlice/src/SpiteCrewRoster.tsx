@@ -64,11 +64,9 @@ const FALLBACK_CREW: CrewMember[] = [
 export default function SpiteCrewRoster() {
   const [crew, setCrew] = useState<CrewMember[]>(FALLBACK_CREW);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const loadCrew = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const token = localStorage.getItem('sovereign_session_token') || '';
       const res = await fetch('/api/personas', {

@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { User, Bot, Search, Save, X, RefreshCw, AlertTriangle, ChevronDown, Download, FileText, Server, Plus } from "lucide-react";
-import avatarMapData from '../avatarMap';
+import { User, Bot, Search, Save, X, RefreshCw, AlertTriangle, ChevronDown, Download, FileText, Server, Plus, Edit, Eye, Trash2, CheckSquare, Square, Printer, Image as ImageIcon, Sparkles, Upload } from "lucide-react";
 
-const avatarMap: Record<string, string> = avatarMapData;
 
 const TEAM_COLORS: Record<string, { primary: string; secondary: string }> = {
   SD: { primary: "#2F241D", secondary: "#FFC72C" },
@@ -122,6 +120,558 @@ async function fetchTable<T>(table: string): Promise<T[]> {
   }
 }
 
+// Sub-component for 3D Advocate Cards
+function AdvocateCard({ 
+  r, 
+  isSelected, 
+  onSelect, 
+  onToggleSelect, 
+  onRefresh 
+}: { 
+  r: any; 
+  isSelected: boolean; 
+  onSelect: (record: any) => void; 
+  onToggleSelect: (id: string, e: React.MouseEvent) => void; 
+  onRefresh: () => void;
+}) {
+  const [isFlipped, setIsFlipped] = useState(false);
+  const [deepLore, setDeepLore] = useState(r.introduction || "");
+  const [systemPrompt, setSystemPrompt] = useState(r.u_system_prompt || "");
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [hovered, setHovered] = useState(false);
+
+  // Sync state if prop changes
+  useEffect(() => {
+    setDeepLore(r.introduction || "");
+    setSystemPrompt(r.u_system_prompt || "");
+  }, [r.introduction, r.u_system_prompt]);
+
+  const styleType = r.u_visual_style || "";
+  const isHeritage = styleType === "90s_cardboard_comic";
+  const isCosmic = styleType === "style_pixel";
+  const isFlagship = !isHeritage && !isCosmic;
+
+  const avatarKey = (r.user_name || r.name || "").toLowerCase().replace(/[\s]/g, '_');
+  const avatarUrl = r.avatar_url || `/api/persona_image/${avatarKey}`;
+  const bust = r._avatarBust ? `?t=${r._avatarBust}` : '';
+  const hasCustomAsset = !!r.avatar_url;
+
+  const rawTeamCode = (r.assigned_to || r.department || "").toUpperCase();
+  const getTeamDisplayCode = (code: string) => {
+    const c = (code || "").trim().toUpperCase();
+    if (!c) return "";
+    if (c.includes("INKWELL")) return "I&I";
+    if (c.includes("WEED")) return "WEED";
+    if (c.includes("AETHER")) return "AET";
+    if (c.includes("SPITE")) return "SPT";
+    if (c.includes("GARDEN")) return "GDN";
+    if (c.length > 4) return c.substring(0, 3);
+    return c;
+  };
+  const teamCode = getTeamDisplayCode(rawTeamCode);
+  const colors = TEAM_COLORS[teamCode] || TEAM_COLORS[rawTeamCode] || { primary: "#0a1118", secondary: "#00d4ff" };
+  const fallbackGradient = `linear-gradient(135deg, ${colors.primary}, ${colors.secondary})`;
+
+  const badgeTextColor = (() => {
+    if (teamCode === "PHI") return "#FFFFFF";
+    const hex = (colors.secondary || "#00d4ff").replace("#", "");
+    if (hex.length !== 6) return colors.secondary;
+    const rgbR = parseInt(hex.substring(0, 2), 16);
+    const rgbG = parseInt(hex.substring(2, 4), 16);
+    const rgbB = parseInt(hex.substring(4, 6), 16);
+    const brightness = (rgbR * 299 + rgbG * 587 + rgbB * 114) / 1000;
+    return brightness < 80 ? "#FFFFFF" : colors.secondary;
+  })();
+
+  const cadence = (r.u_cadence || "pacer").toLowerCase();
+  let cadenceStyle = { bg: "rgba(0, 212, 255, 0.1)", text: VM.blue as string, border: `1px solid rgba(0, 212, 255, 0.2)` };
+  if (cadence === "agitator") {
+    cadenceStyle = { bg: "rgba(255, 89, 16, 0.1)", text: VM.orange as string, border: `1px solid rgba(255, 89, 16, 0.2)` };
+  } else if (cadence === "lurker") {
+    cadenceStyle = { bg: "rgba(90, 122, 138, 0.1)", text: VM.muted as string, border: `1px solid rgba(90, 122, 138, 0.2)` };
+  } else if (cadence === "reactant" || cadence === "yapper") {
+    cadenceStyle = { bg: "rgba(0, 255, 136, 0.1)", text: VM.emerald as string, border: `1px solid rgba(0, 255, 136, 0.2)` };
+  }
+
+  const stagedCount = ((r.user_name || "").charCodeAt(0) % 4) + 1;
+
+  const handleUpdate = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsUpdating(true);
+    try {
+      const token = localStorage.getItem('sovereign_session_token') || '';
+      const res = await fetch(`/api/now/table/cmdb_ci_ai_persona/${r.sys_id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          introduction: deepLore,
+          u_system_prompt: systemPrompt
+        })
+      });
+      if (res.ok) {
+        onRefresh();
+        setIsFlipped(false);
+      } else {
+        alert("Failed to update advocate details");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error updating advocate");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
+  // Card flipping layouts & styles
+  const cardContainerStyle: React.CSSProperties = {
+    perspective: "1000px",
+    width: "100%",
+    height: "390px",
+    position: "relative"
+  };
+
+  const cardInnerStyle: React.CSSProperties = {
+    width: "100%",
+    height: "100%",
+    position: "relative",
+    transition: "transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)",
+    transformStyle: "preserve-3d",
+    transform: isFlipped ? "rotateY(180deg)" : "none",
+  };
+
+  const faceStyle: React.CSSProperties = {
+    position: "absolute",
+    width: "100%",
+    height: "100%",
+    backfaceVisibility: "hidden",
+    WebkitBackfaceVisibility: "hidden",
+    borderRadius: "20px",
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
+  };
+
+  // Front layout styles based on theme
+  const getFrontCardStyles = () => {
+    if (isHeritage) {
+      return {
+        background: "#e4d5b7", // Textured heritage cream
+        border: isSelected ? `3px solid ${VM.blue}` : `3px solid #8b5a2b`,
+        boxShadow: isSelected ? `0 12px 30px rgba(0,212,255,0.3)` : (hovered ? "0 12px 30px rgba(139,90,43,0.3)" : "0 8px 24px rgba(0,0,0,0.5)"),
+        transform: hovered && !isSelected ? "translateY(-6px)" : "none",
+        transition: "all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)"
+      };
+    }
+    if (isCosmic) {
+      return {
+        background: `linear-gradient(135deg, #0b0518 0%, #1f0b35 100%)`, // Cosmic dark purple
+        border: isSelected ? `2px solid ${VM.blue}` : (hovered ? `2px solid #ff00ff` : `2px solid #4a1d6d`),
+        boxShadow: isSelected ? `0 12px 30px rgba(0,212,255,0.4)` : (hovered ? "0 12px 30px rgba(255,0,255,0.4)" : "0 8px 24px rgba(0,0,0,0.6)"),
+        transform: hovered && !isSelected ? "translateY(-6px)" : "none",
+        transition: "all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)"
+      };
+    }
+    // Flagship
+    return {
+      background: isSelected ? `linear-gradient(135deg, ${VM.blue}15, ${VM.card})` : `linear-gradient(135deg, ${VM.card}, ${VM.surface})`,
+      border: `2px solid ${isSelected ? VM.blue : (hovered ? VM.emerald : VM.border)}`,
+      boxShadow: isSelected ? `0 12px 30px rgba(0,212,255,0.2), 0 0 0 1px ${VM.blue}` : (hovered ? `0 12px 30px rgba(0,255,136,0.15), 0 0 0 1px ${VM.emerald}` : "0 8px 24px rgba(0,0,0,0.4)"),
+      transform: hovered && !isSelected ? "translateY(-6px)" : "none",
+      transition: "all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)"
+    };
+  };
+
+  return (
+    <div 
+      style={cardContainerStyle}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      <div style={cardInnerStyle}>
+        
+        {/* CARD FRONT */}
+        <div 
+          style={{ ...faceStyle, ...getFrontCardStyles() }}
+          onClick={() => onSelect(r)}
+        >
+          {/* Checkbox selector */}
+          <div style={{ position: "absolute", top: "14px", right: "14px", zIndex: 12 }}>
+            <input 
+              type="checkbox" 
+              checked={isSelected}
+              onChange={() => {}}
+              onClick={(e) => onToggleSelect(r.sys_id, e)}
+              style={{ cursor: "pointer", width: "20px", height: "20px", accentColor: VM.blue, filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.6))" }}
+            />
+          </div>
+
+          {/* Quick Flip button (top-right next to checkbox) */}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsFlipped(true);
+            }}
+            style={{
+              position: "absolute",
+              top: "14px",
+              right: "46px",
+              zIndex: 12,
+              background: isHeritage ? "#8b5a2b" : "rgba(0,0,0,0.6)",
+              border: `1px solid ${isHeritage ? "#3a2010" : VM.border}`,
+              color: isHeritage ? "#e4d5b7" : VM.text,
+              borderRadius: "4px",
+              padding: "4px 8px",
+              fontSize: "0.6rem",
+              fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              gap: "4px"
+            }}
+          >
+            <RefreshCw size={10} />
+            {isHeritage ? "STATS" : "FLIP"}
+          </button>
+
+          {/* Image Section / Fallback gradient */}
+          <div style={{ height: "55%", width: "100%", position: "relative", overflow: "hidden" }}>
+            <div style={{ 
+              position: "absolute", 
+              inset: 0, 
+              background: isHeritage 
+                ? "linear-gradient(to bottom, transparent 40%, #e4d5b7 100%)" 
+                : (isCosmic ? "linear-gradient(to bottom, transparent 40%, #0b0518 100%)" : "linear-gradient(to bottom, transparent 40%, #0d1820 100%)"), 
+              zIndex: 3 
+            }} />
+            
+            {!hasCustomAsset ? (
+              <div style={{
+                width: "100%",
+                height: "100%",
+                background: fallbackGradient,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                position: "relative"
+              }}>
+                <div style={{
+                  position: "absolute",
+                  inset: 0,
+                  background: "radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.5) 100%)",
+                  zIndex: 1
+                }} />
+                <span style={{
+                  fontFamily: isHeritage ? "Georgia, serif" : VM.fontHead,
+                  fontSize: "3.2rem",
+                  fontWeight: "black",
+                  color: isHeritage ? "#3a2010" : "#ffffff",
+                  textShadow: "0 4px 14px rgba(0,0,0,0.7)",
+                  letterSpacing: "0.05em",
+                  zIndex: 2
+                }}>
+                  {(r.user_name || "").substring(0, 2).toUpperCase()}
+                </span>
+                <span style={{
+                  position: "absolute",
+                  bottom: "16px",
+                  fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono,
+                  fontSize: "0.62rem",
+                  color: isHeritage ? "#3a2010" : "#ffffff",
+                  letterSpacing: "0.15em",
+                  zIndex: 2,
+                  background: isHeritage ? "rgba(228,213,183,0.8)" : "rgba(0,0,0,0.45)",
+                  padding: "3px 8px",
+                  borderRadius: "4px",
+                  border: `1px solid ${isHeritage ? "#8b5a2b" : "rgba(255,255,255,0.1)"}`,
+                  backdropFilter: "blur(4px)"
+                }}>
+                  🏟️ {teamCode || "GLOBAL"} STADIUM
+                </span>
+              </div>
+            ) : (
+              <img 
+                src={avatarUrl + bust}
+                alt={r.user_name}
+                style={{ width: "100%", height: "100%", objectFit: "cover", position: "relative", zIndex: 2 }}
+                onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${r.user_name}&backgroundColor=0f172a&textColor=ffffff`; }}
+              />
+            )}
+
+            {/* Team tag in upper left */}
+            {teamCode && (
+              <div style={{ 
+                position: "absolute", 
+                top: "14px", 
+                left: "14px", 
+                zIndex: 10, 
+                background: isHeritage ? "#8b5a2b" : "rgba(0,4,10,0.75)", 
+                border: `1px solid ${isHeritage ? "#3a2010" : VM.border}`, 
+                padding: "4px 10px", 
+                borderRadius: "6px", 
+                fontFamily: isHeritage ? "Georgia, serif" : VM.fontHead, 
+                fontSize: "0.75rem", 
+                color: isHeritage ? "#e4d5b7" : badgeTextColor, 
+                fontWeight: "bold",
+                backdropFilter: "blur(6px)" 
+              }}>
+                {teamCode}
+              </div>
+            )}
+
+            {/* Staging Items badge overlay */}
+            <div style={{
+              position: "absolute",
+              bottom: "12px",
+              right: "12px",
+              zIndex: 10,
+              background: isHeritage ? "rgba(139,90,43,0.2)" : "rgba(224, 188, 104, 0.15)",
+              border: `1px solid ${isHeritage ? "#8b5a2b" : VM.gold}40`,
+              color: isHeritage ? "#8b5a2b" : VM.gold,
+              borderRadius: "6px",
+              padding: "2px 8px",
+              fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono,
+              fontSize: "0.6rem",
+              letterSpacing: "0.08em",
+              fontWeight: "bold",
+              backdropFilter: "blur(4px)"
+            }}>
+              ⚡ {stagedCount} STAGED
+            </div>
+          </div>
+
+          {/* Content Section */}
+          <div style={{ 
+            flex: 1, 
+            padding: "18px", 
+            display: "flex", 
+            flexDirection: "column", 
+            position: "relative", 
+            zIndex: 4, 
+            background: isHeritage ? "#f4ebd0" : (isCosmic ? "#0b0518" : "#0d1820") 
+          }}>
+            <h3 style={{ 
+              fontFamily: isHeritage ? "Georgia, serif" : VM.fontHead, 
+              fontSize: "1.25rem", 
+              color: isHeritage ? "#3a2010" : (isCosmic ? "#ff00ff" : VM.gold), 
+              margin: "0 0 4px 0", 
+              letterSpacing: "0.05em", 
+              textTransform: "uppercase", 
+              whiteSpace: "nowrap", 
+              overflow: "hidden", 
+              textOverflow: "ellipsis" 
+            }}>
+              {r.user_name}
+            </h3>
+            
+            <div style={{ 
+              fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono, 
+              fontSize: "0.75rem", 
+              color: isHeritage ? "#8b2500" : (isCosmic ? "#00ffff" : VM.emerald), 
+              textTransform: "uppercase", 
+              letterSpacing: "0.1em", 
+              marginBottom: "12px", 
+              whiteSpace: "nowrap", 
+              overflow: "hidden", 
+              textOverflow: "ellipsis" 
+            }}>
+              {r.title || "Sovereign Analyst"}
+            </div>
+
+            <div style={{ 
+              display: "flex", 
+              flexDirection: "column", 
+              gap: "6px", 
+              marginBottom: "16px", 
+              background: isHeritage ? "rgba(139,90,43,0.1)" : "rgba(0,0,0,0.2)", 
+              padding: "10px", 
+              borderRadius: "6px", 
+              border: `1px solid ${isHeritage ? "#8b5a2b" : VM.border}` 
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono, fontSize: "0.6rem", color: isHeritage ? "#8b5a2b" : VM.muted, textTransform: "uppercase" }}>Zone</span>
+                <span style={{ fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono, fontSize: "0.68rem", color: r.u_deployment_zone ? (isHeritage ? "#3a2010" : VM.blue) : (isHeritage ? "#8b5a2b" : VM.muted), fontWeight: "bold" }}>
+                  {r.u_deployment_zone || "—"}
+                </span>
+              </div>
+            </div>
+            
+            <div style={{ marginTop: "auto", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              {/* Status Section */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                <span style={{ fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono, fontSize: "0.58rem", color: isHeritage ? "#8b5a2b" : VM.muted, textTransform: "uppercase", letterSpacing: "0.05em" }}>Status</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span style={{ 
+                    width: "8px", 
+                    height: "8px", 
+                    borderRadius: "50%", 
+                    background: r.active === 1 ? (isHeritage ? "#1f3b2e" : VM.emerald) : VM.danger,
+                    boxShadow: r.active === 1 && !isHeritage ? `0 0 8px ${VM.emerald}` : "none",
+                    display: "inline-block"
+                  }} />
+                  <span style={{ 
+                    fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono, 
+                    fontSize: "0.75rem", 
+                    color: r.active === 1 ? (isHeritage ? "#1f3b2e" : VM.emerald) : VM.danger, 
+                    fontWeight: "bold", 
+                    letterSpacing: "0.05em" 
+                  }}>
+                    {r.active === 1 ? "ACTIVE" : "OFFLINE"}
+                  </span>
+                </div>
+              </div>
+
+              {/* Cadence Badge */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px", alignItems: "flex-end" }}>
+                <span style={{ fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono, fontSize: "0.58rem", color: isHeritage ? "#8b5a2b" : VM.muted, textTransform: "uppercase", letterSpacing: "0.05em" }}>Cadence</span>
+                <span style={{ 
+                  fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono, 
+                  fontSize: "0.7rem", 
+                  fontWeight: "bold",
+                  textTransform: "uppercase",
+                  background: isHeritage ? "rgba(139,90,43,0.15)" : cadenceStyle.bg,
+                  color: isHeritage ? "#8b5a2b" : cadenceStyle.text,
+                  border: isHeritage ? "1px solid #8b5a2b" : cadenceStyle.border,
+                  borderRadius: "4px",
+                  padding: "2px 8px",
+                  letterSpacing: "0.05em"
+                }}>
+                  {r.u_cadence || "pacer"}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* CARD BACK */}
+        <div 
+          style={{ 
+            ...faceStyle, 
+            transform: "rotateY(180deg)",
+            background: isHeritage ? "#e4d5b7" : (isCosmic ? "#0b0518" : VM.card),
+            border: `2px solid ${isHeritage ? "#8b5a2b" : VM.border}`,
+            padding: "20px",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.6)",
+            color: isHeritage ? "#3a2010" : VM.text
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px", borderBottom: `1px solid ${isHeritage ? "#8b5a2b" : VM.border}`, paddingBottom: "8px" }}>
+            <span style={{ fontFamily: isHeritage ? "Georgia, serif" : VM.fontHead, fontSize: "0.85rem", fontWeight: "bold", color: isHeritage ? "#8b2500" : VM.gold }}>
+              {isHeritage ? "ADVOCATE DOSSIER" : "QUICK PROTOCOLS"}
+            </span>
+            <span style={{ fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono, fontSize: "0.7rem", color: isHeritage ? "#8b5a2b" : VM.muted }}>
+              @{r.user_name}
+            </span>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: "10px", flex: 1, minHeight: 0 }}>
+            {/* Deep Lore Field */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+              <label style={{ fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono, fontSize: "0.6rem", color: isHeritage ? "#8b5a2b" : VM.muted, textTransform: "uppercase" }}>
+                Deep Lore / Intro
+              </label>
+              <textarea
+                value={deepLore}
+                onChange={(e) => setDeepLore(e.target.value)}
+                style={{
+                  height: "75px",
+                  resize: "none",
+                  background: isHeritage ? "#f4ebd0" : "rgba(0,0,0,0.3)",
+                  border: `1px solid ${isHeritage ? "#8b5a2b" : VM.border}`,
+                  borderRadius: "6px",
+                  padding: "8px",
+                  fontSize: "0.75rem",
+                  color: isHeritage ? "#3a2010" : VM.text,
+                  fontFamily: isHeritage ? "Georgia, serif" : "inherit"
+                }}
+              />
+            </div>
+
+            {/* System Prompt Field */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "4px", flex: 1, minHeight: 0 }}>
+              <label style={{ fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono, fontSize: "0.6rem", color: isHeritage ? "#8b5a2b" : VM.muted, textTransform: "uppercase" }}>
+                System Prompt Override
+              </label>
+              <textarea
+                value={systemPrompt}
+                onChange={(e) => setSystemPrompt(e.target.value)}
+                style={{
+                  flex: 1,
+                  resize: "none",
+                  background: isHeritage ? "#f4ebd0" : "rgba(0,0,0,0.3)",
+                  border: `1px solid ${isHeritage ? "#8b5a2b" : VM.border}`,
+                  borderRadius: "6px",
+                  padding: "8px",
+                  fontSize: "0.72rem",
+                  color: isHeritage ? "#3a2010" : VM.text,
+                  fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono
+                }}
+              />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", gap: "10px", marginTop: "14px", borderTop: `1px solid ${isHeritage ? "#8b5a2b" : VM.border}`, paddingTop: "12px" }}>
+            <button
+              onClick={handleUpdate}
+              disabled={isUpdating}
+              style={{
+                flex: 1,
+                background: isHeritage ? "#1f3b2e" : VM.emerald,
+                color: "#ffffff",
+                border: "none",
+                borderRadius: "6px",
+                padding: "8px 12px",
+                fontSize: "0.75rem",
+                fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono,
+                fontWeight: "bold",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                textTransform: "uppercase"
+              }}
+            >
+              <Save size={12} />
+              {isUpdating ? "Saving..." : "Save"}
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsFlipped(false);
+              }}
+              style={{
+                flex: 1,
+                background: isHeritage ? "rgba(139,90,43,0.15)" : "rgba(255,255,255,0.05)",
+                color: isHeritage ? "#8b5a2b" : VM.text,
+                border: `1px solid ${isHeritage ? "#8b5a2b" : VM.border}`,
+                borderRadius: "6px",
+                padding: "8px 12px",
+                fontSize: "0.75rem",
+                fontFamily: isHeritage ? "Georgia, serif" : VM.fontMono,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "6px",
+                textTransform: "uppercase"
+              }}
+            >
+              <X size={12} />
+              Cancel
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 /* ── Main Component ── */
 export default function AdvocateCenter() {
   const [activeTab, setActiveTab] = useState<ActiveTab>("ai_bots");
@@ -141,6 +691,21 @@ export default function AdvocateCenter() {
   const [uploadStatus, setUploadStatus] = useState<{ ok: boolean; msg: string } | null>(null);
   const [liveAvatarUrl, setLiveAvatarUrl] = useState<string | null>(null);
   const [sortConfig, setSortConfig] = useState<{ key: string, direction: 'asc' | 'desc' } | null>(null);
+
+  // Lookbook & Media Assets state
+  const [mediaAssets, setMediaAssets] = useState<any[]>([]);
+  const [loadingMedia, setLoadingMedia] = useState(false);
+  const [mediaTab, setMediaTab] = useState<"All" | "Adventures" | "Raw Photos" | "Concept Art">("All");
+  const [selectedMediaIds, setSelectedMediaIds] = useState<Set<string>>(new Set());
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadExpr, setUploadExpr] = useState("");
+  const [uploadCat, setUploadCat] = useState("Concept Art");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [editingExprAsset, setEditingExprAsset] = useState<any | null>(null);
+  const [editExprVal, setEditExprVal] = useState("");
+  const [editCatVal, setEditCatVal] = useState("");
 
   interface StyleItem {
     id: string;
@@ -281,6 +846,115 @@ export default function AdvocateCenter() {
     setEditForm({ ...record });
     setLiveAvatarUrl(null);
     setUploadStatus(null);
+    if (record && record.user_name) {
+      loadMedia(record.user_name.toLowerCase().replace(/[\s]/g, '_'));
+    }
+  };
+
+  const loadMedia = async (username: string) => {
+    setLoadingMedia(true);
+    setSelectedMediaIds(new Set());
+    try {
+      const res = await fetch(`/api/media/assets/${username}`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setMediaAssets(data.assets || []);
+    } catch (err) {
+      console.error("Failed to load media assets", err);
+    } finally {
+      setLoadingMedia(false);
+    }
+  };
+
+  const handleUploadExpression = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadFile || !selectedRecord) return;
+    setIsUploading(true);
+    setUploadError(null);
+
+    const advName = selectedRecord.user_name.toLowerCase().replace(/[\s]/g, '_');
+    const formData = new FormData();
+    formData.append("file", uploadFile);
+    if (uploadExpr.trim()) {
+      formData.append("expression", uploadExpr.trim());
+    }
+    formData.append("category", uploadCat);
+
+    try {
+      const res = await fetch(`/api/media/assets/${advName}/upload`, {
+        method: "POST",
+        body: formData
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        throw new Error(json.detail || `HTTP ${res.status}`);
+      }
+      setUploadFile(null);
+      setUploadExpr("");
+      const fileInput = document.getElementById("lookbook_file_input") as HTMLInputElement;
+      if (fileInput) fileInput.value = "";
+      await loadMedia(advName);
+    } catch (err: any) {
+      setUploadError(err.message || "Upload failed");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleUpdateExpression = async (asset: any) => {
+    if (!editExprVal.trim()) return;
+    try {
+      const res = await fetch(`/api/media/assets/expression/${asset.sys_id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          expression: editExprVal.trim(),
+          category: editCatVal
+        })
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setEditingExprAsset(null);
+      if (selectedRecord) {
+        await loadMedia(selectedRecord.user_name.toLowerCase().replace(/[\s]/g, '_'));
+      }
+    } catch (err: any) {
+      alert(`Update failed: ${err.message}`);
+    }
+  };
+
+  const handleDeleteExpression = async (sys_id: string) => {
+    if (!confirm("Are you sure you want to delete this lookbook expression asset?")) return;
+    try {
+      const res = await fetch(`/api/media/assets/expression/${sys_id}`, {
+        method: "DELETE"
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (selectedRecord) {
+        await loadMedia(selectedRecord.user_name.toLowerCase().replace(/[\s]/g, '_'));
+      }
+    } catch (err: any) {
+      alert(`Delete failed: ${err.message}`);
+    }
+  };
+
+  const toggleMediaSelection = (sys_id: string) => {
+    const next = new Set(selectedMediaIds);
+    if (next.has(sys_id)) {
+      next.delete(sys_id);
+    } else {
+      next.add(sys_id);
+    }
+    setSelectedMediaIds(next);
+  };
+
+  const handlePrintPdf = () => {
+    if (!selectedRecord) return;
+    const adv = selectedRecord.user_name.toLowerCase().replace(/[\s]/g, '_');
+    let url = `/api/media/print_lookbook?advocate=${adv}`;
+    if (selectedMediaIds.size > 0) {
+      url += `&ids=${Array.from(selectedMediaIds).join(",")}`;
+    }
+    window.open(url, "_blank");
   };
 
   const handleNewPersona = () => {
@@ -344,7 +1018,7 @@ export default function AdvocateCenter() {
   };
 
   const handleDeleteSingle = async (sys_id: string) => {
-    if (!confirm("Are you sure you want to delete this persona? This action is permanent.")) return;
+    if (!confirm("Are you sure you want to delete this advocate? This action is permanent.")) return;
     setIsSaving(true);
     setError(null);
     try {
@@ -365,7 +1039,7 @@ export default function AdvocateCenter() {
     // Use the name actually shown on screen — editForm is the live form state
     const personaName = (editForm?.user_name || (selectedRecord as any)?.user_name || '').trim();
     if (!personaName) {
-      setUploadStatus({ ok: false, msg: 'No persona selected — cannot upload.' });
+      setUploadStatus({ ok: false, msg: 'No advocate selected — cannot upload.' });
       return;
     }
     if (!file.type.startsWith('image/')) {
@@ -455,8 +1129,7 @@ export default function AdvocateCenter() {
     
     recordsToExport.forEach((record: any) => {
        const name = record.user_name;
-       const avatarKey = name.toLowerCase().replace(/\s/g, '');
-       const avatarUrl = avatarMap[avatarKey] || `https://api.dicebear.com/7.x/initials/svg?seed=${name}&backgroundColor=0f172a&textColor=ffffff`;
+       const avatarUrl = record.avatar_url || `/api/persona_image/${name.toLowerCase().replace(/\s/g, '_')}`;
        
        mdStr += `## ${name}\n\n`;
        mdStr += `![${name} Avatar](${avatarUrl})\n\n`;
@@ -757,7 +1430,7 @@ export default function AdvocateCenter() {
         <Search size={14} style={{ color: VM.muted }} />
         <input
           type="text"
-          placeholder="Search personas by name or team..."
+          placeholder="Search advocates by name or team..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           style={{
@@ -822,7 +1495,8 @@ export default function AdvocateCenter() {
       </div>
 
       {/* Record Grid/Table */}
-      <div style={{ flex: 1, overflow: "auto", borderRadius: "6px", border: viewMode === "list" ? `1px solid ${VM.border}` : "none" }}>
+      <div style={{ flex: 1, overflow: "auto", borderRadius: "6px", border: viewMode === "list" ? `1px solid ${VM.border}` : "none", position: "relative" }}>
+        <div className="zone-badge" style={{ top: '6px', left: '6px' }}>[ZONE-1] PERSONA DIRECTORY</div>
         {loading ? (
           <div
             style={{
@@ -854,6 +1528,19 @@ export default function AdvocateCenter() {
           </div>
         ) : viewMode === "grid" ? (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(290px, 1fr))", gap: "1.75rem", padding: "1rem" }}>
+            {activeRecords.map((record) => (
+              <AdvocateCard
+                key={record.sys_id}
+                r={record}
+                isSelected={selectedRecords.has(record.sys_id)}
+                onSelect={(rec) => handleSelectRecord(rec as AiPersona)}
+                onToggleSelect={(id, e) => toggleSelection(id, e)}
+                onRefresh={() => loadData()}
+              />
+            ))}
+          </div>
+        ) : false ? (
+          <div style={{ display: "none" }}>
             {activeRecords.map((record) => {
               const isSelected = selectedRecords.has(record.sys_id);
               const r = record as any;
@@ -861,8 +1548,8 @@ export default function AdvocateCenter() {
               const avatarKey = (r.user_name || r.name || "").toLowerCase().replace(/[\s]/g, '_');
               const bust = r._avatarBust ? `?t=${r._avatarBust}` : '';
               
-              const hasCustomAsset = !!(r.avatar_url || avatarMap[avatarKey]);
-              const avatarUrl = r.avatar_url || avatarMap[avatarKey];
+              const hasCustomAsset = !!r.avatar_url;
+              const avatarUrl = r.avatar_url || `/api/persona_image/${avatarKey}`;
               
               const rawTeamCode = (r.assigned_to || r.department || "").toUpperCase();
               
@@ -1274,10 +1961,10 @@ export default function AdvocateCenter() {
                           <option value="BENCHED">Benched</option>
                           <option value="BULLPEN">Bullpen</option>
                           <optgroup label="Active Simulation Rooms">
-                            {simulationZones.map(z => <option key={z} value={z}>{z}</option>)}
+                            {simulationZones.map((z, idx) => <option key={`sz_${z}_${idx}`} value={z}>{z}</option>)}
                           </optgroup>
                           <optgroup label="MLB Game Rooms">
-                            {mlbGames.map(g => <option key={`room_${g.game_pk}`} value={`room_${g.game_pk}`}>{g.label} ({`room_${g.game_pk}`})</option>)}
+                            {mlbGames.map((g, idx) => <option key={`room_${g.game_pk}_${idx}`} value={`room_${g.game_pk}`}>{g.label} ({`room_${g.game_pk}`})</option>)}
                           </optgroup>
                         </select>
                       ) : (
@@ -1376,7 +2063,7 @@ export default function AdvocateCenter() {
             }}>
               <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
                 <img
-                  src={(avatarMap[(editForm.user_name || "").toLowerCase().replace(/[\s]/g, '_')] || avatarMap[(editForm.user_name || "").toLowerCase()] || `/api/persona_image/${(editForm.user_name || "").toLowerCase()}`)}
+                  src={editForm.avatar_url || `/api/persona_image/${(editForm.user_name || "").toLowerCase().replace(/[\s]/g, '_')}`}
                   alt={editForm.user_name}
                   style={{ width: "44px", height: "44px", borderRadius: "10px", objectFit: "cover", border: `2px solid ${VM.border}` }}
                   onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${editForm.user_name}&backgroundColor=0f172a&textColor=ffffff`; }}
@@ -1406,12 +2093,13 @@ export default function AdvocateCenter() {
               </div>
             </div>
 
-            <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "24px" }}>
+            <div style={{ padding: "24px", display: "flex", flexDirection: "column", gap: "24px", position: "relative" }}>
+              <div className="zone-badge" style={{ top: '6px', left: '6px' }}>[ZONE-2] PERSONA EDITOR</div>
 
               {/* Avatar Upload */}
               <div style={{ display: "flex", gap: "16px", alignItems: "center", background: VM.surface, padding: "16px 20px", borderRadius: "10px", border: `1px solid ${VM.border}` }}>
                 <img
-                  src={liveAvatarUrl || (avatarMap[(editForm.user_name || "").toLowerCase().replace(/[\s]/g, '_')] || avatarMap[(editForm.user_name || "").toLowerCase()] || `/api/persona_image/${(editForm.user_name || "").toLowerCase()}`)}
+                  src={liveAvatarUrl || editForm.avatar_url || `/api/persona_image/${(editForm.user_name || "").toLowerCase().replace(/[\s]/g, '_')}`}
                   alt={editForm.user_name}
                   style={{ width: "72px", height: "72px", borderRadius: "10px", objectFit: "cover", border: `2px solid ${VM.border}`, flexShrink: 0 }}
                   onError={(e) => { (e.target as HTMLImageElement).src = `https://api.dicebear.com/7.x/initials/svg?seed=${editForm.user_name}&backgroundColor=0f172a&textColor=ffffff`; }}
@@ -1485,10 +2173,10 @@ export default function AdvocateCenter() {
                           <option value="BENCHED">Benched</option>
                           <option value="BULLPEN">Bullpen</option>
                           <optgroup label="Active Simulation Rooms">
-                            {simulationZones.map(z => <option key={z} value={z}>{z}</option>)}
+                            {simulationZones.map((z, idx) => <option key={`sz_${z}_${idx}`} value={z}>{z}</option>)}
                           </optgroup>
                           <optgroup label="MLB Game Rooms">
-                            {mlbGames.map(g => <option key={`room_${g.game_pk}`} value={`room_${g.game_pk}`}>{g.label} ({`room_${g.game_pk}`})</option>)}
+                            {mlbGames.map((g, idx) => <option key={`room_${g.game_pk}_${idx}`} value={`room_${g.game_pk}`}>{g.label} ({`room_${g.game_pk}`})</option>)}
                           </optgroup>
                         </select>
                       ) : type === "style-select" ? (
@@ -1497,8 +2185,8 @@ export default function AdvocateCenter() {
                             style={{ width: "100%", background: VM.surface, border: `1px solid ${VM.border}`, borderRadius: "6px", color: VM.text, padding: "10px 12px", fontFamily: VM.fontMono, fontSize: "0.82rem", outline: "none", marginBottom: "8px" }}
                             onFocus={(e) => e.target.style.borderColor = VM.emerald} onBlur={(e) => e.target.style.borderColor = VM.border}>
                             {styleRegistry.length > 0 ? (
-                              styleRegistry.map(style => (
-                                <option key={style.id} value={style.id}>{style.display_name}</option>
+                              styleRegistry.map((style, idx) => (
+                                <option key={`style_${style.id}_${idx}`} value={style.id}>{style.display_name}</option>
                               ))
                             ) : (
                               <>
@@ -1722,10 +2410,10 @@ export default function AdvocateCenter() {
                               <option value="BENCHED">Benched</option>
                               <option value="BULLPEN">Bullpen</option>
                               <optgroup label="Active Simulation Rooms">
-                                {simulationZones.map(z => <option key={z} value={z}>{z}</option>)}
+                                {simulationZones.map((z, idx) => <option key={`sz_${z}_${idx}`} value={z}>{z}</option>)}
                               </optgroup>
                               <optgroup label="MLB Game Rooms">
-                                {mlbGames.map(g => <option key={`room_${g.game_pk}`} value={`room_${g.game_pk}`}>{g.label} ({`room_${g.game_pk}`})</option>)}
+                                {mlbGames.map((g, idx) => <option key={`room_${g.game_pk}_${idx}`} value={`room_${g.game_pk}`}>{g.label} ({`room_${g.game_pk}`})</option>)}
                               </optgroup>
                           </select>
                       </div>

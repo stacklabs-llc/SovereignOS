@@ -57,6 +57,8 @@ app.add_middleware(
 
 def get_db():
     conn = sqlite3.connect(DB_PATH, timeout=30)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -138,9 +140,41 @@ def get_cmdb_ci(sys_class_name: str = None):
     if sys_class_name:
         rows = conn.execute("SELECT sys_id, name, sys_class_name, short_description FROM cmdb_ci WHERE sys_class_name = ? ORDER BY name", (sys_class_name,)).fetchall()
     else:
-        rows = conn.execute("SELECT sys_id, name, sys_class_name, short_description FROM cmdb_ci WHERE sys_class_name IN ('cmdb_ci_service', 'cmdb_ci_hardware', 'cmdb_ci_garden') ORDER BY name").fetchall()
+        rows = conn.execute("""
+            SELECT sys_id, name, sys_class_name, short_description 
+            FROM cmdb_ci 
+            WHERE sys_class_name IN (
+                'cmdb_ci_service', 
+                'cmdb_ci_hardware', 
+                'cmdb_ci_appl', 
+                'cmdb_ci_agent_house', 
+                'cmdb_ci_fanstack_room', 
+                'cmdb_ci_stack', 
+                'cmdb_ci_feline_operative',
+                'cmdb_ci_ai_persona'
+            ) 
+            ORDER BY sys_class_name, name
+        """).fetchall()
     conn.close()
     return [dict(r) for r in rows]
+
+@app.get("/api/tickets/assignees")
+def list_assignees():
+    try:
+        conn = get_db()
+        rows = conn.execute("SELECT user_name FROM persona ORDER BY user_name").fetchall()
+        conn.close()
+        personas = [r["user_name"] for r in rows]
+    except Exception as e:
+        print("Error querying personas table:", e)
+        personas = []
+        
+    core = ["james", "antigravity", "Gwen", "Cosmos"]
+    houses = ["ADVISORY_ENTITY", "HOUSE_OF_GLASS", "HOUSE_OF_LAW", "HOUSE_OF_METAL", "MANDO_WATCHDOG"]
+    
+    # Merge and sort
+    merged = sorted(list(set(core + houses + personas)))
+    return merged
 
 @app.get("/api/tickets/{ticket_id}/attachments")
 def list_attachments(ticket_id: str):
@@ -176,18 +210,22 @@ async def upload_attachment(ticket_id: str, file: UploadFile = File(...)):
     with open(filepath, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
         
-    conn = get_db()
-    t_sys_id = ticket_id
-    t_row = conn.execute("SELECT sys_id FROM sovereign_tickets WHERE number = ? OR sys_id = ?", (ticket_id, ticket_id)).fetchone()
-    if t_row:
-        t_sys_id = t_row['sys_id']
-        
-    conn.execute("""
-        INSERT OR IGNORE INTO sys_attachment (sys_id, table_name, table_sys_id, file_name, content_type, file_path)
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (sys_id, 'sovereign_tickets', t_sys_id, filename, file.content_type, f"/attachments/{new_filename}"))
-    conn.commit()
-    conn.close()
+    conn = None
+    try:
+        conn = get_db()
+        t_sys_id = ticket_id
+        t_row = conn.execute("SELECT sys_id FROM sovereign_tickets WHERE number = ? OR sys_id = ?", (ticket_id, ticket_id)).fetchone()
+        if t_row:
+            t_sys_id = t_row['sys_id']
+            
+        conn.execute("""
+            INSERT OR IGNORE INTO sys_attachment (sys_id, table_name, table_sys_id, file_name, content_type, file_path)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (sys_id, 'sovereign_tickets', t_sys_id, filename, file.content_type, f"/attachments/{new_filename}"))
+        conn.commit()
+    finally:
+        if conn:
+            conn.close()
     
     # Automate archiving/decluttering of walkthroughs/plans from root inbox to respective subfolders
     local_source = os.path.join(INBOX_PATH, filename)
@@ -213,20 +251,24 @@ async def upload_attachment(ticket_id: str, file: UploadFile = File(...)):
 
 @app.delete("/api/tickets/{ticket_id}/attachments/{sys_id}")
 def delete_attachment(ticket_id: str, sys_id: str):
-    conn = get_db()
-    row = conn.execute("SELECT file_path FROM sys_attachment WHERE sys_id = ?", (sys_id,)).fetchone()
-    if row:
-        file_path = row['file_path']
-        filename = file_path.replace('/attachments/', '')
-        full_path = resolve_attachment_path(filename)
-        if full_path and os.path.exists(full_path):
-            try:
-                os.remove(full_path)
-            except:
-                pass
-    conn.execute("DELETE FROM sys_attachment WHERE sys_id = ?", (sys_id,))
-    conn.commit()
-    conn.close()
+    conn = None
+    try:
+        conn = get_db()
+        row = conn.execute("SELECT file_path FROM sys_attachment WHERE sys_id = ?", (sys_id,)).fetchone()
+        if row:
+            file_path = row['file_path']
+            filename = file_path.replace('/attachments/', '')
+            full_path = resolve_attachment_path(filename)
+            if full_path and os.path.exists(full_path):
+                try:
+                    os.remove(full_path)
+                except:
+                    pass
+        conn.execute("DELETE FROM sys_attachment WHERE sys_id = ?", (sys_id,))
+        conn.commit()
+    finally:
+        if conn:
+            conn.close()
     return {"status": "deleted", "id": sys_id}
 
 @app.get("/api/tickets")
@@ -1144,48 +1186,52 @@ def get_flat_ticket_page(ticket_id: str):
 @app.post("/api/tickets")
 async def create_ticket(request: Request):
     data = await request.json()
-    conn = get_db()
-    
-    ui_type = data.get('ticket_type', 'Story')
-    db_type = reverse_map_ticket_type(ui_type)
-    
-    # Auto-increment or gen ID based on prefix
-    row = conn.execute(f"SELECT number FROM sovereign_tickets WHERE number LIKE '{db_type}%' ORDER BY number DESC LIMIT 1").fetchone()
-    if row:
-        try:
-            last_num = int(row['number'].replace(db_type, ''))
-            new_id = f"{db_type}{last_num + 1:07d}"
-        except:
-            new_id = f"{db_type}{int(datetime.now().timestamp())}"
-    else:
-        new_id = f"{db_type}0000001"
+    conn = None
+    try:
+        conn = get_db()
         
-    sys_id = uuid.uuid4().hex
-    
-    conn.execute("""
-        INSERT OR IGNORE INTO sovereign_tickets (
-            sys_id, number, type, parent_sys_id, short_description, 
-            description, work_notes, state, priority, assigned_to, 
-            cmdb_ci, sys_created_on, sys_updated_on
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        sys_id,
-        new_id,
-        db_type,
-        data.get('parent_sys_id'),
-        data.get('title', ''),
-        data.get('description', ''),
-        data.get('work_notes', ''),
-        reverse_map_state(data.get('status', 'PLANNING')),
-        reverse_map_priority(data.get('priority', 'P3')),
-        data.get('assigned_to', ''),
-        data.get('affected_ci', ''),
-        datetime.now().isoformat(),
-        datetime.now().isoformat()
-    ))
-    conn.commit()
-    conn.close()
+        ui_type = data.get('ticket_type', 'Story')
+        db_type = reverse_map_ticket_type(ui_type)
+        
+        # Auto-increment or gen ID based on prefix
+        row = conn.execute(f"SELECT number FROM sovereign_tickets WHERE number LIKE '{db_type}%' ORDER BY number DESC LIMIT 1").fetchone()
+        if row:
+            try:
+                last_num = int(row['number'].replace(db_type, ''))
+                new_id = f"{db_type}{last_num + 1:07d}"
+            except:
+                new_id = f"{db_type}{int(datetime.now().timestamp())}"
+        else:
+            new_id = f"{db_type}0000001"
+            
+        sys_id = uuid.uuid4().hex
+        
+        conn.execute("""
+            INSERT OR IGNORE INTO sovereign_tickets (
+                sys_id, number, type, parent_sys_id, short_description, 
+                description, work_notes, state, priority, assigned_to, 
+                cmdb_ci, sys_created_on, sys_updated_on
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            sys_id,
+            new_id,
+            db_type,
+            data.get('parent_sys_id'),
+            data.get('title', ''),
+            data.get('description', ''),
+            data.get('work_notes', ''),
+            reverse_map_state(data.get('status', 'PLANNING')),
+            reverse_map_priority(data.get('priority', 'P3')),
+            data.get('assigned_to', ''),
+            data.get('affected_ci', ''),
+            datetime.now().isoformat(),
+            datetime.now().isoformat()
+        ))
+        conn.commit()
+    finally:
+        if conn:
+            conn.close()
     return {"id": new_id, "status": "created"}
 
 @app.get("/api/tickets/create")
@@ -1200,94 +1246,111 @@ def create_ticket_get(
     affected_ci: str = "",
     parent_sys_id: str = None
 ):
-    conn = get_db()
-    db_type = reverse_map_ticket_type(ticket_type)
-    
-    # Auto-increment or gen ID based on prefix
-    row = conn.execute(f"SELECT number FROM sovereign_tickets WHERE number LIKE '{db_type}%' ORDER BY number DESC LIMIT 1").fetchone()
-    if row:
-        try:
-            last_num = int(row['number'].replace(db_type, ''))
-            new_id = f"{db_type}{last_num + 1:07d}"
-        except:
-            new_id = f"{db_type}{int(datetime.now().timestamp())}"
-    else:
-        new_id = f"{db_type}0000001"
+    conn = None
+    try:
+        conn = get_db()
+        db_type = reverse_map_ticket_type(ticket_type)
         
-    sys_id = uuid.uuid4().hex
-    
-    conn.execute("""
-        INSERT OR IGNORE INTO sovereign_tickets (
-            sys_id, number, type, parent_sys_id, short_description, 
-            description, work_notes, state, priority, assigned_to, 
-            cmdb_ci, sys_created_on, sys_updated_on
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        sys_id,
-        new_id,
-        db_type,
-        parent_sys_id,
-        title,
-        description,
-        work_notes,
-        reverse_map_state(status),
-        reverse_map_priority(priority),
-        assigned_to,
-        affected_ci,
-        datetime.now().isoformat(),
-        datetime.now().isoformat()
-    ))
-    conn.commit()
-    conn.close()
+        # Auto-increment or gen ID based on prefix
+        row = conn.execute(f"SELECT number FROM sovereign_tickets WHERE number LIKE '{db_type}%' ORDER BY number DESC LIMIT 1").fetchone()
+        if row:
+            try:
+                last_num = int(row['number'].replace(db_type, ''))
+                new_id = f"{db_type}{last_num + 1:07d}"
+            except:
+                new_id = f"{db_type}{int(datetime.now().timestamp())}"
+        else:
+            new_id = f"{db_type}0000001"
+            
+        sys_id = uuid.uuid4().hex
+        
+        conn.execute("""
+            INSERT OR IGNORE INTO sovereign_tickets (
+                sys_id, number, type, parent_sys_id, short_description, 
+                description, work_notes, state, priority, assigned_to, 
+                cmdb_ci, sys_created_on, sys_updated_on
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            sys_id,
+            new_id,
+            db_type,
+            parent_sys_id,
+            title,
+            description,
+            work_notes,
+            reverse_map_state(status),
+            reverse_map_priority(priority),
+            assigned_to,
+            affected_ci,
+            datetime.now().isoformat(),
+            datetime.now().isoformat()
+        ))
+        conn.commit()
+    finally:
+        if conn:
+            conn.close()
     return {"id": new_id, "status": "created"}
 
 @app.put("/api/tickets/{ticket_id}")
 async def update_ticket(ticket_id: str, request: Request):
     data = await request.json()
-    conn = get_db()
-    fields = []
-    params = []
-    
-    if 'title' in data:
-        fields.append("short_description = ?")
-        params.append(data['title'])
-    if 'description' in data:
-        fields.append("description = ?")
-        params.append(data['description'])
-    if 'work_notes' in data:
-        fields.append("work_notes = ?")
-        params.append(data['work_notes'])
-    if 'status' in data:
-        fields.append("state = ?")
-        params.append(reverse_map_state(data['status']))
-    if 'priority' in data:
-        fields.append("priority = ?")
-        params.append(reverse_map_priority(data['priority']))
-    if 'assigned_to' in data:
-        fields.append("assigned_to = ?")
-        params.append(data['assigned_to'])
-    if 'affected_ci' in data:
-        fields.append("cmdb_ci = ?")
-        params.append(data['affected_ci'])
-    if 'ticket_type' in data:
-        fields.append("type = ?")
-        params.append(reverse_map_ticket_type(data['ticket_type']))
-    if 'parent_sys_id' in data:
-        fields.append("parent_sys_id = ?")
-        params.append(data['parent_sys_id'])
+    conn = None
+    try:
+        conn = get_db()
+        fields = []
+        params = []
         
-    fields.append("sys_updated_on = ?")
-    params.append(datetime.now().isoformat())
+        if 'title' in data:
+            fields.append("short_description = ?")
+            params.append(data['title'])
+        if 'description' in data:
+            fields.append("description = ?")
+            params.append(data['description'])
+        if 'work_notes' in data:
+            fields.append("work_notes = ?")
+            params.append(data['work_notes'])
+        if 'status' in data:
+            fields.append("state = ?")
+            params.append(reverse_map_state(data['status']))
+        if 'priority' in data:
+            fields.append("priority = ?")
+            params.append(reverse_map_priority(data['priority']))
+        if 'assigned_to' in data:
+            fields.append("assigned_to = ?")
+            params.append(data['assigned_to'])
+        if 'affected_ci' in data:
+            fields.append("cmdb_ci = ?")
+            params.append(data['affected_ci'])
+        if 'ticket_type' in data:
+            fields.append("type = ?")
+            params.append(reverse_map_ticket_type(data['ticket_type']))
+        if 'parent_sys_id' in data:
+            fields.append("parent_sys_id = ?")
+            params.append(data['parent_sys_id'])
+            
+        fields.append("sys_updated_on = ?")
+        params.append(datetime.now().isoformat())
+            
+        if not fields:
+            return JSONResponse({"error": "No valid fields"}, status_code=400)
+            
+        params.append(ticket_id)
+        params.append(ticket_id)
+        conn.execute(f"UPDATE sovereign_tickets SET {', '.join(fields)} WHERE number = ? OR sys_id = ?", params)
+        conn.commit()
+    finally:
+        if conn:
+            conn.close()
         
-    if not fields:
-        return JSONResponse({"error": "No valid fields"}, status_code=400)
-        
-    params.append(ticket_id)
-    params.append(ticket_id)
-    conn.execute(f"UPDATE sovereign_tickets SET {', '.join(fields)} WHERE number = ? OR sys_id = ?", params)
-    conn.commit()
-    conn.close()
+    # Trigger lightweight sync in background if ticket resolved
+    if 'status' in data and reverse_map_state(data['status']) == 4:
+        import subprocess
+        try:
+            subprocess.Popen(["/bin/bash", "/home/james/SovereignOS/scripts/sync_lightweight.sh"])
+        except Exception as e:
+            print(f"[!] Failed to launch background lightweight sync: {e}")
+            
     return {"id": ticket_id, "status": "updated"}
 
 @app.post("/api/tickets/batch_update")
@@ -1299,31 +1362,38 @@ async def batch_update_tickets(request: Request):
     if not ticket_ids or not action:
         return JSONResponse({"error": "Missing ticket_ids or action"}, status_code=400)
         
-    conn = get_db()
-    updated_on = datetime.now().isoformat()
-    
-    if action == "CLOSE":
-        placeholders = ', '.join(['?'] * len(ticket_ids))
-        query = f"""
-            UPDATE sovereign_tickets 
-            SET state = 5, sys_updated_on = ? 
-            WHERE number IN ({placeholders}) OR sys_id IN ({placeholders})
-        """
-        params = [updated_on] + ticket_ids + ticket_ids
-        conn.execute(query, params)
-        conn.commit()
-        conn.close()
-        return {"status": "success", "message": f"Successfully closed {len(ticket_ids)} tickets."}
+    conn = None
+    try:
+        conn = get_db()
+        updated_on = datetime.now().isoformat()
         
-    conn.close()
+        if action == "CLOSE":
+            placeholders = ', '.join(['?'] * len(ticket_ids))
+            query = f"""
+                UPDATE sovereign_tickets 
+                SET state = 5, sys_updated_on = ? 
+                WHERE number IN ({placeholders}) OR sys_id IN ({placeholders})
+            """
+            params = [updated_on] + ticket_ids + ticket_ids
+            conn.execute(query, params)
+            conn.commit()
+            return {"status": "success", "message": f"Successfully closed {len(ticket_ids)} tickets."}
+    finally:
+        if conn:
+            conn.close()
+            
     return JSONResponse({"error": f"Unknown action: {action}"}, status_code=400)
 
 @app.delete("/api/tickets/{ticket_id}")
 def delete_ticket(ticket_id: str):
-    conn = get_db()
-    conn.execute("DELETE FROM sovereign_tickets WHERE number = ? OR sys_id = ?", (ticket_id, ticket_id))
-    conn.commit()
-    conn.close()
+    conn = None
+    try:
+        conn = get_db()
+        conn.execute("DELETE FROM sovereign_tickets WHERE number = ? OR sys_id = ?", (ticket_id, ticket_id))
+        conn.commit()
+    finally:
+        if conn:
+            conn.close()
     return {"id": ticket_id, "status": "deleted"}
 
 @app.get("/api/stats")
@@ -1768,6 +1838,63 @@ async def get_archived_adventures():
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()
+
+@app.get("/api/system/sync/status")
+def get_sync_status():
+    conn = get_db()
+    try:
+        conn.execute("CREATE TABLE IF NOT EXISTS sys_sync_log (sys_id TEXT PRIMARY KEY, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP, status TEXT, event_message TEXT)")
+        conn.commit()
+        row = conn.execute("SELECT status, timestamp FROM sys_sync_log ORDER BY timestamp DESC LIMIT 1").fetchone()
+        last_success_row = conn.execute("SELECT timestamp FROM sys_sync_log WHERE status = 'success' ORDER BY timestamp DESC LIMIT 1").fetchone()
+    except Exception as e:
+        row = None
+        last_success_row = None
+    finally:
+        conn.close()
+
+    status = row['status'] if row else 'idle'
+    
+    # Check if pull_sync script is currently running
+    import subprocess
+    check_proc = subprocess.run(["pgrep", "-f", "sovereign_pull_sync.sh"], capture_output=True)
+    if check_proc.returncode == 0:
+        status = 'syncing'
+
+    last_success = last_success_row['timestamp'] if last_success_row else None
+
+    # Read last 15 lines of sync.log
+    log_lines = []
+    log_path = "/home/james/SovereignOS/logs/sync.log"
+    if os.path.exists(log_path):
+        try:
+            with open(log_path, 'r', encoding='utf-8', errors='ignore') as f:
+                log_lines = f.readlines()[-15:]
+            log_lines = [line.strip() for line in log_lines]
+        except Exception as log_err:
+            log_lines = [f"Error reading log: {log_err}"]
+    else:
+        log_lines = ["No sync logs recorded yet."]
+
+    return {
+        "status": status,
+        "last_success": last_success,
+        "logs": log_lines
+    }
+
+@app.post("/api/system/sync/trigger")
+async def trigger_sync():
+    import subprocess
+    # Run the script in the background asynchronously
+    script_path = "/home/james/SovereignOS/scripts/sovereign_pull_sync.sh"
+    if not os.path.exists(script_path):
+        return JSONResponse({"error": f"Script not found at {script_path}"}, status_code=404)
+    
+    try:
+        subprocess.Popen(["/bin/bash", script_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        return {"status": "triggered"}
+    except Exception as e:
+        return JSONResponse({"error": f"Failed to trigger sync: {e}"}, status_code=500)
 
 # ── SERVE THE UI ────────────────────────────────────────────
 

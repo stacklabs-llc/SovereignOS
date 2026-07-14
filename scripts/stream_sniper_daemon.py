@@ -14,6 +14,9 @@ CORS(app)
 OUTPUT_DIR = "/home/james/SovereignOS/media_vault/01_Ingest"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
+TRANSCRIBE_DIR = "/home/james/sovereign_inbox/media_transcribe"
+os.makedirs(TRANSCRIBE_DIR, exist_ok=True)
+
 # Simple in-memory job tracker
 jobs = {}
 
@@ -185,7 +188,11 @@ def start_transcription():
         
     # If it's just a filename, resolve to absolute path
     if not filepath.startswith('/'):
-        filepath = os.path.join(OUTPUT_DIR, filepath)
+        candidate = os.path.join(TRANSCRIBE_DIR, filepath)
+        if os.path.exists(candidate):
+            filepath = candidate
+        else:
+            filepath = os.path.join(OUTPUT_DIR, filepath)
         
     job_id = f"transcribe_{int(time.time())}"
     jobs[job_id] = {"status": "transcribing", "filepath": filepath}
@@ -204,7 +211,11 @@ def start_summarization():
         return jsonify({"error": "No filepath provided"}), 400
         
     if not filepath.startswith('/'):
-        filepath = os.path.join(OUTPUT_DIR, filepath)
+        candidate = os.path.join(TRANSCRIBE_DIR, filepath)
+        if os.path.exists(candidate):
+            filepath = candidate
+        else:
+            filepath = os.path.join(OUTPUT_DIR, filepath)
         
     job_id = f"summarize_{int(time.time())}"
     jobs[job_id] = {"status": "summarizing", "filepath": filepath}
@@ -358,14 +369,30 @@ def start_tail():
 def get_snipe_history():
     try:
         files = []
+        seen_filenames = set()
+        
+        # Scan TRANSCRIBE_DIR first
+        if os.path.exists(TRANSCRIBE_DIR):
+            for filename in os.listdir(TRANSCRIBE_DIR):
+                if not filename.endswith('.part'):
+                    filepath = os.path.join(TRANSCRIBE_DIR, filename)
+                    files.append({
+                        "filename": filename,
+                        "mtime": os.path.getmtime(filepath),
+                        "size": os.path.getsize(filepath)
+                    })
+                    seen_filenames.add(filename)
+                    
+        # Scan OUTPUT_DIR
         for filename in os.listdir(OUTPUT_DIR):
-            if not filename.endswith('.part'):
+            if filename not in seen_filenames and not filename.endswith('.part'):
                 filepath = os.path.join(OUTPUT_DIR, filename)
                 files.append({
                     "filename": filename,
                     "mtime": os.path.getmtime(filepath),
                     "size": os.path.getsize(filepath)
                 })
+                
         # Sort by newest first
         files.sort(key=lambda x: x["mtime"], reverse=True)
         return jsonify({"files": files})
@@ -377,7 +404,10 @@ def delete_snipe_file(filename):
     try:
         # Prevent directory traversal
         clean_name = os.path.basename(filename)
-        filepath = os.path.join(OUTPUT_DIR, clean_name)
+        filepath = os.path.join(TRANSCRIBE_DIR, clean_name)
+        if not os.path.exists(filepath):
+            filepath = os.path.join(OUTPUT_DIR, clean_name)
+            
         if os.path.exists(filepath):
             os.remove(filepath)
             return jsonify({"status": "success", "message": f"Deleted {clean_name}"})
@@ -390,7 +420,10 @@ def delete_snipe_file(filename):
 def read_snipe_file(filename):
     try:
         clean_name = os.path.basename(filename)
-        filepath = os.path.join(OUTPUT_DIR, clean_name)
+        filepath = os.path.join(TRANSCRIBE_DIR, clean_name)
+        if not os.path.exists(filepath):
+            filepath = os.path.join(OUTPUT_DIR, clean_name)
+            
         if not os.path.exists(filepath):
             return jsonify({"error": "File not found"}), 404
             
@@ -403,6 +436,8 @@ def read_snipe_file(filename):
 @app.route('/api/snipe/media/<path:filename>', methods=['GET'])
 def get_media_file(filename):
     clean_name = os.path.basename(filename)
+    if os.path.exists(os.path.join(TRANSCRIBE_DIR, clean_name)):
+        return send_from_directory(TRANSCRIBE_DIR, clean_name)
     return send_from_directory(OUTPUT_DIR, clean_name)
 
 @app.route('/api/dreadnought/status', methods=['GET'])
@@ -455,7 +490,11 @@ def api_analyze_video():
     filepath = data['filepath']
     # Resolve absolute path if only filename provided
     if not filepath.startswith('/'):
-        filepath = os.path.join(OUTPUT_DIR, filepath)
+        candidate = os.path.join(TRANSCRIBE_DIR, filepath)
+        if os.path.exists(candidate):
+            filepath = candidate
+        else:
+            filepath = os.path.join(OUTPUT_DIR, filepath)
         
     if not os.path.exists(filepath):
         return jsonify({"error": f"File not found: {filepath}"}), 404
@@ -477,7 +516,11 @@ def format_comments():
             return jsonify({"error": "No filepath provided"}), 400
             
         if not filepath.startswith('/'):
-            filepath = os.path.join(OUTPUT_DIR, filepath)
+            candidate = os.path.join(TRANSCRIBE_DIR, filepath)
+            if os.path.exists(candidate):
+                filepath = candidate
+            else:
+                filepath = os.path.join(OUTPUT_DIR, filepath)
             
         if not os.path.exists(filepath):
             return jsonify({"error": f"File not found: {filepath}"}), 404
@@ -511,7 +554,8 @@ def format_comments():
             md_content.append("Reply\n\n\n")
             
         output_filename = os.path.basename(filepath).replace('.info.json', '_comments.md').replace('.json', '_comments.md')
-        output_path = os.path.join(OUTPUT_DIR, output_filename)
+        parent_dir = os.path.dirname(filepath)
+        output_path = os.path.join(parent_dir, output_filename)
         
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write("".join(md_content))
@@ -526,4 +570,11 @@ def format_comments():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5056, threaded=True)
+    cert_path = '/home/james/SovereignOS/01_Sovereign_Portal/clio.taila01894.ts.net.crt'
+    key_path = '/home/james/SovereignOS/01_Sovereign_Portal/clio.taila01894.ts.net.key'
+    if os.path.exists(cert_path) and os.path.exists(key_path):
+        print(f"Starting HTTPS server on port 5056 using cert {cert_path}")
+        app.run(host='0.0.0.0', port=5056, threaded=True, ssl_context=(cert_path, key_path))
+    else:
+        print("Certificates not found. Starting HTTP server on port 5056")
+        app.run(host='0.0.0.0', port=5056, threaded=True)

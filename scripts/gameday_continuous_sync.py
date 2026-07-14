@@ -82,7 +82,7 @@ def run_sync(no_rclone=False):
 
 
         # 1. Fetch active rooms from registry
-        cursor.execute("SELECT room_key, game_pk, name FROM cmdb_ci_fanstack_room WHERE room_state = 'active'")
+        cursor.execute("SELECT room_key, game_pk, name FROM cmdb_ci_fanstack_room WHERE room_state IN ('active', 'live')")
         raw_rooms = [dict(r) for r in cursor.fetchall()]
 
         active_rooms = []
@@ -246,20 +246,29 @@ def run_sync(no_rclone=False):
                 ]
             else:
                 target_dirs = SYNC_DIRS
-                
-            filename = f"livefeed_{room_key}.md.txt"
+            # Clean matchup/name to make it filename-safe
+            safe_matchup = matchup.replace(" @ ", "_at_").replace(" ", "_").replace("/", "_").replace("@", "_at_").lower()
+            # Remove any trailing/leading underscores or double underscores
+            import re
+            safe_matchup = re.sub(r'_+', '_', safe_matchup).strip('_')
+            filename = f"livefeed_{room_key}_{safe_matchup}.md.txt"
             for d in target_dirs:
                 file_path = os.path.join(d, filename)
-                with open(file_path, "w", encoding="utf-8") as f:
+                tmp_path = file_path + ".tmp"
+                with open(tmp_path, "w", encoding="utf-8") as f:
                     f.write(md_content)
+                os.replace(tmp_path, file_path)
             print(f"Staged {filename} to target directories: {', '.join([os.path.basename(d) for d in target_dirs])}")
             
         # 5. Copy the raw statcast_telemetry.log if it exists
         if os.path.exists(TELEMETRY_LOG):
             print("Staging raw statcast telemetry log...")
+            import shutil
             for d in SYNC_DIRS:
                 dest_path = os.path.join(d, "statcast_telemetry.log.txt")
-                subprocess.run(["cp", TELEMETRY_LOG, dest_path], check=True)
+                tmp_dest = dest_path + ".tmp"
+                shutil.copy2(TELEMETRY_LOG, tmp_dest)
+                os.replace(tmp_dest, dest_path)
         else:
             print("No active statcast_telemetry.log found to stage.")
             

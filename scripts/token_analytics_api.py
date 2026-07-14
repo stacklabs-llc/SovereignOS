@@ -107,7 +107,7 @@ def get_game_report(game_pk: str):
             p.user_name,
             p.display_name,
             p.team,
-            p.hex,
+            p.color AS hex,
             p.avatar_url,
             gp.total_tokens,
             gp.gemini_tokens,
@@ -178,7 +178,7 @@ def get_leaderboard():
             p.user_name,
             p.display_name,
             p.team,
-            p.hex,
+            p.color AS hex,
             p.avatar_url,
             SUM(gp.total_tokens) AS lifetime_tokens,
             SUM(gp.gemini_tokens) AS lifetime_gemini,
@@ -223,7 +223,7 @@ def get_fleet_summary():
     """).fetchone()
 
     top_persona = conn.execute("""
-        SELECT p.user_name, p.display_name, p.hex, SUM(gp.total_tokens) AS t
+        SELECT p.user_name, p.display_name, p.color AS hex, SUM(gp.total_tokens) AS t
         FROM game_persona gp JOIN persona p ON p.id = gp.persona_id
         WHERE gp.total_tokens > 0
         GROUP BY p.user_name ORDER BY t DESC LIMIT 1

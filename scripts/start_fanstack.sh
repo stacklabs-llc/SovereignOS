@@ -17,20 +17,20 @@ echo "[+] Igniting Mesh Relay (Port 8008)..."
 nohup /home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/fanstack_relay.py > /tmp/relay.log 2>&1 &
 sleep 2
 
-# 2.1 Start The Skew Relay
-echo "[+] Igniting The Skew Relay (Port 8009)..."
-nohup /home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/the_skew_relay.py > /tmp/skew_relay.log 2>&1 &
-sleep 2
+# # 2.1 Start The Skew Relay (Decommissioned)
+# echo "[+] Igniting The Skew Relay (Port 8009)..."
+# nohup /home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/the_skew_relay.py > /tmp/skew_relay.log 2>&1 &
+# sleep 2
 
 # 3. Start the Agent Personas
 echo "[+] Waking LLM Personas (Dot, Barf, Phanatic...)"
 nohup /home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/fanstack_chatbots.py > /tmp/chatbots.log 2>&1 &
 sleep 2
 
-# 3.1 Start The Skew Chatbots
-echo "[+] Waking The Skew Chatbots..."
-nohup /home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/the_skew_chatbots.py > /tmp/skew_chatbots.log 2>&1 &
-sleep 2
+# # 3.1 Start The Skew Chatbots (Decommissioned)
+# echo "[+] Waking The Skew Chatbots..."
+# nohup /home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/the_skew_chatbots.py > /tmp/skew_chatbots.log 2>&1 &
+# sleep 2
 
 # 3. Start the CMDB Server for [INTEL_REQ]
 echo "[+] Starting CMDB API (Port 8082)..."

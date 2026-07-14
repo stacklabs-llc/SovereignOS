@@ -19,7 +19,7 @@ export default function GodModeEditor() {
     setStatus('EXECUTING');
     setErrorMsg('');
     try {
-      const res = await fetch('http://192.168.1.183:5055/api/admin/override', {
+      const res = await fetch('/api/admin/override', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -44,7 +44,7 @@ export default function GodModeEditor() {
     try {
       const parsed = JSON.parse(payload);
       
-      const res = await fetch('http://192.168.1.183:5055/api/admin/override', {
+      const res = await fetch('/api/admin/override', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(parsed)

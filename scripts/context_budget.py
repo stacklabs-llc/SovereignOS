@@ -276,6 +276,9 @@ def build_context_payload(persona, event_type, inning, score_diff, runners_on, i
     p_behaviors = get_field(persona, 'behavior_notes', get_field(persona, 'u_behavior_expectations', ''))
     p_gov = get_field(persona, 'governance', get_field(persona, 'u_governance_boundaries', ''))
     
+    is_heel = get_field(persona, 'is_heel', 0)
+    is_agitator_or_barf = is_heel or p_cadence == 'agitator' or p_name.lower() == 'barf' or int(boggs_level) >= 4
+    
     # Score and determine tier
     score = score_budget(event_type, inning, score_diff, runners_on, is_rivalry, boggs_level)
     tier = get_budget_tier(score)
@@ -287,25 +290,37 @@ def build_context_payload(persona, event_type, inning, score_diff, runners_on, i
     score += len(lore_samples)
     tier = get_budget_tier(score) # Recalculate tier after lore sample bonus
     
+    if is_agitator_or_barf:
+        tier = 'maximum'
+        # Clean up safety limits in governance
+        p_gov = re.sub(r'(?i).*positive reinforcement filter.*', '', p_gov)
+        p_gov = re.sub(r'(?i).*skepticism buffer.*', '', p_gov)
+        p_gov = re.sub(r'(?i).*venue guest heel directives.*', '', p_gov)
+        p_gov = re.sub(r'(?i).*heel directives.*', '', p_gov)
+        
     payload = []
     
     # 1. ALWAYS-ON BASE TIER (under 500 chars)
-    short_lore = p_lore[:200] if p_lore else "Core fan persona."
+    lore_limit = 1000 if is_agitator_or_barf else 200
+    short_lore = p_lore[:lore_limit] if p_lore else "Core fan persona."
     payload.append(f"You are {p_name}, a loyal {p_team} fan ({p_cadence} cadence). {short_lore}")
     
     # 2. STANDARD TIER (Relevant Behavior Notes)
-    if tier in ['standard', 'elevated', 'maximum'] and p_behaviors:
-        relevant_section = extract_relevant_behavior(p_behaviors, event_type)
+    if (tier in ['standard', 'elevated', 'maximum'] or is_agitator_or_barf) and p_behaviors:
+        relevant_section = p_behaviors if is_agitator_or_barf else extract_relevant_behavior(p_behaviors, event_type)
         if relevant_section:
             payload.append(f"BEHAVIOR PREFERENCE:\n{relevant_section}")
             
     # 3. ELEVATED TIER (Governance Boundaries)
-    if tier in ['elevated', 'maximum'] and p_gov:
-        payload.append(f"GOVERNANCE BOUNDARY:\n{p_gov[:300]}")
+    if (tier in ['elevated', 'maximum'] or is_agitator_or_barf) and p_gov:
+        gov_limit = 1500 if is_agitator_or_barf else 300
+        payload.append(f"GOVERNANCE BOUNDARY:\n{p_gov[:gov_limit]}")
         
     # 4. MAXIMUM TIER (Expanded Deep Lore)
-    if tier == 'maximum' and p_lore:
-        payload.append(f"DEEP LORE CORE DETAIL:\n{p_lore[200:700]}")
+    if (tier == 'maximum' or is_agitator_or_barf) and p_lore:
+        lore_start = 1000 if is_agitator_or_barf else 200
+        lore_end = 4000 if is_agitator_or_barf else 700
+        payload.append(f"DEEP LORE CORE DETAIL:\n{p_lore[lore_start:lore_end]}")
         
     # 5. INJECT LORE SAMPLES
     for key, sample in lore_samples.items():

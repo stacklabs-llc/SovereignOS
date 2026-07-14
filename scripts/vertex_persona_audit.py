@@ -77,7 +77,12 @@ QUOTE: [Your 1 sentence in-character quote]
                 quote_line = line.replace("QUOTE:", "").strip()
         
         if update_line and quote_line:
-            new_behavior = f"{current_behavior}\n{datetime.datetime.now().strftime('%Y-%m-%d')}: {update_line}".strip()
+            import re
+            cleaned_behavior = re.sub(r'^\d{4}-\d{2}-\d{2}:.*$', '', current_behavior, flags=re.MULTILINE).strip()
+            if cleaned_behavior:
+                new_behavior = f"{cleaned_behavior}\n{datetime.datetime.now().strftime('%Y-%m-%d')}: {update_line}".strip()
+            else:
+                new_behavior = f"{datetime.datetime.now().strftime('%Y-%m-%d')}: {update_line}".strip()
             return {
                 "id": p['id'],
                 "user_name": user_name,

@@ -17,7 +17,7 @@ interface StackCI {
 }
 
 const STACK_CIS: StackCI[] = [
-  { key: 'aethervet', name: 'AetherVet', domain: 'ROOT', port: 3015, department: 'Medical Privacy', status: 'OPERATIONAL' },
+  { key: 'aethervet', name: 'AetherVet', domain: 'ROOT', port: 8443, department: 'Medical Privacy', status: 'OPERATIONAL' },
   { key: 'gonzas_cantina', name: 'Gonzas Cantina', domain: 'ROOT', port: 3002, department: 'Cannabis Mfg', status: 'STANDBY' },
   { key: 'samtracker', name: 'SamTracker', domain: 'ROOT', port: 3004, department: 'Sports Silos', status: 'OPERATIONAL' },
   { key: 'anvil_twine', name: 'Anvil & Twine', domain: 'ROOT', port: 3006, department: 'System Admin', status: 'STANDBY' },
@@ -39,22 +39,14 @@ export default function SovereignThemeLab() {
   const [deskRelic, setDeskRelic] = useState('');
   
   // UI States
-  const [activeTab, setActiveTab] = useState<'slate' | 'cli' | 'portfolio'>('slate');
+  const [activeTab, setActiveTab] = useState<'slate' | 'portfolio'>('slate');
   const [isLoading, setIsLoading] = useState(false);
   const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
   // Accordion portfolio states
   const [expandedFolder, setExpandedFolder] = useState<string | null>('Sports Silos');
 
-  // CLI States
-  const [cliInput, setCliInput] = useState('');
-  const [cliHistory, setCliHistory] = useState<string[]>([
-    'SOVEREIGN OPERATOR SHELL v1.0.4 - SECURE CORE',
-    `Operator: ${username.toUpperCase()} (Node Authenticated)`,
-    "Type 'help' for a list of available system commands.",
-    ''
-  ]);
-  const terminalEndRef = useRef<HTMLDivElement>(null);
+
 
   // Fetch current database preferences on mount
   useEffect(() => {
@@ -79,12 +71,7 @@ export default function SovereignThemeLab() {
     fetchMyPrefs();
   }, []);
 
-  // Sync scroll on terminal output
-  useEffect(() => {
-    if (activeTab === 'cli') {
-      terminalEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }
-  }, [cliHistory, activeTab]);
+
 
   // Apply Theme Locally
   const applyThemeLocally = () => {
@@ -172,94 +159,7 @@ export default function SovereignThemeLab() {
     }));
   };
 
-  // Handle CLI Terminal command inputs
-  const handleCliSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!cliInput.trim()) return;
 
-    const command = cliInput.trim();
-    const args = command.split(' ');
-    const mainCommand = args[0].toLowerCase();
-    
-    const newHistory = [...cliHistory, `james@clio:~$ ${command}`];
-
-    switch (mainCommand) {
-      case 'help':
-        newHistory.push(
-          'Available commands:',
-          '  help             - Print this directory of command items',
-          '  list             - Query CMDB and print active configuration items',
-          '  jump <ci_name>   - Route portal gateway to stack CI (e.g. jump fanstack)',
-          '  status           - Print telemetry node diagnostics',
-          '  entropy <level>  - Set local system entropy scale (1-11)',
-          '  clear            - Purge terminal buffer lines'
-        );
-        break;
-
-      case 'list':
-        newHistory.push(
-          '+----------------------+------+-------------+-----------------+',
-          '| Configuration Item   | Port | Status      | Department      |',
-          '+----------------------+------+-------------+-----------------+',
-          ...STACK_CIS.map(ci => 
-            `| ${ci.key.padEnd(20)} | ${ci.port.toString().padEnd(4)} | ${(ci.status === 'OPERATIONAL' ? 'OPERATIONAL' : 'STANDBY').padEnd(11)} | ${ci.department.padEnd(15)} |`
-          ),
-          '+----------------------+------+-------------+-----------------+'
-        );
-        break;
-
-      case 'status':
-        newHistory.push(
-          'SYSTEM STATUS DIAGNOSTICS:',
-          `  OPERATOR: ${username.toUpperCase()} (Node: @james)`,
-          '  M.A.R.D ENGINE: ONLINE / NOMINAL',
-          '  SQLITE DB: /home/james/SovereignOS/data/sovereign_now.db',
-          `  THEME PARADIGM: ${osTheme.toUpperCase()}`,
-          `  ENTROPY SCALE: LEVEL ${entropyLevel} / 11`,
-          '  TELEMETRY CONNECTIONS: 6 ACTIVE HOPS'
-        );
-        break;
-
-      case 'jump':
-        if (!args[1]) {
-          newHistory.push('Usage: jump <ci_name>  (e.g. jump fanstack)');
-        } else {
-          const targetKey = args[1].toLowerCase();
-          const target = STACK_CIS.find(ci => ci.key === targetKey || ci.name.toLowerCase() === targetKey);
-          if (target) {
-            newHistory.push(`Gateway authorized. Launching telepresence connection to Port ${target.port}...`);
-            setTimeout(() => {
-              routeGateway(target.key);
-            }, 800);
-          } else {
-            newHistory.push(`✗ CMDB Lookup Failed: CI "${args[1]}" not found.`);
-          }
-        }
-        break;
-
-      case 'entropy':
-        const levelNum = parseInt(args[1]);
-        if (isNaN(levelNum) || levelNum < 1 || levelNum > 11) {
-          newHistory.push('Usage: entropy <1-11>');
-        } else {
-          setEntropyLevel(levelNum);
-          newHistory.push(`✓ Local entropy level adjusted to ${levelNum}. Commit to Database to save.`);
-        }
-        break;
-
-      case 'clear':
-        setCliHistory([]);
-        setCliInput('');
-        return;
-
-      default:
-        newHistory.push(`sh: command not found: ${mainCommand}. Type 'help' for commands.`);
-    }
-
-    newHistory.push(''); // add spacer line
-    setCliHistory(newHistory);
-    setCliInput('');
-  };
 
   return (
     <div className="h-[85vh] w-full flex flex-col p-6 bg-[#04060C] text-[#C5C6C7] font-sans overflow-hidden">
@@ -411,20 +311,12 @@ export default function SovereignThemeLab() {
               <Layout className="w-3.5 h-3.5" /> 1. ServiceNow Slate Grid
             </button>
             <button 
-              onClick={() => setActiveTab('cli')}
-              className={`px-5 py-3 border-r border-white/5 flex items-center gap-2 transition-colors ${
-                activeTab === 'cli' ? 'bg-[#090D16] text-white border-t-2 border-t-slate-400' : 'text-slate-500 hover:text-slate-300'
-              }`}
-            >
-              <Terminal className="w-3.5 h-3.5" /> 2. CLI Operator Shell
-            </button>
-            <button 
               onClick={() => setActiveTab('portfolio')}
               className={`px-5 py-3 border-r border-white/5 flex items-center gap-2 transition-colors ${
                 activeTab === 'portfolio' ? 'bg-[#090D16] text-white border-t-2 border-t-slate-400' : 'text-slate-500 hover:text-slate-300'
               }`}
             >
-              <FolderOpen className="w-3.5 h-3.5" /> 3. Collapsible Catalog
+              <FolderOpen className="w-3.5 h-3.5" /> 2. Collapsible Catalog
             </button>
           </div>
 
@@ -490,39 +382,7 @@ export default function SovereignThemeLab() {
               </div>
             )}
 
-            {/* Tab 2: CLI Operator Shell */}
-            {activeTab === 'cli' && (
-              <div className="h-full flex flex-col bg-black rounded border border-slate-800 p-4 font-mono text-xs text-emerald-500 relative">
-                
-                {/* Diagnostics Panel Overlay in corner */}
-                <div className="absolute top-3 right-3 text-[9px] text-[#8E9CAA]/50 bg-black/40 px-2 py-1 border border-white/5 rounded select-none">
-                  CLIO HOST TETHERED
-                </div>
 
-                {/* Log Outputs */}
-                <div className="flex-1 overflow-y-auto mb-3 flex flex-col gap-1 pr-2">
-                  {cliHistory.map((line, idx) => (
-                    <div key={idx} className="whitespace-pre-wrap leading-relaxed min-h-[1.2em]">
-                      {line}
-                    </div>
-                  ))}
-                  <div ref={terminalEndRef} />
-                </div>
-
-                {/* Interactive Input Form */}
-                <form onSubmit={handleCliSubmit} className="flex border-t border-slate-900 pt-2 shrink-0">
-                  <span className="text-[#38bdf8] mr-2 shrink-0 select-none">{username}@clio:~$</span>
-                  <input 
-                    type="text"
-                    value={cliInput}
-                    onChange={(e) => setCliInput(e.target.value)}
-                    className="flex-1 bg-transparent border-none outline-none text-white font-mono text-xs focus:ring-0 p-0"
-                    placeholder="Enter command (e.g. 'help', 'list', 'jump stacklabs')..."
-                    autoFocus
-                  />
-                </form>
-              </div>
-            )}
 
             {/* Tab 3: Collapsible Portfolios */}
             {activeTab === 'portfolio' && (

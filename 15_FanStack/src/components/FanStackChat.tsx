@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { getWsUrl, getApiBase } from '../api-host';
 import { Film, CheckCircle, Phone, PhoneOff, Loader2 } from 'lucide-react';
+import CrosstalkLounge from './CrosstalkLounge';
 
 interface Message {
   id: string;
@@ -10,6 +11,7 @@ interface Message {
   text: string;
   timestamp: string;
   model?: string;
+  user?: string;
 }
 
 // ── Model badge helpers ───────────────────────────────────────────────────────
@@ -194,6 +196,13 @@ const FanStackChat: React.FC<FanStackChatProps> = ({ onMeltdown, activeGamedayPk
   const ws = useRef<WebSocket | null>(null);
   const endOfMessagesRef = useRef<HTMLDivElement>(null);
   const [promotedIds, setPromotedIds] = useState<string[]>([]);
+  const reconnectTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const activeGamedayPkRef = useRef(activeGamedayPk);
+
+  // Sync ref to always have latest activeGamedayPk
+  useEffect(() => {
+    activeGamedayPkRef.current = activeGamedayPk;
+  }, [activeGamedayPk]);
 
   const handlePromote = (id: string, text: string) => {
       if (ws.current?.readyState === WebSocket.OPEN) {
@@ -202,27 +211,55 @@ const FanStackChat: React.FC<FanStackChatProps> = ({ onMeltdown, activeGamedayPk
       setPromotedIds(prev => [...prev, id]);
   };
 
-  useEffect(() => {
-    // Route through FastAPI proxy on :8000/ws (HTTP) or /ws-relay (HTTPS)
-    // Never connect directly to :8008 — that is a raw backend-to-backend socket only
-    ws.current = new WebSocket(getWsUrl('/ws-relay'));
+  const connect = useCallback(() => {
+    if (reconnectTimerRef.current) {
+        clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = null;
+    }
 
-    ws.current.onopen = () => {
-        if (activeGamedayPk) {
-            ws.current?.send(JSON.stringify({ type: "JOIN_ROOM", target_game_pk: activeGamedayPk }));
+    console.log('[WebSocket] Connecting to relay...');
+    const socket = new WebSocket(getWsUrl('/ws'));
+    ws.current = socket;
+
+    socket.onopen = () => {
+        console.log('[WebSocket] Connection established.');
+        if (activeGamedayPkRef.current) {
+            socket.send(JSON.stringify({ type: "JOIN_ROOM", target_game_pk: activeGamedayPkRef.current }));
         }
     };
 
-    ws.current.onmessage = (event) => {
+    socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      // Only mount full persona payloads
-      if (data.id && data.persona_name) {
+      if (data.type === "CHAT_HISTORY") {
+         const mapped = (data.messages || []).map((msg: any) => ({
+           ...msg,
+           model: msg.model || msg.model_used || msg.engine || undefined,
+         }));
+         setMessages(mapped);
+      } else if (data.id && data.persona_name) {
          setMessages((prev) => [...prev, {
            ...data,
            model: data.model || data.model_used || data.engine || undefined,
          } as Message]);
       }
     };
+
+    socket.onclose = (event) => {
+        console.log('[WebSocket] Connection closed. Attempting reconnect in 2s...', event.reason);
+        if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+        reconnectTimerRef.current = setTimeout(() => {
+            connect();
+        }, 2000);
+    };
+
+    socket.onerror = (err) => {
+        console.error('[WebSocket] Error encountered, closing socket:', err);
+        socket.close();
+    };
+  }, []);
+
+  useEffect(() => {
+    connect();
 
     // WAL-Optimized Polling Heartbeat (500ms)
     // Ensures the Python M.A.R.D backend loop ticks constantly to intercept em_alert without UI stutter
@@ -234,9 +271,21 @@ const FanStackChat: React.FC<FanStackChatProps> = ({ onMeltdown, activeGamedayPk
 
     return () => {
         clearInterval(pulseInterval);
-        ws.current?.close();
+        if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+        if (ws.current) {
+            ws.current.onclose = null; // Prevent reconnect on deliberate unmount
+            ws.current.close();
+        }
     };
-  }, []);
+  }, [connect]);
+
+  // Handle room changes dynamically without reconnecting the socket
+  useEffect(() => {
+    setMessages([]);
+    if (ws.current?.readyState === WebSocket.OPEN && activeGamedayPk) {
+      ws.current.send(JSON.stringify({ type: "JOIN_ROOM", target_game_pk: activeGamedayPk }));
+    }
+  }, [activeGamedayPk]);
 
   // Auto-scroll logic
   useEffect(() => {
@@ -262,55 +311,12 @@ const FanStackChat: React.FC<FanStackChatProps> = ({ onMeltdown, activeGamedayPk
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-0.5 pt-14">
-        
-        {messages.length === 0 && (
-            <div className="flex h-full items-center justify-center font-mono text-[10px] tracking-[0.3em] font-bold uppercase text-[#38bdf8] animate-pulse">
-                [ INITIALIZING PERSONA MATRIX ]
-            </div>
-        )}
-
-        {messages.map((msg) => (
-          <div key={msg.id} className={`group flex items-start gap-2 py-1 px-2 hover:bg-white/5 transition-colors ${promotedIds.includes(msg.id) ? 'bg-[#facc15]/10' : ''}`}>
-             <div className="shrink-0 pt-0.5">
-                <img src={msg.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover border border-[#0A0D12]" />
-             </div>
-             <div className="flex-1 min-w-0 text-[13px] leading-snug font-sans">
-                 <span className="inline-flex items-center gap-1 mr-2 font-bold" style={{ color: msg.hex }}>
-                     {/* HOST/VIP role badge */}
-                     {msg.persona_name === 'Wardy' || msg.persona_name === 'Jolly Olive' ? (
-                         <span className="bg-[#e91e63] text-white text-[9px] px-1 py-0.5 rounded-sm uppercase tracking-wider leading-none">HOST</span>
-                     ) : (
-                         <span className="bg-blue-500/80 text-white text-[9px] px-1 py-0.5 rounded-sm uppercase tracking-wider leading-none">VIP</span>
-                     )}
-                     {msg.persona_name}
-                     {/* AI Model badge — only rendered when relay sends model field */}
-                     {msg.model && (
-                         <span className={`text-[8px] px-1 py-px rounded border font-mono font-normal tracking-wider leading-none ${getModelColor(msg.model)}`}
-                               title={msg.model}>
-                             {getModelLabel(msg.model)}
-                         </span>
-                     )}
-                 </span>
-                 <span className="text-[#e2e8f0]/90 whitespace-pre-wrap break-words inline">
-                     {msg.text}
-                 </span>
-             </div>
-             
-             {/* Promote to Coulda Been Action Button (Small icon on hover) */}
-             <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity flex items-center">
-                 <button
-                    onClick={() => handlePromote(msg.id, msg.text)}
-                    disabled={promotedIds.includes(msg.id)}
-                    className="p-1 rounded-md hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                    title="Promote to Coulda Been"
-                 >
-                     {promotedIds.includes(msg.id) ? <CheckCircle className="w-3.5 h-3.5 text-[#facc15]" /> : <Film className="w-3.5 h-3.5" />}
-                 </button>
-             </div>
-          </div>
-        ))}
-        <div ref={endOfMessagesRef} />
+      <div className="flex-1 overflow-hidden pt-14">
+        <CrosstalkLounge 
+          messages={messages} 
+          onPromote={handlePromote} 
+          promotedIds={promotedIds} 
+        />
       </div>
     </div>
   );

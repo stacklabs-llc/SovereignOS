@@ -90,3 +90,31 @@ async def sovereign_ingest(request: Request):
     ok_count  = sum(1 for r in results if r["status"] == "ok")
     err_count = len(results) - ok_count
     return {"ingested": ok_count, "errors": err_count, "results": results}
+
+
+@router.post("/api/ingress")
+@router.get("/api/ingress")
+async def api_ingress():
+    try:
+        # Play physical chime
+        print("\n🔔 [VIP INGRESS DETECTED] Wardy has entered the Sandbox 🔔\n")
+        try:
+            subprocess.Popen(['paplay', '/usr/share/sounds/freedesktop/stereo/message.oga'], stderr=subprocess.DEVNULL)
+        except Exception:
+            print('\a') # Fallback to terminal bell
+            
+        # Log to DB Severity 0
+        conn = sqlite3.connect(DB_INGEST_PATH)
+        c = conn.cursor()
+        try:
+            c.execute('CREATE TABLE IF NOT EXISTS sys_alerts (timestamp TEXT, severity INTEGER, message TEXT, sys_created_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP, sys_updated_on TIMESTAMP DEFAULT CURRENT_TIMESTAMP)')
+            c.execute('INSERT INTO sys_alerts (timestamp, severity, message) VALUES (?, ?, ?)', 
+                      (datetime.now().isoformat(), 0, '[VIP INGRESS DETECTED] Wardy connected to FanStack Sandbox'))
+            conn.commit()
+        finally:
+            conn.close()
+            
+        return JSONResponse(content={"status": "ingress_logged"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+

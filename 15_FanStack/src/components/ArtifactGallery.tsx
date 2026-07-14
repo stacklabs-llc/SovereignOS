@@ -30,7 +30,7 @@ export default function ArtifactGallery() {
         
         // Sort globally by harvested/timestamp (oldest first or newest first? Let's do newest first but allow natural session grouping)
         parsed.sort((a, b) => new Date(b.harvested_at).getTime() - new Date(a.harvested_at).getTime());
-        setArtifacts(parsed);
+        setArtifacts(parsed.slice(0, 100));
         setLoading(false);
       })
       .catch(err => {

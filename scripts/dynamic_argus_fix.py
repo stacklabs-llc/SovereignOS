@@ -118,11 +118,21 @@ def video_feed(cam_id):
         return Response(generate_frames(cam_id), mimetype='multipart/x-mixed-replace; boundary=frame')
     return "Camera Offline or Unplugged", 404
 
+@app.route('/cam/tapo_couch')
+def tapo_couch_feed():
+    if 0 in active_cameras:
+        return Response(generate_frames(0), mimetype='multipart/x-mixed-replace; boundary=frame')
+    elif active_cameras:
+        first_cam = list(active_cameras.keys())[0]
+        return Response(generate_frames(first_cam), mimetype='multipart/x-mixed-replace; boundary=frame')
+    return "Camera Offline or Unplugged", 404
+
 @app.route('/')
 def index():
     html = "<h3>Sovereign Argus Node : Active Optic Arrays</h3><ul>"
     for cid in active_cameras.keys():
         html += f'<li><a href="/cam/{cid}">/dev/video{cid} : STREAMING</a></li>'
+    html += '<li><a href="/cam/tapo_couch">Tapo C120 Couch Cam Feed</a></li>'
     html += "</ul>"
     return html
 

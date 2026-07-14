@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign Knot Core Showcase</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-void: #0b0d13;
+            --accent-cyan: #00b4d8;
+            --accent-cyan-glow: rgba(0, 180, 216, 0.4);
+            --accent-gold: #ffb703;
+            --accent-gold-glow: rgba(255, 183, 3, 0.4);
+            --accent-red: #ef4444;
+            --accent-red-glow: rgba(239, 68, 68, 0.4);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --glass-bg: rgba(15, 23, 42, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-void);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 2rem 1rem;
+        }
+
+        /* Ambient background glow */
+        .ambient-glow {
+            position: absolute;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 180, 216, 0.08) 0%, rgba(11, 13, 19, 0) 70%);
+            top: -10%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        header {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            stroke: var(--accent-cyan);
+            filter: drop-shadow(0 0 8px var(--accent-cyan-glow));
+        }
+
+        .title-area h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            text-transform: uppercase;
+        }
+
+        .title-area p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: var(--glass-shadow);
+            transition: all 0.5s ease;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: var(--accent-cyan);
+            box-shadow: 0 0 10px var(--accent-cyan);
+            transition: all 0.5s ease;
+        }
+
+        .status-badge.fractured .status-dot {
+            background-color: var(--accent-red);
+            box-shadow: 0 0 10px var(--accent-red);
+        }
+
+        .status-badge.fractured {
+            border-color: rgba(239, 68, 68, 0.3);
+            color: var(--accent-red);
+        }
+
+        main {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+            position: relative;
+        }
+
+        /* Consensus Thread Connection Canvas */
+        .thread-canvas {
+            position: absolute;
+            top: 135px;
+            left: 0;
+            width: 100%;
+            height: 10px;
+            z-index: 0;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .thread-path {
+            stroke: var(--accent-gold);
+            stroke-width: 4;
+            stroke-dasharray: 8 4;
+            animation: dash 30s linear infinite;
+            fill: none;
+            filter: drop-shadow(0 0 8px var(--accent-gold-glow));
+            transition: all 0.5s ease;
+        }
+
+        .thread-canvas.fractured .thread-path {
+            stroke: rgba(239, 68, 68, 0.2);
+            filter: none;
+            stroke-dasharray: 0;
+        }
+
+        @keyframes dash {
+            to {
+                stroke-dashoffset: -1000;
+            }
+        }
+
+        /* Dashboard Grid */
+        .dials-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1.5rem;
+            z-index: 1;
+        }
+
+        .dial-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: var(--glass-shadow);
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .dial-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(0, 180, 216, 0.3);
+        }
+
+        .dial-card.fractured-card {
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .dial-card.fractured-card:hover {
+            border-color: rgba(239, 68, 68, 0.6);
+        }
+
+        .dial-svg-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin-bottom: 1.25rem;
+        }
+
+        .dial-track {
+            fill: none;
+            stroke: #1e293b;
+            stroke-width: 8;
+        }
+
+        .dial-fill {
+            fill: none;
+            stroke: var(--accent-cyan);
+            stroke-width: 8;
+            stroke-linecap: round;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+            transition: stroke-dashoffset 0.8s ease, stroke 0.5s ease;
+            filter: drop-shadow(0 0 6px var(--accent-cyan-glow));
+        }
+
+        .dial-card.fractured-card .dial-fill {
+            stroke: var(--accent-red);
+            filter: drop-shadow(0 0 6px var(--accent-red-glow));
+        }
+
+        .dial-center-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dial-value {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .dial-unit {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-top: 0.1rem;
+        }
+
+        .dial-label {
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+            text-align: center;
+        }
+
+        .dial-subtext {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-align: center;
+            min-height: 1rem;
+        }
+
+        /* Controls Section */
+        .controls-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .panel-info h2 {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .panel-info p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        button {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            outline: none;
+        }
+
+        .btn-fracture {
+            background: transparent;
+            border: 1px solid var(--accent-red);
+            color: var(--accent-red);
+        }
+
+        .btn-fracture:hover {
+            background: var(--accent-red);
+            color: var(--text-primary);
+            box-shadow: 0 0 16px var(--accent-red-glow);
+            transform: scale(1.02);
+        }
+
+        .btn-recovery {
+            background: transparent;
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+        }
+
+        .btn-recovery:hover {
+            background: var(--accent-cyan);
+            color: #0b0d13;
+            box-shadow: 0 0 16px var(--accent-cyan-glow);
+            transform: scale(1.02);
+        }
+
+        /* Logs Section */
+        .logs-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .logs-header {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .logs-count {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.15rem 0.5rem;
+            border-radius: 9999px;
+        }
+
+        .logs-container {
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            font-family: monospace;
+            font-size: 0.85rem;
+            padding-right: 0.5rem;
+        }
+
+        .logs-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .logs-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .logs-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 9999px;
+        }
+
+        .log-row {
+            display: flex;
+            gap: 1rem;
+            line-height: 1.4;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .log-time {
+            color: var(--text-secondary);
+            flex-shrink: 0;
+        }
+
+        .log-text {
+            color: #e2e8f0;
+        }
+
+        .log-row.nominal-log {
+            background: rgba(0, 180, 216, 0.03);
+            border-left: 2px solid var(--accent-cyan);
+        }
+
+        .log-row.fracture-log {
+            background: rgba(239, 68, 68, 0.05);
+            border-left: 2px solid var(--accent-red);
+            animation: flashRed 1s ease infinite alternate;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes flashRed {
+            from { background: rgba(239, 68, 68, 0.05); }
+            to { background: rgba(239, 68, 68, 0.12); }
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 1024px) {
+            .dials-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            .thread-canvas {
+                display: none;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .dials-grid {
+                grid-template-columns: 1fr;
+            }
+            .controls-panel {
+                flex-direction: column;
+                gap: 1.5rem;
+                align-items: stretch;
+            }
+            .btn-group {
+                flex-direction: column;
+            }
+            header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow"></div>
+
+    <header>
+        <div class="brand">
+            <svg class="brand-logo" viewBox="0 0 24 24" fill="none" stroke-width="2">
+                <path d="M12 2L2 22h20L12 2zM12 6l7 14H5l7-14z" />
+            </svg>
+            <div class="title-area">
+                <h1>Sovereign Knot</h1>
+                <p>Core Showcase Gateway Dashboard</p>
+            </div>
+        </div>
+        <div id="badge-container" class="status-badge">
+            <div class="status-dot"></div>
+            <span id="badge-text">NOMINAL STATUS</span>
+        </div>
+    </header>
+
+    <main>
+        <!-- Golden Thread SVG Connector -->
+        <svg class="thread-canvas" id="canvas">
+            <path class="thread-path" id="thread-connector" d="" />
+        </svg>
+
+        <!-- Dials Grid -->
+        <div class="dials-grid">
+            <!-- Autonomy -->
+            <div class="dial-card" id="card-A">
+                <div class="dial-svg-container">
+                    <svg width="120" height="120">
+                        <circle class="dial-track" cx="60" cy="60" r="50" />
+                        <circle class="dial-fill" id="fill-A" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="0" />
+                    </svg>
+                    <div class="dial-center-text">
+                        <span class="dial-value" id="val-A">1.0</span>
+                        <span class="dial-unit">state</span>
+                    </div>
+                </div>
+                <div class="dial-label">Autonomy</div>
+                <div class="dial-subtext" id="sub-A">Network core aligned</div>
+            </div>
+
+            <!-- Power Purity -->
+            <div class="dial-card" id="card-PW">
+                <div class="dial-svg-container">
+                    <svg width="120" height="120">
+                        <circle class="dial-track" cx="60" cy="60" r="50" />
+                        <circle class="dial-fill" id="fill-PW" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="0" />
+                    </svg>
+                    <div class="dial-center-text">
+                        <span class="dial-value" id="val-PW">5.1</span>
+                        <span class="dial-unit">volts</span>
+                    </div>
+                </div>
+                <div class="dial-label">Power Purity</div>
+                <div class="dial-subtext" id="sub-PW">Strict 5.1V rail active</div>
+            </div>
+
+            <!-- CMDB Constraints -->
+            <div class="dial-card" id="card-C">
+                <div class="dial-svg-container">
+                    <svg width="120" height="120">
+                        <circle class="dial-track" cx="60" cy="60" r="50" />
+                        <circle class="dial-fill" id="fill-C" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="0" />
+                    </svg>
+                    <div class="dial-center-text">
+                        <span class="dial-value" id="val-C">1.0</span>
+                        <span class="dial-unit">sync</span>
+                    </div>
+                </div>
+                <div class="dial-label">Relational CMDB</div>
+                <div class="dial-subtext" id="sub-C">Relations mapped</div>
+            </div>
+
+            <!-- Temporal Sync -->
+            <div class="dial-card" id="card-T">
+                <div class="dial-svg-container">
+                    <svg width="120" height="120">
+                        <circle class="dial-track" cx="60" cy="60" r="50" />
+                        <circle class="dial-fill" id="fill-T" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="0" />
+                    </svg>
+                    <div class="dial-center-text">
+                        <span class="dial-value" id="val-T">1.0</span>
+                        <span class="dial-unit">sync</span>
+                    </div>
+                </div>
+                <div class="dial-label">Temporal Sync</div>
+                <div class="dial-subtext" id="sub-T">Chronology verified</div>
+            </div>
+
+            <!-- Omega Gate -->
+            <div class="dial-card" id="card-PI">
+                <div class="dial-svg-container">
+                    <svg width="120" height="120">
+                        <circle class="dial-track" cx="60" cy="60" r="50" />
+                        <circle class="dial-fill" id="fill-PI" cx="60" cy="60" r="50" stroke-dasharray="314" stroke-dashoffset="0" />
+                    </svg>
+                    <div class="dial-center-text">
+                        <span class="dial-value" id="val-PI">1.0</span>
+                        <span class="dial-unit">gate</span>
+                    </div>
+                </div>
+                <div class="dial-label">Omega Gate</div>
+                <div class="dial-subtext" id="sub-PI">Pilot gate verified</div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-panel">
+            <div class="panel-info">
+                <h2>Fault-Tolerance Simulation controls</h2>
+                <p>Trigger state fractures or restore system rails dynamically.</p>
+            </div>
+            <div class="btn-group">
+                <button class="btn-fracture" id="btn-fracture">Simulate Fracture</button>
+                <button class="btn-recovery" id="btn-recovery">Simulate Recovery</button>
+            </div>
+        </div>
+
+        <!-- Audit Log Panel -->
+        <div class="logs-panel">
+            <div class="logs-header">
+                <span>System Breadcrumb & Consensus Logs</span>
+                <span class="logs-count" id="log-count">0 items</span>
+            </div>
+            <div class="logs-container" id="logs-container">
+                <!-- Log entries will be prepended here -->
+            </div>
+        </div>
+    </main>
+
+    <script>
+        const badgeContainer = document.getElementById("badge-container");
+        const badgeText = document.getElementById("badge-text");
+        const canvas = document.getElementById("canvas");
+        const threadConnector = document.getElementById("thread-connector");
+        const logsContainer = document.getElementById("logs-container");
+        const logCountBadge = document.getElementById("log-count");
+
+        let logCount = 0;
+        let lastKnownStatus = "";
+
+        // Elements mapping
+        const keys = ["A", "PW", "C", "T", "PI"];
+        const els = keys.reduce((acc, key) => {
+            acc[key] = {
+                card: document.getElementById(`card-${key}`),
+                fill: document.getElementById(`fill-${key}`),
+                val: document.getElementById(`val-${key}`),
+                sub: document.getElementById(`sub-${key}`)
+            };
+            return acc;
+        }, {});
+
+        // Compute SVG connector path to join dial card center coordinates dynamically
+        function updateConnectorThread() {
+            if (window.innerWidth <= 1024) return; // Hidden on smaller layouts
+
+            const coords = keys.map(key => {
+                const card = els[key].card;
+                const rect = card.getBoundingClientRect();
+                const canvasRect = canvas.getBoundingClientRect();
+                return {
+                    x: rect.left + rect.width / 2 - canvasRect.left,
+                    y: rect.top + 60 - canvasRect.top // Align vertically with gauge centers (60px from card top)
+                };
+            });
+
+            // Construct smooth wave path
+            let d = `M ${coords[0].x} ${coords[0].y}`;
+            for (let i = 0; i < coords.length - 1; i++) {
+                const current = coords[i];
+                const next = coords[i + 1];
+                const cp1x = current.x + (next.x - current.x) / 3;
+                const cp2x = current.x + 2 * (next.x - current.x) / 3;
+                d += ` C ${cp1x} ${current.y + 40}, ${cp2x} ${next.y - 40}, ${next.x} ${next.y}`;
+            }
+            threadConnector.setAttribute("d", d);
+        }
+
+        // Add visual audit logs
+        function addLog(message, isFracture) {
+            logCount++;
+            logCountBadge.textContent = `${logCount} items`;
+
+            const row = document.createElement("div");
+            row.className = `log-row ${isFracture ? 'fracture-log' : 'nominal-log'}`;
+            
+            const timeSpan = document.createElement("span");
+            timeSpan.className = "log-time";
+            const now = new Date();
+            timeSpan.textContent = now.toTimeString().split(' ')[0];
+
+            const textSpan = document.createElement("span");
+            textSpan.className = "log-text";
+            textSpan.textContent = message;
+
+            row.appendChild(timeSpan);
+            row.appendChild(textSpan);
+
+            logsContainer.insertBefore(row, logsContainer.firstChild);
+
+            // Keep maximum of 50 logs in DOM
+            if (logsContainer.children.length > 50) {
+                logsContainer.removeChild(logsContainer.lastChild);
+            }
+        }
+
+        // Establish WebSocket stream
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}/ws/consensus`;
+        
+        function connectWebSocket() {
+            const socket = new WebSocket(wsUrl);
+
+            socket.onopen = () => {
+                console.log("WebSocket connected.");
+                addLog("System Link Established. Commencing live consensus stream.", false);
+            };
+
+            socket.onmessage = (event) => {
+                const data = JSON.parse(event.data);
+                
+                // Update Dial states
+                keys.forEach(key => {
+                    const rawVal = data.variables[key];
+                    const statusVal = data.status[key];
+                    const el = els[key];
+
+                    // Render numeric value
+                    el.val.textContent = typeof rawVal === 'number' ? rawVal.toFixed(1) : rawVal;
+
+                    // Compute dial percentage circle offset
+                    // circle circumference is 314
+                    const pct = statusVal === 1.0 ? 100 : 0;
+                    const offset = 314 - (314 * pct) / 100;
+                    el.fill.style.strokeDashoffset = offset;
+
+                    // Toggle card classes based on status
+                    if (statusVal === 1.0) {
+                        el.card.classList.remove("fractured-card");
+                    } else {
+                        el.card.classList.add("fractured-card");
+                    }
+
+                    // Update subtext depending on value
+                    if (key === 'PW') {
+                        el.sub.textContent = statusVal === 1.0 ? "Strict 5.1V rail active" : `Voltage Sag: ${rawVal.toFixed(2)}V`;
+                    } else {
+                        el.sub.textContent = statusVal === 1.0 ? `${key} state active` : `${key} state fracture`;
+                    }
+                });
+
+                // Update overall status badge
+                const overall = data.overall_status;
+                if (overall === "NOMINAL") {
+                    badgeContainer.className = "status-badge";
+                    badgeText.textContent = `NOMINAL (S-Score: ${data.s_score.toFixed(4)})`;
+                    canvas.classList.remove("fractured");
+                } else {
+                    badgeContainer.className = "status-badge fractured";
+                    badgeText.textContent = `COLLAPSED (S-Score: ${data.s_score.toFixed(4)})`;
+                    canvas.classList.add("fractured");
+                }
+
+                // Log state changes to terminal feed
+                if (overall !== lastKnownStatus) {
+                    if (overall === "NOMINAL") {
+                        addLog("NOMINAL CONSENSUS REGISTERED - Executive gate engaged successfully.", false);
+                    } else {
+                        addLog("STATE FRACTURE - [TOPOLOGICAL COLLAPSE - POWER DEGRADATION] detected.", true);
+                    }
+                    lastKnownStatus = overall;
+                }
+            };
+
+            socket.onclose = () => {
+                console.log("WebSocket disconnected. Retrying in 2 seconds...");
+                addLog("System connection dropped. Reconnecting...", true);
+                setTimeout(connectWebSocket, 2000);
+            };
+
+            socket.onerror = (err) => {
+                console.error("WebSocket error:", err);
+            };
+        }
+
+        // Button handlers
+        document.getElementById("btn-fracture").addEventListener("click", () => {
+            fetch("/api/simulate_fracture", { method: "POST" })
+                .then(r => r.json())
+                .then(d => {
+                    console.log(d.message);
+                })
+                .catch(e => console.error("Error triggering fracture:", e));
+        });
+
+        document.getElementById("btn-recovery").addEventListener("click", () => {
+            fetch("/api/simulate_recovery", { method: "POST" })
+                .then(r => r.json())
+                .then(d => {
+                    console.log(d.message);
+                })
+                .catch(e => console.error("Error triggering recovery:", e));
+        });
+
+        // Initialize UI layout hooks
+        window.addEventListener("resize", updateConnectorThread);
+        setTimeout(() => {
+            updateConnectorThread();
+            connectWebSocket();
+        }, 100);
+    </script>
+</body>
+</html>

@@ -559,6 +559,26 @@ def main():
         except IndexError:
             print("[-] ERROR: --execute-id requires a target ID argument.")
             sys.exit(1)
+    elif "--execute-ticket" in sys.argv:
+        try:
+            idx = sys.argv.index("--execute-ticket")
+            ticket_id = sys.argv[idx + 1]
+        except IndexError:
+            print("[-] ERROR: --execute-ticket requires a ticket ID argument.")
+            sys.exit(1)
+            
+        if not os.path.exists(DB_PATH):
+            print(f"[-] ERROR: Database not found at {DB_PATH}")
+            sys.exit(1)
+        conn = sqlite3.connect(DB_PATH)
+        cursor = conn.cursor()
+        cursor.execute("SELECT id FROM metsy_adventure_stage WHERE ticket_id = ? AND status = 'Staged'", (ticket_id,))
+        rows = cursor.fetchall()
+        conn.close()
+        
+        print(f"[+] Found {len(rows)} staged scenarios to execute for ticket {ticket_id}.")
+        for row in rows:
+            execute_scenario(row[0])
     elif "--execute-all" in sys.argv:
         if not os.path.exists(DB_PATH):
             print(f"[-] ERROR: Database not found at {DB_PATH}")

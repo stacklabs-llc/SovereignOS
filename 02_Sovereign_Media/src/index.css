@@ -178,3 +178,22 @@ html, body {
   box-shadow: -1px 1px 3px rgba(0,0,0,0.1);
 }
 
+/* TV Scaling Overrides */
+.tv-scale-mode {
+  transform: scale(1.25);
+  transform-origin: top left;
+  width: 80% !important;
+  height: 80% !important;
+}
+
+.tv-scale-mode h1 {
+  text-shadow: 0 0 15px rgba(56, 189, 248, 0.7);
+}
+
+.tv-scale-mode button.ring-sky-400\/50,
+.tv-scale-mode div.ring-white\/90 {
+  box-shadow: 0 0 35px rgba(56, 189, 248, 0.7) !important;
+  border-color: rgba(56, 189, 248, 0.9) !important;
+}
+
+

@@ -106,10 +106,48 @@ export default function PlaycallDesk() {
     };
     
     const wsRef = useRef<WebSocket | null>(null);
+    const mardWsRef = useRef<WebSocket | null>(null);
     const feedRef = useRef<HTMLDivElement>(null);
 
     const getApiHost = () => import.meta.env.VITE_API_HOST || "";
     const getOldApiHost = () => import.meta.env.VITE_API_HOST || "";
+
+    const connectMardWS = () => {
+        try {
+            const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const mardHost = window.location.hostname + ':8000';
+            const wsUrl = `${wsProtocol}//${mardHost}/ws-relay`;
+            const ws = new WebSocket(wsUrl);
+            mardWsRef.current = ws;
+            
+            ws.onopen = () => {
+                console.log('MARD relay connected on :8000');
+            };
+            ws.onclose = () => {
+                setTimeout(connectMardWS, 3000);
+            };
+            ws.onerror = () => {};
+        } catch(e) {
+            setTimeout(connectMardWS, 3000);
+        }
+    };
+
+    const sendTactileTrigger = (triggerKey: string) => {
+        const payload = {
+            source_port: 3009,
+            event_type: "TACTILE_TRIGGER",
+            type: "TACTILE_TRIGGER",
+            trigger_key: triggerKey,
+            timestamp: new Date().toISOString(),
+            payload: { intensity: "HIGH", target_room: selectedGame || "NYM-TOR" }
+        };
+        addMsg('system', 'SOVEREIGN', `Dispatched TACTILE: ${triggerKey.toUpperCase()}`);
+        if (mardWsRef.current && mardWsRef.current.readyState === 1) {
+            mardWsRef.current.send(JSON.stringify(payload));
+        } else if (wsRef.current && wsRef.current.readyState === 1) {
+            wsRef.current.send(JSON.stringify(payload));
+        }
+    };
 
     const fetchLeaderboard = async () => {
         try {
@@ -126,11 +164,13 @@ export default function PlaycallDesk() {
         initGames();
         initTmiScenarios();
         connectWS();
+        connectMardWS();
         fetchLeaderboard();
         const interval = setInterval(fetchLeaderboard, 5000);
         const gamesInterval = setInterval(initGames, 15000);
         return () => { 
             wsRef.current?.close(); 
+            mardWsRef.current?.close(); 
             clearInterval(interval);
             clearInterval(gamesInterval);
         };
@@ -875,6 +915,21 @@ export default function PlaycallDesk() {
                                     <button onClick={() => triggerEvent('brawl')} className="col-span-2 font-['Outfit'] text-[15px] font-bold p-3 rounded-xl border border-[#ff003c] bg-[#ff003c]/20 text-white uppercase tracking-[0.06em] hover:bg-[#ff003c]  transition-all">BRAWL!</button>
                                     <button onClick={() => setTmiModalOpen(true)} className="col-span-2 font-['Outfit'] text-[15px] font-bold p-3 rounded-xl border border-[#eab308]/50 bg-[#eab308]/10 text-[#eab308] uppercase tracking-[0.1em] hover:bg-[#eab308] hover:text-[#0B0E14]  transition-all text-center flex justify-center items-center gap-2 mt-1">📺 TMI TIMELINE PRUNING</button>
                                     <button onClick={triggerPanicSync} className="col-span-2 font-['Outfit'] text-[15px] font-bold p-3 rounded-xl border border-[#b44aff] bg-[#b44aff]/10 text-[#b44aff] uppercase tracking-[0.06em] transition-all">⚡ PANIC SYNC DB PERSONAS</button>
+                                </div>
+                            </div>
+                            
+                            <div className="mb-5 border-b border-white/10 pb-5">
+                                <div className="font-['Outfit'] text-[15px] font-bold tracking-[0.15em] text-[#00b4d8] uppercase mb-3 flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-[#00b4d8] animate-pulse"></span>
+                                    Tactile Soundboard
+                                </div>
+                                <div className="grid grid-cols-2 gap-2.5">
+                                    <button onClick={() => sendTactileTrigger('trigger_siren')} className="font-['Outfit'] text-[13px] font-bold p-3 rounded-xl border border-[#00b4d8]/30 bg-[#00b4d8]/10 text-[#00b4d8] uppercase tracking-[0.05em] hover:bg-[#00b4d8] hover:text-slate-950 transition-all shadow-[0_0_15px_rgba(0,180,216,0.1)]">Trigger Siren</button>
+                                    <button onClick={() => sendTactileTrigger('ghost_fork')} className="font-['Outfit'] text-[13px] font-bold p-3 rounded-xl border border-[#00b4d8]/30 bg-[#00b4d8]/10 text-[#00b4d8] uppercase tracking-[0.05em] hover:bg-[#00b4d8] hover:text-slate-950 transition-all shadow-[0_0_15px_rgba(0,180,216,0.1)]">Ghost Fork FX</button>
+                                    <button onClick={() => sendTactileTrigger('spidey_swing')} className="font-['Outfit'] text-[13px] font-bold p-3 rounded-xl border border-[#00b4d8]/30 bg-[#00b4d8]/10 text-[#00b4d8] uppercase tracking-[0.05em] hover:bg-[#00b4d8] hover:text-slate-950 transition-all shadow-[0_0_15px_rgba(0,180,216,0.1)]">Spidey Swing</button>
+                                    <button onClick={() => sendTactileTrigger('outrage_screen')} className="font-['Outfit'] text-[13px] font-bold p-3 rounded-xl border border-[#00b4d8]/30 bg-[#00b4d8]/10 text-[#00b4d8] uppercase tracking-[0.05em] hover:bg-[#00b4d8] hover:text-slate-950 transition-all shadow-[0_0_15px_rgba(0,180,216,0.1)]">Outrage State</button>
+                                    <button onClick={() => sendTactileTrigger('mets_blow_it')} className="font-['Outfit'] text-[13px] font-bold p-3 rounded-xl border border-[#ef4444]/30 bg-[#ef4444]/10 text-[#ef4444] uppercase tracking-[0.05em] hover:bg-[#ef4444] hover:text-slate-950 transition-all">Mets Blow It</button>
+                                    <button onClick={() => sendTactileTrigger('mets_win_cardiac')} className="font-['Outfit'] text-[13px] font-bold p-3 rounded-xl border border-[#22c55e]/30 bg-[#22c55e]/10 text-[#22c55e] uppercase tracking-[0.05em] hover:bg-[#22c55e] hover:text-slate-950 transition-all">Mets Win Cardiac</button>
                                 </div>
                             </div>
                             

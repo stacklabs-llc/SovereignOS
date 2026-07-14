@@ -10,7 +10,7 @@ export default function VideoPlayer({ onBack, videoUrl }: VideoPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(true);
 
   const getApiUrl = () => {
-    return `${window.location.protocol}//${window.location.hostname}:8090/api/theater/command`;
+    return '/api/theater/command';
   };
 
   useEffect(() => {

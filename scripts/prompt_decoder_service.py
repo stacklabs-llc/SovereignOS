@@ -17,7 +17,13 @@ def optimize_prompt(payload: OptimizationPayload):
     if not payload.raw_text.strip():
         raise HTTPException(status_code=400, detail="Input text cannot be blank.")
         
-    base_text = payload.raw_text
+    # Enforce strict token boundaries by truncating incoming raw prompts to 1000 characters
+    truncated = False
+    if len(payload.raw_text) > 1000:
+        base_text = payload.raw_text[:1000]
+        truncated = True
+    else:
+        base_text = payload.raw_text
     
     # Process custom style sheets under the Brooks Exception
     style = payload.style_sheet.lower() if payload.style_sheet else "style_a"
@@ -48,7 +54,11 @@ def optimize_prompt(payload: OptimizationPayload):
         # Fallback to standard cinematic style sheet injection
         enriched = f"{base_text}. {style_desc}"
         
-    return {"status": "SUCCESS", "optimized_prompt": enriched}
+    return {
+        "status": "WARNING" if truncated else "SUCCESS",
+        "optimized_prompt": enriched,
+        "warning": "Prompt truncated to 1000 characters due to API Token Budget Lock constraints." if truncated else None
+    }
 
 # Expose as a standalone app if executed directly via Uvicorn on Port 5057
 app = FastAPI(title="Sovereign Prompt Decoder Gate")

@@ -44,7 +44,7 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
       voice?: string,
   } | null>(null);
   const [draftNote, setDraftNote] = useState("");
-  const [personaData, setPersonaData] = useState<Record<string, {system_prompt: string, deep_lore: string}>>({});
+  const [personaData, setPersonaData] = useState<Record<string, {system_prompt: string, deep_lore: string, behavior_notes?: string}>>({});
   const [allPersonas, setAllPersonas] = useState<any[]>([]);
   const [activeSwapIndex, setActiveSwapIndex] = useState<number | null>(null);
   const [personaSearch, setPersonaSearch] = useState('');
@@ -102,9 +102,13 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
     }).then(r => r.json()).then(d => {
       const personasList = d.personas || [];
       setAllPersonas(personasList);
-      const map: Record<string, {system_prompt: string, deep_lore: string}> = {};
+      const map: Record<string, {system_prompt: string, deep_lore: string, behavior_notes: string}> = {};
       personasList.forEach((p: any) => {
-        map[p.user_name.toLowerCase()] = { system_prompt: p.system_prompt || '', deep_lore: p.deep_lore || '' };
+        map[p.user_name.toLowerCase()] = { 
+          system_prompt: p.system_prompt || '', 
+          deep_lore: p.deep_lore || '',
+          behavior_notes: p.behavior_notes || ''
+        };
       });
       setPersonaData(map);
     }).catch(() => {});
@@ -293,21 +297,36 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
                                <button
                                    onClick={async () => {
                                         const noteStr = draftNote.trim() ? ` Additional context: ${draftNote}` : '';
-                                        const prompt = `${shotModal.targetAuthor} said in YouTube chat: "${shotModal.targetText}"${noteStr}\n\nReact to this comment in character. Output ONLY your chat response, nothing else.`;
+                                        const prompt = `You are a real fan chatting live in a YouTube stream.
+${shotModal.targetAuthor} said: "${shotModal.targetText}"
+${noteStr ? `${noteStr}\n` : ''}
+React to this comment naturally in character. 
+Guidelines:
+- Respond directly to what they said. Do not output canned catchphrases out of context.
+- Keep it punchy, short, and conversational.
+- Output ONLY the raw chat response text, no quotes or metadata labels.`;
                                         setShotModal(prev => prev ? {...prev, state: 'loading'} : null);
                                         try {
-                                            const res = await fetch(`/api/hot_take_sniper`, {
-                                                method: 'POST',
-                                                headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
-                                                body: JSON.stringify({ voice: shotModal.voice, prompt })
-                                            });
-                                            const data = await res.json();
-                                            const text = data?.text || 'No response generated.';
-                                            setShotModal(prev => prev ? {...prev, state: 'ready', text} : null);
-                                            wsRef.current?.send(JSON.stringify({ type: 'CHAT_MESSAGE', user: shotModal.pName, text, target_game_pk: 'live_chat_sniper' }));
-                                        } catch (err) {
-                                            setShotModal(prev => prev ? {...prev, state: 'ready', text: 'Error calling Gemini. Check API key.'} : null);
-                                        }
+                                             const res = await fetch(`/api/hot_take_sniper`, {
+                                                 method: 'POST',
+                                                 headers: getAuthHeaders({ 'Content-Type': 'application/json' }),
+                                                 body: JSON.stringify({ voice: shotModal.voice, prompt })
+                                             });
+                                             const data = await res.json();
+                                             let text = data?.text;
+                                             if (!res.ok) {
+                                                 text = data?.detail || 'Error calling Gemini.';
+                                             }
+                                             if (!text) {
+                                                 text = 'No response generated.';
+                                             }
+                                             setShotModal(prev => prev ? {...prev, state: 'ready', text} : null);
+                                             if (res.ok && text !== 'No response generated.') {
+                                                 wsRef.current?.send(JSON.stringify({ type: 'CHAT_MESSAGE', user: shotModal.pName, text, target_game_pk: 'live_chat_sniper' }));
+                                             }
+                                         } catch (err) {
+                                             setShotModal(prev => prev ? {...prev, state: 'ready', text: 'Error calling Gemini. Check API key or system logs.'} : null);
+                                         }
                                    }}
                                    className="flex-1 bg-blue-500 hover:bg-blue-400 text-black font-black text-sm uppercase tracking-widest py-3 rounded-xl flex items-center justify-center gap-2 transition-colors"
                                >
@@ -714,7 +733,7 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
                                                onClick={() => {
                                                     const dbPersona = personaData[p.name.toLowerCase()];
                                                     const voice = dbPersona?.system_prompt
-                                                        ? `${dbPersona.system_prompt}\n\nDeep Lore: ${dbPersona.deep_lore || ''}\n\nYou are responding in a LIVE YouTube chat. Keep your response under 200 characters. Output ONLY the chat message, no quotes, no labels.`
+                                                        ? `${dbPersona.system_prompt}\n\nDeep Lore: ${dbPersona.deep_lore || ''}\n\nCurrent Season Context (2026): ${dbPersona.behavior_notes || ''}\n\nYou are responding in a LIVE YouTube chat. Keep your response under 200 characters. Be specific — use 2026 Mets facts, real player names. NEVER use generic phrases like "Mets gonna Met". Output ONLY the chat message, no quotes, no labels.`
                                                         : (PERSONA_VOICES[p.id] || `You are ${p.alias}, a passionate Mets fan. Under 200 characters.`);
 
                                                     setDraftNote('');

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sovereign OS — JIT Approval Queue</title>
+    <!-- Modern typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        void: '#0b0d13',
+                        neon: '#00b4d8'
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #0b0d13;
+            color: #f8fafc;
+            font-family: 'Outfit', sans-serif;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+        .neon-glow {
+            box-shadow: 0 0 20px rgba(0, 180, 216, 0.4);
+            text-shadow: 0 0 8px rgba(0, 180, 216, 0.6);
+        }
+        .neon-border-glow:hover {
+            border-color: #00b4d8;
+            box-shadow: 0 0 15px rgba(0, 180, 216, 0.3);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-between p-4 md:p-8">
+    
+    <!-- Top Bar -->
+    <header class="w-full max-w-md flex justify-between items-center py-4">
+        <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-xs uppercase tracking-widest text-slate-400 font-mono">Gateway Node: Clio</span>
+        </div>
+        <div class="text-xs font-mono text-slate-400">omega=1 secure</div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="w-full max-w-md flex-1 flex flex-col justify-center my-auto">
+        
+        <!-- Loading State -->
+        <div id="loading" class="text-center py-12">
+            <div class="inline-block w-8 h-8 border-4 border-t-neon border-slate-700 rounded-full animate-spin"></div>
+            <p class="text-sm text-slate-400 mt-4 font-mono">Querying u_sys_approval_queue...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div id="empty-state" class="hidden text-center py-12 glass-panel rounded-3xl p-8">
+            <div class="text-neon text-4xl mb-4">✓</div>
+            <h2 class="text-xl font-semibold mb-2">Queue is Clear</h2>
+            <p class="text-sm text-slate-400">All Antigravity implementation plans have been authorized. Metsy remains undisturbed.</p>
+        </div>
+
+        <!-- Approval Card -->
+        <div id="approval-card" class="hidden glass-panel rounded-3xl p-6 md:p-8 flex flex-col gap-6 relative overflow-hidden transition-all duration-300">
+            <div class="absolute top-0 right-0 left-0 h-[2px] bg-gradient-to-r from-transparent via-neon to-transparent"></div>
+            
+            <div class="flex justify-between items-start">
+                <span id="task-id" class="text-xs font-mono bg-slate-800 text-slate-300 px-2.5 py-1 rounded-md uppercase tracking-wider"></span>
+                <span class="flex items-center gap-1.5 text-xs text-neon font-mono">
+                    <span class="w-1.5 h-1.5 rounded-full bg-neon"></span> Pending Approval
+                </span>
+            </div>
+
+            <div>
+                <h1 id="title" class="text-xl font-bold text-slate-100 leading-tight"></h1>
+                <p class="text-xs text-slate-400 mt-1">Assigned to: <span id="assignee" class="text-slate-300"></span></p>
+            </div>
+
+            <!-- Scrollable Markdown Plan Container -->
+            <div class="w-full bg-slate-950/60 rounded-xl p-4 border border-slate-800/80 max-h-60 overflow-y-auto text-sm text-slate-300 leading-relaxed font-mono">
+                <pre id="plan-text" class="whitespace-pre-wrap font-sans text-xs"></pre>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex flex-col gap-3 mt-2">
+                <button onclick="approveRequest()" class="w-full bg-neon text-void font-bold py-4 px-6 rounded-2xl tracking-wide uppercase transition-all duration-200 active:scale-95 neon-glow hover:bg-[#00d4fc] text-center text-lg">
+                    Approve with Omega=1 Auth
+                </button>
+                <div class="flex gap-3">
+                    <button onclick="rejectRequest()" class="flex-1 bg-slate-900 border border-slate-800 hover:border-red-500/50 hover:bg-red-950/20 text-slate-400 hover:text-red-400 font-semibold py-3 px-4 rounded-xl transition-all duration-200 active:scale-95 text-sm">
+                        Reject
+                    </button>
+                    <button onclick="promptComment()" class="bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 font-semibold p-3 rounded-xl transition-all duration-200 active:scale-95 text-sm">
+                        💬 Comment
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full max-w-md py-6 text-center text-[10px] text-slate-500 font-mono tracking-wider">
+        Sovereign OS v1.0.4 • Lap-Friendly JIT Console
+    </footer>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 glass-panel px-6 py-3 rounded-full text-xs font-mono tracking-wider opacity-0 transition-opacity duration-300 pointer-events-none z-50"></div>
+
+    <script>
+        let currentApproval = null;
+
+        async function fetchApprovals() {
+            showLoading(true);
+            try {
+                const res = await fetch('/api/v1/approvals');
+                const approvals = await res.json();
+                if (approvals && approvals.length > 0) {
+                    currentApproval = approvals[0];
+                    renderApproval(currentApproval);
+                } else {
+                    currentApproval = null;
+                    renderEmpty();
+                }
+            } catch (err) {
+                console.error("Error loading approvals:", err);
+                showToast("Failed to fetch approvals queue.");
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function renderApproval(app) {
+            document.getElementById('task-id').innerText = app.u_task_id;
+            document.getElementById('title').innerText = app.u_title;
+            document.getElementById('assignee').innerText = app.u_assigned_to;
+            document.getElementById('plan-text').innerText = app.u_plan_markdown;
+
+            document.getElementById('approval-card').classList.remove('hidden');
+            document.getElementById('empty-state').classList.add('hidden');
+        }
+
+        function renderEmpty() {
+            document.getElementById('approval-card').classList.add('hidden');
+            document.getElementById('empty-state').classList.remove('hidden');
+        }
+
+        function showLoading(isLoading) {
+            if (isLoading) {
+                document.getElementById('loading').classList.remove('hidden');
+                document.getElementById('approval-card').classList.add('hidden');
+                document.getElementById('empty-state').classList.add('hidden');
+            } else {
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        async function approveRequest() {
+            if (!currentApproval) return;
+            const sysId = currentApproval.sys_id;
+            showLoading(true);
+            try {
+                const res = await fetch(`/api/v1/approvals/${sysId}/approve`, {
+                    method: 'POST'
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    showToast("Approved successfully with omega=1.");
+                    fetchApprovals();
+                } else {
+                    showToast("Error: " + data.message);
+                    fetchApprovals();
+                }
+            } catch (err) {
+                showToast("Network error approving plan.");
+                fetchApprovals();
+            }
+        }
+
+        async function rejectRequest(comments = "") {
+            if (!currentApproval) return;
+            const sysId = currentApproval.sys_id;
+            showLoading(true);
+            try {
+                const res = await fetch(`/api/v1/approvals/${sysId}/reject`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ comments: comments || "Rejected from mobile JIT console" })
+                });
+                const data = await res.json();
+                showToast("Request rejected.");
+                fetchApprovals();
+            } catch (err) {
+                showToast("Error rejecting request.");
+                fetchApprovals();
+            }
+        }
+
+        function promptComment() {
+            const comment = prompt("Enter feedback / comment:");
+            if (comment !== null) {
+                showToast("Comment logged.");
+            }
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 3000);
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', fetchApprovals);
+    </script>
+</body>
+</html>

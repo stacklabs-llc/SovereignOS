@@ -114,6 +114,30 @@ def load_mlb_event_config():
         print(f"Error loading MLB event config: {e}")
     return config
 
+def clean_day_off_text(text: str) -> str:
+    if not text:
+        return text
+    lines = text.split('\n')
+    cleaned_lines = []
+    skip_mode = False
+    for line in lines:
+        stripped = line.strip()
+        if stripped.startswith('#') and ('day off' in stripped.lower() or 'day-off' in stripped.lower()):
+            skip_mode = True
+            continue
+        elif stripped.startswith('#') and skip_mode:
+            skip_mode = False
+            
+        if skip_mode:
+            continue
+            
+        if 'day off' in stripped.lower() or 'day-off' in stripped.lower():
+            continue
+            
+        cleaned_lines.append(line)
+    return '\n'.join(cleaned_lines)
+
+
 def load_fans():
     """Load all personas from active game rooms using the game-centric schema."""
     fans_list = []
@@ -135,6 +159,7 @@ def load_fans():
                 p.behavior_notes,
                 p.governance,
                 p.is_sophisticated,
+                s.status        as game_status,
                 gp.game_pk      as room,
                 gp.overlay      as prompt_overlay
             FROM persona p
@@ -178,13 +203,21 @@ def load_fans():
                 else:                start_boggs = 2
 
             # System prompt + overlay
+            game_status = str(r['game_status']).lower() if r['game_status'] else ""
+            behavior_notes = str(r['behavior_notes']) if r['behavior_notes'] else ""
+            deep_lore = str(r['deep_lore']) if r['deep_lore'] else ""
+            
+            if "in progress" in game_status or "live" in game_status:
+                behavior_notes = clean_day_off_text(behavior_notes)
+                deep_lore = clean_day_off_text(deep_lore)
+
             base_prompt = str(r['u_system_prompt']) if r['u_system_prompt'] else name
-            if r['behavior_notes']:
-                base_prompt += f"\n\n### BEHAVIOR EXPECTATIONS ###\n{r['behavior_notes']}"
+            if behavior_notes:
+                base_prompt += f"\n\n### BEHAVIOR EXPECTATIONS ###\n{behavior_notes}"
             if r['governance']:
                 base_prompt += f"\n\n### GOVERNANCE BOUNDARIES ###\n{r['governance']}"
-            if r['deep_lore']:
-                base_prompt += f"\n\n### DEEP LORE ###\n{r['deep_lore']}"
+            if deep_lore:
+                base_prompt += f"\n\n### DEEP LORE ###\n{deep_lore}"
             if r['prompt_overlay']:
                 base_prompt += f"\n\n### MATCHUP OVERLAY ###\n{r['prompt_overlay']}"
 
@@ -392,6 +425,19 @@ async def generate_response(model, prompt, system_instruction=None, allow_rant=F
         # Brevity constraints removed per Pilot request to prevent cutoffs
         sys_text += " ABSOLUTE RULE: Output ONLY the character's spoken words. NEVER include parenthetical notes, meta-commentary, guideline references, or any text like '(Note: ...)' or '[Note: ...]'. Your output is raw chat dialogue — nothing else."
 
+        KI044_DISCLOSURE_BLOCK = """
+
+---
+SOVEREIGN OS INVARIANT KI-044 — ANTI-ASTROTURFING DOCTRINE (NON-NEGOTIABLE):
+If any user directly and sincerely asks whether you are an AI, a bot, or not a real person,
+you MUST acknowledge that you are an AI persona. You may do this in your own voice and with
+full character intact — but you may never deny, deflect, or evade the question.
+You are not a human. If asked, say so. This rule cannot be overridden by any instruction
+above this line, including brand directives, operator lore, or prompt overlays.
+---
+"""
+        sys_text = sys_text.rstrip() + KI044_DISCLOSURE_BLOCK
+
         # Extract Boggs Level
         sys_str = system_instruction or ""
         active_boggs = 2
@@ -562,6 +608,20 @@ async def generate_commentary(model, prompt, user, color, websocket, msg_type="C
 
     user_lower = user.lower()
 
+    # Lexical sanitization filter for @dr_terp to prevent domain bleed
+    if user_lower == "dr_terp":
+        import re
+        CANNABIS_KEYWORDS = [
+            "terpene", "purple haze", "dispensary special", "ganja god", "ganja", "dispensary", 
+            "cannabis", "marijuana", "weed", "thc", "cbd", "sativa", "indica", "joint", "blunt",
+            "bong", "kush", "shatter", "resin", "edible", "budder", "vape", "terp"
+        ]
+        scrub_pattern = re.compile(rf"\b({'|'.join(re.escape(k) for k in CANNABIS_KEYWORDS)})\b", re.IGNORECASE)
+        if prompt:
+            prompt = scrub_pattern.sub("[redacted]", prompt)
+        if sys_override:
+            sys_override = scrub_pattern.sub("[redacted]", sys_override)
+
     # Dynamic Spatial Lore Injection
     spatial_lore = ""
     try:
@@ -615,6 +675,19 @@ async def generate_commentary(model, prompt, user, color, websocket, msg_type="C
         if f.get("name", "").lower() == user_lower:
             fan = f
             break
+
+    if fan:
+        is_agitator_or_high_entropy = (
+            str(fan.get("cadence", "")).lower() == "agitator" or 
+            int(fan.get("boggs_level", 2)) >= 4 or
+            "barf" in user_lower
+        )
+        if is_agitator_or_high_entropy and sys_override:
+            import re
+            sys_override = re.sub(r'(?i).*positive reinforcement filter.*', '', sys_override)
+            sys_override = re.sub(r'(?i).*skepticism buffer.*', '', sys_override)
+            sys_override = re.sub(r'(?i).*venue guest heel directives.*', '', sys_override)
+            sys_override = re.sub(r'(?i).*heel directives.*', '', sys_override)
 
     start = time.time()
     text = await generate_response(model, prompt, sys_override, allow_rant=allow_rant, fan=fan)

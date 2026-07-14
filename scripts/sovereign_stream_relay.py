@@ -133,7 +133,7 @@ async def get_active_games():
         conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT game_pk, home_team, away_team, room_state FROM mlb_schedule WHERE room_state = 'active'"
+            "SELECT game_pk, home_team, away_team, room_state FROM mlb_schedule WHERE room_state IN ('active', 'live')"
         )
         rows = cursor.fetchall()
         conn.close()
@@ -298,19 +298,37 @@ async def get_stream_url(game_id: str):
         if row and row["stream_url"]:
             headers_json = row["stream_headers"]
             headers = {}
+            available_streams = []
             if headers_json:
                 try:
-                    headers = json.loads(headers_json)
+                    data = json.loads(headers_json)
+                    if isinstance(data, dict) and ("headers" in data or "available_streams" in data):
+                        headers = data.get("headers", {})
+                        available_streams = data.get("available_streams", [])
+                    else:
+                        headers = data
                 except Exception:
                     pass
-            return {"m3u8_url": row["stream_url"], "stream_headers": headers}
+            
+            if not available_streams:
+                available_streams = [
+                    {"name": "Default Feed", "url": row["stream_url"]}
+                ]
+            return {
+                "m3u8_url": row["stream_url"], 
+                "stream_headers": headers,
+                "available_streams": available_streams
+            }
     except Exception as e:
         logger.error(f"Error loading stream URL: {e}")
         
     # Active 24/7 Red Bull TV live HLS action sports stream (failsafe fallback)
     return {
         "m3u8_url": "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8",
-        "stream_headers": {}
+        "stream_headers": {},
+        "available_streams": [
+            {"name": "Failsafe Fallback", "url": "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8"}
+        ]
     }
 
 class UpdateStreamRequest(BaseModel):
@@ -323,7 +341,27 @@ async def update_stream_url(game_id: str, req: UpdateStreamRequest):
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
-        headers_json = json.dumps(req.stream_headers) if req.stream_headers else None
+        
+        # Read existing headers to preserve available_streams
+        cursor.execute("SELECT stream_headers FROM mlb_schedule WHERE game_pk = ?", (game_id,))
+        row = cursor.fetchone()
+        
+        available_streams = []
+        if row and row["stream_headers"]:
+            try:
+                data = json.loads(row["stream_headers"])
+                if isinstance(data, dict):
+                    available_streams = data.get("available_streams", [])
+            except Exception:
+                pass
+                
+        # Construct updated stream headers JSON
+        updated_data = {
+            "headers": req.stream_headers or {},
+            "available_streams": available_streams
+        }
+        headers_json = json.dumps(updated_data)
+        
         cursor.execute(
             "UPDATE mlb_schedule SET stream_url = ?, stream_source = ?, stream_headers = ?, stream_resolved_at = datetime('now') WHERE game_pk = ?",
             (req.stream_url, req.stream_source, headers_json, game_id)
@@ -343,11 +381,20 @@ async def get_game_state(game_id: str):
     """
     Returns the current cached game state for initial load in the sports portal.
     """
+    from fastapi.responses import JSONResponse
     file_path = f"/home/james/SovereignOS/game_states/{game_id}.json"
     if os.path.exists(file_path):
         try:
             with open(file_path, "r") as f:
-                return json.load(f)
+                data = json.load(f)
+            return JSONResponse(
+                content=data,
+                headers={
+                    "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+                    "Pragma": "no-cache",
+                    "Expires": "0"
+                }
+            )
         except Exception as e:
             logger.error(f"Error reading game state file {file_path}: {e}")
             raise HTTPException(status_code=500, detail="Failed to parse game state")

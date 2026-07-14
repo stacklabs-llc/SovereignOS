@@ -50,6 +50,7 @@ import EdgeDvrConsole from "./components/EdgeDvrConsole";
 import StreamSniperConsole from "./components/StreamSniperConsole";
 import HighlightHeistConsole from "./components/HighlightHeistConsole";
 import SovereignThemeLab from "./components/SovereignThemeLab";
+import CliOperatorShell from "./components/CliOperatorShell";
 import PgaAmenCornerLookBook from "./components/PgaAmenCornerLookBook";
 import ArgusNexusConsole from "./components/ArgusNexusConsole";
 import TMINewsDesk from "./components/TMINewsDesk";
@@ -62,6 +63,8 @@ import HateMailInbox from "./components/HateMailInbox";
 import SmyrnaPlaycall from "./components/SmyrnaPlaycall";
 import TownSimulation from "./components/TownSimulation";
 import CatnipWarsGame from "./components/CatnipWarsGame";
+import DeFiArbitrageSimulator from "./components/DeFiArbitrageSimulator";
+
 
 import SovereignOsPortal from "./components/SovereignOsPortal";
 import FanLobby from "./components/FanLobby";
@@ -264,11 +267,19 @@ export default function App() {
     return () => window.removeEventListener('click', handleOutsideClick);
   }, []);
 
-  const [activeRoom, setActiveRoom] = useState<"starter" | "claude" | "auditor" | "void" | "data" | "pegasus" | "persona_console" | "uhf_studio" | "god_mode" | "rom_gallery" | "configurator" | "log_viewer" | "playcall_desk" | "tmi_news_desk" | "the_skew" | "shatcast_vision" | "persona_center" | "knowledge_hub" | "sow" | "courier" | "promo_inbox" | "nexus_telemetry" | "artifact_gallery" | "fanstack_sandbox" | "savant_query" | "vocal_matrix" | "storyboard_deck" | "holodex" | "holodex_matrix" | "tesseract_stage" | "edge_dvr" | "stream_sniper" | "highlight_heist" | "live_chat_sniper" | "sovereign_css" | "factory_dashboard" | "aether_vet" | "kanban" | "roll_call" | "dreadnought" | "theme_manager" | "argus_nexus" | "hot_takes" | "model_arena" | "optical_ingest" | "user_mgmt" | "portal_layout" | "pixel_dropzone" | "system_config" | "user_management" | "bistro" | "amen_corner" | "sys_rules" | "sys_docs" | "fan_lobby" | "wildseed" | "prospectus" | "stack_seeder" | "hate_mail_inbox" | "catnip_wars" | "town_simulation" | "cockpit" | "voice" | "post_genesis" | "app_directory" | "presence" | "oracle_guardrails" | "cmdb" | "asset_backlog" | "active_stacks" | "metsy_adventures" | "prompt_preview" | "power_tools">(() => {
+  const [activeRoom, setActiveRoom] = useState<"starter" | "claude" | "auditor" | "void" | "data" | "pegasus" | "persona_console" | "uhf_studio" | "god_mode" | "rom_gallery" | "configurator" | "log_viewer" | "playcall_desk" | "tmi_news_desk" | "the_skew" | "shatcast_vision" | "persona_center" | "knowledge_hub" | "sow" | "courier" | "promo_inbox" | "nexus_telemetry" | "artifact_gallery" | "fanstack_sandbox" | "savant_query" | "vocal_matrix" | "storyboard_deck" | "holodex" | "holodex_matrix" | "tesseract_stage" | "edge_dvr" | "stream_sniper" | "highlight_heist" | "live_chat_sniper" | "sovereign_css" | "factory_dashboard" | "aether_vet" | "kanban" | "roll_call" | "dreadnought" | "theme_manager" | "argus_nexus" | "hot_takes" | "model_arena" | "optical_ingest" | "user_mgmt" | "portal_layout" | "pixel_dropzone" | "system_config" | "user_management" | "bistro" | "amen_corner" | "sys_rules" | "sys_docs" | "fan_lobby" | "wildseed" | "prospectus" | "stack_seeder" | "hate_mail_inbox" | "catnip_wars" | "town_simulation" | "cockpit" | "voice" | "post_genesis" | "app_directory" | "presence" | "oracle_guardrails" | "cmdb" | "asset_backlog" | "active_stacks" | "metsy_adventures" | "prompt_preview" | "power_tools" | "arbitrage_sim" | "shell">(() => {
     const params = new URLSearchParams(window.location.search);
-    const room = params.get('room');
-    const validRooms = ["starter", "claude", "auditor", "void", "data", "pegasus", "persona_console", "uhf_studio", "god_mode", "rom_gallery", "configurator", "log_viewer", "playcall_desk", "tmi_news_desk", "the_skew", "shatcast_vision", "persona_center", "knowledge_hub", "sow", "courier", "promo_inbox", "nexus_telemetry", "artifact_gallery", "fanstack_sandbox", "savant_query", "vocal_matrix", "storyboard_deck", "holodex", "holodex_matrix", "tesseract_stage", "edge_dvr", "stream_sniper", "highlight_heist", "live_chat_sniper", "sovereign_css", "factory_dashboard", "aether_vet", "kanban", "roll_call", "dreadnought" , "theme_manager", "argus_nexus", "hot_takes", "model_arena", "optical_ingest", "portal_layout", "fan_lobby", "wildseed", "prospectus", "stack_seeder", "hate_mail_inbox", "catnip_wars", "town_simulation", "cockpit", "voice", "post_genesis", "app_directory", "presence", "oracle_guardrails", "cmdb", "sys_rules", "sys_docs", "system_config", "user_management", "user_mgmt", "bistro", "amen_corner", "asset_backlog", "active_stacks", "metsy_adventures", "prompt_preview", "power_tools"];
+    const pathname = window.location.pathname;
+    if (pathname === '/shell' || pathname.startsWith('/shell/')) return "shell";
+    let room = params.get('room');
+    if (room === 'local_transcribe') room = 'stream_sniper';
+    const validRooms = ["starter", "claude", "auditor", "void", "data", "pegasus", "persona_console", "uhf_studio", "god_mode", "rom_gallery", "configurator", "log_viewer", "playcall_desk", "tmi_news_desk", "the_skew", "shatcast_vision", "persona_center", "knowledge_hub", "sow", "courier", "promo_inbox", "nexus_telemetry", "artifact_gallery", "fanstack_sandbox", "savant_query", "vocal_matrix", "storyboard_deck", "holodex", "holodex_matrix", "tesseract_stage", "edge_dvr", "stream_sniper", "highlight_heist", "live_chat_sniper", "sovereign_css", "factory_dashboard", "aether_vet", "kanban", "roll_call", "dreadnought" , "theme_manager", "argus_nexus", "hot_takes", "model_arena", "optical_ingest", "portal_layout", "fan_lobby", "wildseed", "prospectus", "stack_seeder", "hate_mail_inbox", "catnip_wars", "town_simulation", "cockpit", "voice", "post_genesis", "app_directory", "presence", "oracle_guardrails", "cmdb", "sys_rules", "sys_docs", "system_config", "user_management", "user_mgmt", "bistro", "amen_corner", "asset_backlog", "active_stacks", "metsy_adventures", "prompt_preview", "power_tools", "arbitrage_sim", "shell"];
     if (room && validRooms.includes(room)) return room as any;
+    
+    // Fallback to last known room
+    const lastRoom = localStorage.getItem('sovereign_last_known_room');
+    if (lastRoom && lastRoom !== 'starter' && validRooms.includes(lastRoom)) return lastRoom as any;
+    
     return "cockpit";
   });
   const [activeGamedayPk, setActiveGamedayPk] = useState<string | null>(() => {
@@ -426,10 +437,11 @@ export default function App() {
     const validDomains = ["ROOT", "PORTAL", "MLB", "NBA", "NFL", "PGA", "SKEW", "HOLODEX", "GLOBAL", "ARGUS", "CMDB"];
     if (domain && validDomains.includes(domain)) return domain as any;
     
-    const room = params.get('room');
+    let room = params.get('room');
+    if (room === 'local_transcribe') room = 'stream_sniper';
     if (room && room !== 'starter') {
       if (room === 'amen_corner') return 'PGA';
-      if (['edge_dvr', 'stream_sniper', 'highlight_heist', 'sovereign_css', 'sow', 'dreadnought', 'theme_manager', 'model_arena', 'user_management', 'user_mgmt', 'system_config', 'portal_layout', 'sys_rules', 'sys_docs', 'stack_seeder', 'hate_mail_inbox', 'catnip_wars', 'town_simulation', 'voice', 'persona_center', 'nexus_telemetry', 'prospectus', 'wildseed', 'oracle_guardrails', 'asset_backlog', 'metsy_adventures', 'prompt_preview'].includes(room)) return 'GLOBAL';
+      if (['edge_dvr', 'stream_sniper', 'highlight_heist', 'sovereign_css', 'sow', 'dreadnought', 'theme_manager', 'model_arena', 'optical_ingest', 'user_management', 'user_mgmt', 'system_config', 'portal_layout', 'sys_rules', 'sys_docs', 'stack_seeder', 'hate_mail_inbox', 'catnip_wars', 'town_simulation', 'voice', 'persona_center', 'nexus_telemetry', 'prospectus', 'wildseed', 'oracle_guardrails', 'asset_backlog', 'metsy_adventures', 'prompt_preview', 'vocal_matrix'].includes(room)) return 'GLOBAL';
       if (room === 'kanban' || room === 'cockpit' || room === 'pixel_dropzone' || room === 'app_directory') return 'ROOT';
       if (room === 'the_skew' || room === 'hot_takes') return 'SKEW';
       if (room === 'holodex' || room === 'holodex_matrix') return 'HOLODEX';
@@ -438,6 +450,11 @@ export default function App() {
       if (room === 'savant_query' || room === 'tmi_news_desk') return 'MLB';
       return 'MLB';
     }
+    
+    // Fallback to last known domain
+    const lastDomain = localStorage.getItem('sovereign_last_known_domain');
+    if (lastDomain && validDomains.includes(lastDomain)) return lastDomain as any;
+    
     return "ROOT";
   });
   const setActiveDomain = (domain: "ROOT" | "PORTAL" | "MLB" | "NBA" | "NFL" | "PGA" | "SKEW" | "HOLODEX" | "GLOBAL" | "ARGUS" | "CMDB") => {
@@ -497,7 +514,7 @@ export default function App() {
   // Creator Ingress Tracker
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const apiHost = SovereignConfig.telemetryApi;
+    const apiHost = window.location.protocol === "https:" ? window.location.origin : SovereignConfig.telemetryApi;
 
     if (params.get("vip")?.toLowerCase() === "creator") {
       // Fire the tracking beacon
@@ -518,6 +535,13 @@ export default function App() {
   useEffect(() => {
     const handleNavigation = () => {
       const params = new URLSearchParams(window.location.search);
+      const pathname = window.location.pathname;
+
+      if (pathname === '/shell' || pathname.startsWith('/shell/')) {
+        setActiveDomain('GLOBAL');
+        setActiveRoom('shell');
+        return;
+      }
       const viewParam = params.get('view');
       if (viewParam === 'remote') {
         setIsMobileRemote(true);
@@ -537,17 +561,20 @@ export default function App() {
       }
 
       const domainParam = params.get('domain');
-      const roomParam = params.get('room');
+      let roomParam = params.get('room');
+      if (roomParam === 'local_transcribe') {
+        roomParam = 'stream_sniper';
+      }
 
       // If there's a specific room in the URL, let the room determine the routing, 
       // EXCEPT if the room is 'starter', where the domain parameter decides.
       if (roomParam && roomParam !== 'starter') {
-        const validRooms = ['starter', 'claude', 'auditor', 'void', 'data', 'pegasus', 'persona_console', 'uhf_studio', 'god_mode', 'rom_gallery', 'configurator', 'log_viewer', 'playcall_desk', 'tmi_news_desk', 'the_skew', 'shatcast_vision', 'persona_center', 'knowledge_hub', 'sow', 'courier', 'promo_inbox', 'nexus_telemetry', 'amen_corner', 'artifact_gallery', 'fanstack_sandbox', 'savant_query', 'vocal_matrix', 'storyboard_deck', 'holodex', 'holodex_matrix', 'tesseract_stage', 'edge_dvr', 'stream_sniper', 'highlight_heist', 'live_chat_sniper', 'sovereign_css', 'factory_dashboard', 'aether_vet', 'roll_call', 'kanban', 'dreadnought', 'theme_manager', 'argus_nexus', 'model_arena', 'optical_ingest', 'user_management', 'user_mgmt', 'system_config', 'portal_layout', 'sys_rules', 'sys_docs', 'pixel_dropzone', 'fan_lobby', 'wildseed', 'prospectus', 'stack_seeder', 'hate_mail_inbox', 'catnip_wars', 'town_simulation', 'cockpit', 'voice', 'post_genesis', 'app_directory', 'presence', 'oracle_guardrails', 'cmdb', 'bistro', 'asset_backlog', 'metsy_adventures', 'prompt_preview'];
+        const validRooms = ['starter', 'claude', 'auditor', 'void', 'data', 'pegasus', 'persona_console', 'uhf_studio', 'god_mode', 'rom_gallery', 'configurator', 'log_viewer', 'playcall_desk', 'tmi_news_desk', 'the_skew', 'shatcast_vision', 'persona_center', 'knowledge_hub', 'sow', 'courier', 'promo_inbox', 'nexus_telemetry', 'amen_corner', 'artifact_gallery', 'fanstack_sandbox', 'savant_query', 'vocal_matrix', 'storyboard_deck', 'holodex', 'holodex_matrix', 'tesseract_stage', 'edge_dvr', 'stream_sniper', 'highlight_heist', 'live_chat_sniper', 'sovereign_css', 'factory_dashboard', 'aether_vet', 'roll_call', 'kanban', 'dreadnought', 'theme_manager', 'argus_nexus', 'model_arena', 'optical_ingest', 'user_management', 'user_mgmt', 'system_config', 'portal_layout', 'sys_rules', 'sys_docs', 'pixel_dropzone', 'fan_lobby', 'wildseed', 'prospectus', 'stack_seeder', 'hate_mail_inbox', 'catnip_wars', 'town_simulation', 'cockpit', 'voice', 'post_genesis', 'app_directory', 'presence', 'oracle_guardrails', 'cmdb', 'bistro', 'asset_backlog', 'metsy_adventures', 'prompt_preview', 'shell'];
         if (validRooms.includes(roomParam)) {
           setActiveRoom(roomParam as any);
           if (roomParam === 'amen_corner') {
             setActiveDomain('PGA');
-          } else if (['edge_dvr', 'stream_sniper', 'highlight_heist', 'sovereign_css', 'sow', 'dreadnought', 'theme_manager', 'model_arena', 'user_management', 'user_mgmt', 'system_config', 'portal_layout', 'sys_rules', 'sys_docs', 'stack_seeder', 'hate_mail_inbox', 'catnip_wars', 'town_simulation', 'voice', 'persona_center', 'nexus_telemetry', 'prospectus', 'wildseed', 'oracle_guardrails', 'asset_backlog', 'data', 'metsy_adventures', 'tesseract_stage', 'prompt_preview'].includes(roomParam)) {
+          } else if (['edge_dvr', 'stream_sniper', 'highlight_heist', 'sovereign_css', 'sow', 'dreadnought', 'theme_manager', 'model_arena', 'optical_ingest', 'user_management', 'user_mgmt', 'system_config', 'portal_layout', 'sys_rules', 'sys_docs', 'stack_seeder', 'hate_mail_inbox', 'catnip_wars', 'town_simulation', 'voice', 'persona_center', 'nexus_telemetry', 'prospectus', 'wildseed', 'oracle_guardrails', 'asset_backlog', 'data', 'metsy_adventures', 'tesseract_stage', 'prompt_preview', 'shell'].includes(roomParam)) {
             setActiveDomain('GLOBAL');
           } else if (roomParam === 'kanban' || roomParam === 'cockpit' || roomParam === 'pixel_dropzone' || roomParam === 'app_directory') {
             setActiveDomain('ROOT');
@@ -568,10 +595,18 @@ export default function App() {
         }
       }
 
+      // Fallback workspace retrieval
+      const lastRoom = localStorage.getItem('sovereign_last_known_room');
+      const lastDomain = localStorage.getItem('sovereign_last_known_domain');
+
       // If no specific room (or room is 'starter'), fallback to domain parameters
       if (domainParam === 'ROOT') {
         setActiveDomain('ROOT');
-        setActiveRoom(roomParam === 'starter' ? 'starter' : 'cockpit');
+        if (roomParam === 'starter') {
+          setActiveRoom('starter');
+        } else {
+          setActiveRoom(lastDomain === 'ROOT' && lastRoom && lastRoom !== 'starter' ? lastRoom as any : 'cockpit');
+        }
         return;
       }
       if (domainParam === 'PORTAL') {
@@ -581,28 +616,49 @@ export default function App() {
       }
       if (domainParam === 'CMDB') {
         setActiveDomain('CMDB');
-        setActiveRoom(roomParam === 'starter' ? 'starter' : 'starter');
+        if (roomParam === 'starter') {
+          setActiveRoom('starter');
+        } else {
+          setActiveRoom(lastDomain === 'CMDB' && lastRoom && lastRoom !== 'starter' ? lastRoom as any : 'cmdb');
+        }
         return;
       }
       if (domainParam === 'ARGUS') {
         setActiveDomain('ARGUS');
-        setActiveRoom(roomParam === 'starter' ? 'starter' : 'starter');
+        if (roomParam === 'starter') {
+          setActiveRoom('starter');
+        } else {
+          setActiveRoom(lastDomain === 'ARGUS' && lastRoom && lastRoom !== 'starter' ? lastRoom as any : 'argus_nexus');
+        }
         return;
       }
       if (domainParam === 'MLB') {
         setActiveDomain('MLB');
-        setActiveRoom(roomParam === 'starter' ? 'starter' : 'starter');
+        if (roomParam === 'starter') {
+          setActiveRoom('starter');
+        } else {
+          setActiveRoom(lastDomain === 'MLB' && lastRoom && lastRoom !== 'starter' ? lastRoom as any : 'starter');
+        }
         return;
       }
       if (domainParam === 'GLOBAL') {
         setActiveDomain('GLOBAL');
-        setActiveRoom(roomParam === 'starter' ? 'starter' : 'starter');
+        if (roomParam === 'starter') {
+          setActiveRoom('starter');
+        } else {
+          setActiveRoom(lastDomain === 'GLOBAL' && lastRoom && lastRoom !== 'starter' ? lastRoom as any : 'power_tools');
+        }
         return;
       }
 
       // Default fallback
-      setActiveDomain('ROOT');
-      setActiveRoom(roomParam === 'starter' ? 'starter' : 'cockpit');
+      if (lastRoom && lastRoom !== 'starter' && lastDomain) {
+        setActiveDomain(lastDomain as any);
+        setActiveRoom(lastRoom as any);
+      } else {
+        setActiveDomain('ROOT');
+        setActiveRoom(roomParam === 'starter' ? 'starter' : 'cockpit');
+      }
     };
     
     // Run on initial mount
@@ -618,44 +674,56 @@ export default function App() {
     const url = new URL(window.location.href);
     let title = "Sovereign OS";
 
-    if (activeDomain === 'ROOT' && (!activeRoom || activeRoom === 'cockpit')) {
+    if (activeRoom === 'shell') {
+      url.pathname = '/shell';
       url.searchParams.delete('room');
       url.searchParams.delete('domain');
       url.searchParams.delete('filter');
-      title = "Sovereign OS | Command Center";
-    } else if (activeDomain === 'PORTAL') {
-      url.searchParams.delete('room');
-      url.searchParams.set('domain', 'PORTAL');
-      title = "Sovereign OS | FanStack";
-    } else if (activeDomain === 'CMDB') {
-      url.searchParams.delete('room');
-      url.searchParams.set('domain', 'CMDB');
-      title = "Sovereign OS | CMDB Workspace";
+      title = "Sovereign OS | CLI Operator Shell";
     } else {
-      url.searchParams.set('domain', activeDomain);
-      url.searchParams.set('room', activeRoom);
-      
-      const titles: Record<string, string> = {
-        'starter': 'Command Center',
-        'playcall_desk': 'Playcall Desk',
-        'tmi_news_desk': 'TMI Triage',
-        'savant_query': 'Savant Oracle',
-        'stream_sniper': 'Stream Sniper',
-        'highlight_heist': 'Highlight Heist',
-        'live_chat_sniper': 'Live Chat Sniper',
-        'storyboard_deck': 'Storyboards',
-        'the_skew': 'The Skew',
-        'holodex': 'HoloDex',
-        'argus_nexus': 'Argus Nexus',
-        'model_arena': 'Model Arena',
-        'stack_seeder': 'Stack Seeder',
-        'catnip_wars': 'Catnip Wars Control Desk',
-        'town_simulation': 'Town Square',
-        'voice': 'Voice Heal'
-      };
-      
-      const roomTitle = titles[activeRoom] || activeRoom.replace('_', ' ').toUpperCase();
-      title = `Sovereign OS | ${roomTitle}`;
+      if (url.pathname === '/shell') {
+        url.pathname = '/';
+      }
+      if (activeDomain === 'ROOT' && (!activeRoom || activeRoom === 'cockpit')) {
+        url.searchParams.delete('room');
+        url.searchParams.delete('domain');
+        url.searchParams.delete('filter');
+        title = "Sovereign OS | Command Center";
+      } else if (activeDomain === 'PORTAL') {
+        url.searchParams.delete('room');
+        url.searchParams.set('domain', 'PORTAL');
+        title = "Sovereign OS | FanStack";
+      } else if (activeDomain === 'CMDB') {
+        url.searchParams.delete('room');
+        url.searchParams.set('domain', 'CMDB');
+        title = "Sovereign OS | CMDB Workspace";
+      } else {
+        url.searchParams.set('domain', activeDomain);
+        url.searchParams.set('room', activeRoom);
+        
+        const titles: Record<string, string> = {
+          'starter': 'Command Center',
+          'playcall_desk': 'Playcall Desk',
+          'tmi_news_desk': 'TMI Triage',
+          'savant_query': 'Savant Oracle',
+          'stream_sniper': 'Stream Sniper',
+          'highlight_heist': 'Highlight Heist',
+          'live_chat_sniper': 'Live Chat Sniper',
+          'storyboard_deck': 'Storyboards',
+          'the_skew': 'The Skew',
+          'holodex': 'HoloDex',
+          'argus_nexus': 'Argus Nexus',
+          'model_arena': 'Model Arena',
+          'stack_seeder': 'Stack Seeder',
+          'catnip_wars': 'Catnip Wars Control Desk',
+          'town_simulation': 'Town Square',
+          'voice': 'Voice Heal',
+          'shell': 'CLI Operator Shell'
+        };
+        
+        const roomTitle = titles[activeRoom] || activeRoom.replace('_', ' ').toUpperCase();
+        title = `Sovereign OS | ${roomTitle}`;
+      }
     }
 
     document.title = title;
@@ -664,6 +732,13 @@ export default function App() {
     if (url.searchParams.get('view') === 'cinema_remote') url.searchParams.delete('view');
     if (url.searchParams.get('view') === 'mobile_hololink') url.searchParams.delete('view');
     window.history.replaceState({}, '', url);
+
+    if (activeRoom && activeRoom !== 'starter') {
+      localStorage.setItem('sovereign_last_known_room', activeRoom);
+    }
+    if (activeDomain) {
+      localStorage.setItem('sovereign_last_known_domain', activeDomain);
+    }
   }, [activeRoom, activeDomain, isMobileRemote, isCinemaRemote, isMobileHololink]);
 
   useEffect(() => {
@@ -777,11 +852,6 @@ export default function App() {
   return (
     <div className={`min-h-screen p-2 md:p-3 flex flex-col gap-2 transition-all duration-1000 bg-[#0B0E14] text-gray-200 selection:bg-[#3B82F6]/30 relative overflow-y-visible theme-${osTheme}`}>
       
-      {envBadge === 'PROD' && (
-        <div className="w-full bg-red-600 text-white font-bold text-center py-1 text-xs uppercase tracking-[0.3em] font-mono z-[9999] shadow-[0_0_15px_red]">
-          PROD ENVIRONMENT — LIVE FIRE
-        </div>
-      )}
       {envBadge === 'DEV' && (
         <div className="w-full bg-[#38bdf8] text-black font-bold text-center py-1 text-xs uppercase tracking-[0.3em] font-mono z-[9999] shadow-[0_0_15px_#38bdf8]">
           DEV ENVIRONMENT — SANDBOX
@@ -831,21 +901,7 @@ export default function App() {
                 </>
               )}
 
-              {/* Active Stack Breadcrumb (if any, e.g. FanStack, AetherVet) */}
-              {activeStack && !isAdminOrRootRoom && (activeRoom as string) !== 'starter' && (
-                <>
-                  <ChevronRight size={12} className="text-white/20" />
-                  <button
-                    onClick={() => {
-                      setActiveDomain('ROOT');
-                      setActiveRoom('app_directory');
-                    }}
-                    className="font-mono text-xs uppercase tracking-wider text-white/60 hover:text-white transition-colors"
-                  >
-                    {activeStack === 'fanstack' ? '🕹️ FanStack' : '🏥 AetherVet'}
-                  </button>
-                </>
-              )}
+
 
               {/* Current View Breadcrumb */}
               {(activeRoom as string) !== 'starter' && (activeRoom as string) !== 'system_config' && (
@@ -861,85 +917,6 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-3 ml-auto md:ml-0">
-          {/* SELECTORS WRAPPED IN CONDITIONAL TO HIDE ON ADMIN OR ROOT VIEWS */}
-          {!isAdminOrRootRoom && (
-            <div className="flex items-center gap-3">
-              {/* STACK CONTEXT SELECTOR */}
-              <div className="relative group py-1">
-                <button 
-                  onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === 'stack_context' ? null : 'stack_context'); }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all border font-mono border-white/5 text-white/70 hover:text-white hover:bg-white/5"
-                >
-                  🔌 Stack Context: {activeStack === 'fanstack' ? 'FanStack' : activeStack === 'aethervet' ? 'AetherVet' : 'None'}
-                  <ChevronDown size={11} className={`opacity-60 transition-transform duration-200 ${activeDropdown === 'stack_context' ? 'rotate-180' : ''}`} />
-                </button>
-                {activeDropdown === 'stack_context' && (
-                  <div className="absolute top-full left-0 flex flex-col bg-[#0b0e14]/95 backdrop-blur-md border border-white/10 rounded-xl p-1.5 shadow-2xl z-[1000] w-48 gap-0.5 mt-1">
-                    <button 
-                      onClick={() => { setActiveStack(null); setActiveDropdown(null); }}
-                      className={`w-full text-left px-3 py-2 text-xs font-bold uppercase tracking-wider font-mono rounded-lg transition-colors ${
-                        !activeStack ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white hover:bg-white/5'
-                      }`}
-                    >
-                      No Stack Scope
-                    </button>
-                    <button 
-                      onClick={() => { setActiveStack('fanstack'); setActiveDropdown(null); }}
-                      className={`w-full text-left px-3 py-2 text-xs font-bold uppercase tracking-wider font-mono rounded-lg transition-colors ${
-                        activeStack === 'fanstack' ? 'bg-[#38bdf8]/10 text-[#38bdf8]' : 'text-white/70 hover:text-white hover:bg-white/5'
-                      }`}
-                    >
-                      🕹️ FanStack
-                    </button>
-                    <button 
-                      onClick={() => { setActiveStack('aethervet'); setActiveDropdown(null); }}
-                      className={`w-full text-left px-3 py-2 text-xs font-bold uppercase tracking-wider font-mono rounded-lg transition-colors ${
-                        activeStack === 'aethervet' ? 'bg-[#a78bfa]/10 text-[#a78bfa]' : 'text-white/70 hover:text-white hover:bg-white/5'
-                      }`}
-                    >
-                      🏥 AetherVet
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* DYNAMIC STACK TOOLS DROPDOWN */}
-              {activeStack && (
-                <div className="relative group py-1">
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); setActiveDropdown(activeDropdown === 'stack_tools' ? null : 'stack_tools'); }}
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold uppercase tracking-wider rounded-lg transition-all border font-mono border-white/5 text-white/70 hover:text-white hover:bg-white/5"
-                  >
-                    🛠️ {activeStack === 'fanstack' ? 'FanStack' : 'AetherVet'} Tools
-                    <ChevronDown size={11} className={`opacity-60 transition-transform duration-200 ${activeDropdown === 'stack_tools' ? 'rotate-180' : ''}`} />
-                  </button>
-                  {activeDropdown === 'stack_tools' && (
-                    <div className="absolute top-full left-0 flex flex-col bg-[#0b0e14]/95 backdrop-blur-md border border-white/10 rounded-xl p-1.5 shadow-2xl z-[1000] w-56 gap-0.5 mt-1">
-                      {stackUtilities.length === 0 ? (
-                        <div className="px-3 py-2 text-xs font-mono text-white/40 uppercase">No tools provisioned</div>
-                      ) : (
-                        stackUtilities.map((util: any) => (
-                          <button 
-                            key={util.module_name}
-                            onClick={() => {
-                              setActiveDomain('GLOBAL');
-                              setActiveRoom(util.module_name as any);
-                              setActiveDropdown(null);
-                            }}
-                            className={`w-full text-left px-3 py-2 text-xs font-bold uppercase tracking-wider font-mono rounded-lg transition-colors ${
-                              activeRoom === util.module_name ? 'bg-white/10 text-white' : 'text-white/70 hover:text-white hover:bg-white/5'
-                            }`}
-                          >
-                            {util.display_name}
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
 
           <div className="shrink-0 flex items-center">
             <GlobalSystemBar osTheme={osTheme} setOsTheme={setOsTheme} accessLocale={accessLocale} setAccessLocale={setAccessLocale} isVocalMatrixOpen={isVocalMatrixOpen} setIsVocalMatrixOpen={setIsVocalMatrixOpen} activeDomain={activeDomain} activeRoom={activeRoom} globalRoomBoggsOverride={globalRoomBoggsOverride} setGlobalRoomBoggsOverride={setGlobalRoomBoggsOverride} onNavigateRoom={(room) => { _setActiveDomain('GLOBAL'); setActiveRoom(room as any); }} onToggleSearch={() => setIsGlobalSearchOpen(prev => !prev)} />
@@ -1033,6 +1010,7 @@ export default function App() {
             <div className="flex-1 flex flex-col w-full relative min-h-0">
               {activeRoom === 'claude' && <StarterShack />}
               {activeRoom === 'active_stacks' && <ActiveStacksGrid />}
+              {activeRoom === 'arbitrage_sim' && <DeFiArbitrageSimulator />}
               {activeRoom === 'power_tools' && <PowerToolsGrid onNavigate={(domain, room) => {
                 if (domain) setActiveDomain(domain as any);
                 if (room) setActiveRoom(room as any);
@@ -1076,7 +1054,7 @@ export default function App() {
                     window.history.pushState({}, '', '?room=wildseed');
                   }}
                   onEnterAetherVet={() => {
-                    window.location.href = `${window.location.protocol}//${window.location.hostname}:3015/`;
+                    window.location.href = `${window.location.protocol}//${window.location.hostname}:8443/`;
                   }}
                   onEnterFanStack={() => {
                     window.open(SovereignConfig.fanstack, '_blank');
@@ -1105,6 +1083,10 @@ export default function App() {
                 <OracleGuardrailsConfig />
               ) : activeRoom === 'nexus_telemetry' ? (
                 <ArgusNexusConsole osTheme={osTheme} onBack={() => { setActiveRoom('starter'); }} />
+              ) : activeRoom === 'vocal_matrix' ? (
+                <div className="h-[calc(100vh-200px)] w-full rounded-xl overflow-hidden border border-slate-800">
+                  <iframe src={`/tts-proxy/tts_commlink.html?theme=${osTheme}`} className="w-full h-full border-0" title="Vocal Matrix" />
+                </div>
               ) : activeRoom === 'asset_backlog' ? (
                 <AssetBacklog />
               ) : activeRoom === 'stack_seeder' ? (
@@ -1113,6 +1095,10 @@ export default function App() {
                 <MetsyAdventuresWorkspace />
               ) : activeRoom === 'prompt_preview' ? (
                 <PromptPreviewConsole />
+              ) : activeRoom === 'shell' ? (
+                <CliOperatorShell />
+              ) : activeRoom === 'optical_ingest' ? (
+                <OpticalIngestConsole />
               ) : (activeRoom === 'holodex' || activeRoom === 'holodex_matrix') ? (
                 <div className="min-h-[85vh] w-full rounded-xl border border-[#38bdf8]/30 flex flex-col">
                   <HoloDex />
@@ -1128,23 +1114,41 @@ export default function App() {
                 </div>
               ) : activeRoom === 'persona_console' ? (
                 <PersonaConsole />
+              ) : activeRoom === 'edge_dvr' ? (
+                <motion.div
+                  key="edge_dvr"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="w-full rounded-xl overflow-hidden border border-[#ff0033]/30"
+                >
+                  <EdgeDvrConsole />
+                </motion.div>
+              ) : activeRoom === 'stream_sniper' ? (
+                <motion.div
+                  key="stream_sniper"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-full h-full"
+                >
+                  <StreamSniperConsole />
+                </motion.div>
+              ) : activeRoom === 'highlight_heist' ? (
+                <motion.div
+                  key="highlight_heist"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="w-full h-full"
+                >
+                  <HighlightHeistConsole />
+                </motion.div>
               ) : (activeRoom === 'kanban' || (activeRoom as string) === 'sdlc') && !dashboardWidgetsActive ? (
-                <div className="h-[85vh] w-full rounded-xl overflow-hidden shadow-2xl border border-white/5 relative">
-                  <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-4">
-                    <button 
-                      onClick={() => setIsTicketModalOpen(true)}
-                      className="px-4 py-2 bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/50 rounded-lg font-mono text-[10px] uppercase tracking-widest hover:bg-[#38bdf8] hover:text-black transition-colors"
-                    >
-                      New Ticket
-                    </button>
-                    <button 
-                      onClick={() => { setActiveDomain('ROOT'); setActiveRoom('cockpit'); window.history.pushState({}, '', '/'); }} 
-                      className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg font-mono text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-colors"
-                    >
-                      Close Kanban
-                    </button>
-                  </div>
-                  <LivingKanbanBoard />
+                <div className="h-[calc(100vh-64px)] w-full rounded-xl overflow-hidden shadow-2xl border border-white/5 relative">
+                  <LivingKanbanBoard onNewTicket={() => setIsTicketModalOpen(true)} />
                   <NewTicketModal isOpen={isTicketModalOpen} onClose={() => setIsTicketModalOpen(false)} />
                 </div>
               ) : activeRoom === 'pixel_dropzone' ? (
@@ -2089,23 +2093,9 @@ export default function App() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="h-[85vh] w-full rounded-xl overflow-hidden shadow-2xl border border-white/5 relative"
+              className="h-[calc(100vh-64px)] w-full rounded-xl overflow-hidden shadow-2xl border border-white/5 relative"
             >
-              <div className="absolute top-6 left-1/2 -translate-x-1/2 z-[999] flex items-center gap-4">
-                <button 
-                  onClick={() => setIsTicketModalOpen(true)}
-                  className="px-4 py-2 bg-[#38bdf8]/20 text-[#38bdf8] border border-[#38bdf8]/50 rounded-lg font-mono text-[10px] uppercase tracking-widest hover:bg-[#38bdf8] hover:text-black transition-colors"
-                >
-                  New Ticket
-                </button>
-                <button 
-                  onClick={() => { setActiveDomain('ROOT'); setActiveRoom('cockpit'); window.history.pushState({}, '', '/'); }} 
-                  className="px-4 py-2 bg-red-500/20 text-red-400 border border-red-500/50 rounded-lg font-mono text-[10px] uppercase tracking-widest hover:bg-red-500 hover:text-white transition-colors"
-                >
-                  Close Kanban
-                </button>
-              </div>
-              <LivingKanbanBoard />
+              <LivingKanbanBoard onNewTicket={() => setIsTicketModalOpen(true)} />
               <NewTicketModal isOpen={isTicketModalOpen} onClose={() => setIsTicketModalOpen(false)} />
             </motion.div>
           )}
@@ -2152,7 +2142,7 @@ export default function App() {
                   window.history.pushState({}, '', '?room=wildseed');
                 }}
                 onEnterAetherVet={() => {
-                  window.location.href = `${window.location.protocol}//${window.location.hostname}:3015/`;
+                  window.location.href = `${window.location.protocol}//${window.location.hostname}:8443/`;
                 }}
                 onEnterFanStack={() => {
                   window.open(SovereignConfig.fanstack, '_blank');

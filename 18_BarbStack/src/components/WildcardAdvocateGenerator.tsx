@@ -10,7 +10,28 @@ interface Persona {
   team: string;
   deep_lore: string;
   avatar_url: string | null;
+  u_visual_style?: string;
+  avatar_prompt?: string;
+  character_map_prompt?: string;
 }
+
+const InfoTooltip = ({ text }: { text: string }) => {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div 
+      className="inline-flex relative ml-1.5 cursor-help items-center justify-center align-middle"
+      onMouseEnter={() => setVisible(true)}
+      onMouseLeave={() => setVisible(false)}
+    >
+      <span className="text-[9px] text-[#0ea5e9] border border-[#0ea5e9]/50 rounded-full w-3.5 h-3.5 flex items-center justify-center font-bold">?</span>
+      {visible && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 bg-stone-900 border border-[#0ea5e9] rounded-lg text-stone-200 p-2.5 w-52 z-50 text-[10px] font-mono leading-relaxed shadow-lg pointer-events-none normal-case tracking-normal">
+          {text}
+        </div>
+      )}
+    </div>
+  );
+};
 
 interface SliceResult {
   row: string;
@@ -272,6 +293,70 @@ export default function WildcardAdvocateGenerator() {
 
         {/* Right Side - Active Control Room */}
         <div className="lg:col-span-8 flex flex-col gap-6">
+          
+          {/* Selected Advocate Metadata Card */}
+          {selectedPersonas.length > 0 && (() => {
+            const selectedPersona = personas.find(p => p.user_name === selectedPersonas[0]);
+            if (!selectedPersona) return null;
+            
+            const styleLabels: Record<string, string> = {
+              style_felt: "Style A: Traumatized Fuzzy Felt (Banned)",
+              style_pixel: "Style B: 16-Bit Pixel Grid",
+              style_clay: "Style C: Unraveled Claymation",
+              style_apathetic: "Style D: Apathetic Claymation",
+              style_2d: "Style E: Flat 2D Vector Comic"
+            };
+            
+            const visualStyleName = styleLabels[selectedPersona.u_visual_style || ""] || "Style E: Flat 2D Vector Comic";
+            
+            return (
+              <div className="bg-stone-900/50 p-4 border border-stone-800 rounded-xl flex flex-col gap-3">
+                <div className="flex items-center justify-between pb-2 border-b border-stone-850">
+                  <span className="text-[10px] font-mono uppercase tracking-widest text-[#0ea5e9] font-bold flex items-center">
+                    ADVOCATE SPECIFICATIONS
+                    <InfoTooltip text="Active advocate settings and prompt templates configured in the database." />
+                  </span>
+                  <span className="text-[10px] font-mono text-stone-400">
+                    @{selectedPersona.user_name.toUpperCase()}
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  {/* Visual Style */}
+                  <div className="bg-black/40 p-2.5 border border-stone-850 rounded-lg">
+                    <span className="block text-[8px] font-mono text-stone-500 uppercase tracking-wider">
+                      VISUAL STYLE
+                      <InfoTooltip text="The art style template applied to all image assets generated for this persona." />
+                    </span>
+                    <span className="block text-xs font-mono text-white font-bold mt-1">
+                      {visualStyleName}
+                    </span>
+                  </div>
+
+                  {/* Avatar Prompt */}
+                  <div className="bg-black/40 p-2.5 border border-stone-850 rounded-lg md:col-span-2">
+                    <span className="block text-[8px] font-mono text-stone-500 uppercase tracking-wider">
+                      AVATAR GENERATION PROMPT
+                      <InfoTooltip text="AI image generation prompt description used for synthesizing the advocate's avatar portrait." />
+                    </span>
+                    <span className="block text-[10px] font-mono text-stone-300 truncate mt-1" title={selectedPersona.avatar_prompt || "Not Configured"}>
+                      {selectedPersona.avatar_prompt || "Not Configured"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-black/40 p-2.5 border border-stone-850 rounded-lg">
+                  <span className="block text-[8px] font-mono text-stone-500 uppercase tracking-wider">
+                    CHARACTER MAP PROMPT
+                    <InfoTooltip text="Sprite-sheet layout generation prompt template used to guide the 3x3 grid assembly." />
+                  </span>
+                  <span className="block text-[10px] font-mono text-stone-300 truncate mt-1" title={selectedPersona.character_map_prompt || "Not Configured"}>
+                    {selectedPersona.character_map_prompt || "Not Configured"}
+                  </span>
+                </div>
+              </div>
+            );
+          })()}
           
           {/* Theme & Actions panel */}
           <div className="bg-stone-900/50 p-5 border border-stone-800 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

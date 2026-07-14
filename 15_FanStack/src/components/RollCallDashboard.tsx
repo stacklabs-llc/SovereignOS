@@ -185,7 +185,7 @@ export default function RollCallDashboard() {
                                 )}
                                 <div className="flex justify-between items-center mb-3 border-b border-white/5 pb-2">
                                     <div className="text-[#8E9CAA] font-mono text-[10px] uppercase">
-                                        Deployed Personas ({room.personas.length})
+                                        Deployed Advocates ({room.personas.length})
                                     </div>
                                     <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold uppercase tracking-widest ${isActive ? 'bg-[#00FF88]/20 text-[#00FF88] border border-[#00FF88]/50' : 'bg-[#FF5910]/20 text-[#FF5910] border border-[#FF5910]/50'}`}>
                                         {room.room_state || 'staged'}

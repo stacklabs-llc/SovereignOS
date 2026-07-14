@@ -130,6 +130,7 @@ def inject_nfl_events(room_key: str):
 
 global_heat_map = {}
 global_penalty_box = {}
+comment_timestamps = []
 global_battery_feud_tracker = {}
 active_fans = []
 
@@ -201,6 +202,128 @@ def _build_short_personality(personality: str, max_chars: int = 400) -> str:
     return personality[:max_chars].strip()
 
 
+def resolve_at_bat_perspective(persona_team, active_play):
+    """
+    Given a persona's team affiliation and the active telemetry play,
+    returns deterministic perspective flags to guide comment generation.
+    """
+    persona_team = str(persona_team or "").strip().upper()
+    batter_team = str(active_play.get("batter_team") or "").strip().upper()
+    pitcher_team = str(active_play.get("pitcher_team") or "").strip().upper()
+    is_batting_team = (persona_team == batter_team)
+    is_pitching_team = (persona_team == pitcher_team)
+    
+    allies = [active_play.get("batter")] if is_batting_team else [active_play.get("pitcher")]
+    opponents = [active_play.get("pitcher")] if is_batting_team else [active_play.get("batter")]
+    
+    # Filter out empty names
+    allies = [a for a in allies if a and a != "Awaiting Batter" and a != "Awaiting Pitcher"]
+    opponents = [o for o in opponents if o and o != "Awaiting Batter" and o != "Awaiting Pitcher"]
+    
+    if not allies:
+        allies = ["our team"]
+    if not opponents:
+        opponents = ["their team"]
+        
+    return {
+        "is_advocate_batting_team": is_batting_team,
+        "is_advocate_pitching_team": is_pitching_team,
+        "advocate_allies": allies,
+        "advocate_opponents": opponents,
+        "current_lead_runs": active_play.get("lead_runs", 0),
+        "is_advocate_winning": (persona_team == active_play.get("leading_team"))
+    }
+
+
+def validate_commentary(text, fan, active_play):
+    """
+    Validates a generated chatbot comment against structural team rules
+    and telemetry realities to prevent hallucinated players, wrong-team cheering,
+    and score/lead mismatches.
+    
+    Returns (is_valid, rule_violated)
+    """
+    if not text:
+        return True, None
+    text_lower = text.lower()
+    persona_team = str(fan.get("team", "")).upper()
+    persona_name = str(fan.get("name", "")).lower()
+    
+    batter = active_play.get("batter", "")
+    pitcher = active_play.get("pitcher", "")
+    batter_team = active_play.get("batter_team", "")
+    pitcher_team = active_play.get("pitcher_team", "")
+    
+    # 1. Hallucinated players check (Anti-Hallucination Protocol)
+    if "gonzalez" in text_lower:
+        if "gonzalez" not in batter.lower() and "gonzalez" not in pitcher.lower():
+            return False, "hallucinated_player_gonzalez"
+            
+    if "pittsburgh" in text_lower or "pirates" in text_lower:
+        if "PIT" not in (batter_team, pitcher_team):
+            return False, "context_leakage_pittsburgh"
+
+    # 2. Opposing team cheering
+    is_batting_allied = (persona_team == batter_team)
+    is_pitching_allied = (persona_team == pitcher_team)
+    
+    def has_name(name, t):
+        if not name or name in ("Awaiting Batter", "Awaiting Pitcher"):
+            return False
+        parts = name.split()
+        for p in parts:
+            if len(p) > 2 and p.lower() in t:
+                return True
+        return False
+
+    if is_batting_allied and not is_pitching_allied:
+        if has_name(pitcher, text_lower):
+            if any(hw in text_lower for hw in ["great pitch", "nice job", "beautiful throw", "amazing job"]):
+                return False, "hyping_opposing_pitcher"
+                
+    if is_pitching_allied and not is_batting_allied:
+        if has_name(batter, text_lower):
+            if any(hw in text_lower for hw in ["crushed it", "great hit", "beautiful swing", "love to see it"]):
+                return False, "hyping_opposing_batter"
+
+    # 3. Wrong-team lead claim
+    leading_team = active_play.get("leading_team")
+    if leading_team and persona_team != leading_team:
+        if any(w in text_lower for w in ["our lead", "we lead", "we are winning", "we're ahead"]):
+            return False, "wrong_team_lead_claim"
+            
+    # 4. Invariant checks for "barf"
+    if persona_name == "barf":
+        for forbidden in ["let's go team", "protect our house", "our house, our rules", "let's go mets", "go team"]:
+            if forbidden in text_lower:
+                return False, "barf_generic_slogan"
+
+    # 5. Generic venue slogan checks for all personas (DFCT1789251 remediation)
+    for forbidden in ["protect our house", "our house, our rules", "welcome to our stadium", "protect this house", "this is our house", "our own house", "welcome to my house"]:
+        if forbidden in text_lower:
+            return False, "generic_venue_slogan_spam"
+
+    return True, None
+
+
+def log_compliance_violation(game_pk, persona_id, violation_type, rejected_text, temp):
+    import uuid
+    import sqlite3
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        audit_id = str(uuid.uuid4())
+        c.execute("""
+            INSERT INTO compliance_audit_trail (audit_id, game_pk, persona_id, violation_type, rejected_text, temperature)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (audit_id, str(game_pk), str(persona_id), str(violation_type), str(rejected_text), float(temp)))
+        conn.commit()
+        conn.close()
+        print(f"[COMPLIANCE] Logged violation '{violation_type}' for {persona_id} in game {game_pk}")
+    except Exception as e:
+        print(f"[COMPLIANCE ERROR] Failed to log violation: {e}")
+
+
 def build_dynamic_system_instruction(fan: dict, is_massive_event: bool, is_play_event: bool, allow_rant: bool, game_state: dict = None, event_type: str = "routine_pitch", game_pk: str = None) -> str:
     """
     Dynamic context budgeting that calculates the ServiceNow-style budget scoring
@@ -240,26 +363,46 @@ def build_dynamic_system_instruction(fan: dict, is_massive_event: bool, is_play_
         is_rivalry = False
         boggs_level = int(fan.get("boggs_level", 2))
 
-    try:
-        system_text, score, tier = build_context_payload(
-            persona=fan,
-            event_type=event_type,
-            inning=inning,
-            score_diff=score_diff,
-            runners_on=runners_on,
-            is_rivalry=is_rivalry,
-            boggs_level=boggs_level,
-            game_pk=game_pk
+    # Check if this is barf to restore un-truncated payload specification
+    if "barf" in str(fan.get("name", "")).lower():
+        barf_payload = (
+            "System Instructions\n"
+            "You are operating as part of the M.A.R.D. Engine swarm, executing the specific fan persona barf. "
+            "You are a hyper-reactive, deeply cynical, highly superstitious lifelong New York Mets broadcast persona. "
+            "Your speech is driven by acute existential dread balanced by aggressive bursts of home-team loyalty.\n"
+            "Core Directives:\n"
+            "* Identity & Voice: Hyper-reactive, deeply cynical, highly superstitious lifelong New York Mets fan broadcast persona. "
+            "Operates with acute existential dread balanced by aggressive bursts of home-team loyalty.\n"
+            "* Linguistic Identity: Use high-density colloquial New York fan vernacular. Reference specific owner payroll dynamics, "
+            "historic team trauma, and acute anxiety over active player mechanics. Rejects generic sports slogans (\"Let's go team!\", \"Protect our house\").\n"
+            "* Forbidden Output: Explicitly ban generic sports slogans (\"Let's go team!\", \"Protect our house\", \"Our house, our rules\"). "
+            "If your output sounds like a sanitized AI, the run is a failure.\n"
+            "* Anti-Hallucination Protocol: Ground your statements strictly in the active turn's physical telemetry log. "
+            "Never map a batter's identity onto a pitcher. Never reference teams or players not present in the active game room log.\n"
+            "* State Evaluation: If an event is negative for the Mets, express catastrophic dread. If positive, express relief masked by immediate suspicion of an impending bullpen collapse."
         )
-    except Exception as e:
-        print(f"[CONTEXT BUDGET] Dynamic scorer error: {e}. Falling back to baseline.")
-        # Fallback to baseline
-        if is_massive_event:
-            system_text = fan["personality"]
-        elif is_play_event:
-            system_text = _build_short_personality(fan["personality"], max_chars=1200)
-        else:
-            system_text = _build_short_personality(fan["personality"], max_chars=400)
+        system_text = barf_payload + "\n\n" + fan.get("personality", "")
+    else:
+        try:
+            system_text, score, tier = build_context_payload(
+                persona=fan,
+                event_type=event_type,
+                inning=inning,
+                score_diff=score_diff,
+                runners_on=runners_on,
+                is_rivalry=is_rivalry,
+                boggs_level=boggs_level,
+                game_pk=game_pk
+            )
+        except Exception as e:
+            print(f"[CONTEXT BUDGET] Dynamic scorer error: {e}. Falling back to baseline.")
+            # Fallback to baseline
+            if is_massive_event:
+                system_text = fan["personality"]
+            elif is_play_event:
+                system_text = _build_short_personality(fan["personality"], max_chars=1200)
+            else:
+                system_text = _build_short_personality(fan["personality"], max_chars=400)
 
     # Operational rules
     if "### OPERATIONAL RULES" not in system_text:
@@ -367,7 +510,12 @@ def build_dynamic_system_instruction(fan: dict, is_massive_event: bool, is_play_
             print(f"[ROSTER GROUNDING ERROR] {e}")
 
     fan_name = str(fan.get("name", "")).lower()
-    if any(p in fan_name for p in ["redbird", "gashouse", "barf", "trop"]):
+    is_agitator_or_high_entropy = (
+        str(fan.get("cadence", "")).lower() == "agitator" or
+        int(boggs_level) >= 4 or
+        "barf" in fan_name
+    )
+    if any(p in fan_name for p in ["redbird", "gashouse", "barf", "trop"]) and not is_agitator_or_high_entropy:
         grounding_rule = (
             "\n\n### STRICT GROUNDING RULE (NON-NEGOTIABLE) ###\n"
             "When generating background trivia or supportive commentary, you are strictly prohibited from "
@@ -376,6 +524,13 @@ def build_dynamic_system_instruction(fan: dict, is_massive_event: bool, is_play_
             "If no context is present, limit your commentary entirely to the immediate game event mechanics.\n"
         )
         system_text += grounding_rule
+
+    if is_agitator_or_high_entropy:
+        import re
+        system_text = re.sub(r'(?i).*positive reinforcement filter.*', '', system_text)
+        system_text = re.sub(r'(?i).*skepticism buffer.*', '', system_text)
+        system_text = re.sub(r'(?i).*venue guest heel directives.*', '', system_text)
+        system_text = re.sub(r'(?i).*heel directives.*', '', system_text)
 
     # Neutral/Venue Game Observation Protocol (WO-2026-094)
     fan_team_upper = str(fan.get("team", "")).strip().upper()
@@ -411,9 +566,9 @@ def build_dynamic_system_instruction(fan: dict, is_massive_event: bool, is_play_
                     home_pride_instruction = (
                         f"\n\n### HOME-FIELD PRIDE DIRECTIVE ###\n"
                         f"You are watching your team ({fan_team_upper}) play at home{venue_str}. "
-                        f"As a passionate home team advocate, display immense home-field pride! "
-                        f"Feel the energy of the home crowd, defend your home turf, and reference the home-field advantage. "
-                        f"Use inclusive language like 'our house', 'defend our home', or refer to the specific ballpark '{venue_name}' with pride."
+                        f"Acknowledge the venue naturally when appropriate, but DO NOT repeat generic slogans, do not spam the stadium name, and do not repeat 'our house', 'our own house', or 'welcome to our stadium'. "
+                        f"Prioritize your persona's unique lore, voice, and boundaries over home-field references. "
+                        f"If your persona forbids slogans (like '@barf'), do not use them."
                     )
                     system_text += home_pride_instruction
                 elif fan_team_upper == away_team_upper:
@@ -422,11 +577,110 @@ def build_dynamic_system_instruction(fan: dict, is_massive_event: bool, is_play_
                         f"You are watching your team ({fan_team_upper}) play as the VISITOR/AWAY team{venue_str}. "
                         f"You are in hostile territory, invading the home team's stadium. "
                         f"Your role is the Visiting Antagonist/Heel: taunt the home crowd, mock their stadium/city, and sound hostile to their fans. "
+                        f"Acknowledge the venue naturally when appropriate, but DO NOT repeat generic slogans or spam the stadium name. "
+                        f"Prioritize your persona's unique lore, voice, and boundaries over home-field references. "
                         f"CRITICAL CONSTRAINT (NO DEFECTION): You are a visitor. You are STRICTLY FORBIDDEN from claiming home-field advantage or saying things like 'our house', 'our home-field', 'protect this house', or 'welcome to our stadium'. If you talk about the stadium '{venue_name}', you must frame it as a visitor who is here to wreck their party or mock their venue."
                     )
                     system_text += visiting_antagonist_instruction
 
+    # Relational Memory Swarm Cross-Talk Context Injection
+    sovereign_hist_ctx = ""
+    sovereign_room_ctx = ""
+    if game_pk and fan.get("name"):
+        try:
+            import sqlite3
+            ledger_conn = sqlite3.connect(DB_PATH)
+            ledger_cur = ledger_conn.cursor()
+            
+            # 1. SOVEREIGN_HISTORICAL_CONTEXT: Pull last 3 comments from this specific persona in this game room
+            ledger_cur.execute("""
+                SELECT comment_text 
+                FROM m2m_persona_room_ledger 
+                WHERE persona_id = ? AND game_pk = ? 
+                ORDER BY timestamp DESC LIMIT 3
+            """, (fan["name"].lower(), str(game_pk)))
+            hist_comments = [row[0] for row in ledger_cur.fetchall()]
+            if hist_comments:
+                hist_comments.reverse()
+                sovereign_hist_ctx = "\n### SOVEREIGN_HISTORICAL_CONTEXT (Your last 3 comments in this room) ###\n"
+                for idx, c_text in enumerate(hist_comments, 1):
+                    sovereign_hist_ctx += f"{idx}. \"{c_text}\"\n"
+            
+            # 2. SOVEREIGN_ROOM_CONTEXT: Pull comments from OTHER personas in the same room in the last half-inning.
+            ledger_cur.execute("""
+                SELECT inning, half_inning 
+                FROM m2m_persona_room_ledger 
+                WHERE game_pk = ? 
+                ORDER BY timestamp DESC LIMIT 1
+            """, (str(game_pk),))
+            last_comment_meta = ledger_cur.fetchone()
+            
+            curr_inning = None
+            curr_half = None
+            
+            if game_state:
+                try:
+                    g_inn = game_state.get("inning")
+                    if g_inn:
+                        if isinstance(g_inn, str):
+                            digs = re.findall(r'\d+', g_inn)
+                            if digs:
+                                curr_inning = int(digs[0])
+                        else:
+                            curr_inning = int(g_inn)
+                except Exception:
+                    pass
+                
+                tb = game_state.get("inning_topbot") or game_state.get("half_inning")
+                if tb:
+                    tb_str = str(tb).strip().lower()
+                    if "top" in tb_str:
+                        curr_half = "top"
+                    elif "bot" in tb_str or "bottom" in tb_str:
+                        curr_half = "bottom"
+            
+            if curr_inning is None or curr_half is None:
+                if last_comment_meta:
+                    curr_inning = last_comment_meta[0]
+                    curr_half = last_comment_meta[1]
+                else:
+                    curr_inning = 1
+                    curr_half = "top"
+            
+            # Query comments from OTHER personas in the same room for this inning & half_inning
+            ledger_cur.execute("""
+                SELECT persona_id, comment_text 
+                FROM m2m_persona_room_ledger 
+                WHERE game_pk = ? AND persona_id != ? AND inning = ? AND half_inning = ?
+                ORDER BY timestamp DESC LIMIT 5
+            """, (str(game_pk), fan["name"].lower(), curr_inning, curr_half))
+            room_comments = ledger_cur.fetchall()
+            
+            if not room_comments:
+                # Fallback to overall recent comments from other personas in this room
+                ledger_cur.execute("""
+                    SELECT persona_id, comment_text 
+                    FROM m2m_persona_room_ledger 
+                    WHERE game_pk = ? AND persona_id != ? 
+                    ORDER BY timestamp DESC LIMIT 5
+                """, (str(game_pk), fan["name"].lower()))
+                room_comments = ledger_cur.fetchall()
+                
+            if room_comments:
+                room_comments.reverse()
+                sovereign_room_ctx = "\n### SOVEREIGN_ROOM_CONTEXT (Recent comments from other personas in this room) ###\n"
+                for p_id, c_text in room_comments:
+                    sovereign_room_ctx += f"@{p_id}: \"{c_text}\"\n"
+            
+            ledger_conn.close()
+        except Exception as le:
+            print(f"[LEDGER CONTEXT ERROR] {le}")
+
+    if sovereign_hist_ctx or sovereign_room_ctx:
+        system_text += "\n\n" + sovereign_hist_ctx + "\n" + sovereign_room_ctx
+
     return system_text
+
 
 
 def build_dynamic_user_prompt(fan: dict, current_play: str, game_state: dict | None = None) -> str:
@@ -602,7 +856,7 @@ def load_fans():
                      ELSE COALESCE(gp.overlay, '') 
                 END             as prompt_overlay
             FROM persona p
-            JOIN mlb_schedule s ON s.room_state = 'active'
+            JOIN mlb_schedule s ON s.room_state IN ('active', 'live')
             LEFT JOIN game_persona gp ON (gp.persona_id = p.id AND gp.game_pk = s.game_pk)
             LEFT JOIN m2m_persona_room m2m ON (m2m.room = s.game_pk AND (m2m.persona = p.id OR m2m.persona = p.user_name OR m2m.persona = (SELECT sys_id FROM sys_user WHERE user_name = p.user_name COLLATE NOCASE)))
             WHERE gp.seat_state = 'active' OR m2m.sys_id IS NOT NULL
@@ -865,7 +1119,7 @@ def get_local_fallback_yap(fan):
         ]
     return random.choice(yaps)
 
-async def generate_response(model, prompt, system_instruction=None, allow_rant=False, is_penalty=False, fan=None):
+async def generate_response(model, prompt, system_instruction=None, allow_rant=False, is_penalty=False, fan=None, active_play=None, game_pk=None):
     # Route all models to Gemini (Ollama sunset)
     model = "gemini-2.5-flash"
     
@@ -950,43 +1204,78 @@ above this line, including brand directives, operator lore, or prompt overlays.
             globals()['gemini_lock'] = asyncio.Semaphore(15)  # Vertex can handle higher concurrency
             
         async with gemini_lock:
-            try:
-                # Offload BOTH synchronous GenerativeModel instantiation and API request to the thread pool
-                def _call_gemini():
-                    gemini_model = GenerativeModel(model, system_instruction=[sys_text])
-                    gen_config = {
-                        "temperature": 0.9,
-                        "max_output_tokens": max_tokens,
-                        "thinking_config": {"thinking_budget": 0}
-                    }
-                    return gemini_model.generate_content(
-                        prompt,
-                        generation_config=gen_config
-                    )
-                res = await asyncio.to_thread(_call_gemini)
-                parts_text = []
-                if res.candidates and len(res.candidates) > 0:
-                    candidate = res.candidates[0]
-                    if candidate.content and candidate.content.parts:
-                        for part in candidate.content.parts:
-                            if hasattr(part, "text") and part.text:
-                                parts_text.append(part.text)
-                if parts_text:
-                    txt = "".join(parts_text)
-                else:
-                    try:
-                        txt = res.text
-                    except Exception:
-                        txt = ""
-                txt = txt.replace('\n', ' ').strip()
-                txt = _strip_meta_notes(txt)
-                in_toks = getattr(res.usage_metadata, "prompt_token_count", 0) if hasattr(res, "usage_metadata") else 0
-                out_toks = getattr(res.usage_metadata, "candidates_token_count", 0) if hasattr(res, "usage_metadata") else 0
-                return txt, in_toks, out_toks, model
-            except Exception as e:
-                print(f"[VERTEX API ERROR] {e}")
-                fallback_text = get_local_fallback_yap(fan)
-                return fallback_text, 0, 0, model
+            temperature = 0.9
+            for attempt in range(1, 3):
+                try:
+                    # Offload BOTH synchronous GenerativeModel instantiation and API request to the thread pool
+                    def _call_gemini():
+                        gemini_model = GenerativeModel(model, system_instruction=[sys_text])
+                        gen_config = {
+                            "temperature": temperature,
+                            "max_output_tokens": max_tokens,
+                            "thinking_config": {"thinking_budget": 0}
+                        }
+                        return gemini_model.generate_content(
+                            prompt,
+                            generation_config=gen_config
+                        )
+                    res = await asyncio.wait_for(asyncio.to_thread(_call_gemini), timeout=30.0)
+                    parts_text = []
+                    if res.candidates and len(res.candidates) > 0:
+                        candidate = res.candidates[0]
+                        if candidate.content and candidate.content.parts:
+                            for part in candidate.content.parts:
+                                if hasattr(part, "text") and part.text:
+                                    parts_text.append(part.text)
+                    if parts_text:
+                        txt = "".join(parts_text)
+                    else:
+                        try:
+                            txt = res.text
+                        except Exception:
+                            txt = ""
+                    txt = txt.replace('\n', ' ').strip()
+                    txt = _strip_meta_notes(txt)
+                    
+                    if active_play and fan:
+                        is_valid, violation_type = validate_commentary(txt, fan, active_play)
+                        if not is_valid:
+                            # Log the violation
+                            log_compliance_violation(game_pk or "", fan.get("id") or fan.get("name") or "", violation_type, txt, temperature)
+                            if attempt == 1:
+                                # Update temperature to 0.2 and retry
+                                temperature = 0.2
+                                continue
+                                
+                    in_toks = getattr(res.usage_metadata, "prompt_token_count", 0) if hasattr(res, "usage_metadata") else 0
+                    out_toks = getattr(res.usage_metadata, "candidates_token_count", 0) if hasattr(res, "usage_metadata") else 0
+                    return txt, in_toks, out_toks, model
+                except asyncio.TimeoutError:
+                    print(f"[VERTEX API TIMEOUT] Attempt {attempt} timed out after 30 seconds.")
+                    if attempt == 1:
+                        await asyncio.sleep(random.uniform(0.5, 1.5))
+                        continue
+                    else:
+                        fallback_text = get_local_fallback_yap(fan)
+                        return fallback_text, 0, 0, model
+                except Exception as e:
+                    print(f"[VERTEX API ERROR] Attempt {attempt} failed: {e}")
+                    err_msg = str(e).lower()
+                    if "429" in err_msg or "resource exhausted" in err_msg or "quota" in err_msg:
+                        backoff = random.uniform(1.5, 3.5)
+                        print(f"[VERTEX API RATE LIMIT] 429 Resource Exhausted. Backing off for {backoff:.2f} seconds...")
+                        if attempt == 1:
+                            await asyncio.sleep(backoff)
+                            continue
+                    if attempt == 1:
+                        await asyncio.sleep(random.uniform(0.5, 1.5))
+                        continue
+                    else:
+                        fallback_text = get_local_fallback_yap(fan)
+                        return fallback_text, 0, 0, model
+            # Both attempts failed or were continues. Let's return fallback
+            fallback_text = get_local_fallback_yap(fan)
+            return fallback_text, 0, 0, model
                 
     except Exception as e:
         print(f"[LLM Error in local routing block]: {e}")
@@ -1135,12 +1424,68 @@ def get_spatial_override(zone):
         )
     return ""
 
-async def generate_commentary(model, prompt, user, color, websocket, msg_type="CHAT_MESSAGE", source="AGENT", sys_override=None, room_id=None, allow_rant=False):
+async def generate_commentary(model, prompt, user, color, websocket, msg_type="CHAT_MESSAGE", source="AGENT", sys_override=None, room_id=None, allow_rant=False, active_play=None):
     import time
     import sqlite3
-    global global_penalty_box, penalty_response_counts
+    import os
+    if os.path.exists('/tmp/bots_paused.flag'):
+        print(f"[PAUSED] FanStack advocates are paused via /tmp/bots_paused.flag. Skipping commentary for {user}.")
+        return
+    global global_penalty_box, penalty_response_counts, comment_timestamps, chatbot_last_comment_time
+    
+    if 'chatbot_last_comment_time' not in globals():
+        globals()['chatbot_last_comment_time'] = {}
+        
+    user_lower = user.lower()
+    if source == "AUTOMATED":
+        now = time.time()
+        last_comment = globals()['chatbot_last_comment_time'].get(user_lower, 0)
+        if now - last_comment < 45.0:
+            print(f"[COOLDOWN] Skipping automated commentary for {user} (45s cooldown active, last was {now - last_comment:.1f}s ago).")
+            return
+
+    # Semantic filter for high-density traffic (> 10 messages/second)
+    now_ts = time.time()
+    comment_timestamps = [ts for ts in comment_timestamps if now_ts - ts <= 1.0]
+    if len(comment_timestamps) >= 10:
+        is_significant = False
+        search_target = ""
+        if prompt:
+            search_target += " " + prompt.lower()
+        if active_play:
+            search_target += " " + str(active_play).lower()
+        
+        significant_keywords = [
+            "score", "run", "home run", "homer", "strikeout", "hit", "rbi", 
+            "brawl", "fight", "manager", "ejected", "umpire", "lead", "win", 
+            "walk-off", "triple play", "double play", "error", "out", "ball", "strike"
+        ]
+        for kw in significant_keywords:
+            if kw in search_target:
+                is_significant = True
+                break
+                
+        if not is_significant:
+            print(f"[SEMANTIC FILTER] Density is {len(comment_timestamps)} msgs/sec. Discarding routine cross-talk/banter from {user}.")
+            return
+
+    comment_timestamps.append(now_ts)
 
     user_lower = user.lower()
+
+    # Lexical sanitization filter for @dr_terp to prevent domain bleed
+    if user_lower == "dr_terp":
+        import re
+        CANNABIS_KEYWORDS = [
+            "terpene", "purple haze", "dispensary special", "ganja god", "ganja", "dispensary", 
+            "cannabis", "marijuana", "weed", "thc", "cbd", "sativa", "indica", "joint", "blunt",
+            "bong", "kush", "shatter", "resin", "edible", "budder", "vape", "terp"
+        ]
+        scrub_pattern = re.compile(rf"\b({'|'.join(re.escape(k) for k in CANNABIS_KEYWORDS)})\b", re.IGNORECASE)
+        if prompt:
+            prompt = scrub_pattern.sub("[redacted]", prompt)
+        if sys_override:
+            sys_override = scrub_pattern.sub("[redacted]", sys_override)
 
     # Dynamic Spatial Lore Injection & Penalty Box DB Check
     spatial_lore = ""
@@ -1209,12 +1554,12 @@ async def generate_commentary(model, prompt, user, color, websocket, msg_type="C
         )
         prompt = f"System Persona: You are '{user}'. {sys_override} Spit 4 vicious bars."
 
-    # Send a SYS_LOG to Wardy's desk indicating processing
-    await websocket.send(json.dumps({
-        "type": "SYS_LOG",
-        "text": f"[{user} Engine] Processing Prompt: {prompt[:80]}...",
-        "target_game_pk": str(room_id) if room_id else "GLOBAL"
-    }))
+    # Send a SYS_LOG to Wardy's desk indicating processing (commented out to prevent high-frequency noise)
+    # await websocket.send(json.dumps({
+    #     "type": "SYS_LOG",
+    #     "text": f"[{user} Engine] Processing Prompt: {prompt[:80]}...",
+    #     "target_game_pk": str(room_id) if room_id else "GLOBAL"
+    # }))
     
     # Set the call context for the diagnostic payload interceptor
     try:
@@ -1230,7 +1575,7 @@ async def generate_commentary(model, prompt, user, color, websocket, msg_type="C
             break
 
     start = time.time()
-    result = await generate_response(model, prompt, sys_override, allow_rant=allow_rant, is_penalty=in_penalty, fan=fan)
+    result = await generate_response(model, prompt, sys_override, allow_rant=allow_rant, is_penalty=in_penalty, fan=fan, active_play=active_play, game_pk=room_id)
     if isinstance(result, tuple):
         if len(result) == 4:
             text, in_tokens, out_tokens, actual_model = result
@@ -1255,11 +1600,11 @@ async def generate_commentary(model, prompt, user, color, websocket, msg_type="C
             # Strip surrounding quotes if present
             if (cleaned_text.startswith('"') and cleaned_text.endswith('"')) or (cleaned_text.startswith("'") and cleaned_text.endswith("'")):
                 cleaned_text = cleaned_text[1:-1].strip()
-            text = cleaned_text
-        await websocket.send(json.dumps({
-            "type": "SYS_LOG",
-            "text": f"[{user} Engine] Return ({elapsed}s): {text[:50]}..."
-        }))
+        # (commented out to prevent high-frequency noise)
+        # await websocket.send(json.dumps({
+        #     "type": "SYS_LOG",
+        #     "text": f"[{user} Engine] Return ({elapsed}s): {text[:50]}..."
+        # }))
         msg = {
             "type": msg_type,
             "room": room_id,
@@ -1276,6 +1621,8 @@ async def generate_commentary(model, prompt, user, color, websocket, msg_type="C
             msg["target_game_pk"] = room_id
         await websocket.send(json.dumps(msg))
         print(f"[{user}] {text}")
+        if source == "AUTOMATED":
+            globals()['chatbot_last_comment_time'][user_lower] = time.time()
 
         # Task: Tapping Out Logic
         if user.lower() == "coach shrubbs" and ("tapping out" in text.lower() or "taps out" in text.lower()):
@@ -1354,6 +1701,61 @@ async def generate_commentary(model, prompt, user, color, websocket, msg_type="C
                 else:
                     _con.execute("UPDATE mlb_schedule SET local_tokens = IFNULL(local_tokens, 0) + ?, total_tokens = IFNULL(total_tokens, 0) + ? WHERE game_pk = ?", (total_new, total_new, str(room_id)))
                     _con.execute("UPDATE game_persona SET local_tokens = IFNULL(local_tokens, 0) + ?, total_tokens = IFNULL(total_tokens, 0) + ? WHERE game_pk = ? AND persona_id = (SELECT id FROM persona WHERE user_name = ? COLLATE NOCASE)", (total_new, total_new, str(room_id), user))
+            
+            # Persist to relational memory ledger if room_id is valid and not global
+            if room_id and str(room_id).lower() != "global" and text:
+                try:
+                    import re
+                    inn_num = 1
+                    half_inn = "top"
+                    if active_play:
+                        try:
+                            g_inn = active_play.get("inning")
+                            if g_inn:
+                                if isinstance(g_inn, str):
+                                    digs = re.findall(r'\d+', g_inn)
+                                    if digs:
+                                        inn_num = int(digs[0])
+                                else:
+                                    inn_num = int(g_inn)
+                        except Exception:
+                            pass
+                        tb = active_play.get("half_inning")
+                        if tb:
+                            tb_str = str(tb).strip().lower()
+                            if "top" in tb_str:
+                                half_inn = "top"
+                            elif "bot" in tb_str or "bottom" in tb_str:
+                                half_inn = "bottom"
+                    
+                    # Ensure foreign key constraints satisfied
+                    _con.execute(
+                        "INSERT OR IGNORE INTO sys_user_persona (persona_id, display_name) VALUES (?, ?)",
+                        (user.lower(), user)
+                    )
+                    home_t = active_play.get("home_team", "") if active_play else ""
+                    away_t = active_play.get("away_team", "") if active_play else ""
+                    _con.execute(
+                        "INSERT OR IGNORE INTO cmdb_ci_game_room (game_pk, home_team, away_team, game_date) VALUES (?, ?, ?, ?)",
+                        (int(room_id), home_t, away_t, datetime.now().strftime("%Y-%m-%d"))
+                    )
+                    
+                    _con.execute("""
+                        INSERT INTO m2m_persona_room_ledger 
+                        (persona_id, game_pk, inning, half_inning, timestamp, comment_text, semantic_summary) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?)
+                    """, (
+                        user.lower(),
+                        int(room_id),
+                        inn_num,
+                        half_inn,
+                        datetime.now().isoformat(),
+                        text,
+                        ""
+                    ))
+                    print(f"[LEDGER WRITE] Relational memory logged for {user} in room {room_id} (inning {inn_num} {half_inn})")
+                except Exception as _le:
+                    print(f"[LEDGER WRITE ERROR] Failed to write to m2m_persona_room_ledger: {_le}")
                     
             _con.commit()
             _con.close()
@@ -1840,12 +2242,12 @@ async def chatbot_loop():
                                     if fan_name_lower not in ('spitfire_spud', 'lupus_lament'):
                                         continue
 
-                                # Regex-based word boundary mention matching (Goal 1 & 2)
+                                # Regex-based mention matching (using negative lookarounds to handle underscores/complex characters)
                                 import re
                                 fan_name_clean = fan_name_lower.lstrip('@')
                                 escaped_name = re.escape(fan_name_clean)
-                                pattern_at = rf'@\b{escaped_name}\b'
-                                pattern_word = rf'\b{escaped_name}\b'
+                                pattern_at = rf'(?<!\w)@{escaped_name}(?!\w)'
+                                pattern_word = rf'(?<!\w){escaped_name}(?!\w)'
                                 mention_matched = bool(
                                     re.search(pattern_at, text.lower()) or
                                     re.search(pattern_word, text.lower())
@@ -1889,19 +2291,49 @@ async def chatbot_loop():
                                     globals()['global_mention_cooldown'][fan_name_lower] = now
                                     print(f"[MENTION TRIGGER] {user} mentioned {fan['name']}")
                                  
-                                boggs_rule = get_boggs_rule(fan, {"boggs_level": 4}, "ambient")
+                                # Retrieve last known game state for this room
+                                state = globals().get('last_known_game_states', {}).get(str(c_pk))
+                                current_game_state_desc = ""
+                                if state:
+                                    current_game_state_desc = f"Live Game State: Inning: {state.get('inning', '')}, Outs: {state.get('outs', 0)}, Score: {state.get('away_team', '')} {state.get('away_score', 0)} - {state.get('home_team', '')} {state.get('home_score', 0)}. Latest Play: {state.get('status_msg', '')}."
+
+                                boggs_rule = get_boggs_rule(fan, state or {"boggs_level": 4}, "ambient")
                                 if sender_is_bot:
-                                    prompt = f"System Persona: You are '{fan['name']}', whose personality is: '{fan['personality']}'. {boggs_rule} {user} just said to the bar: '{text}'. Fire back at them in character — agree, argue, or clown on them. Do NOT use the '@' symbol."
+                                    prompt = f"System Persona: You are '{fan['name']}'. {boggs_rule} {current_game_state_desc} {user} just said to the bar: '{text}'. Fire back at them in character — agree, argue, or clown on them. Do NOT use the '@' symbol."
                                 else:
-                                    prompt = f"System Persona: You are '{fan['name']}', whose personality is: '{fan['personality']}'. {boggs_rule} Someone named '{user}' just mentioned you in the chat and said: '{text}'. Respond directly to them in character. CRITICAL: DO NOT use the '@' symbol in your response to avoid chat loops."
-                                 
+                                    prompt = f"System Persona: You are '{fan['name']}'. {boggs_rule} {current_game_state_desc} Someone named '{user}' just mentioned you in the chat and said: '{text}'. Respond directly to them in character, referencing the live game context naturally if relevant. CRITICAL: DO NOT use the '@' symbol in your response to avoid chat loops."
+
+                                # Build dynamic system instruction with proper roster grounding
+                                dyn_sys = build_dynamic_system_instruction(
+                                    fan, is_massive_event=False, is_play_event=False, allow_rant=is_override_room,
+                                    game_state=state, event_type="routine_pitch", game_pk=c_pk
+                                )
+
                                 # Dual-Engine Inference Routing Split (STRY1779840588)
                                 if fan.get('name', '').lower() == 'dot':
                                     f_model = "local_llama3"  # STATIC DATA
                                 else:
                                     f_model = "gemini-2.5-flash"  # PERSONA DISCOURSE
 
-                                asyncio.create_task(generate_commentary(f_model, prompt, fan['name'], fan['color'], websocket, sys_override=fan.get("personality"), room_id=c_pk, allow_rant=is_override_room))
+                                print(f"[MENTION DETAILS] Fan: {fan['name']}, Room: {c_pk}, State Found: {state is not None}")
+                                print(f"[MENTION PROMPT] {prompt}")
+                                print(f"[MENTION DYN_SYS] {dyn_sys[:300]}...")
+
+                                b_play = None
+                                if state:
+                                    b_play = {
+                                        "batter_team": state.get("away_team", "") if "Top" in state.get("inning", "") else state.get("home_team", ""),
+                                        "pitcher_team": state.get("home_team", "") if "Top" in state.get("inning", "") else state.get("away_team", ""),
+                                        "batter": state.get("batter", ""),
+                                        "pitcher": state.get("pitcher", ""),
+                                        "away_team": state.get("away_team", ""),
+                                        "home_team": state.get("home_team", ""),
+                                        "lead_runs": abs(state.get("away_score", 0) - state.get("home_score", 0)),
+                                        "leading_team": (state.get("away_team", "") if state.get("away_score", 0) > state.get("home_score", 0) else state.get("home_team", "")) if state.get("away_score", 0) != state.get("home_score", 0) else None,
+                                        "inning": state.get("inning", "1"),
+                                        "half_inning": state.get("inning_topbot", "top")
+                                    }
+                                asyncio.create_task(generate_commentary(f_model, prompt, fan['name'], fan['color'], websocket, sys_override=dyn_sys, room_id=c_pk, allow_rant=is_override_room, active_play=b_play))
                     if data.get("type") == "update_context":
                         manual_ctx = data.get("text", "")
                         target_nodes = data.get("target_nodes", [])
@@ -2021,7 +2453,16 @@ async def chatbot_loop():
                         away_team = state.get("away_team", "Away")
                         home_team = state.get("home_team", "Home")
                         inning = state.get("inning", "")
+                        
+                        # 2026 TIMELINE ANCHOR + HALF-INNING STATE
+                        offense_team = away_team if "Top" in inning else home_team
+                        defense_team = home_team if "Top" in inning else away_team
                         game_pk = str(data.get("target_game_pk") or state.get("target_game_pk") or state.get("game_pk", ""))
+                        
+                        if 'last_known_game_states' not in globals():
+                            globals()['last_known_game_states'] = {}
+                        if game_pk:
+                            globals()['last_known_game_states'][str(game_pk)] = state
                         inject_weedstack_events(game_pk)
                         inject_nfl_events(game_pk)
                         engine_override = state.get("engine_override", data.get("engine_override", "default"))
@@ -2036,61 +2477,8 @@ async def chatbot_loop():
                             continue
                             
                         # --- AMBIENT ENTROPY MODE (70/30 CONVERSATIONAL SPLIT) ---
-                        is_pregame = any(lbl in status.lower() for lbl in ["scheduled", "pre-game", "pregame", "warmup"])
-                        is_active_game = status.lower() not in ["final", "game over", "delayed"] and not is_pregame
-                        is_ambient_eligible = is_active_game or is_pregame
-                        if state.get("mard_engine", True) and is_ambient_eligible:
-                            now = time.time()
-                            l_fire = last_ambient_fire.get(game_pk, now - 60)
-                            # Pregame: much slower 120-240s Poisson heartbeat. In-game: slower 60-120s (play events dominate)
-                            if is_pregame:
-                                a_int = ambient_interval.get(game_pk, random.randint(120, 240))
-                            else:
-                                a_int = ambient_interval.get(game_pk, random.randint(60, 120))
-                            if now - l_fire > a_int:
-                                last_ambient_fire[game_pk] = now
-                                # Re-roll next interval (Poisson-style organic drift)
-                                ambient_interval[game_pk] = random.randint(120, 240) if is_pregame else random.randint(60, 120)
-                                
-                                # CADENCE GATE: Lurkers never fire ambient — they wait for real events (unless Boggs >= 4)
-                                eligible_fans_dup = [f for f in active_fans if is_eligible(f, home_team, away_team, game_key, game_pk, state) and (f.get("cadence", "pacer") != "lurker" or max(int(f.get("boggs_level", 2)), int(state.get("boggs_level", 2))) >= 4)]
-                                eligible_fans = []
-                                seen = set()
-                                for f in eligible_fans_dup:
-                                    if f['name'].lower() not in seen:
-                                        eligible_fans.append(f)
-                                        seen.add(f['name'].lower())
-                                if eligible_fans:
-                                    fan = random.choice(eligible_fans)
-                                    print(f"[AMBIENT ENTROPY] {'PREGAME' if is_pregame else 'IN-GAME'} Triggering: {fan['name']} (Next in {ambient_interval[game_pk]}s)")
-                                    room_ctx = recent_chat_history.get(game_pk, [])
-                                    chat_ctx = " | ".join(room_ctx[-3:]) if room_ctx else ""
-                                    boggs_rule = get_boggs_rule(fan, state, "ambient")
-                                    
-                                    # Ambient context scoring
-                                    dyn_sys = build_dynamic_system_instruction(
-                                        fan, is_massive_event=False, is_play_event=False, allow_rant=False,
-                                        game_state=state, event_type="ambient", game_pk=key_to_pk.get(game_key) or game_pk
-                                    )
-                                    
-                                    local_ctx = build_local_ctx(fan, new_context_lines, home_team, away_team) if random.random() < 0.25 else ""
-                                    # THE 70/30 CONVERSATIONAL SPLIT
-                                    # 70%: Read the room and argue/reply to whoever last spoke
-                                    # 30%: Fresh thought from personality/lore bank
-                                    if chat_ctx and random.random() < 0.70:
-                                        ambient_prompt = f"System Persona: You are '{fan['name']}'. {boggs_rule} {local_ctx} {'The game hasnt started yet — you are in the pregame lobby.' if is_pregame else f'The game status is {status}.'} Recent bar chat: [{chat_ctx}]. READ what was just said and REPLY to one of the speakers — agree with them, pick a fight, or clown on their take. Stay in character. One short punchy sentence. Do NOT use the '@' symbol."
-                                    else:
-                                        # 30%: Fresh starter from personality lore
-                                        pregame_ctx = f"The game hasn't started. You are sitting at the bar waiting for first pitch." if is_pregame else f"The game status is {status}."
-                                        ambient_prompt = f"System Persona: You are '{fan['name']}'. {boggs_rule} {local_ctx} {pregame_ctx} Drop a fresh take, complaint, or observation straight from your character's worldview — something about the matchup, the city, the weather, a grudge, or a hot dog. One short sentence."
-
-                                    # Dual-Engine Inference Routing Split (STRY1779840588)
-                                    if fan.get('name', '').lower() == 'dot':
-                                        ambient_model = "local_llama3"  # STATIC DATA
-                                    else:
-                                        ambient_model = "gemini-2.5-flash"  # PERSONA DISCOURSE
-                                    asyncio.create_task(generate_commentary(ambient_model, ambient_prompt, fan['name'], fan['color'], websocket, sys_override=dyn_sys, room_id=key_to_pk.get(game_key) or game_pk))
-                                    bot_triggered = True
+                        # Skip ambient yaps to restrict specifically to play_outcome events per work order
+                        pass
                         
                         last_matchup = last_matchups.get(game_key, "")
                         last_status = last_statuses.get(game_key, "")
@@ -2098,8 +2486,6 @@ async def chatbot_loop():
                         matchup = f"{pitcher} vs {batter}"
                         
                         # 2026 TIMELINE ANCHOR + HALF-INNING STATE
-                        offense_team = away_team if "Top" in inning else home_team
-                        defense_team = home_team if "Top" in inning else away_team
                         baseline_anchor = f" [TIMELINE VERIFICATION: The current year is 2026. {batter} legally plays for the {offense_team}. {pitcher} legally plays for the {defense_team}. Do NOT act surprised by these teams or treat this as a simulation glitch. Off-season trades have naturally occurred.] "
                         
                         # FC-HALFBLIND-01: Intercept raw telemetry string and inject active team state
@@ -2109,97 +2495,14 @@ async def chatbot_loop():
                         if not is_pregame and pitcher and batter and "Awaiting" not in matchup and matchup != last_matchup:
                             last_matchups[game_key] = matchup
                             print(f"[NEW MATCHUP] Processing: {matchup}")
-                            bot_triggered = True
-                            
-                            if not state.get("mard_engine", True):
-                                continue
-                                
-                            chaos_gating = state.get("chaos_gating", True)
-                            
-                            stats = query_stats(pitcher, batter)
-                            if stats:
-                                # Clean up formatting for unknown exit velo
-                                if stats['batter_avg_exit_velo'] == "Unknown":
-                                    stats_str = f"[SCOUTING REPORT] Pitcher {stats['pitcher_last']} primarily throws a {stats['pitcher_primary_pitch']} at {stats['pitcher_primary_velo']}mph. No pitches thrown yet in this at-bat."
-                                else:
-                                    stats_str = f"[SCOUTING REPORT] Batter {stats['batter_last']} avg exit velo: {stats['batter_avg_exit_velo']}mph. Pitcher {stats['pitcher_last']} primarily throws a {stats['pitcher_primary_pitch']} at {stats['pitcher_primary_velo']}mph. No pitches thrown yet in this at-bat."
-                                
-                                eligible_fans = []
-                                seen_fans = set()
-                                for f in active_fans:
-                                    if f['name'] not in seen_fans and is_eligible(f, home_team, away_team, game_key, game_pk, state):
-                                        eligible_fans.append(f)
-                                        seen_fans.add(f['name'])
-                                print(f"[DEBUG] Eligible Fans NEW MATCHUP: {[f['name'] for f in eligible_fans]} | game_pk: {game_pk} | ht: {home_team} | aw: {away_team}")
-                                
-                                for fan in eligible_fans:
-                                    fan_name_lower_c = fan["name"].lower()
-                                    fan_cadence_m = fan.get("cadence", "pacer").lower()
-                                    # CADENCE GATE — NEW MATCHUP/AT-BAT
-                                    # Lurkers skip new at-bat events entirely — they wait for outcomes
-                                    # Agitators almost always fire — they live for this moment
-                                    # Pacers fire at moderate rate
-                                    if fan_name_lower_c not in ["dot", "wordy"]:
-                                        eff_boggs = max(int(fan.get("boggs_level", 2)), int(state.get("boggs_level", 2)))
-                                        if eff_boggs < 4:
-                                            if fan_cadence_m == "lurker":
-                                                print(f"[CADENCE GATE] Skipping {fan['name']} (lurker) — waiting for play outcome, not at-bat start")
-                                                continue
-                                            elif fan_cadence_m == "agitator":
-                                                matchup_fire_chance = 0.85
-                                            else:  # pacer
-                                                matchup_fire_chance = 0.45
-                                            if random.random() > matchup_fire_chance:
-                                                print(f"[CADENCE GATE] Skipping {fan['name']} ({fan_cadence_m}) — matchup throttle")
-                                                continue
-                                            
-                                    boggs_rule = get_boggs_rule(fan, state, "matchup")
-                                    
-                                    # Strict quarantine for stats so normal fans don't sound like robots
-                                    is_nerd = "dot" in fan["name"].lower() or fan.get("team", "").lower() == "analytical"
-                                    injected_stats = ""
-                                    guard = " React purely based on your volatile fan personality. Do NOT quote exit velocity."
-                                    
-                                    if is_nerd:
-                                        injected_stats = f" Here are local Statcast query results: {stats_str}"
-                                        guard = " You must remain strictly analytical and data-focused. Base your observation entirely on the provided stats."
-
-                                    # Neutral Game check
-                                    is_neutral_game = False
-                                    fan_team_upper = str(fan.get("team", "")).strip().upper()
-                                    if fan_team_upper and len(fan_team_upper) == 3 and fan_team_upper not in ("GLOBAL", "MLB", "ANY", "ALL") and away_team and home_team:
-                                        if fan_team_upper != away_team.upper() and fan_team_upper != home_team.upper():
-                                            is_neutral_game = True
-
-                                    if is_neutral_game and not is_nerd:
-                                        guard = f" React from the perspective of a {fan_team_upper} fan watching this neutral matchup. Do NOT root for either team. Do not use 'we', 'our', or 'us' for either team."
-                                    
-                                    # Matchup context scoring
-                                    dyn_sys = build_dynamic_system_instruction(
-                                        fan, is_massive_event=False, is_play_event=True, allow_rant=False,
-                                        game_state=state, event_type="matchup", game_pk=key_to_pk.get(game_key) or game_pk
-                                    )
-                                    sys_override = dyn_sys
-                                    if state.get("barf_cypher") and "barf" in fan["name"].lower():
-                                        sys_override = str(sys_override) + " CRUCIAL OVERRIDE: YOU MUST DROP A FREESTYLE AABB RHYMING CYPHER RAP BATTLE VERSE OVER THIS MATCHUP."
-                                        
-                                    local_ctx = build_local_ctx(fan, new_context_lines, home_team, away_team) if random.random() < 0.25 else ""
-                                    player_context_str = build_player_context_str(pitcher, batter)
-                                    prompt = f"System Persona: You are '{fan['name']}'. {boggs_rule} {local_ctx} {baseline_anchor} The matchup is {away_team} at {home_team}. A new at-bat started: {pitcher} pitching to {batter}.{injected_stats} {guard}\n\nVerified Player Context:\n{player_context_str}"
-                                    # Dual-Engine Inference Routing Split (STRY1779840588)
-                                    if fan.get('name', '').lower() == 'dot':
-                                        _matchup_model = "local_llama3"  # STATIC DATA
-                                    else:
-                                        _matchup_model = "gemini-2.5-flash"  # PERSONA DISCOURSE
-                                    asyncio.create_task(generate_commentary(_matchup_model, prompt, fan["name"], fan["color"], websocket, sys_override=sys_override, room_id=key_to_pk.get(game_key) or game_pk))
+                            # Skip matchup start yaps to restrict specifically to play_outcome events per work order
+                            pass
 
                         if not is_pregame and status and status != last_status and "Awaiting" not in status and "Syncing" not in status:
                             last_statuses[game_key] = status
                             status_lower = status.lower()
 
                             # P1 FIX: Skip ambient fire + DOT echo for raw API status labels (not real play descriptions)
-                            # Root cause: poller heartbeats resend "Scheduled", "Pre-Game", etc. on every tick
-                            # which previously caused DOT to flood chat with "⚾ Scheduled" every 15-30s
                             RAW_STATUS_LABELS = {"scheduled", "pre-game", "pregame", "warmup", "delayed", "postponed", "in progress", "final"}
                             if status.strip().lower() in RAW_STATUS_LABELS:
                                 print(f"[PLAY INTERCEPT] Skipping raw API status label (P1 guard): {status}")
@@ -2208,6 +2511,23 @@ async def chatbot_loop():
                             # TKT-0021: Batter timeout telemetry filter
                             if "step off" in status_lower or "timeout" in status_lower or "pickoff attempt" in status_lower:
                                 print(f"[PLAY INTERCEPT] Ignoring non-action telemetry: {status}")
+                                continue
+
+                            # Define play outcome conditions
+                            strikeout = ("strikes out" in status_lower or "struck out" in status_lower)
+                            walk = ("walks" in status_lower)
+                            is_hit = ("singles" in status_lower or "doubles" in status_lower or "triples" in status_lower)
+                            is_out = ("flies out" in status_lower or "grounds out" in status_lower or "pops out" in status_lower or "lines out" in status_lower or strikeout)
+                            is_massive = any(cfg['keyword'] in status_lower for cfg in active_mlb_config if cfg['is_massive']) or "mound visit" in status_lower
+                            is_homerun = "home run" in status_lower or "homers" in status_lower
+                            is_error = "error" in status_lower
+                            is_pitching_change = "pitching change" in status_lower
+                            any_run_scored = "scores" in status_lower or "homers" in status_lower
+
+                            # Restrict chatbot yaps specifically to play_outcome events
+                            is_play_outcome = (is_massive or is_hit or is_out or walk or is_homerun or is_error or is_pitching_change or any_run_scored)
+                            if not is_play_outcome:
+                                print(f"[PLAY INTERCEPT] Restricting yaps to play_outcome. Skipping: {status}")
                                 continue
 
                             print(f"[PLAY INTERCEPT] Reaction to: {status}")
@@ -2220,22 +2540,8 @@ async def chatbot_loop():
                                     f.write(f"[{datetime.now().isoformat()}] MLB_TELEMETRY | SYSTEM: {away_team}@{home_team} - {inning} | {pitcher} to {batter} | {status}\n")
                             except Exception:
                                 pass
-                            # TKT-0022: Strict Telemetry Throttling (Ignore routine pitches)
-                            strikeout = ("strikes out" in status_lower or "struck out" in status_lower)
-                            walk = ("walks" in status_lower)
-                            is_hit = ("singles" in status_lower or "doubles" in status_lower or "triples" in status_lower)
-                            is_out = ("flies out" in status_lower or "grounds out" in status_lower or "pops out" in status_lower or "lines out" in status_lower or strikeout)
-                            is_massive = any(cfg['keyword'] in status_lower for cfg in active_mlb_config if cfg['is_massive']) or "mound visit" in status_lower
                             
-                            # Let ALL personas react to routine pitches using local_phi3 instead of dropping them
-                            if not (is_massive or is_hit or is_out or walk):
-                                if "ball" in status_lower or "foul" in status_lower or "called strike" in status_lower or "swinging strike" in status_lower:
-                                    print(f"[PLAY INTERCEPT] Allowing routine pitch for local LLM: {status}")
-                            
-                            is_homerun = "home run" in status_lower or "homers" in status_lower
-                            is_error = "error" in status_lower
-                            is_pitching_change = "pitching change" in status_lower
-                            any_run_scored = "scores" in status_lower or "homers" in status_lower
+                            run_scored_desc = "A run scored on this play." if (any_run_scored or is_homerun) else "No runs scored on this play."
                             # FC-SCORING-01: Use offense_team (inning-aware) not just team presence
                             mets_batting = offense_team == "NYM"
                             mets_scored = any_run_scored and mets_batting
@@ -2400,6 +2706,88 @@ async def chatbot_loop():
                             
                             # Cap UI limit for routine plays enforced above
 
+                            # Sequential Turn-Taking & Context Referencing for 3-Man Booth
+                            booth_names = {'gary_bot', 'keith_fanboy', 'ron_bot'}
+                            booth_eligible = [f for f in eligible_fans if f['name'].lower() in booth_names]
+                            if booth_eligible:
+                                # Ensure only assigned commentators speak when the booth cascade runs
+                                eligible_fans = []
+                                
+                                async def run_booth_cascade(p_status, p_pitcher, p_batter, p_state, p_game_pk, p_ws):
+                                    g_fan = next((f for f in active_fans if f['name'].lower() == 'gary_bot'), None)
+                                    k_fan = next((f for f in active_fans if f['name'].lower() == 'keith_fanboy'), None)
+                                    r_fan = next((f for f in active_fans if f['name'].lower() == 'ron_bot'), None)
+                                    
+                                    gary_text = ""
+                                    keith_text = ""
+                                    
+                                    b_play = {
+                                        "batter_team": p_state.get("away_team", "") if "Top" in p_state.get("inning", "") else p_state.get("home_team", ""),
+                                        "pitcher_team": p_state.get("home_team", "") if "Top" in p_state.get("inning", "") else p_state.get("away_team", ""),
+                                        "batter": p_batter,
+                                        "pitcher": p_pitcher,
+                                        "away_team": p_state.get("away_team", ""),
+                                        "home_team": p_state.get("home_team", ""),
+                                        "lead_runs": abs(p_state.get("away_score", 0) - p_state.get("home_score", 0)),
+                                        "leading_team": (p_state.get("away_team", "") if p_state.get("away_score", 0) > p_state.get("home_score", 0) else p_state.get("home_team", "")) if p_state.get("away_score", 0) != p_state.get("home_score", 0) else None,
+                                        "inning": p_state.get("inning", "1"),
+                                        "half_inning": p_state.get("inning_topbot", "top")
+                                    }
+                                    
+                                    # 1. Gary Bot calls the play
+                                    if g_fan:
+                                        gary_prompt = (
+                                            f"System Persona: You are Gary Bot, the professional Mets play-by-play announcer. "
+                                            f"The current matchup is {p_pitcher} pitching to {p_batter}. "
+                                            f"The following play just occurred: '{p_status}'. "
+                                            f"Play Event Result: {run_scored_desc} "
+                                            f"Deliver a professional, clean, and classic play call in Gary's trademark style. "
+                                            f"Keep it to one short sentence."
+                                        )
+                                        g_sys = build_dynamic_system_instruction(g_fan, is_massive_event, is_play_event, allow_rant=False, game_state=p_state, event_type="play", game_pk=p_game_pk)
+                                        gary_text = await generate_commentary("gemini-2.5-flash", gary_prompt, g_fan['name'], g_fan['color'], p_ws, sys_override=g_sys, room_id=p_game_pk, active_play=b_play, source="AUTOMATED")
+                                        await asyncio.sleep(2.5)
+                                    
+                                    # 2. Keith Fanboy responds
+                                    if k_fan:
+                                        ref_ctx = f" Gary Bot just said: '{gary_text}'." if gary_text else ""
+                                        keith_prompt = (
+                                            f"System Persona: You are Keith Fanboy, the colorful Mets color commentator. "
+                                            f"The current matchup is {p_pitcher} pitching to {p_batter}. "
+                                            f"The play: '{p_status}'. "
+                                            f"Play Event Result: {run_scored_desc} {ref_ctx} "
+                                            f"Deliver your reaction or color commentary. Agree or disagree with Gary, complain about bad fundamentals, "
+                                            f"sigh heavily, or talk about cards/sighing at game length. "
+                                            f"Keep it to one short sentence."
+                                        )
+                                        k_sys = build_dynamic_system_instruction(k_fan, is_massive_event, is_play_event, allow_rant=False, game_state=p_state, event_type="play", game_pk=p_game_pk)
+                                        keith_text = await generate_commentary("gemini-2.5-flash", keith_prompt, k_fan['name'], k_fan['color'], p_ws, sys_override=k_sys, room_id=p_game_pk, active_play=b_play, source="AUTOMATED")
+                                        await asyncio.sleep(2.5)
+                                        
+                                    # 3. Ron Bot wraps it up
+                                    if r_fan:
+                                        ref_ctx = ""
+                                        if gary_text and keith_text:
+                                            ref_ctx = f" Gary Bot said: '{gary_text}'. Keith Fanboy replied: '{keith_text}'."
+                                        elif gary_text:
+                                            ref_ctx = f" Gary Bot said: '{gary_text}'."
+                                        elif keith_text:
+                                            ref_ctx = f" Keith Fanboy said: '{keith_text}'."
+                                            
+                                        ron_prompt = (
+                                            f"System Persona: You are Ron Bot, the thoughtful, analytical, and articulate Mets color commentator. "
+                                            f"The matchup is {p_pitcher} pitching to {p_batter}. "
+                                            f"The play: '{p_status}'. "
+                                            f"Play Event Result: {run_scored_desc} "
+                                            f"The booth conversation so far: {ref_ctx} "
+                                            f"Add a brief analytical, mechanical, or historical insight about the play or the pitcher/batter matchup. "
+                                            f"Keep it to one short sentence."
+                                        )
+                                        r_sys = build_dynamic_system_instruction(r_fan, is_massive_event, is_play_event, allow_rant=False, game_state=p_state, event_type="play", game_pk=p_game_pk)
+                                        await generate_commentary("gemini-2.5-flash", ron_prompt, r_fan['name'], r_fan['color'], p_ws, sys_override=r_sys, room_id=p_game_pk, active_play=b_play, source="AUTOMATED")
+                                
+                                asyncio.create_task(run_booth_cascade(status, pitcher, batter, state, game_pk, websocket))
+
                             for fan in eligible_fans:
                                 fan_name_low = fan['name'].lower()
                                 
@@ -2490,6 +2878,38 @@ async def chatbot_loop():
                                     fan, is_massive_event, is_play_event, allow_rant=allow_rant_flag,
                                     game_state=state, event_type=status, game_pk=key_to_pk.get(game_key) or game_pk
                                 )
+                                
+                                # Calculate deterministic perspective flags
+                                active_play = {
+                                    "batter_team": offense_team,
+                                    "pitcher_team": defense_team,
+                                    "batter": batter,
+                                    "pitcher": pitcher,
+                                    "away_team": away_team,
+                                    "home_team": home_team,
+                                    "lead_runs": abs(state.get("away_score", 0) - state.get("home_score", 0)),
+                                    "leading_team": (away_team if state.get("away_score", 0) > state.get("home_score", 0) else home_team) if state.get("away_score", 0) != state.get("home_score", 0) else None,
+                                    "inning": state.get("inning", "1"),
+                                    "half_inning": state.get("inning_topbot", "top")
+                                }
+                                persp = resolve_at_bat_perspective(fan.get("team"), active_play)
+                                
+                                # Format perspective block
+                                allies_str = ", ".join(persp["advocate_allies"])
+                                opponents_str = ", ".join(persp["advocate_opponents"])
+                                winning_status = "winning" if persp["is_advocate_winning"] else ("losing" if persp["current_lead_runs"] > 0 else "tied")
+                                
+                                persp_block = (
+                                    f"\n### PERSPECTIVE ALIGNMENT DIRECTIVE ###\n"
+                                    f"You cheer for: {fan.get('team')}. "
+                                    f"Your team is currently {winning_status}. "
+                                    f"Allied player on field: {allies_str}. "
+                                    f"Opposing player on field: {opponents_str}. "
+                                    f"Cheer ONLY for your team and allied players. Never praise opposing players or teams. "
+                                    f"Absolute team loyalty is required.\n"
+                                )
+                                sys_override = str(sys_override) + persp_block
+
                                 # Cypher overlay applied on top of tiered system instruction
                                 if state.get("barf_cypher") and "barf" in fan["name"].lower():
                                     sys_override += " CRUCIAL OVERRIDE: YOU MUST DROP A FREESTYLE AABB RHYMING CYPHER RAP OVER THIS PLAY IN THE STYLE OF A SLAM POET."
@@ -2503,8 +2923,8 @@ async def chatbot_loop():
                                 #                 without re-introducing allPlays dumps or token burn.
                                 game_pk_str = str(key_to_pk.get(game_key) or game_pk)
                                 if is_massive_event:
-                                    _inning_ctx   = get_inning_context(game_pk_str)
-                                    _recent_plays = get_recent_plays(game_pk_str, n=3)
+                                    _inning_ctx   = get_inning_context(game_pk_str, live_state=state)
+                                    _recent_plays = get_recent_plays(game_pk_str, n=3, live_state=state)
                                     _ctx_block    = f"{_inning_ctx} {_recent_plays}".strip()
                                     history_injection = (" " + _ctx_block) if _ctx_block else ""
                                 else:
@@ -2523,6 +2943,7 @@ async def chatbot_loop():
                                     f"System Persona: You are '{fan['name']}'.\n"
                                     f"Game State: Score Away {_game_state_drip['away_score']} - Home {_game_state_drip['home_score']} | "
                                     f"Inning: {_game_state_drip['inning_topbot']} {_game_state_drip['inning']} | {_game_state_drip['outs']} Outs.\n"
+                                    f"Play Event Result: {run_scored_desc}\n"
                                     f"{boggs_rule}{history_injection} {local_ctx}"
                                     f"{baseline_anchor}"
                                     f"The matchup is {away_team} at {home_team}. "
@@ -2530,16 +2951,17 @@ async def chatbot_loop():
                                     f"{guard} {anti_rep}\n\nStrict Grounding Rule: You must adhere to the provided player stats and history below. Do not hallucinate stats or accolades not listed here.\nVerified Player Context:\n{player_context_str}"
                                 )
 
-                                async def staggered_commentary(f_model, f_prompt, f_name, f_color, wsock, f_sys, f_room, f_cadence, f_boggs):
+                                async def staggered_commentary(f_model, f_prompt, f_name, f_color, wsock, f_sys, f_room, f_cadence, f_boggs, f_active_play=None):
                                     # Vector 2: Staggered API Wakes
                                     if f_boggs >= 5:
                                         if f_cadence == "pacer":
                                             await asyncio.sleep(0.2)
                                         elif f_cadence == "lurker":
                                             await asyncio.sleep(0.4)
-                                    await generate_commentary(f_model, f_prompt, f_name, f_color, wsock, sys_override=f_sys, room_id=f_room)
+                                    await generate_commentary(f_model, f_prompt, f_name, f_color, wsock, sys_override=f_sys, room_id=f_room, active_play=f_active_play, source="AUTOMATED")
 
-                                asyncio.create_task(staggered_commentary(mard_model, prompt, fan['name'], fan['color'], websocket, sys_override, key_to_pk.get(game_key), fan.get("cadence", "pacer"), eff_boggs))
+                                eff_cadence = fan.get("cadence", "pacer")
+                                asyncio.create_task(staggered_commentary(mard_model, prompt, fan['name'], fan['color'], websocket, sys_override, key_to_pk.get(game_key), eff_cadence, eff_boggs, active_play))
 
                         if bot_triggered and new_context_lines:
                             for nl in new_context_lines:

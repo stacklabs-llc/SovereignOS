@@ -52,7 +52,7 @@ SERVICES=(
     "SDLC Ticketing Server|8095|sdlc_portal_server.py|cd ${SOVEREIGN_HOME} && nohup .venv/bin/python3 scripts/sdlc_portal_server.py >> ${LOG_DIR}/sdlc_portal_server.log 2>&1 &|sdlc_portal_server.log"
     "Aether Vet Telemedicine|3015|20_AetherVet|cd ${SOVEREIGN_HOME}/20_AetherVet && nohup npm run dev -- --host 0.0.0.0 --port 3015 >> ${LOG_DIR}/aether_vet.log 2>&1 &|aether_vet.log"
     "Sovereign Media|3008|02_Sovereign_Media|cd ${SOVEREIGN_HOME}/02_Sovereign_Media && nohup npm run dev -- --host 0.0.0.0 --port 3008 >> ${LOG_DIR}/vite_cinema.log 2>&1 &|vite_cinema.log"
-    "SamTracker Frontend|3004|14_SamTracker|cd ${SOVEREIGN_HOME}/14_SamTracker && nohup npm run dev -- --force --port 3004 >> ${LOG_DIR}/vite_sam.log 2>&1 &|vite_sam.log"
+    "SamTracker Frontend|3024|14_SamTracker|cd ${SOVEREIGN_HOME}/14_SamTracker && nohup npm run dev -- --force --port 3024 >> ${LOG_DIR}/vite_sam.log 2>&1 &|vite_sam.log"
     "SamTracker Backend|8083|sam_tracker_server.py|cd ${SOVEREIGN_HOME} && nohup .venv/bin/python3 scripts/sam_tracker_server.py >> ${LOG_DIR}/sam_tracker.log 2>&1 &|sam_tracker.log"
     "Storybook Station|3017|23_EileenStack|cd ${SOVEREIGN_HOME}/23_EileenStack && nohup npm run dev -- --force --port 3017 >> ${LOG_DIR}/vite_garden.log 2>&1 &|vite_garden.log"
     "BistroPortal|3006|16_BistroPortal|cd ${SOVEREIGN_HOME}/16_BistroPortal && nohup npm run dev -- --force --port 3006 >> ${LOG_DIR}/vite_bistro.log 2>&1 &|vite_bistro.log"

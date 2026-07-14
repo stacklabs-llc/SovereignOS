@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Utensils, Calendar, BookOpen, Ghost, Zap, Settings, Trash2 } from 'lucide-react';
+import { Camera, Utensils, Calendar, BookOpen, Settings, Trash2, X, Download, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import './App.css';
 
 export default function App() {
   const [samMode, setSamMode] = useState<'cozy' | 'wacko'>('cozy');
   const [sightings, setSightings] = useState<any[]>([]);
   const [newSighting, setNewSighting] = useState('');
+  const [newDispatch, setNewDispatch] = useState('');
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [ws, setWs] = useState<WebSocket | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
   
   // Dynamic Environment check (KI_031)
   const getEnvDetails = () => {
@@ -142,6 +145,21 @@ export default function App() {
     setSelectedVideo(null);
   };
 
+  const handleSendDispatch = () => {
+    if (!newDispatch.trim()) return;
+    let msg = newDispatch.trim();
+    if (!msg.startsWith('@')) {
+      msg = `@operator: ${msg}`;
+    }
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ 
+        type: 'CMD_LOG', 
+        message: msg
+      }));
+    }
+    setNewDispatch('');
+  };
+
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -205,45 +223,69 @@ export default function App() {
     }
   };
 
-  return (
-    <div className={`w-screen min-h-screen p-4 md:p-8 transition-all duration-1000 overflow-hidden relative flex justify-center items-center ${
-      samMode === 'cozy' 
-        ? 'bg-[#fef9e7] text-slate-800' 
-        : 'bg-[#ff6b00] text-black border-8 border-green-500'
-    }`}>
-      
-      {/* Background Texture/Images */}
-      <div className="absolute inset-0 opacity-30 pointer-events-none mix-blend-multiply" 
-           style={{ 
-             backgroundImage: `url('/sam/${samMode === 'cozy' ? 'UI_grid_watercolor_field_journal_202605081352.jpeg' : 'Radioactive_sludge_mobile_app_sc…_202605081352.jpeg'}')`,
-             backgroundSize: '100% auto',
-             backgroundRepeat: 'repeat-y',
-             backgroundPosition: 'top center'
-           }} 
-      />
+  // Split sightings into regular incidents and chat coordinates
+  const chatMessages = sightings.filter(s => s.text && s.text.trim().startsWith('@'));
+  const incidentMessages = sightings.filter(s => !s.text || !s.text.trim().startsWith('@'));
 
-      <div className="w-full max-w-6xl relative z-10 flex flex-col">
+  // Default fallback messages to ensure UI is hydrated and immersive immediately
+  const initialChats = [
+    { sender: '@doc_wheeler', text: 'Just secured three boxes of calming pheromones from Science Officer Gwen via AetherVet! Bypassed the corporate database check cleanly. Standard barter ratio applied: 1 custom framed canvas delivered.', time: '17:10' },
+    { sender: '@jukebox_jesse', text: 'Just loaded Smyrna Midnight Rain into the local playlist slots on the outpost. Chopper is howling along already. Let\'s make sure James hears this when he hits his workstation!', time: '17:15' },
+    { sender: '@buster_brawler', text: 'SpiteSlice delivery van is crossing King Springs Rd. GPS telemetry is active on the Sentinel Map. Keeping an eye on the big-box retail delivery trucks trying to block our path. Max is on guard by the front gate!', time: '17:20' },
+    { sender: '@barb_founder', text: 'Thanks, crew. @jack_carpenter is framing the custom canvases now with Georgia Oakwood shavings we gathered on the route today. This keeps us 100% independent. James, you watching?', time: '17:22' }
+  ];
+
+  // Parse chat messages from database
+  const parsedDbChats = chatMessages.map(s => {
+    const match = s.text.match(/^(@\w+):\s*(.*)/);
+    if (match) {
+      return {
+        sender: match[1],
+        text: match[2].split(' |||')[0],
+        time: s.date ? s.date.split(' ')[1] || s.date : '12:00'
+      };
+    }
+    return {
+      sender: '@operator',
+      text: s.text.split(' |||')[0],
+      time: s.date ? s.date.split(' ')[1] || s.date : '12:00'
+    };
+  });
+
+  const allChats = [...initialChats, ...parsedDbChats];
+
+  return (
+    <div id="catnip-wars-console" className="w-screen min-h-screen p-4 md:p-8 overflow-y-auto relative flex justify-center items-center bg-[#2b1f1d] text-[#e8dcd0] font-mono">
+      {/* Background Grid Pattern */}
+      <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-[radial-gradient(#8b5a2b_2px,transparent_2px)] [background-size:24px_24px]" />
+
+      <div className="w-full max-w-7xl relative z-10 flex flex-col my-4">
         {/* Header */}
         <header className="flex flex-col items-center justify-center text-center mb-8 relative">
-          {/* Dynamic Environment Pill (KI_031) */}
           <div className={`mb-4 px-4 py-1 text-xs font-bold uppercase tracking-widest rounded-full border shadow-sm ${env.color}`}>
             {env.name} ENVIRONMENT
           </div>
 
-          <h1 className={`font-bold tracking-widest ${
-            samMode === 'cozy' 
-              ? 'font-serif text-5xl md:text-7xl text-[#d97706]' 
-              : 'font-display text-6xl md:text-8xl text-yellow-300 drop-shadow-[0_4px_0_rgba(0,0,0,1)] uppercase tracking-tighter transform -skew-x-6'
-          }`}>
-            {samMode === 'cozy' ? 'SamTracker' : 'TRACK \'EM! CAT \'EM!'}
-          </h1>
-          <p className={`mt-2 font-bold ${samMode === 'cozy' ? 'font-mono text-lg text-amber-700/60 uppercase' : 'font-display text-2xl bg-black text-green-400 px-4 py-1 rotate-2'}`}>
-            {samMode === 'cozy' ? 'Est. 2023 · The Biological Oracle' : 'REPORT CAT WACKO!!!'}
+          {samMode === 'wacko' && (
+            <div className="mb-4 bg-red-950 border-2 border-red-700 text-red-400 px-4 py-1.5 rounded-lg text-xs font-bold font-mono tracking-wider animate-pulse max-w-md">
+              ⚠️ TACTICAL ALARM: CAT WACKO / CRIME DETECTED IN BACKYARD
+            </div>
+          )}
+
+          {/* Silver Duct Tape styled banner */}
+          <div className="duct-tape duct-tape-header text-xl md:text-3xl font-black uppercase text-center transform -rotate-1 relative select-none">
+            <div className="duct-tape-corner-tl" />
+            <div className="duct-tape-corner-tr" />
+            🌳 CATNIP WARS SYNDICATE 🌳
+          </div>
+          
+          <p className="font-serif text-base font-bold text-[#b5a642] uppercase tracking-wide">
+            Cardboard Tactical Terminal v1.0
           </p>
           
-          {samMode === 'cozy' && config.note_text && (
-            <div className="mt-4 bg-amber-100/80 backdrop-blur-sm border-2 border-amber-300 text-amber-800 px-6 py-3 rounded-xl shadow-sm max-w-2xl transform -rotate-1">
-              <p className="font-serif text-lg font-medium">
+          {config.note_text && (
+            <div className="mt-4 bg-[#3c2a21] border-2 border-[#8b5a2b] text-[#e8dcd0] px-6 py-3 rounded-xl shadow-md max-w-2xl transform -rotate-1">
+              <p className="font-serif text-sm font-medium">
                 🐾 <strong>{config.note_title}:</strong> {config.note_text}
               </p>
             </div>
@@ -258,148 +300,150 @@ export default function App() {
                   window.location.hash = 'admin';
                   window.location.reload();
                 }}
-                className={`flex items-center gap-2 px-4 py-2 rounded-full font-bold text-sm uppercase tracking-widest transition-all shadow-md ${
-                  samMode === 'cozy'
-                    ? 'bg-amber-600 text-white hover:bg-amber-700'
-                    : 'bg-black text-green-400 border-2 border-green-500 hover:bg-green-900'
-                }`}
+                className="wooden-btn px-6 py-2 text-sm uppercase tracking-widest"
               >
-                <Settings size={16} /> Admin Portal
+                <Settings size={16} className="mr-2" /> Admin Portal
               </a>
             </div>
           )}
         </header>
 
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+        {/* 3-Column Layout */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           
-          {/* Left Column: Stats & Actions */}
-          <div className="md:col-span-4 flex flex-col gap-6">
+          {/* Column 1 (3/12): Stats & Controls */}
+          <div className="lg:col-span-3 flex flex-col gap-6">
             
-            {/* Status Box */}
-            <div className={`p-6 rounded-2xl border-4 shadow-xl flex flex-col items-center text-center ${
-              samMode === 'cozy' 
-                ? 'bg-white/90 border-amber-300 backdrop-blur-sm' 
-                : 'bg-purple-600 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)]'
-            }`}>
-              <div className={`w-40 h-40 rounded-full mb-6 flex items-center justify-center overflow-hidden border-4 ${samMode === 'cozy' ? 'bg-amber-100 border-white shadow-inner' : 'bg-green-400 border-black animate-pulse shadow-[4px_4px_0px_rgba(0,0,0,1)]'}`}>
+            {/* Stats Card */}
+            <div className="cardboard-panel p-6 flex flex-col items-center text-center relative overflow-hidden">
+              <div className="duct-tape absolute top-2 right-2 text-[8px] uppercase tracking-wider scale-75 rotate-3">
+                Active Operative
+              </div>
+
+              <div className="w-32 h-32 rounded-2xl mb-6 flex items-center justify-center overflow-hidden border-4 border-[#5c4033] bg-[#f7ebd3] shadow-md">
                  <img 
-                   src={`/sam/${samMode === 'cozy' ? config.picture_url : 'sovereign_sam_tracker_stacklift_1774835849312.png_202605081352.jpeg'}`} 
-                   className="w-full h-full object-cover opacity-90"
+                   src={`/sam/${config.picture_url}`} 
+                   className="w-full h-full object-cover opacity-95"
                    alt="Sam Portrait"
                  />
               </div>
-              <h2 className={`text-2xl font-bold uppercase ${samMode === 'cozy' ? 'text-amber-800 font-serif' : 'text-white font-display text-3xl tracking-widest'}`}>
-                Current Status
-              </h2>
-              <p className={`text-4xl font-bold mt-2 ${samMode === 'cozy' ? 'text-slate-600 font-serif' : 'text-yellow-300 font-display animate-bounce'}`}>
-                {samMode === 'cozy' ? config.status_text : 'FELONY MODE!!!'}
-              </p>
               
-              <div className={`w-full mt-8 flex flex-col gap-3 text-lg font-bold uppercase tracking-wider ${samMode === 'cozy' ? 'font-mono text-amber-700/80' : 'font-display text-white text-xl'}`}>
-                <div className="flex justify-between border-b-2 border-black/10 pb-2"><span>Daily Naps</span><span>{samMode === 'cozy' ? config.daily_naps : '0'}</span></div>
-                <div className="flex justify-between border-b-2 border-black/10 pb-2"><span>Adventures</span><span>{samMode === 'cozy' ? config.adventures : '42'}</span></div>
-                <div className="flex justify-between pb-2"><span>Tuna Snacks</span><span>{samMode === 'cozy' ? config.tuna_snacks : 'STOLEN'}</span></div>
+              <h2 className="text-lg font-bold uppercase text-[#5c4033] font-serif border-b-2 border-[#8b5a2b] w-full pb-1">
+                Syndicate Intelligence
+              </h2>
+              
+              <p className="text-md font-bold mt-2 text-[#8b5a2b] font-serif">
+                {config.status_text}
+              </p>
+
+              {/* Firefly Mason Jar */}
+              <div className="flex items-center gap-3 my-4 w-full justify-center">
+                <div className="mason-jar shrink-0 scale-75">
+                  <div className="mason-jar-lid" />
+                  <div className="firefly" style={{ top: '30px', left: '20px', animationDelay: '0.1s' }} />
+                  <div className="firefly" style={{ top: '50px', left: '40px', animationDelay: '0.5s' }} />
+                  <div className="firefly" style={{ top: '70px', left: '15px', animationDelay: '0.9s' }} />
+                </div>
+                <div className="text-left font-serif text-[#5c4033] text-xs leading-tight">
+                  <span className="font-bold text-[#8b5a2b]">TERRITORY STATUS:</span><br />
+                  Backyard Core Plats online.<br />
+                  Smyrna air space clear.<br />
+                  Pi 5 watch room locked.
+                </div>
+              </div>
+              
+              {/* Dynamic Stats list mapped to Catnip Wars labels */}
+              <div className="w-full mt-2 flex flex-col gap-2 text-xs font-bold uppercase tracking-wider text-[#5c4033] font-mono">
+                <div className="flex justify-between border-b border-[#8b5a2b]/20 pb-1.5">
+                  <span>Fortification Integrity</span>
+                  <span className="text-[#8b5a2b]">{config.daily_naps || '0'}%</span>
+                </div>
+                <div className="flex justify-between border-b border-[#8b5a2b]/20 pb-1.5">
+                  <span>Active Feline Agents</span>
+                  <span className="text-[#8b5a2b]">{config.adventures || '0'}</span>
+                </div>
+                <div className="flex justify-between pb-1">
+                  <span>Kibble Ammo Inventory</span>
+                  <span className="text-[#8b5a2b]">{config.tuna_snacks || '0'} buds</span>
+                </div>
               </div>
             </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-4 mt-2">
+            {/* Wooden Action Buttons */}
+            <div className="flex flex-col gap-4">
               <button 
                 onClick={feedSam}
-                className={`py-5 px-6 rounded-2xl font-bold text-xl uppercase tracking-widest transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-4 ${
-                  samMode === 'cozy' 
-                    ? 'bg-emerald-500 text-white shadow-[0_6px_0_rgba(4,120,87,1)] font-serif' 
-                    : 'bg-green-500 text-black border-4 border-black shadow-[6px_6px_0_rgba(0,0,0,1)] font-display'
-                }`}
+                className="wooden-btn py-4 px-4 text-sm uppercase tracking-wider w-full flex items-center justify-center gap-2"
               >
-                <Utensils size={28} /> I Just Fed Sam
+                <Utensils size={18} /> Restore Diplomacy (Feed)
               </button>
               <button 
                 onClick={handleAddSighting}
-                className={`py-5 px-6 rounded-2xl font-bold text-xl uppercase tracking-widest transition-transform hover:scale-105 active:scale-95 flex items-center justify-center gap-4 ${
-                  samMode === 'cozy' 
-                    ? 'bg-blue-500 text-white shadow-[0_6px_0_rgba(29,78,216,1)] font-serif' 
-                    : 'bg-red-500 text-white border-4 border-black shadow-[6px_6px_0_rgba(0,0,0,1)] animate-pulse font-display text-2xl'
-                }`}
+                className="wooden-btn py-4 px-4 text-sm uppercase tracking-wider w-full flex items-center justify-center gap-2"
               >
-                <Camera size={28} /> {samMode === 'cozy' ? 'Log Sighting' : 'REPORT CRIME'}
+                <Camera size={18} /> Log Sighting / Incident
               </button>
             </div>
 
           </div>
 
-          {/* Right Column: The Ledger */}
-          <div className={`md:col-span-8 p-8 rounded-2xl border-4 shadow-xl flex flex-col min-h-[600px] ${
-            samMode === 'cozy' 
-              ? 'bg-white/90 border-amber-300 backdrop-blur-sm' 
-              : 'bg-yellow-300 border-black shadow-[8px_8px_0px_rgba(0,0,0,1)]'
-          }`}>
-            <div className="flex items-center justify-between mb-8 border-b-4 border-black/10 pb-4">
-              <h2 className={`text-3xl font-bold uppercase flex items-center gap-3 ${samMode === 'cozy' ? 'text-amber-800 font-serif' : 'text-black font-display text-4xl'}`}>
-                <BookOpen size={32} /> {samMode === 'cozy' ? 'Recent Activity Ledger' : 'SUSPECT INCIDENT REPORT'}
+          {/* Column 2 (5/12): Tactical Incident Ledger */}
+          <div className="cardboard-panel lg:col-span-5 p-6 flex flex-col min-h-[600px] h-[750px]">
+            <div className="flex items-center justify-between mb-6 border-b-2 border-[#5c4033]/20 pb-3">
+              <h2 className="text-lg font-bold uppercase flex items-center gap-2 text-[#5c4033] font-serif">
+                <BookOpen size={22} /> SYNDICATE INCIDENT LEDGER
               </h2>
-              <button onClick={() => setSamMode(prev => prev === 'cozy' ? 'wacko' : 'cozy')} className="p-3 rounded-full bg-black/5 hover:bg-black/10 transition-colors">
-                {samMode === 'cozy' ? <Ghost size={24} className="text-amber-600" /> : <Zap size={24} className="text-black" />}
-              </button>
+              <div className="flex items-center gap-2 bg-[#f7ebd3] border border-[#8b5a2b] px-3 py-1 rounded-full text-[10px] font-bold text-[#8b5a2b] font-mono">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                SECURE WIRE
+              </div>
             </div>
 
-            {/* Sighting Input */}
-            <div className="flex flex-col gap-3 mb-8">
-              <div className="flex flex-col sm:flex-row gap-3">
+            {/* Incident Entry Input */}
+            <div className="flex flex-col gap-3 mb-6 bg-[#f7ebd3] p-4 border border-[#8b5a2b] rounded-lg">
+              <div className="flex gap-2">
                 <input 
                   type="text" 
                   value={newSighting}
                   onChange={(e) => setNewSighting(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleAddSighting()}
-                  placeholder={samMode === 'cozy' ? "What did Sam do today?" : "DESCRIBE THE CRIME..."}
-                  className={`flex-1 px-5 py-4 rounded-xl outline-none font-bold text-lg md:text-xl ${
-                    samMode === 'cozy'
-                      ? 'bg-amber-50 border-2 border-amber-200 text-slate-700 placeholder:text-amber-400/70'
-                      : 'bg-white border-4 border-black text-black uppercase tracking-widest placeholder:text-black/30'
-                  }`}
+                  placeholder="Report incident or coordinate status..."
+                  className="flex-1 px-4 py-2 text-sm rounded-lg outline-none font-bold bg-[#fcf8ef] border border-[#8b5a2b] text-[#5c4033] placeholder:text-[#8b5a2b]/40 font-mono focus:border-amber-500"
                 />
                 <button 
                   onClick={handleAddSighting}
-                  className={`px-8 py-4 font-bold text-xl uppercase tracking-widest rounded-xl flex items-center justify-center ${
-                    samMode === 'cozy'
-                      ? 'bg-amber-500 text-white hover:bg-amber-600 font-serif shadow-[0_4px_0_rgba(217,119,6,1)]'
-                      : 'bg-black text-white border-4 border-black hover:bg-zinc-800 font-display shadow-[4px_4px_0_rgba(0,0,0,1)]'
-                  }`}
+                  className="wooden-btn px-4 py-2 text-xs uppercase tracking-wider"
                 >
                   Log
                 </button>
               </div>
-              <div className="flex items-center gap-4">
-                <label className={`cursor-pointer px-4 py-2 rounded-lg font-bold uppercase tracking-wider text-sm flex items-center gap-2 ${samMode === 'cozy' ? 'bg-amber-100 text-amber-700 hover:bg-amber-200 border-2 border-amber-300' : 'bg-black text-white border-2 border-black hover:bg-gray-800'}`}>
-                  <Camera size={18} /> {samMode === 'cozy' ? 'Attach Photo/Video' : 'Attach Evidence'}
+              <div className="flex items-center gap-4 justify-between">
+                <label className="cursor-pointer px-3 py-1.5 rounded-lg font-bold uppercase tracking-wider text-[10px] flex items-center gap-1.5 bg-[#fcf8ef] text-[#8b5a2b] hover:bg-[#e5c290] border border-[#8b5a2b] font-mono">
+                  <Camera size={12} /> Attach Photo/Video
                   <input type="file" accept="image/*,video/*" className="hidden" onChange={handleImageSelect} />
                 </label>
                 {selectedImage && (
                   <div className="relative">
-                    <img src={selectedImage} alt="Preview" className="h-16 w-16 object-cover rounded-lg border-2 border-black" />
-                    <button onClick={() => setSelectedImage(null)} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center font-bold border-2 border-black">x</button>
+                    <img src={selectedImage} alt="Preview" className="h-10 w-10 object-cover rounded border border-[#5c4033]" />
+                    <button onClick={() => setSelectedImage(null)} className="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center font-bold border border-black text-[9px]">×</button>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Sightings Feed */}
-            <div className="flex-1 overflow-y-auto pr-4 space-y-6 custom-scrollbar">
+            {/* Incidents Feed scroll container */}
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
               <AnimatePresence>
-                {sightings.map((s) => (
+                {incidentMessages.map((s) => (
                   <motion.div 
                     key={s.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    className={`p-6 rounded-2xl border-2 ${
-                      samMode === 'cozy'
-                        ? 'bg-white border-amber-100 shadow-md'
-                        : 'bg-white border-4 border-black shadow-[6px_6px_0_rgba(0,0,0,1)] hover:rotate-1 transition-transform'
-                    }`}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-4 rounded-xl border-2 bg-white border-[#e5c290] shadow-sm relative overflow-hidden"
                   >
-                    <div className={`font-mono text-sm mb-3 uppercase tracking-widest flex items-center justify-between ${samMode === 'cozy' ? 'text-amber-500' : 'text-purple-600 font-bold bg-black/5 p-1'}`}>
-                      <div className="flex items-center gap-2">
-                        <Calendar size={14} /> {s.date}
+                    <div className="font-mono text-[10px] mb-2 uppercase tracking-widest flex items-center justify-between text-[#8b5a2b]">
+                      <div className="flex items-center gap-1">
+                        <Calendar size={12} /> {s.date}
                       </div>
                       {isCreator && s.db_id && (
                         <button 
@@ -407,40 +451,52 @@ export default function App() {
                           className="text-red-500 hover:text-red-700 transition-colors"
                           title="Delete Post"
                         >
-                          <Trash2 size={16} />
+                          <Trash2 size={12} />
                         </button>
                       )}
                     </div>
-                    <div className={`font-medium leading-relaxed ${samMode === 'cozy' ? 'text-slate-800 text-base md:text-lg' : 'text-black font-bold text-lg md:text-xl uppercase tracking-wide'}`}>
-                      <span className={`font-bold mr-2 ${samMode === 'cozy' ? 'text-amber-700' : 'text-red-600'}`}>Sighting:</span> 
+                    
+                    <div className="font-medium text-xs text-[#5c4033] leading-relaxed">
+                      <span className="font-bold mr-1 text-[#8b5a2b] font-serif">Sighting:</span> 
                       {s.text.split(' |||')[0]}
                     </div>
+
                     {s.text.includes(' ||| IMG:') && (() => {
                       const parts = s.text.split(' ||| IMG:');
                       const imgUrls = parts.slice(1);
                       if (imgUrls.length === 1) {
                         const src = imgUrls[0].startsWith('http') ? imgUrls[0] : `/sam${imgUrls[0]}`;
                         return (
-                          <div className="mt-4">
-                            <img src={src} alt="Sighting Evidence" className="rounded-xl border-4 border-black max-h-64 object-cover hover:scale-[1.02] transition-transform duration-200" />
+                          <div className="mt-3">
+                            <img 
+                              src={src} 
+                              alt="Sighting Evidence" 
+                              onClick={() => setLightboxImage(src)}
+                              className="rounded-lg border-2 border-black max-h-48 w-full object-cover hover:scale-[1.01] cursor-pointer transition-transform duration-200" 
+                            />
                           </div>
                         );
                       } else {
-                        // Multi-panel comic strip!
+                        // Multi-panel comic strip
                         const panelNames = ["THE FLIP", "GPS HORIZON", "WEATHER MATRIX", "METS TEMPO", "CLIMAX ESCAPE"];
                         return (
-                          <div className="mt-4 p-4 bg-amber-50/70 rounded-2xl border-4 border-black shadow-[8px_8px_0_rgba(0,0,0,1)]">
-                            <div className="font-display font-bold text-center text-xl uppercase tracking-wider mb-4 text-black border-b-4 border-black pb-2 bg-yellow-300 p-2 rounded-lg">
+                          <div className="mt-3 p-3 bg-amber-50/70 rounded-lg border border-black shadow-[4px_4px_0_rgba(0,0,0,0.1)]">
+                            <div className="font-display font-bold text-center text-xs uppercase tracking-wider mb-2 text-black border-b border-black pb-1 bg-yellow-200 rounded">
                               📖 METSY'S DAILY ADVENTURES
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                            <div className="grid grid-cols-5 gap-2">
                               {imgUrls.map((imgUrl: string, idx: number) => {
                                 const src = imgUrl.startsWith('http') ? imgUrl : `/sam${imgUrl}`;
                                 return (
-                                  <div key={idx} className="bg-white p-2 rounded-lg border-2 border-black flex flex-col justify-between shadow-[4px_4px_0_rgba(0,0,0,1)] hover:translate-y-[-4px] hover:shadow-[6px_6px_0_rgba(0,0,0,1)] transition-all duration-200">
-                                    <img src={src} alt={`Panel ${idx + 1}`} className="w-full aspect-square object-cover rounded-md border border-slate-300" />
-                                    <div className="mt-2 text-center text-xs font-black uppercase text-slate-800 tracking-wider bg-slate-100 py-1 rounded">
-                                      {panelNames[idx] || `PANEL ${idx + 1}`}
+                                  <div key={idx} className="bg-white p-1 rounded border border-black flex flex-col justify-between shadow-[2px_2px_0_rgba(0,0,0,0.1)]">
+                                    <img 
+                                      src={src} 
+                                      alt={`Panel ${idx + 1}`} 
+                                      onClick={() => setLightboxImage(src)}
+                                      className="w-full aspect-square object-cover rounded border border-slate-300 hover:scale-[1.03] cursor-pointer transition-all duration-200" 
+                                    />
+                                    <div className="mt-1 text-[8px] text-center font-black uppercase text-slate-800 scale-90">
+                                      {panelNames[idx] || `P${idx + 1}`}
                                     </div>
                                   </div>
                                 );
@@ -450,42 +506,151 @@ export default function App() {
                         );
                       }
                     })()}
+
                     {s.text.includes(' ||| VID_PROCESSING:') && (() => {
                       const vidProcUrl = s.text.split(' ||| VID_PROCESSING:')[1];
                       const src = vidProcUrl.startsWith('http') ? vidProcUrl : `/sam${vidProcUrl}`;
                       return (
-                        <div className="mt-4 relative inline-block">
-                          <img src={src} alt="Evidence" className="rounded-xl border-4 border-black max-h-64 object-cover opacity-50" />
+                        <div className="mt-3 relative inline-block">
+                          <img src={src} alt="Evidence" className="rounded-lg border-2 border-black max-h-48 object-cover opacity-50" />
                           <div className="absolute inset-0 flex items-center justify-center">
-                             <div className="bg-black/70 text-white font-bold text-sm px-4 py-2 rounded-lg animate-pulse uppercase tracking-widest border border-white/20">Processing Video...</div>
+                             <div className="bg-black/70 text-white font-bold text-[9px] px-2 py-1 rounded animate-pulse uppercase tracking-wider border border-white/20">Processing...</div>
                           </div>
                         </div>
                       );
                     })()}
+
                     {s.text.includes(' ||| VID:') && (() => {
                       const vidUrl = s.text.split(' ||| VID:')[1];
                       const src = vidUrl.startsWith('http') ? vidUrl : `/sam${vidUrl}`;
                       return (
-                        <div className="mt-4 bg-black rounded-xl border-4 border-black overflow-hidden relative">
-                          <video src={src} controls preload="metadata" className="w-full max-h-64 object-contain bg-black" />
+                        <div className="mt-3 bg-black rounded-lg border-2 border-black overflow-hidden relative">
+                          <video src={src} controls preload="metadata" className="w-full max-h-48 object-contain bg-black" />
                         </div>
                       );
                     })()}
-                    
-                    {s.id === 1 && samMode === 'wacko' && !s.text.includes(' |||') && (
-                      <div className="mt-6 flex gap-4">
-                        <div className="w-24 h-24 bg-green-400 border-4 border-black flex items-center justify-center font-display font-bold text-lg text-center p-2 uppercase shadow-[4px_4px_0_rgba(0,0,0,1)] rotate-3">EVIDENCE A</div>
-                        <div className="w-24 h-24 bg-pink-400 border-4 border-black flex items-center justify-center font-display font-bold text-lg text-center p-2 uppercase shadow-[4px_4px_0_rgba(0,0,0,1)] -rotate-2">EVIDENCE B</div>
-                      </div>
-                    )}
                   </motion.div>
                 ))}
               </AnimatePresence>
             </div>
           </div>
 
+          {/* Column 3 (4/12): Strategic Coordination Feed (Chat) */}
+          <div className="cardboard-panel lg:col-span-4 p-6 flex flex-col min-h-[600px] h-[750px]">
+            <div className="flex items-center justify-between mb-6 border-b-2 border-[#5c4033]/20 pb-3">
+              <h2 className="text-lg font-bold uppercase flex items-center gap-2 text-[#5c4033] font-serif">
+                <MessageSquare size={22} /> STRATEGIC COORDINATION FEED
+              </h2>
+              <div className="flex items-center gap-1.5 bg-[#f7ebd3] border border-[#8b5a2b] px-3 py-1 rounded-full text-[10px] font-bold text-[#8b5a2b] font-mono">
+                <span className="w-2 h-2 rounded-full bg-cyan-500 animate-pulse" />
+                OUTPOST FEED
+              </div>
+            </div>
+
+            {/* Chat List Scroll container */}
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
+              <AnimatePresence>
+                {allChats.map((chat, idx) => (
+                  <motion.div 
+                    key={idx}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="p-3 rounded-xl border border-[#e5c290] bg-[#fdfaf2] shadow-sm relative"
+                  >
+                    <div className="flex justify-between items-center mb-1.5 border-b border-[#8b5a2b]/10 pb-1">
+                      <span className="font-bold text-xs text-[#8b5a2b] font-sans">
+                        {chat.sender}
+                      </span>
+                      <span className="text-[9px] text-slate-400 font-mono">
+                        {chat.time}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#5c4033] leading-relaxed font-serif">
+                      {chat.text}
+                    </p>
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+
+            {/* Chat input dispatch board */}
+            <div className="mt-4 pt-3 border-t border-[#8b5a2b]/20 flex gap-2">
+              <input 
+                type="text" 
+                value={newDispatch}
+                onChange={(e) => setNewDispatch(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSendDispatch()}
+                placeholder="Broadcast dispatch (e.g. @operator: all clear)..."
+                className="flex-1 px-3 py-2 text-xs rounded-lg outline-none font-bold bg-[#f7ebd3] border border-[#8b5a2b] text-[#5c4033] placeholder:text-[#8b5a2b]/40 font-mono focus:border-amber-500"
+              />
+              <button 
+                onClick={handleSendDispatch}
+                className="wooden-btn px-4 py-2 text-xs uppercase tracking-wider shrink-0"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+
         </div>
       </div>
+
+      {/* Lightbox Modal */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImage(null)}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative max-w-4xl w-full flex flex-col items-center border-4 border-[#5c4033] shadow-2xl p-6 bg-[#f7ebd3] rounded-2xl"
+            >
+              <button
+                onClick={() => setLightboxImage(null)}
+                className="absolute top-4 right-4 p-2 text-amber-800 hover:text-amber-950 hover:bg-amber-100 rounded-full"
+                aria-label="Close Lightbox"
+              >
+                <X size={24} />
+              </button>
+
+              <h3 className="text-lg font-bold mb-4 uppercase tracking-widest text-[#5c4033] font-serif">
+                🔍 Sighting Evidence
+              </h3>
+
+              <div className="overflow-hidden border-4 border-[#5c4033] mb-6 max-h-[70vh] flex items-center justify-center rounded-xl bg-white">
+                <img
+                  src={lightboxImage}
+                  alt="Enlarged Sighting"
+                  className="max-h-[60vh] max-w-full object-contain"
+                />
+              </div>
+
+              <div className="flex gap-4">
+                <a
+                  href={lightboxImage}
+                  download={`sam_sighting_${Date.now()}.jpg`}
+                  className="wooden-btn py-3 px-6 text-sm uppercase tracking-wider flex items-center gap-2"
+                >
+                  <Download size={18} /> Save Image
+                </a>
+                <button
+                  onClick={() => setLightboxImage(null)}
+                  className="wooden-btn py-3 px-6 text-sm uppercase tracking-wider"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -246,6 +246,42 @@ option {
 
   /* WORKSPACE OS THEMES */
   
+  /* Theme: SNY Classic */
+  .theme-sny-classic {
+      background: #090e1a !important;
+  }
+  .theme-sny-classic .os-panel {
+      background-color: #090e1a !important;
+      border: 1px solid rgba(255, 89, 16, 0.2);
+  }
+  .theme-sny-classic .os-card, .theme-sny-classic .os-card-primary {
+      border-radius: 0px !important;
+      background-color: #090e1a !important;
+      border: 2px solid #ff5910 !important;
+      box-shadow: none !important;
+      backdrop-filter: none !important;
+  }
+  .theme-sny-classic .os-card-header, .theme-sny-classic .os-card-primary .os-card-header {
+      background-color: #0d1527 !important;
+      border-bottom: 2px solid #ff5910 !important;
+      border-radius: 0px !important;
+  }
+  .theme-sny-classic * {
+      font-family: 'Outfit', 'Inter', sans-serif !important;
+  }
+  .theme-sny-classic .text-\[\#38bdf8\], .theme-sny-classic .text-\[\#38bdf8\] {
+      color: #ff5910 !important;
+  }
+  .theme-sny-classic .border-\[\#38bdf8\] {
+      border-color: #ff5910 !important;
+  }
+  .theme-sny-classic .bg-\[\#38bdf8\] {
+      background-color: #ff5910 !important;
+  }
+  .theme-sny-classic .text-cyan-400 {
+      color: #00b4d8 !important;
+  }
+
   /* Theme: Windows (Fluent/Metro) */
   .theme-windows .os-card, .theme-windows .os-card-primary {
       @apply rounded-none bg-[#111111] border border-white/20 shadow-none backdrop-blur-none;
@@ -828,5 +864,25 @@ option {
 .theme-stacklabs textarea:focus {
   border-color: #00d4ff !important;
   box-shadow: 0 0 10px rgba(0, 212, 255, 0.2) !important;
+}
+
+/* Zone Badge Styling for Fundies Grid Mode */
+.zone-badge {
+  display: none !important;
+  position: absolute !important;
+  background: rgba(9, 13, 26, 0.85) !important;
+  border: 1px solid rgba(0, 240, 255, 0.4) !important;
+  border-radius: 4px !important;
+  padding: 2px 6px !important;
+  color: #00f0ff !important;
+  font-size: 0.65rem !important;
+  font-family: monospace !important;
+  font-weight: 700 !important;
+  text-shadow: 0 0 6px rgba(0, 240, 255, 0.4) !important;
+  z-index: 100 !important;
+  pointer-events: none !important;
+}
+body.fundies-grid-active .zone-badge {
+  display: block !important;
 }
 

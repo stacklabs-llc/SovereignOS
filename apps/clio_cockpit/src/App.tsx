@@ -841,6 +841,9 @@ export default function App() {
                     <option value="sovereign_core_8090.log">Core API (sovereign_core_8090.log)</option>
                     <option value="tmi_daemon.log">TMI Engine (tmi_daemon.log)</option>
                     <option value="vesper_scheduler.log">Vesper Scheduler (vesper_scheduler.log)</option>
+                    <option value="statcast_ingestor.log">Statcast Ingestor (statcast_ingestor.log)</option>
+                    <option value="statcast_sentinel.log">Statcast Sentinel (statcast_sentinel.log)</option>
+                    <option value="sovereign_drive_pipeline.log">Sovereign Drive Pipeline (sovereign_drive_pipeline.log)</option>
                   </select>
 
                   <div className="console-action-bar">

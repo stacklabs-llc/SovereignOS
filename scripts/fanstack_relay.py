@@ -17,6 +17,192 @@ load_dotenv("/home/james/SovereignOS/.env")
 SOVEREIGN_HOME = Path(os.getenv("SOVEREIGN_HOME", "/home/james/SovereignOS"))
 DB_PATH = str(SOVEREIGN_HOME / "dna" / os.getenv("SOVEREIGN_DB_NAME", "sovereign_now.db"))
 
+def get_db(path=DB_PATH, row_factory=True):
+    import sqlite3
+    conn = sqlite3.connect(path, timeout=30.0)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA foreign_keys=ON;")
+    if row_factory:
+        conn.row_factory = sqlite3.Row
+    return conn
+
+def resolve_player_id(player_val):
+    if not player_val:
+        return None
+    try:
+        return int(player_val)
+    except ValueError:
+        import sqlite3
+        import re
+        try:
+            conn = get_db(DB_PATH, row_factory=False)
+            cur = conn.cursor()
+            cur.execute("SELECT sys_id FROM mlb_rosters WHERE player_name = ? COLLATE NOCASE LIMIT 1", (player_val,))
+            row = cur.fetchone()
+            conn.close()
+            if row:
+                match = re.search(r'\d+', row[0])
+                if match:
+                    return int(match.group())
+        except Exception as e:
+            print(f"[resolve_player_id error] {e}")
+    return None
+
+def get_matchup_prediction(batter_val, pitcher_val):
+    batter_id = resolve_player_id(batter_val)
+    pitcher_id = resolve_player_id(pitcher_val)
+
+    if not batter_id or not pitcher_id:
+        return {
+            "source": "invalid-players",
+            "total_matchups": 0,
+            "strikeout_prob": 22.0,
+            "hit_prob": 25.0,
+            "walk_prob": 8.0
+        }
+
+    try:
+        conn = get_db(INTELLIGENCE_DB, row_factory=True)
+        cur = conn.cursor()
+
+        # 1. Try head-to-head matchup history
+        cur.execute("""
+            SELECT
+                COUNT(*) as total_matchups,
+                COUNT(*) FILTER (WHERE events = 'strikeout') * 100.0 / COUNT(*) as strikeout_prob,
+                COUNT(*) FILTER (WHERE events IN ('single', 'double', 'triple', 'home_run')) * 100.0 / COUNT(*) as hit_prob,
+                COUNT(*) FILTER (WHERE events = 'walk') * 100.0 / COUNT(*) as walk_prob
+            FROM statcast_pitches
+            WHERE batter = ? AND pitcher = ?;
+        """, (batter_id, pitcher_id))
+        row = cur.fetchone()
+
+        if row and row["total_matchups"] > 0:
+            res = {
+                "source": "head-to-head",
+                "total_matchups": row["total_matchups"],
+                "strikeout_prob": round(row["strikeout_prob"], 1) if row["strikeout_prob"] is not None else 0.0,
+                "hit_prob": round(row["hit_prob"], 1) if row["hit_prob"] is not None else 0.0,
+                "walk_prob": round(row["walk_prob"], 1) if row["walk_prob"] is not None else 0.0
+            }
+            conn.close()
+            return res
+
+        # 2. If no head-to-head, get pitcher's dominant pitch type
+        cur.execute("""
+            SELECT pitch_name, COUNT(*) as c
+            FROM statcast_pitches
+            WHERE pitcher = ? AND pitch_name IS NOT NULL AND pitch_name != '' AND pitch_name != '---'
+            GROUP BY pitch_name
+            ORDER BY c DESC
+            LIMIT 1
+        """, (pitcher_id,))
+        p_row = cur.fetchone()
+
+        dominant_pitch = p_row["pitch_name"] if p_row else None
+
+        if dominant_pitch:
+            # Try batter's splits against this dominant pitch type
+            cur.execute("""
+                SELECT
+                    COUNT(*) as total_matchups,
+                    COUNT(*) FILTER (WHERE events = 'strikeout') * 100.0 / COUNT(*) as strikeout_prob,
+                    COUNT(*) FILTER (WHERE events IN ('single', 'double', 'triple', 'home_run')) * 100.0 / COUNT(*) as hit_prob,
+                    COUNT(*) FILTER (WHERE events = 'walk') * 100.0 / COUNT(*) as walk_prob
+                FROM statcast_pitches
+                WHERE batter = ? AND pitch_name = ?;
+            """, (batter_id, dominant_pitch))
+            b_row = cur.fetchone()
+
+            if b_row and b_row["total_matchups"] > 0:
+                res = {
+                    "source": f"splits_vs_{dominant_pitch}",
+                    "total_matchups": b_row["total_matchups"],
+                    "strikeout_prob": round(b_row["strikeout_prob"], 1) if b_row["strikeout_prob"] is not None else 0.0,
+                    "hit_prob": round(b_row["hit_prob"], 1) if b_row["hit_prob"] is not None else 0.0,
+                    "walk_prob": round(b_row["walk_prob"], 1) if b_row["walk_prob"] is not None else 0.0
+                }
+                conn.close()
+                return res
+
+        # 3. Fallback: Batter's overall splits against all pitch types
+        cur.execute("""
+            SELECT
+                COUNT(*) as total_matchups,
+                COUNT(*) FILTER (WHERE events = 'strikeout') * 100.0 / COUNT(*) as strikeout_prob,
+                COUNT(*) FILTER (WHERE events IN ('single', 'double', 'triple', 'home_run')) * 100.0 / COUNT(*) as hit_prob,
+                COUNT(*) FILTER (WHERE events = 'walk') * 100.0 / COUNT(*) as walk_prob
+            FROM statcast_pitches
+            WHERE batter = ?;
+        """, (batter_id,))
+        fallback_row = cur.fetchone()
+
+        if fallback_row and fallback_row["total_matchups"] > 0:
+            res = {
+                "source": "batter-overall",
+                "total_matchups": fallback_row["total_matchups"],
+                "strikeout_prob": round(fallback_row["strikeout_prob"], 1) if fallback_row["strikeout_prob"] is not None else 0.0,
+                "hit_prob": round(fallback_row["hit_prob"], 1) if fallback_row["hit_prob"] is not None else 0.0,
+                "walk_prob": round(fallback_row["walk_prob"], 1) if fallback_row["walk_prob"] is not None else 0.0
+            }
+            conn.close()
+            return res
+
+        conn.close()
+        # 4. Final safety fallback
+        return {
+            "source": "league-average",
+            "total_matchups": 0,
+            "strikeout_prob": 22.0,
+            "hit_prob": 25.0,
+            "walk_prob": 8.0
+        }
+
+    except Exception as e:
+        print(f"[RELAY_PREDICTION_ERROR] {e}")
+        return {
+            "source": "error-fallback",
+            "total_matchups": 0,
+            "strikeout_prob": 22.0,
+            "hit_prob": 25.0,
+            "walk_prob": 8.0
+        }
+
+
+def decorate_chat_message(chat_msg):
+    """
+    Look up persona details from the database and append id, persona_name, avatar_url,
+    and hex (mapped from color) to make the chat message compliant with frontend expected format.
+    """
+    user = chat_msg.get("user") or chat_msg.get("persona") or "SYSTEM"
+    if "id" not in chat_msg or "persona_name" not in chat_msg:
+        import uuid
+        msg_id = str(uuid.uuid4())
+        p_name = user
+        avatar_url = "/avatars/Sovereign_OS_Logo.jpg"
+        hex_color = chat_msg.get("color") or "#ffffff"
+        
+        try:
+            with get_db(row_factory=False) as conn:
+                c = conn.cursor()
+                c.execute("SELECT display_name, avatar_url, color FROM persona WHERE user_name = ? OR display_name = ? COLLATE NOCASE", (user, user))
+                row = c.fetchone()
+                if row:
+                    p_name = row[0] if row[0] else user
+                    avatar_url = row[1] if row[1] else avatar_url
+                    hex_color = row[2] if row[2] else hex_color
+        except Exception as e:
+            print(f"[DECORATOR ERROR] {e}")
+            
+        chat_msg["id"] = chat_msg.get("id") or msg_id
+        chat_msg["persona_name"] = chat_msg.get("persona_name") or p_name
+        chat_msg["avatar_url"] = chat_msg.get("avatar_url") or avatar_url
+        chat_msg["hex"] = chat_msg.get("hex") or hex_color
+    return chat_msg
+
+
+
 def fire_govee(r, g, b, color_tem=0):
     import socket, json, os
     from dotenv import load_dotenv
@@ -175,7 +361,7 @@ active_sim_task = None
 INTELLIGENCE_DB = str(SOVEREIGN_HOME / "sovereign_intelligence.db")
 
 async def run_simulation(game_pk, speed):
-    con = sqlite3.connect(INTELLIGENCE_DB)
+    con = get_db(INTELLIGENCE_DB, row_factory=False)
     cur = con.cursor()
     cur.execute("SELECT at_bat_number, pitch_number, events, description, des, away_score, home_score, inning, outs_when_up, balls, strikes, pitch_name, release_speed, batter, pitcher, away_team, home_team FROM statcast_pitches WHERE game_pk = ? ORDER BY at_bat_number ASC, pitch_number ASC", (game_pk,))
     rows = cur.fetchall()
@@ -231,8 +417,7 @@ async def run_simulation(game_pk, speed):
 def get_active_system_warnings():
     warnings = []
     try:
-        conn = sqlite3.connect("/home/james/SovereignOS/dna/sovereign_now.db")
-        conn.row_factory = sqlite3.Row
+        conn = get_db()
         cur = conn.cursor()
         cur.execute("""
             SELECT ea.ci_sys_id, ea.expression_name, ea.avatar_url, c.name, c.operational_status
@@ -268,6 +453,8 @@ async def broadcast_state(target_pk=None, force_global=False):
         for c in list(clients):
             # Send if force_global, or if they are in GLOBAL, or if they are in the target room
             room = ws_rooms.get(c, "GLOBAL")
+            if room == "POLLER":
+                continue
             if force_global or room == "GLOBAL" or room == target_pk:
                 try:
                     await c.send(msg)
@@ -279,6 +466,8 @@ async def broadcast_state(target_pk=None, force_global=False):
         # Just sending an empty system update
         msg = json.dumps({"type": "STATE_UPDATE", "data": {}, "system": global_system_state, "force_global": True, "target_game_pk": "GLOBAL"})
         for c in list(clients):
+            if ws_rooms.get(c, "GLOBAL") == "POLLER":
+                continue
             try: await c.send(msg)
             except: pass
 
@@ -479,6 +668,38 @@ async def handle_client(ws):
                         loop.run_in_executor(None, run_strobe)
                 
                 for c in list(clients):
+                    if ws_rooms.get(c, "GLOBAL") == "POLLER":
+                        continue
+                    if ws_rooms.get(c, "GLOBAL") == room_id or room_id == "GLOBAL" or ws_rooms.get(c, "GLOBAL") == "GLOBAL":
+                        try:
+                            await c.send(out_msg)
+                        except:
+                            pass
+                continue
+
+            if data.get("event") == "media_trigger":
+                room_id = str(data.get("room_id", "GLOBAL"))
+                out_msg = json.dumps({
+                    "type": "media_trigger",
+                    "room_id": room_id,
+                    "data": data.get("data")
+                })
+                for c in list(clients):
+                    if ws_rooms.get(c, "GLOBAL") == "POLLER":
+                        continue
+                    if ws_rooms.get(c, "GLOBAL") == room_id or room_id == "GLOBAL" or ws_rooms.get(c, "GLOBAL") == "GLOBAL":
+                        try:
+                            await c.send(out_msg)
+                        except:
+                            pass
+                continue
+
+            if data.get("type") in ["official_review_start", "official_review_end", "official_review_override", "official_review_clear"]:
+                room_id = str(data.get("room_id") or data.get("target_game_pk") or "GLOBAL")
+                out_msg = json.dumps(data)
+                for c in list(clients):
+                    if ws_rooms.get(c, "GLOBAL") == "POLLER":
+                        continue
                     if ws_rooms.get(c, "GLOBAL") == room_id or room_id == "GLOBAL" or ws_rooms.get(c, "GLOBAL") == "GLOBAL":
                         try:
                             await c.send(out_msg)
@@ -486,8 +707,40 @@ async def handle_client(ws):
                             pass
                 continue
             
+            # SYS_LOG Message Routing - Isolated from Public Chat Stream
+            if data.get("type") == "SYS_LOG":
+                user = data.get("user", data.get("persona", "SYSTEM"))
+                text = data.get("text", "")
+                target_room = str(data.get("target_game_pk", "GLOBAL"))
+                
+                chat_msg = {
+                    "type": "SYS_LOG",
+                    "user": user,
+                    "color": data.get("color"),
+                    "text": text,
+                    "target_game_pk": target_room,
+                    "timestamp": time.strftime("%H:%M:%S"),
+                    "model_engine": data.get("model_engine"),
+                    "is_penalty_box": data.get("is_penalty_box", False),
+                    "channel": data.get("channel", "system_broadcast"),
+                    "mediaUrl": data.get("mediaUrl") or data.get("media_url") or data.get("image"),
+                    "shake": data.get("shake", False)
+                }
+                out_msg = json.dumps(chat_msg)
+                
+                # Broadcast only to active clients in the target room (for live dev view)
+                for c in list(clients):
+                    if ws_rooms.get(c, "GLOBAL") == "POLLER":
+                        continue
+                    if ws_rooms.get(c, "GLOBAL") == target_room or target_room == "GLOBAL" or ws_rooms.get(c, "GLOBAL") == "GLOBAL":
+                        try:
+                            await c.send(out_msg)
+                        except:
+                            pass
+                continue
+
             # Global Chat Relay for WardyStack and Fans
-            if data.get("type") in ["CHAT_MESSAGE", "SYS_LOG", "YOUTUBE_CHAT"]:
+            if data.get("type") in ["CHAT_MESSAGE", "YOUTUBE_CHAT"]:
                 user = data.get("user", data.get("persona", "SYSTEM"))
                 text = data.get("text", "")
                 target_room = str(data.get("target_game_pk", "GLOBAL"))
@@ -545,6 +798,7 @@ async def handle_client(ws):
                     "mediaUrl": data.get("mediaUrl") or data.get("media_url") or data.get("image"),
                     "shake": data.get("shake", False)
                 }
+                chat_msg = decorate_chat_message(chat_msg)
                 out_msg = json.dumps(chat_msg)
                 
                 chat_buffers[target_room].append(chat_msg)
@@ -578,6 +832,8 @@ async def handle_client(ws):
                         print(f"Failed to write NotebookLM export: {e}")
                 
                 for c in list(clients):
+                    if ws_rooms.get(c, "GLOBAL") == "POLLER":
+                        continue
                     if ws_rooms.get(c, "GLOBAL") == target_room or target_room == "GLOBAL" or ws_rooms.get(c, "GLOBAL") == "GLOBAL":
                         try: 
                             await c.send(out_msg)
@@ -607,6 +863,85 @@ async def handle_client(ws):
             
             if data.get("type") == "CMD_SYNC_STATE":
                 sync_data = data.get("data", {})
+                
+                # Check for "Empty JSON" packet: home/away teams missing and pitch values are placeholders ("---")
+                home_team = sync_data.get("home_team")
+                away_team = sync_data.get("away_team")
+                pitch_name = sync_data.get("pitch_name")
+                pitch_speed = sync_data.get("pitch_speed")
+                if (not home_team and not away_team) and (pitch_name == "---" or pitch_speed == "---"):
+                    print(f"[DEBUG] Dropping Empty JSON/Placeholder telemetry packet for game: {data.get('target_game_pk')}")
+                    continue
+
+                # Send application-layer ACK immediately back to the sender
+                if "msg_id" in data:
+                    try:
+                        await ws.send(json.dumps({
+                            "type": "CMD_SYNC_ACK",
+                            "msg_id": data["msg_id"],
+                            "target_game_pk": data.get("target_game_pk")
+                        }))
+                    except Exception as ack_err:
+                        print(f"[ACK_ERROR] Failed to send ACK to poller: {ack_err}")
+
+                # Persist live play telemetry into game_play database table (WO-2026-094)
+                try:
+                    import sqlite3 as _sq, uuid as _uuid
+                    pk = str(data.get("target_game_pk", "GLOBAL"))
+                    if pk != "GLOBAL" and sync_data.get("status_msg"):
+                        inning_str = sync_data.get("inning", "")
+                        half_val = None
+                        inning_num = None
+                        if inning_str:
+                            parts = inning_str.split()
+                            if len(parts) >= 2:
+                                half_val = parts[0].lower()
+                                if half_val.startswith("bot"):
+                                    half_val = "bottom"
+                                elif half_val.startswith("top"):
+                                    half_val = "top"
+                                try:
+                                    import re
+                                    num_str = re.sub(r'\D', '', parts[1])
+                                    if num_str:
+                                        inning_num = int(num_str)
+                                except Exception:
+                                    pass
+
+                        p_speed = sync_data.get("pitch_speed")
+                        try:
+                            p_speed_val = float(p_speed) if p_speed and p_speed != "---" else None
+                        except Exception:
+                            p_speed_val = None
+
+                        db_conn = get_db(row_factory=False)
+                        db_conn.execute("""
+                            INSERT OR IGNORE INTO game_play
+                                (id, game_pk, play_id, inning, half, event_type,
+                                 batter, pitcher, pitch_speed, pitch_type,
+                                 description, score_away, score_home, outs, raw_json)
+                            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                        """, (
+                            _uuid.uuid4().hex,
+                            pk,
+                            sync_data.get('play_id') or _uuid.uuid4().hex[:12],
+                            inning_num,
+                            half_val,
+                            sync_data.get('event_type'),
+                            sync_data.get('batter'),
+                            sync_data.get('pitcher'),
+                            p_speed_val,
+                            sync_data.get('pitch_name'),
+                            sync_data.get('status_msg'),
+                            sync_data.get('away_score'),
+                            sync_data.get('home_score'),
+                            sync_data.get('outs'),
+                            json.dumps(sync_data)
+                        ))
+                        db_conn.commit()
+                        db_conn.close()
+                except Exception as db_err:
+                    print(f"[DB_ERROR] Failed to persist game_play event: {db_err}")
                 
                 # SDLC-0027 FINAL LOCKDOWN LOGIC
                 s_msg = sync_data.get("status_msg", "").lower()
@@ -663,6 +998,8 @@ async def handle_client(ws):
                 gs["launch_angle"] = sync_data.get("launch_angle", gs.get("launch_angle", "---"))
                 gs["event_type"] = sync_data.get("event_type", gs.get("event_type", "pitch"))
                 gs["batting_team"] = sync_data.get("batting_team", gs.get("batting_team", ""))
+                gs["delta_score"] = sync_data.get("delta_score", gs.get("delta_score", 0))
+                gs["inning_half"] = sync_data.get("inning_half") or sync_data.get("half") or gs.get("inning_half", "")
                 gs["onFirst"] = sync_data.get("onFirst", gs.get("onFirst", False))
                 gs["onSecond"] = sync_data.get("onSecond", gs.get("onSecond", False))
                 gs["onThird"] = sync_data.get("onThird", gs.get("onThird", False))
@@ -690,6 +1027,20 @@ async def handle_client(ws):
                 gs["pitcher_losses"] = sync_data.get("pitcher_losses", gs.get("pitcher_losses", ""))
                 gs["pitcher_so"] = sync_data.get("pitcher_so", gs.get("pitcher_so", ""))
                 gs["pitcher_ip"] = sync_data.get("pitcher_ip", gs.get("pitcher_ip", ""))
+
+                # Compute matchup predictions dynamically
+                b_val = gs.get("batter_id") or gs.get("batter")
+                p_val = gs.get("pitcher_id") or gs.get("pitcher")
+                if b_val and p_val:
+                    gs["matchup_prediction"] = get_matchup_prediction(b_val, p_val)
+                else:
+                    gs["matchup_prediction"] = {
+                        "source": "missing-players",
+                        "total_matchups": 0,
+                        "strikeout_prob": 22.0,
+                        "hit_prob": 25.0,
+                        "walk_prob": 8.0
+                    }
 
                 # Senga Ghost Protocol Easter Egg detection
                 status_msg = sync_data.get("status_msg", "")
@@ -767,6 +1118,7 @@ async def handle_client(ws):
                 pk = data.get("game_pk")
                 force_global = data.get("force_global", False)
                 if pk:
+                    sports_session["current_ingress_stream"] = str(pk)
                     hist_msg = json.dumps({"type": "CHAT_HISTORY", "messages": list(chat_buffers[str(pk)])})
                     if force_global:
                         for c in list(clients): 
@@ -797,8 +1149,7 @@ async def handle_client(ws):
                         active_sim_task.cancel()
                         active_sim_task = None
                     
-                    # Check DB to see if the chosen room is marked as simulated
-                    con = sqlite3.connect(DB_PATH)
+                    con = get_db(row_factory=False)
                     cur = con.cursor()
                     cur.execute("SELECT is_simulated, sim_speed FROM cmdb_ci_fanstack_room WHERE game_pk=?", (str(pk),))
                     row = cur.fetchone()
@@ -818,6 +1169,7 @@ async def handle_client(ws):
             # Wardy Broadcast translation
             if data.get("type") == "broadcast":
                 chat_msg = {"type": "CHAT_MESSAGE", "user": "Wardy", "color": "#f97316", "text": data.get("message", ""), "target_game_pk": "GLOBAL", "timestamp": time.strftime("%H:%M:%S")}
+                chat_msg = decorate_chat_message(chat_msg)
                 out_msg = json.dumps(chat_msg)
                 for c in list(clients):
                     try: await c.send(out_msg)
@@ -840,7 +1192,7 @@ async def handle_client(ws):
                 await broadcast_state(force_global=True)
                     
             # Pass all new Claude Wardy v2 UI events and WebRTC signaling transparently to backend bots/clients
-            if data.get("type") in ["persona_config", "persona_strike", "custom_prompt", "boggs_level", "sim_speed", "trigger_event", "switch_game", "update_context", "TMI_ANOMALY", "hot_take_rant", "HOLOLINK_REQUEST", "WEBRTC_OFFER", "WEBRTC_ANSWER", "WEBRTC_ICE_CANDIDATE", "HOLOLINK_END", "outrage_proxy_deployed", "MULTIVERSE_PREP", "MULTIVERSE_SETTLE"]:
+            if data.get("type") in ["persona_config", "persona_strike", "custom_prompt", "boggs_level", "sim_speed", "trigger_event", "switch_game", "update_context", "TMI_ANOMALY", "hot_take_rant", "HOLOLINK_REQUEST", "WEBRTC_OFFER", "WEBRTC_ANSWER", "WEBRTC_ICE_CANDIDATE", "HOLOLINK_END", "outrage_proxy_deployed", "MULTIVERSE_PREP", "MULTIVERSE_SETTLE", "CMD_SIT_DOWN", "TACTILE_TRIGGER"]:
                 out_msg = json.dumps(data)
                 for c in list(clients):
                     try: 
@@ -902,7 +1254,7 @@ except Exception as _gl_err:
 # Ensure hot_takes table exists
 def _ensure_hot_takes_table():
     try:
-        _c = sqlite3.connect(DB_PATH)
+        _c = get_db(row_factory=False)
         _c.execute("""
             CREATE TABLE IF NOT EXISTS hot_takes (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -932,6 +1284,17 @@ sports_session = {
     "historical_session_thread": [],
     "current_ingress_stream": ""
 }
+
+@fastapi_app.get("/api/session/active-stream")
+async def api_get_active_stream():
+    """
+    Retrieve the current active session state and ingress stream PK.
+    """
+    return {
+        "status": "success",
+        "game_pk": sports_session["current_ingress_stream"] or None,
+        "session": sports_session
+    }
 
 @fastapi_app.post("/api/session/swap-stream")
 async def api_swap_stream(request: Request):
@@ -1027,6 +1390,17 @@ async def api_swap_stream(request: Request):
                                 "INSERT INTO game_persona (id, game_pk, persona_id, seat_state) VALUES (?, ?, ?, 'active')",
                                 (_uuid.uuid4().hex, target_game_pk, p_id)
                             )
+                    
+                    # Ensure all active game_persona seats for target game are active=1 in sys_user
+                    c.execute("""
+                        UPDATE sys_user 
+                        SET active = 1 
+                        WHERE sys_id IN (
+                            SELECT persona_id 
+                            FROM game_persona 
+                            WHERE game_pk = ? AND seat_state = 'active'
+                        )
+                    """, (target_game_pk,))
                     con.commit()
                     print(f"[SWAP-STREAM] Carried over {len(global_active_ids)} global/gang personas from room {prev_stream} to {target_game_pk} (preserved native team advocates)")
             con.close()
@@ -1034,6 +1408,52 @@ async def api_swap_stream(request: Request):
             print(f"[SWAP-STREAM] Database persona carryover warning: {db_err}")
     else:
         print(f"[SWAP-STREAM] Optional carryover skipped: bring_gang = False (preserved rosters)")
+        try:
+            import sqlite3 as _sq
+            con = _sq.connect(DB_PATH)
+            c = con.cursor()
+            # Fetch active personas in the target room
+            c.execute("""
+                SELECT gp.persona_id, c.assigned_to 
+                FROM game_persona gp
+                LEFT JOIN cmdb_ci c ON gp.persona_id = c.sys_id
+                WHERE gp.game_pk = ? AND gp.seat_state = 'active'
+            """, (target_game_pk,))
+            target_rows = c.fetchall()
+            
+            # Identify global/gang advocates
+            global_target_ids = []
+            for p_id, assigned_to in target_rows:
+                assigned_to_upper = str(assigned_to).upper().strip() if assigned_to else ""
+                is_persistent = p_id in sports_session["persistent_advocate_registry"]
+                is_global = assigned_to_upper in ('GLOBAL', '') or (len(assigned_to_upper) != 3 and assigned_to_upper != 'UFL')
+                if is_persistent or is_global:
+                    global_target_ids.append(p_id)
+            
+            # Delete those global personas from the target room
+            if global_target_ids:
+                placeholders = ', '.join(['?'] * len(global_target_ids))
+                c.execute(
+                    f"DELETE FROM game_persona WHERE game_pk = ? AND persona_id IN ({placeholders})",
+                    [target_game_pk] + global_target_ids
+                )
+            
+            # Ensure all remaining active game_persona seats for target game are active=1 in sys_user
+            c.execute("""
+                UPDATE sys_user 
+                SET active = 1 
+                WHERE sys_id IN (
+                    SELECT persona_id 
+                    FROM game_persona 
+                    WHERE game_pk = ? AND seat_state = 'active'
+                )
+            """, (target_game_pk,))
+            con.commit()
+            if global_target_ids:
+                print(f"[SWAP-STREAM] Cleaned up {len(global_target_ids)} global advocates from target room {target_game_pk}")
+            con.close()
+        except Exception as db_err:
+            print(f"[SWAP-STREAM] Database cleanup warning: {db_err}")
         
     # 4. Broadcast the hot-swap event (GAME_SWITCHED) to all connected websocket clients
     ws_msg = json.dumps({
@@ -1063,8 +1483,7 @@ async def api_swap_stream(request: Request):
 @fastapi_app.get("/api/hot_takes")
 async def get_hot_takes(persona: str = None, limit: int = 50):
     """Retrieve saved hot takes from the DB, optionally filtered by persona."""
-    con = sqlite3.connect(DB_PATH)
-    con.row_factory = sqlite3.Row
+    con = get_db()
     cur = con.cursor()
     if persona:
         cur.execute("SELECT * FROM hot_takes WHERE persona = ? ORDER BY created_at DESC LIMIT ?", (persona, limit))
@@ -1141,9 +1560,8 @@ async def synthesize_holodex_image(req: HoloDexSynthesizeRequest):
             
             # Also register the asset in our CMDB sys_media_asset table!
             try:
-                import sqlite3
                 sys_id = uuid.uuid4().hex
-                con = sqlite3.connect(DB_PATH)
+                con = get_db(row_factory=False)
                 c = con.cursor()
                 
                 # Get next asset tag
@@ -1553,10 +1971,11 @@ async def api_all_personas():
     con = _sq.connect(DB_PATH)
     c = con.cursor()
     c.execute("""
-        SELECT id as sys_id, user_name, team, deep_lore, system_prompt, behavior_notes, governance, color, avatar_url
-        FROM persona
-        WHERE team IS NOT NULL AND team != '' AND team NOT IN ('golf_room')
-        ORDER BY team, user_name
+        SELECT p.id as sys_id, p.user_name, p.team, p.deep_lore, p.system_prompt, p.behavior_notes, p.governance, p.color, p.avatar_url, p.display_name, u.active, p.email_alias, p.cadence, p.boggs_level, p.u_visual_style, p.avatar_prompt, p.character_map_prompt, p.u_deployment_zone
+        FROM persona p
+        LEFT JOIN sys_user u ON u.sys_id = p.id
+        WHERE p.team IS NOT NULL AND p.team != '' AND p.team NOT IN ('golf_room')
+        ORDER BY p.team, p.user_name
     """)
     rows = c.fetchall()
     con.close()
@@ -1572,7 +1991,16 @@ async def api_all_personas():
             "behavior_notes": r[5],
             "governance": r[6],
             "color": r[7],
-            "avatar_url": r[8]
+            "avatar_url": r[8],
+            "display_name": r[9],
+            "active": r[10] if r[10] is not None else 1,
+            "email_alias": r[11],
+            "cadence": r[12],
+            "boggs_level": r[13],
+            "u_visual_style": r[14],
+            "avatar_prompt": r[15],
+            "character_map_prompt": r[16],
+            "u_deployment_zone": r[17]
         }
         for r in rows
         if not clone_pattern.search(r[1])
@@ -1592,9 +2020,10 @@ async def api_room_personas(gamePk: str):
     c.execute("""
         SELECT p.user_name, p.team, p.color, COALESCE(gp.gemini_tokens, 0), COALESCE(gp.local_tokens, 0)
         FROM persona p
+        JOIN sys_user u ON u.sys_id = p.id
         LEFT JOIN game_persona gp ON (gp.persona_id = p.id AND gp.game_pk = ?)
         LEFT JOIN m2m_persona_room m2m ON (m2m.room = ? AND (m2m.persona = p.id OR m2m.persona = p.user_name OR m2m.persona = (SELECT sys_id FROM sys_user WHERE user_name = p.user_name COLLATE NOCASE)))
-        WHERE (gp.game_pk = ? AND gp.seat_state = 'active') OR m2m.sys_id IS NOT NULL
+        WHERE ((gp.game_pk = ? AND gp.seat_state = 'active') OR m2m.sys_id IS NOT NULL)
         GROUP BY p.user_name
         ORDER BY p.team, p.user_name
     """, (gamePk, gamePk, gamePk))
@@ -1838,6 +2267,7 @@ async def api_inject_chat(request: Request):
         "mediaUrl": data.get("mediaUrl") or data.get("media_url") or data.get("image"),
         "shake": data.get("shake", False)
     }
+    chat_msg = decorate_chat_message(chat_msg)
     chat_buffers[target_room].append(chat_msg)
     
     # Broadcast to all clients
@@ -1929,6 +2359,67 @@ async def api_store_game_play(request: Request):
     con.commit()
     con.close()
     return {"status": "stored"}
+
+
+@fastapi_app.post("/api/game_play/blackjack")
+async def api_store_blackjack_state(request: Request):
+    """Receive Blackjack game state from Argo CV and broadcast GTO decision."""
+    try:
+        data = await request.json()
+    except Exception:
+        data = {}
+    player_score = int(data.get('player_score', 16))
+    dealer_up = str(data.get('dealer_up', 'Ts'))
+    player_cards = data.get('player_cards', ['10s', '6d'])
+    dealer_cards = data.get('dealer_cards', ['Ts'])
+    
+    # Calculate GTO Optimal Play
+    up_card = dealer_up.strip()[:1].upper() if dealer_up else 'T'
+    if player_score == 16:
+        if up_card in ['T', 'J', 'Q', 'K', 'A', '1']:
+            gto = {"recommendation": "SURRENDER", "ev": -0.54, "is_warning": True}
+        elif up_card in ['7', '8', '9']:
+            gto = {"recommendation": "HIT", "ev": -0.48, "is_warning": False}
+        else:
+            gto = {"recommendation": "STAND", "ev": -0.28, "is_warning": False}
+    elif player_score == 11:
+        if up_card in ['A', '1']:
+            gto = {"recommendation": "HIT", "ev": 0.15, "is_warning": False}
+        else:
+            gto = {"recommendation": "DOUBLE", "ev": 0.32, "is_warning": False}
+    elif 12 <= player_score <= 15:
+        if up_card in ['2', '3', '4', '5', '6']:
+            gto = {"recommendation": "STAND", "ev": -0.25, "is_warning": False}
+        else:
+            gto = {"recommendation": "HIT", "ev": -0.42, "is_warning": False}
+    elif player_score >= 17:
+        gto = {"recommendation": "STAND", "ev": 0.45, "is_warning": False}
+    elif player_score <= 10:
+        gto = {"recommendation": "HIT", "ev": -0.12, "is_warning": False}
+    else:
+        gto = {"recommendation": "HIT", "ev": -0.35, "is_warning": False}
+
+    payload = {
+        "type": "BLACKJACK_STATE",
+        "player_score": player_score,
+        "dealer_up": dealer_up,
+        "player_cards": player_cards,
+        "dealer_cards": dealer_cards,
+        "recommendation": gto["recommendation"],
+        "ev": gto["ev"],
+        "is_warning": gto["is_warning"]
+    }
+    
+    # Broadcast to all connected WebSockets
+    msg_str = json.dumps(payload)
+    for c in list(clients):
+        try:
+            asyncio.create_task(c.send(msg_str))
+        except Exception as e:
+            print(f"[Blackjack Broadcast Error] {e}")
+            
+    return {"status": "broadcasted", "payload": payload}
+
 
 
 @fastapi_app.get("/api/game_play/{game_pk}")
@@ -2119,16 +2610,22 @@ async def upload_persona_image_blob(persona_id: str, file: UploadFile = File(...
     mime = file.content_type or 'image/png'
     b64 = base64.b64encode(raw).decode('utf-8')
     data_url = f"data:{mime};base64,{b64}"
+    avatar_path = f"/api/persona_image/{safe_id}"
     con = _sq.connect(DB_PATH)
     updated = con.execute(
-        "UPDATE persona SET avatar_blob = ? WHERE user_name = ? OR user_name = ?",
-        (data_url, persona_id, safe_id)
+        "UPDATE persona SET avatar_blob = ?, avatar_url = ? WHERE user_name = ? OR user_name = ?",
+        (data_url, avatar_path, persona_id, safe_id)
     ).rowcount
+    if updated > 0:
+        con.execute(
+            "UPDATE sys_user SET avatar_url = ? WHERE sys_id = (SELECT id FROM persona WHERE user_name = ? OR user_name = ?)",
+            (avatar_path, persona_id, safe_id)
+        )
     con.commit()
     con.close()
     if updated == 0:
         raise HTTPException(status_code=404, detail=f"Persona '{persona_id}' not found")
-    return {"status": "success", "user_name": safe_id, "avatar_url": f"/api/persona_image/{safe_id}"}
+    return {"status": "success", "user_name": safe_id, "avatar_url": avatar_path}
 
 
 @fastapi_app.post("/api/chat/upload")
@@ -2370,10 +2867,11 @@ async def generate_advocate_sprite(payload: AdvocateSpritePayload):
     system_prompt = ""
     deep_lore = ""
     team = "global"
+    visual_style = "style_2d"
     try:
-        con = sqlite3.connect(DB_PATH)
+        con = get_db(row_factory=False)
         row = con.execute(
-            "SELECT system_prompt, deep_lore, team FROM persona WHERE LOWER(user_name) = ? OR LOWER(user_name) = ?",
+            "SELECT system_prompt, deep_lore, team, u_visual_style FROM persona WHERE LOWER(user_name) = ? OR LOWER(user_name) = ?",
             (norm_name, norm_name)
         ).fetchone()
         con.close()
@@ -2381,9 +2879,19 @@ async def generate_advocate_sprite(payload: AdvocateSpritePayload):
             system_prompt = row[0] or ""
             deep_lore = row[1] or ""
             team = row[2] or "global"
+            visual_style = row[3] or "style_2d"
     except Exception as e:
         print(f"[Sprite Gen DB Error] {e}")
         
+    style_prompts = {
+        "style_2d": "rendered in a premium Flat 2D Vector Comic art style, crisp clean outlines, bold vector shading, solid near-black background, extremely high visual consistency.",
+        "style_pixel": "rendered in a vibrant 16-bit retro pixel art grid style, pixelated textures, clean shapes, solid dark near-black background.",
+        "style_clay": "rendered as an unraveled claymation model, stop-motion plasticine textures, playful handcrafted look, solid near-black background.",
+        "style_apathetic": "rendered as a gloomy, apathetic claymation figure, moody lighting, distressed plasticine textures, solid near-black background.",
+        "style_felt": "cozy hand-drawn fuzzy felt puppet style, soft fleece textures, warm organic lighting, solid dark near-black background."
+    }
+    style_suffix = style_prompts.get(visual_style, style_prompts["style_2d"])
+    
     base_description = f"Consistent facial features, headshot portrait of {persona_name}. Description: {deep_lore[:150]}. System context: {system_prompt[:150]}."
     
     if theme == "Beach Promotion":
@@ -2411,7 +2919,7 @@ async def generate_advocate_sprite(payload: AdvocateSpritePayload):
         )
         row_keys = ["modern", "1975", "1920"]
         
-    full_prompt = f"{base_description} {grid_instructions} Masterpiece, strict 3x3 grid layout, symmetric spacing, high-definition character sprite sheet."
+    full_prompt = f"{base_description} {grid_instructions} {style_suffix} Masterpiece, strict 3x3 grid layout, symmetric spacing, high-definition character sprite sheet."
     encoded_prompt = urllib.parse.quote(full_prompt)
     pollinations_url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?width=1024&height=1024&nologo=true"
     
@@ -2465,7 +2973,7 @@ async def generate_advocate_sprite(payload: AdvocateSpritePayload):
         # Register in CMDB
         try:
             sys_id = uuid.uuid4().hex
-            con = sqlite3.connect(DB_PATH)
+            con = get_db(row_factory=False)
             c = con.cursor()
             c.execute("SELECT asset_tag FROM sys_media_asset ORDER BY asset_tag DESC LIMIT 1")
             row_db = c.fetchone()
@@ -2537,8 +3045,7 @@ async def run_fastapi():
 @fastapi_app.get("/api/pga/leaderboard")
 def get_pga_leaderboard():
     try:
-        conn = sqlite3.connect("/home/james/SovereignOS/dna/sovereign_now.db")
-        conn.row_factory = sqlite3.Row
+        conn = get_db()
         c = conn.cursor()
         c.execute("SELECT player_id, player_name, current_position, score_to_par, current_hole, status, updated_at FROM pga_active_leaderboard ORDER BY current_position ASC, score_to_par ASC")
         rows = [dict(r) for r in c.fetchall()]
@@ -2557,7 +3064,7 @@ def post_pga_leaderboard(data: dict):
         current_hole = data.get("current_hole", 18)
         status = data.get("status", "ACTIVE")
         
-        conn = sqlite3.connect("/home/james/SovereignOS/dna/sovereign_now.db")
+        conn = get_db(row_factory=False)
         c = conn.cursor()
         c.execute("""
             INSERT OR REPLACE INTO pga_active_leaderboard 
@@ -2573,7 +3080,7 @@ def post_pga_leaderboard(data: dict):
 @fastapi_app.delete("/api/pga/leaderboard/{player_id}")
 def delete_pga_leaderboard(player_id: int):
     try:
-        conn = sqlite3.connect("/home/james/SovereignOS/dna/sovereign_now.db")
+        conn = get_db(row_factory=False)
         c = conn.cursor()
         c.execute("DELETE FROM pga_active_leaderboard WHERE player_id = ?", (player_id,))
         conn.commit()
@@ -2679,6 +3186,311 @@ async def get_mlb_boxscore(game_pk: str):
         return r.json()
     except Exception as e:
         return {"error": str(e)}
+
+class ChatRequest(BaseModel):
+    message: str
+
+def resolve_persona(tag: str):
+    """
+    Look up persona details (user_name, color, system_prompt, deep_lore)
+    from the database first, and then fallback to static files.
+    """
+    import sqlite3
+    tag_clean = tag.lower().strip().lstrip('@')
+    if tag_clean.endswith('_ci'):
+        tag_clean = tag_clean[:-3]
+
+    # Try mapping aliases first
+    if "james" in tag_clean:
+        tag_clean = "pilot_james"
+    elif "barb" in tag_clean:
+        if "warden" in tag_clean:
+            tag_clean = "warden_barb"
+        else:
+            tag_clean = "barb_the_founder"
+
+    # Query DB
+    try:
+        conn = get_db(row_factory=False)
+        c = conn.cursor()
+        # Look for exact username match or partial/fuzzy match
+        c.execute("""
+            SELECT user_name, color, system_prompt, deep_lore 
+            FROM persona 
+            WHERE LOWER(user_name) = ? OR LOWER(user_name) LIKE ?
+            LIMIT 1
+        """, (tag_clean, f"%{tag_clean}%"))
+        row = c.fetchone()
+        conn.close()
+        if row:
+            return {
+                "user_name": row[0],
+                "color": row[1] or "#A9A9A9",
+                "system_prompt": row[2] or "",
+                "deep_lore": row[3] or ""
+            }
+    except Exception as e:
+        print(f"[resolve_persona] DB lookup error: {e}")
+
+    # Fallback to static markdown files in dna/agents/personas/
+    PERSONAS_DIR = '/home/james/SovereignOS/dna/agents/personas/'
+    possible_files = [
+        f"{tag_clean}.md",
+        f"{tag_clean}_stan.md",
+        f"{tag_clean}_terry.md",
+        tag_clean
+    ]
+    
+    selected_file = None
+    for pf in possible_files:
+        if os.path.exists(os.path.join(PERSONAS_DIR, pf)):
+            selected_file = pf
+            break
+            
+    if not selected_file:
+        try:
+            # Fuzzy match files
+            all_files = [f for f in os.listdir(PERSONAS_DIR) if f.endswith('.md')]
+            for f in all_files:
+                if tag_clean in f.lower():
+                    selected_file = f
+                    break
+        except Exception:
+            pass
+
+    if selected_file:
+        try:
+            with open(os.path.join(PERSONAS_DIR, selected_file), 'r') as f:
+                content = f.read()
+            # Construct a basic model mapping from the file name
+            name = selected_file.replace('.md', '').replace('_', ' ').title()
+            color = "#FF5910" if "barf" in tag_clean else "#00E676" if "dot" in tag_clean else "#E0E0E0"
+            return {
+                "user_name": name,
+                "color": color,
+                "system_prompt": content,
+                "deep_lore": ""
+            }
+        except Exception:
+            pass
+
+    return None
+
+@fastapi_app.post("/api/chat")
+async def api_chat_endpoint(request: ChatRequest):
+    import re
+    from google import genai
+    from google.genai import types
+    
+    user_message = request.message
+    if not user_message:
+        return {"error": "Missing message"}
+
+    # Extract @tag
+    match = re.search(r'@(\w+)', user_message)
+    
+    if not match:
+        scruffy_text = "Hey pal, if you're gonna yell at someone in my bar, you gotta use their name. Tag them with @ (like @barf or @dot). Now buy a drink or get out."
+        # Broadcast user message
+        user_chat_msg = {
+            "type": "CHAT_MESSAGE",
+            "user": "james (Pilot)",
+            "color": "#94a3b8",
+            "text": user_message,
+            "target_game_pk": "GLOBAL",
+            "timestamp": time.strftime("%H:%M:%S"),
+            "model_engine": "USER_INTERACTION",
+            "is_penalty_box": False,
+            "channel": "system_broadcast"
+        }
+        user_chat_msg = decorate_chat_message(user_chat_msg)
+        chat_buffers["GLOBAL"].append(user_chat_msg)
+        for c in list(clients):
+            try:
+                await c.send(json.dumps(user_chat_msg))
+            except:
+                pass
+
+        # Broadcast Scruffy message
+        scruffy_chat_msg = {
+            "type": "CHAT_MESSAGE",
+            "user": "Scruffy (Bartender)",
+            "color": "#8B4513",
+            "text": scruffy_text,
+            "target_game_pk": "GLOBAL",
+            "timestamp": time.strftime("%H:%M:%S"),
+            "model_engine": "SYSTEM_FALLBACK",
+            "is_penalty_box": False,
+            "channel": "system_broadcast"
+        }
+        scruffy_chat_msg = decorate_chat_message(scruffy_chat_msg)
+        chat_buffers["GLOBAL"].append(scruffy_chat_msg)
+        for c in list(clients):
+            try:
+                await c.send(json.dumps(scruffy_chat_msg))
+            except:
+                pass
+
+        return {
+            "persona": "Scruffy (Bartender)",
+            "text": scruffy_text,
+            "color": "#8B4513"
+        }
+
+    tag = match.group(1)
+    persona = resolve_persona(tag)
+
+    if not persona:
+        scruffy_text = f"Ain't nobody in this bar named {tag}. Try @barf, @dot, or @uncle_stevie."
+        # Broadcast user message
+        user_chat_msg = {
+            "type": "CHAT_MESSAGE",
+            "user": "james (Pilot)",
+            "color": "#94a3b8",
+            "text": user_message,
+            "target_game_pk": "GLOBAL",
+            "timestamp": time.strftime("%H:%M:%S"),
+            "model_engine": "USER_INTERACTION",
+            "is_penalty_box": False,
+            "channel": "system_broadcast"
+        }
+        user_chat_msg = decorate_chat_message(user_chat_msg)
+        chat_buffers["GLOBAL"].append(user_chat_msg)
+        for c in list(clients):
+            try:
+                await c.send(json.dumps(user_chat_msg))
+            except:
+                pass
+
+        # Broadcast Scruffy message
+        scruffy_chat_msg = {
+            "type": "CHAT_MESSAGE",
+            "user": "Scruffy (Bartender)",
+            "color": "#8B4513",
+            "text": scruffy_text,
+            "target_game_pk": "GLOBAL",
+            "timestamp": time.strftime("%H:%M:%S"),
+            "model_engine": "SYSTEM_FALLBACK",
+            "is_penalty_box": False,
+            "channel": "system_broadcast"
+        }
+        scruffy_chat_msg = decorate_chat_message(scruffy_chat_msg)
+        chat_buffers["GLOBAL"].append(scruffy_chat_msg)
+        for c in list(clients):
+            try:
+                await c.send(json.dumps(scruffy_chat_msg))
+            except:
+                pass
+
+        return {
+            "persona": "Scruffy (Bartender)",
+            "text": scruffy_text,
+            "color": "#8B4513"
+        }
+
+    # Load latest context
+    current_context = "No recent context available."
+    try:
+        context_path = '/home/james/SovereignOS/dna/dropzone/daily_22042026/mardy_soto_comments.md'
+        if os.path.exists(context_path):
+            with open(context_path, 'r') as f:
+                current_context = f.read()[:5000]
+    except Exception as e:
+        print(f"[api_chat] Failed to load context: {e}")
+
+    # Build persona lore
+    persona_lore = ""
+    if persona.get("system_prompt"):
+        persona_lore += f"System Prompt:\n{persona['system_prompt']}\n\n"
+    if persona.get("deep_lore"):
+        persona_lore += f"Deep Lore:\n{persona['deep_lore']}\n"
+
+    prompt = f"""You are acting as the persona described below. You are currently sitting at "Scruffy's Bar", a local dive bar where sports fans come to complain or talk stats.
+
+Persona Lore:
+{persona_lore}
+
+CURRENT REALITY (DO NOT HALLUCINATE STATS OR PROBABILITIES THAT CONTRADICT THIS):
+The Mets are currently on an 11+ game losing streak. They are the worst team in MLB right now. Juan Soto has just returned for Game 2 vs Minnesota. 
+Here is what the fans are currently screaming about in the live chat right now:
+{current_context}
+
+A fan just walked up to you in the bar and said:
+"{user_message}"
+
+Task: Write ONE single, highly punchy, character-accurate response to this fan. Speak directly to them. Do not use hashtags or emojis. Keep it STRICTLY UNDER 250 CHARACTERS. Ensure your response reflects the CURRENT REALITY provided above.
+If the fan asks a statistical or factual question about current events or baseball, USE GOOGLE SEARCH to find the real answer before responding!"""
+
+    api_key = os.getenv("GEMINI_API_KEY")
+    gemini_client = None
+    if api_key:
+        try:
+            gemini_client = genai.Client(api_key=api_key)
+        except Exception as e:
+            print(f"[api_chat] Gemini Client Init Error: {e}")
+
+    if not gemini_client:
+        return {"error": "Gemini API client not initialized"}
+
+    try:
+        res = gemini_client.models.generate_content(
+            model='gemini-2.5-flash-lite',
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                temperature=0.85,
+                tools=[types.Tool(google_search=types.GoogleSearch())]
+            )
+        )
+        bot_text = res.text.strip()
+    except Exception as e:
+        print(f"[api_chat] Gemini Generation Error: {e}")
+        return {"error": f"Gemini Generation Error: {str(e)}"}
+
+    # Broadcast user message to websockets
+    user_chat_msg = {
+        "type": "CHAT_MESSAGE",
+        "user": "james (Pilot)",
+        "color": "#94a3b8",
+        "text": user_message,
+        "target_game_pk": "GLOBAL",
+        "timestamp": time.strftime("%H:%M:%S"),
+        "model_engine": "USER_INTERACTION",
+        "is_penalty_box": False,
+        "channel": "system_broadcast"
+    }
+    user_chat_msg = decorate_chat_message(user_chat_msg)
+    chat_buffers["GLOBAL"].append(user_chat_msg)
+    for c in list(clients):
+        try:
+            await c.send(json.dumps(user_chat_msg))
+        except:
+            pass
+
+    # Broadcast bot response to websockets
+    bot_chat_msg = {
+        "type": "CHAT_MESSAGE",
+        "user": persona["user_name"],
+        "color": persona["color"],
+        "text": bot_text,
+        "target_game_pk": "GLOBAL",
+        "timestamp": time.strftime("%H:%M:%S"),
+        "model_engine": "GEMINI",
+        "is_penalty_box": False,
+        "channel": "system_broadcast"
+    }
+    bot_chat_msg = decorate_chat_message(bot_chat_msg)
+    chat_buffers["GLOBAL"].append(bot_chat_msg)
+    for c in list(clients):
+        try:
+            await c.send(json.dumps(bot_chat_msg))
+        except:
+            pass
+
+    return {
+        "persona": persona["user_name"],
+        "text": bot_text,
+        "color": persona["color"]
+    }
 
 fastapi_app.mount("/images", StaticFiles(directory="/home/james/SovereignOS/15_FanStack/public/images"), name="images")
 fastapi_app.mount("/", StaticFiles(directory="/home/james/SovereignOS", html=True), name="static")

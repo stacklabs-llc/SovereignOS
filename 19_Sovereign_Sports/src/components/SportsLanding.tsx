@@ -48,28 +48,31 @@ export default function SportsLanding() {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: '80vh',
+      height: '100%',
+      minHeight: 'unset',
       color: '#fff',
-      padding: '2.5rem',
+      padding: '1.5rem',
       position: 'relative',
       backgroundImage: `radial-gradient(circle at center, rgba(10, 15, 30, 0.4) 0%, rgba(0, 0, 0, 0.95) 100%), url(${properties['sports.landing.background']})`,
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'center',
       backgroundSize: 'cover',
       borderRadius: '24px',
-      margin: '1rem',
+      margin: '0',
       border: '1px solid rgba(255, 255, 255, 0.05)',
       boxShadow: '0 20px 50px rgba(0,0,0,0.6)',
-      transition: 'all 0.5s ease-in-out'
+      transition: 'all 0.5s ease-in-out',
+      boxSizing: 'border-box',
+      overflow: 'hidden'
     }}>
       {/* Title & Subtitle */}
-      <div style={{ textAlign: 'center', marginBottom: '4rem', zIndex: 2 }}>
+      <div style={{ textAlign: 'center', marginBottom: '2rem', zIndex: 2 }}>
         <h1 style={{
-          fontSize: '2.8rem',
+          fontSize: '2.2rem',
           fontWeight: 800,
           letterSpacing: '1px',
           textTransform: 'uppercase',
-          margin: '0 0 1rem 0',
+          margin: '0 0 0.5rem 0',
           background: 'linear-gradient(90deg, #A78BFA, #38BDF8, #F472B6)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
@@ -78,11 +81,11 @@ export default function SportsLanding() {
           Unleash Your Fanaticism. Choose Your Stack!
         </h1>
         <p style={{
-          fontSize: '1.2rem',
+          fontSize: '1rem',
           color: 'rgba(255, 255, 255, 0.7)',
           maxWidth: '600px',
           margin: '0 auto',
-          lineHeight: '1.6',
+          lineHeight: '1.5',
           textShadow: '0 2px 4px rgba(0,0,0,0.5)'
         }}>
           Welcome to the ultimate decibel-breaking Sovereign Sports Hub. Step inside your arena and access real-time streams and live telemetry.
@@ -92,10 +95,10 @@ export default function SportsLanding() {
       {/* Cards Grid */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '2.5rem',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+        gap: '1.5rem',
         width: '100%',
-        maxWidth: '1200px',
+        maxWidth: '1100px',
         zIndex: 2
       }}>
         {/* Card 1: MLB */}
@@ -106,7 +109,7 @@ export default function SportsLanding() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            padding: '3rem 2rem',
+            padding: '2rem 1.5rem',
             textAlign: 'center',
             border: '1px solid rgba(56, 189, 248, 0.15)',
             transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
@@ -116,24 +119,24 @@ export default function SportsLanding() {
           }}
         >
           <div style={{
-            width: '80px',
-            height: '80px',
+            width: '60px',
+            height: '60px',
             borderRadius: '50%',
             background: 'rgba(56, 189, 248, 0.1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '2rem',
+            marginBottom: '1rem',
             border: '1px solid rgba(56, 189, 248, 0.3)',
-            boxShadow: '0 0 30px rgba(56, 189, 248, 0.2)'
+            boxShadow: '0 0 20px rgba(56, 189, 248, 0.2)'
           }}>
-            <Gamepad2 size={40} style={{ color: '#38BDF8' }} />
+            <Gamepad2 size={30} style={{ color: '#38BDF8' }} />
           </div>
           
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, margin: '0 0 1rem 0', color: '#fff' }}>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: '0 0 0.5rem 0', color: '#fff' }}>
             {properties['sports.landing.mlb.title']}
           </h2>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '2.5rem', flexGrow: 1 }}>
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', lineHeight: '1.5', marginBottom: '1.5rem', flexGrow: 1 }}>
             {properties['sports.landing.mlb.description']}
           </p>
 
@@ -144,7 +147,7 @@ export default function SportsLanding() {
             background: 'linear-gradient(90deg, #38BDF8, #0A84FF)',
             border: 'none',
             color: '#fff',
-            padding: '0.75rem 1.75rem',
+            padding: '0.6rem 1.5rem',
             borderRadius: '8px',
             fontWeight: 600,
             cursor: 'pointer',
@@ -163,7 +166,7 @@ export default function SportsLanding() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            padding: '3rem 2rem',
+            padding: '2rem 1.5rem',
             textAlign: 'center',
             border: '1px solid rgba(16, 185, 129, 0.15)',
             transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
@@ -173,24 +176,24 @@ export default function SportsLanding() {
           }}
         >
           <div style={{
-            width: '80px',
-            height: '80px',
+            width: '60px',
+            height: '60px',
             borderRadius: '50%',
             background: 'rgba(16, 185, 129, 0.1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '2rem',
+            marginBottom: '1rem',
             border: '1px solid rgba(16, 185, 129, 0.3)',
-            boxShadow: '0 0 30px rgba(16, 185, 129, 0.2)'
+            boxShadow: '0 0 20px rgba(16, 185, 129, 0.2)'
           }}>
-            <Trophy size={40} style={{ color: '#10B981' }} />
+            <Trophy size={30} style={{ color: '#10B981' }} />
           </div>
           
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, margin: '0 0 1rem 0', color: '#fff' }}>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: '0 0 0.5rem 0', color: '#fff' }}>
             {properties['sports.landing.pga.title']}
           </h2>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '2.5rem', flexGrow: 1 }}>
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', lineHeight: '1.5', marginBottom: '1.5rem', flexGrow: 1 }}>
             {properties['sports.landing.pga.description']}
           </p>
 
@@ -201,7 +204,7 @@ export default function SportsLanding() {
             background: 'linear-gradient(90deg, #10B981, #059669)',
             border: 'none',
             color: '#fff',
-            padding: '0.75rem 1.75rem',
+            padding: '0.6rem 1.5rem',
             borderRadius: '8px',
             fontWeight: 600,
             cursor: 'pointer',
@@ -220,7 +223,7 @@ export default function SportsLanding() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            padding: '3rem 2rem',
+            padding: '2rem 1.5rem',
             textAlign: 'center',
             border: '1px solid rgba(244, 114, 182, 0.15)',
             transition: 'all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1)',
@@ -230,24 +233,24 @@ export default function SportsLanding() {
           }}
         >
           <div style={{
-            width: '80px',
-            height: '80px',
+            width: '60px',
+            height: '60px',
             borderRadius: '50%',
             background: 'rgba(244, 114, 182, 0.1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            marginBottom: '2rem',
+            marginBottom: '1rem',
             border: '1px solid rgba(244, 114, 182, 0.3)',
-            boxShadow: '0 0 30px rgba(244, 114, 182, 0.2)'
+            boxShadow: '0 0 20px rgba(244, 114, 182, 0.2)'
           }}>
-            <Globe size={40} style={{ color: '#F472B6' }} />
+            <Globe size={30} style={{ color: '#F472B6' }} />
           </div>
           
-          <h2 style={{ fontSize: '1.8rem', fontWeight: 700, margin: '0 0 1rem 0', color: '#fff' }}>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 700, margin: '0 0 0.5rem 0', color: '#fff' }}>
             {properties['sports.landing.global.title']}
           </h2>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '2.5rem', flexGrow: 1 }}>
+          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem', lineHeight: '1.5', marginBottom: '1.5rem', flexGrow: 1 }}>
             {properties['sports.landing.global.description']}
           </p>
 
@@ -258,7 +261,7 @@ export default function SportsLanding() {
             background: 'linear-gradient(90deg, #F472B6, #D946EF)',
             border: 'none',
             color: '#fff',
-            padding: '0.75rem 1.75rem',
+            padding: '0.6rem 1.5rem',
             borderRadius: '8px',
             fontWeight: 600,
             cursor: 'pointer',

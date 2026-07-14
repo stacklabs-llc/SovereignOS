@@ -40,12 +40,19 @@ function isRetro(theme: CardTheme) {
 export function FrontFace({ player, theme, era }: FaceProps) {
   const retro = isRetro(theme)
   const premium = theme === "sim-premium"
+  const isBarf = player.name.toLowerCase().includes("barf")
+  const jerseyNumber = isBarf ? "00" : player.number
+  const headshotSrc = isBarf
+    ? (era.id === "1979" ? "/barf-1970.png" : "/barf.png")
+    : ((era.id === "2024" && player.headshot) ? player.headshot : era.headshot)
+
+  const isBarf1979 = isBarf && era.id === "1979"
   // Standard theme is fully driven by the era palette; premium/retro keep their
   // signature look but still adopt the era's accent + uniform headshot.
   const accent = retro ? "#5be1ff" : era.accent
   const surfaceStyle =
     theme === "standard"
-      ? { width: FACE_W, height: FACE_H, backgroundColor: era.cardBg, borderColor: alpha(era.accent, 0.35) }
+      ? { width: FACE_W, height: FACE_H, backgroundColor: isBarf1979 ? "transparent" : era.cardBg, borderColor: isBarf1979 ? "transparent" : alpha(era.accent, 0.35) }
       : { width: FACE_W, height: FACE_H }
 
   return (
@@ -54,7 +61,9 @@ export function FrontFace({ player, theme, era }: FaceProps) {
       className={cn(
         "relative flex flex-col overflow-hidden p-4 select-none",
         retro ? "rounded-none font-mono" : "rounded-2xl font-sans",
-        theme === "standard" ? "border text-[#f4f6f8]" : themeShell(theme),
+        isBarf1979
+          ? "bg-transparent border-transparent text-[#f4f6f8]"
+          : (theme === "standard" ? "border text-[#f4f6f8]" : themeShell(theme)),
       )}
     >
       {/* Team banner — team name changes with the era */}
@@ -72,7 +81,7 @@ export function FrontFace({ player, theme, era }: FaceProps) {
           )}
           style={{ backgroundColor: accent, color: era.trim }}
         >
-          {player.number}
+          {jerseyNumber}
         </span>
       </div>
 
@@ -96,7 +105,7 @@ export function FrontFace({ player, theme, era }: FaceProps) {
         >
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src={era.headshot || "/placeholder.svg"}
+            src={headshotSrc}
             alt={`${player.name} in ${era.year} ${era.team} uniform`}
             className={cn(
               "h-full w-full object-cover transition-opacity duration-300",
@@ -141,10 +150,13 @@ export function FrontFace({ player, theme, era }: FaceProps) {
 
 export function BackFace({ player, theme, era }: FaceProps) {
   const retro = isRetro(theme)
+  const isBarf = player.name.toLowerCase().includes("barf")
+  const isBarf1979 = isBarf && era.id === "1979"
+  const jerseyNumber = isBarf ? "00" : player.number
   const accent = retro ? "#5be1ff" : era.accent
   const surfaceStyle =
     theme === "standard"
-      ? { width: FACE_W, height: FACE_H, backgroundColor: era.cardBg, borderColor: alpha(era.accent, 0.35) }
+      ? { width: FACE_W, height: FACE_H, backgroundColor: isBarf1979 ? "transparent" : era.cardBg, borderColor: isBarf1979 ? "transparent" : alpha(era.accent, 0.35) }
       : { width: FACE_W, height: FACE_H }
   return (
     <div
@@ -152,13 +164,15 @@ export function BackFace({ player, theme, era }: FaceProps) {
       className={cn(
         "relative flex flex-col overflow-hidden p-4 select-none",
         retro ? "rounded-none font-mono" : "rounded-2xl font-mono",
-        theme === "standard" ? "border text-[#f4f6f8]" : themeShell(theme),
+        isBarf1979
+          ? "bg-transparent border-transparent text-[#f4f6f8]"
+          : (theme === "standard" ? "border text-[#f4f6f8]" : themeShell(theme)),
       )}
     >
       <div className="flex items-center justify-between border-b border-white/15 pb-2">
         <span className="text-[11px] font-bold uppercase tracking-[0.2em]">Statcast Log</span>
         <span className="text-[10px]" style={{ color: accent }}>
-          {era.year} · {player.name}
+          {era.year} · {player.name} {isBarf ? `(#${jerseyNumber})` : ""}
         </span>
       </div>
 
@@ -198,6 +212,11 @@ export function BackFace({ player, theme, era }: FaceProps) {
       <p className="mt-2 border-t border-white/15 pt-2 text-center text-[9px] uppercase tracking-widest opacity-60">
         Tap to flip
       </p>
+      {isBarf && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden opacity-[0.08] font-mono font-extrabold text-[150px] leading-none text-white z-0">
+          00
+        </div>
+      )}
     </div>
   )
 }

@@ -24,8 +24,8 @@ ZIP_PATH    = "/home/james/sovereign_inbox/today/sovereign_uat_full.zip"
 CREDS_PATH  = "/home/james/SovereignOS/config/vertex_sa.json"
 PROJECT_ID  = "gen-lang-client-0840454416"
 LOCATION    = "us-central1"
-MODEL_NAME  = "gemini-flash-latest"
-MAX_PAGES   = 15   # Safety cap — raise if needed
+MODEL_NAME  = "gemini-2.5-flash"
+MAX_PAGES   = 30   # Safety cap — raise if needed
 
 AUTH_USER = "james"
 AUTH_PASS = "!!Stella1977"
@@ -35,6 +35,7 @@ SESSION_TOKEN = ""
 ALLOWED_HOSTS = {
     "clio.taila01894.ts.net",       # main portal (80/443)
     "clio.taila01894.ts.net:3009",  # FanStack
+    "clio.taila01894.ts.net:3010",  # Sovereign Sports
     "clio.taila01894.ts.net:3015",  # AetherVet
     "clio.taila01894.ts.net:3018",  # Inkwell & Irony Investigations
 }
@@ -48,6 +49,8 @@ SEEDS = [
     "https://clio.taila01894.ts.net:3009/?domain=MLB&room=roll_call",
     "https://clio.taila01894.ts.net:3009/fancast_fan_live_mobile.html",
     "https://clio.taila01894.ts.net:3009/fancast_live_logs.html",
+    "https://clio.taila01894.ts.net:3010/fan-portal?game_room=824910",
+    "https://clio.taila01894.ts.net:3010/creator-portal",
     "https://clio.taila01894.ts.net:3015/",
     "https://clio.taila01894.ts.net:3018/",
 ]
@@ -252,6 +255,14 @@ async def run_crawl():
         # Also auth FanStack context
         try:
             await page.goto("https://clio.taila01894.ts.net:3009/", wait_until="networkidle", timeout=10000)
+            await inject_auth(page)
+            await handle_login_form(page)
+        except:
+            pass
+
+        # Also auth Sovereign Sports context
+        try:
+            await page.goto("https://clio.taila01894.ts.net:3010/fan-portal?game_room=824910", wait_until="networkidle", timeout=10000)
             await inject_auth(page)
             await handle_login_form(page)
         except:

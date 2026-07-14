@@ -196,16 +196,33 @@ def sentinel_loop():
             df = statcast(start_dt=today_str, end_dt=today_str)
             
             if df is not None and not df.empty:
-                # 2. Maintain Ground Truth: Remove today's partial data before inserting updated batch
+                # 2. Extract and cast composite keys for idempotency checking
+                df['game_pk'] = df['game_pk'].astype(float).fillna(0).astype(int)
+                df['at_bat_number'] = df['at_bat_number'].astype(float).fillna(0).astype(int)
+                df['pitch_number'] = df['pitch_number'].astype(float).fillna(0).astype(int)
+
+                # Fetch existing keys from db
+                existing_keys = set()
                 with engine.connect() as conn:
-                    # pybaseball returns 'game_date' usually as a datetime or string. 
-                    # We will delete the current day's records to prevent duplicates when updating.
-                    conn.execute(text(f"DELETE FROM {TABLE_NAME} WHERE game_date LIKE '{today_str}%'"))
-                    conn.commit()
-                    
-                # 3. Insert updated micro-batch
-                df.to_sql(TABLE_NAME, engine, if_exists='append', index=False)
-                print(f"  [+] SUCCESS: Injected {len(df)} payload events into sovereign_intelligence.db")
+                    result = conn.execute(text(
+                        f"SELECT game_pk, at_bat_number, pitch_number FROM {TABLE_NAME} WHERE game_date LIKE '{today_str}%'"
+                    )).fetchall()
+                    for r in result:
+                        existing_keys.add((int(r[0]), int(r[1]), int(r[2])))
+                
+                # Filter df to find only new pitches
+                new_rows = []
+                for _, row in df.iterrows():
+                    key = (int(row['game_pk']), int(row['at_bat_number']), int(row['pitch_number']))
+                    if key not in existing_keys:
+                        new_rows.append(row)
+                
+                if new_rows:
+                    df_new = pd.DataFrame(new_rows)
+                    df_new.to_sql(TABLE_NAME, engine, if_exists='append', index=False)
+                    print(f"  [+] SUCCESS: Injected {len(df_new)} new payload events (out of {len(df)} fetched) into sovereign_intelligence.db")
+                else:
+                    print("  [-] No new events to inject. All fetched events already exist in database.")
             else:
                 print("  [-] No new events found for today's micro-batch.")
                 

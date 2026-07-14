@@ -4,7 +4,10 @@ import uuid
 DB_PATH = '/home/james/SovereignOS/dna/sovereign_now.db'
 
 def run():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA foreign_keys=ON;")
     c = conn.cursor()
 
     # 1. Add category column if not exists
@@ -23,23 +26,28 @@ def run():
 
     # 3. Define all standard apps/stacks/utilities/configs
     apps = [
-        # Active Stacks (9)
-        ('fanstack', 'FanStack', 'Sovereign Portal', 'F', '#38bdf8', 1, 'stack', 3009),
+        # Active Stacks (11)
+        ('fanstack', 'FanStack Creator Portal', 'Sovereign Portal', 'F', '#38bdf8', 1, 'stack', 3009),
+        ('fan_portal', 'Fan Portal', 'Sovereign Fan Portal', 'F', '#38bdf8', 1, 'stack', 3010),
+        ('sovereign_portal', 'Sovereign OS Portal', 'Central Configuration & Stack Directory', '❖', '#ffffff', 1, 'stack', 3016),
         ('samtracker', 'SamTracker', 'Six Dinner Sam', 'S', '#fbbf24', 1, 'stack', 3004),
-        ('catnipwars', 'Catnip Wars', 'Syndicate Sandbox', 'C', '#10b981', 1, 'stack', 7300),
+        ('catnipwars', 'Catnip Wars', 'Syndicate Sandbox', 'C', '#10b981', 1, 'stack', 7301),
         ('aethervet', 'AetherVet', 'Veterinary Portal', '🩺', '#a78bfa', 1, 'stack', 3015),
-        ('anvil_twine', 'Anvil & Twine', 'Hardware & Craftsmanship', '🛠️', '#f59e0b', 1, 'stack', 3022),
-        ('gonzas', 'Gonzas Convenience & Cantina', 'Convenience Store & Cantina', '🏪', '#ff007f', 1, 'stack', 3016),
-        ('gardenstack', 'GardenStack', 'Horticulture AI', '🌱', '#10b981', 1, 'stack', 3017),
+        ('clio_cockpit', 'Clio Cockpit Dashboard', 'Hardware & System Command Center', '🛠️', '#f59e0b', 1, 'stack', 3022),
+        ('eileen_stack', "Eileen's Stack", 'Storybook Station', '🌱', '#10b981', 1, 'stack', 3017),
+        ('barb_stack', "Barb's Stack", 'Smyrna Heights rustic catalog', '🏡', '#fbbf24', 1, 'stack', 3020),
         ('sovereign_cinema', 'Sovereign Cinema', 'Streaming Portal', '🎬', '#8b5cf6', 1, 'stack', 3008),
-        ('sovereign_sports', 'Sovereign Sports', 'Live Stream Command', '🛡️', '#00f0ff', 1, 'stack', 3010),
+        ('sovereign_sports', 'Sovereign Sports', 'Live Stream Command', '🛡️', '#00f0ff', 0, 'stack', 3010),
 
-        # Inactive / Decommissioned Stacks (5)
+        # Inactive / Decommissioned Stacks (7)
+        ('gonzas', 'Gonzas Convenience & Cantina', 'Convenience Store & Cantina', '🏪', '#ff007f', 0, 'stack', 3025),
+        ('gardenstack', 'GardenStack', 'Horticulture AI', '🌱', '#10b981', 0, 'stack', 3021),
         ('wild_paws', 'Wild Paws Rescue', 'Art Rescue Sanctuary', '🐾', '#f59e0b', 0, 'stack', 3008),
         ('spite_slice', 'Spite Slice', 'Culinary Vengeance', '🍕', '#ef4444', 0, 'stack', 3019),
         ('card_turpey', 'Card Turpey', 'Predictive Memorabilia', '🃏', '#fb923c', 0, 'stack', 3016),
         ('inkwell_irony', 'Inkwell & Irony', 'Investigations', '🖋️', '#a1a1aa', 0, 'stack', 3018),
         ('stacklabs', 'StackLabs LLC', 'Edge-Native Bare-Metal Software Foundry', '💻', '#00d4ff', 1, 'stack', 3000),
+        ('anvil_twine', 'Anvil & Twine', 'Hardware & Craftsmanship', '🛠️', '#f59e0b', 0, 'stack', 3022),
 
         # Utilities
         ('argus', 'ARGUS Nexus', 'Surveillance Grid', '👁️', '#66fcf1', 1, 'utility', None),
@@ -79,10 +87,14 @@ def run():
     # Module to CMDB Appl sys_id mapping to match pre-existing records and keep consistency
     sys_id_map = {
         'fanstack': 'app_fanstack',
+        'fan_portal': 'app_fan_portal',
+        'sovereign_portal': 'app_sovereign_portal',
         'samtracker': 'app_samtracker',
         'catnipwars': 'app_catnipwars',
         'aethervet': 'app_aethervet',
-        'anvil_twine': 'app_anvil_twine',
+        'clio_cockpit': 'app_clio_cockpit',
+        'eileen_stack': 'app_eileen_stack',
+        'barb_stack': 'app_barb_stack',
         'gonzas': 'app_gonzas_cantina',
         'wild_paws': 'app_wild_paws',
         'spite_slice': 'app_spiteslice',

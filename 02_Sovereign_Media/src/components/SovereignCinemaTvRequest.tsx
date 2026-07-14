@@ -34,6 +34,54 @@ export const SovereignCinemaTvRequest: React.FC = () => {
   const [queue, setQueue] = useState<QueueResponse | null>(null)
   const [queueError, setQueueError] = useState<string | null>(null)
 
+  // Manuel Chat State
+  const [isChatOpen, setIsChatOpen] = useState(false)
+  const [chatInput, setChatInput] = useState('')
+  const [chatMessages, setChatMessages] = useState<{ role: 'user' | 'model'; text: string }[]>([
+    { role: 'model', text: '¡Hola amigo! I am Manuel, your guide for the Cinema Portal. Ask me anything about queue speed, downloading, or requesting files!' }
+  ])
+  const [isTyping, setIsTyping] = useState(false)
+
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault()
+    if (!chatInput.trim() || isTyping) return
+
+    const userMsg = chatInput.trim()
+    setChatInput('')
+    
+    const updatedHistory: { role: 'user' | 'model'; text: string }[] = [
+      ...chatMessages,
+      { role: 'user', text: userMsg }
+    ]
+    setChatMessages(updatedHistory)
+    setIsTyping(true)
+
+    try {
+      const res = await fetch('/api/cinema/manuel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userMsg,
+          history: updatedHistory.map(m => ({
+            role: m.role,
+            text: m.text
+          }))
+        })
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setChatMessages(prev => [...prev, { role: 'model', text: data.response }])
+      } else {
+        setChatMessages(prev => [...prev, { role: 'model', text: 'Lo siento, I failed to reach my brain relay, amigo!' }])
+      }
+    } catch (err) {
+      setChatMessages(prev => [...prev, { role: 'model', text: 'Lo siento, error reaching the server, amigo!' }])
+    } finally {
+      setIsTyping(false)
+    }
+  }
+
   // ── SABnzbd Queue Polling (Every 5 seconds) ──────────────────────────────
   const fetchQueue = useCallback(async () => {
     try {
@@ -126,7 +174,7 @@ export const SovereignCinemaTvRequest: React.FC = () => {
   }
 
   return (
-    <div className="w-full h-full flex flex-col gap-6 p-6 overflow-y-auto hide-scrollbar select-none cardboard-texture-dark crt-scanlines" style={{ backgroundColor: '#0B0E14' }}>
+    <div className="w-full h-full flex flex-col gap-6 p-6 pt-24 md:pt-28 overflow-y-auto hide-scrollbar select-none cardboard-texture-dark crt-scanlines" style={{ backgroundColor: '#0B0E14' }}>
       {/* Tape decoration for 90s cardboard aesthetic */}
       <div className="tape-corner"></div>
       <div className="tape-corner-right"></div>
@@ -302,7 +350,7 @@ export const SovereignCinemaTvRequest: React.FC = () => {
 
                 {/* Active Slots list */}
                 <div className="flex flex-col gap-2 mt-2">
-                  <span className="text-[10px] text-slate-500 mono">ACTIVE USENET PIPELINE SLOTS</span>
+                  <span className="font-mono text-xs tracking-wider text-slate-400 uppercase">ACTIVE DOWNSTREAM PIPELINE SLOTS</span>
                   <div className="flex flex-col gap-2 max-h-[350px] overflow-y-auto hide-scrollbar pr-1">
                     {queue.queue.slots && queue.queue.slots.length > 0 ? (
                       queue.queue.slots.map((slot, idx) => (
@@ -335,6 +383,89 @@ export const SovereignCinemaTvRequest: React.FC = () => {
           </div>
         </div>
 
+      </div>
+
+      {/* ── Agent Manuel Chat Bubble & Panel ── */}
+      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 font-sans">
+        {isChatOpen && (
+          <div className="w-80 md:w-96 h-[450px] rounded-2xl border border-emerald-500/30 bg-slate-950/95 backdrop-blur-md shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+            {/* Header */}
+            <div className="p-4 bg-emerald-950/60 border-b border-emerald-500/20 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">👨🏽‍💼</span>
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-emerald-400 font-mono tracking-wider">MANUEL</span>
+                  <span className="text-[10px] text-slate-400 font-mono flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    ONLINE ORIENTATION
+                  </span>
+                </div>
+              </div>
+              <button 
+                type="button"
+                onClick={() => setIsChatOpen(false)}
+                className="text-slate-400 hover:text-white transition-colors cursor-pointer text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Chat Messages */}
+            <div className="flex-1 p-4 overflow-y-auto flex flex-col gap-3 hide-scrollbar">
+              {chatMessages.map((msg, index) => (
+                <div 
+                  key={index}
+                  className={`flex flex-col max-w-[80%] ${msg.role === 'user' ? 'self-end items-end' : 'self-start items-start'}`}
+                >
+                  <div className={`p-3 rounded-xl text-xs leading-relaxed ${
+                    msg.role === 'user' 
+                      ? 'bg-sky-600 text-white rounded-br-none border border-sky-400/20' 
+                      : 'bg-slate-900 text-emerald-300 rounded-bl-none border border-emerald-500/20'
+                  }`}>
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+              {isTyping && (
+                <div className="self-start flex gap-1 items-center bg-slate-900 border border-emerald-500/20 p-2.5 rounded-xl rounded-bl-none">
+                  <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                  <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                  <span className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                </div>
+              )}
+            </div>
+
+            {/* Input Form */}
+            <form onSubmit={handleSendMessage} className="p-3 bg-slate-900/90 border-t border-slate-800 flex gap-2">
+              <input
+                type="text"
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                placeholder="Ask Manuel..."
+                disabled={isTyping}
+                className="flex-1 bg-slate-950 text-white text-xs border border-slate-700 rounded-lg px-3 py-2 focus:outline-none focus:border-emerald-500 transition-colors font-mono placeholder-slate-500"
+              />
+              <button
+                type="submit"
+                disabled={isTyping || !chatInput.trim()}
+                className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white text-xs font-bold font-mono px-3 py-2 rounded-lg cursor-pointer transition-all border border-emerald-400/30"
+              >
+                SEND
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* Floating Bubble Button */}
+        <button
+          type="button"
+          onClick={() => setIsChatOpen(!isChatOpen)}
+          className="h-12 w-12 rounded-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg flex items-center justify-center text-xl font-bold cursor-pointer transition-all hover:scale-105 active:scale-95 border-2 border-emerald-300/40 relative group"
+          title="Chat with Manuel"
+        >
+          👨🏽‍💼
+          <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-emerald-400 border-2 border-slate-950 animate-pulse"></span>
+        </button>
       </div>
     </div>
   )

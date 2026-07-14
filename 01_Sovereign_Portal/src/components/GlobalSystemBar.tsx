@@ -4,6 +4,7 @@ import { getApiHost } from '../api-host';
 import { useAuth } from '../contexts/AuthContext';
 import { TOKEN_KEY_EXPORT } from './AuthGate';
 import FanProfileModal from './FanProfileModal';
+import SyncStatusMonitor from './SyncStatusMonitor';
 
 interface GlobalSystemBarProps {
   osTheme: string;
@@ -80,6 +81,7 @@ export default function GlobalSystemBar({
       {/* Sovereign Oracle Toggle */}
       {auth?.role === 'pilot' || auth?.role === 'creator' ? (
       <div className="flex items-center gap-2">
+        <SyncStatusMonitor />
         <button
           onClick={onToggleSearch}
           className="px-3 py-1.5 border border-cyan-500/50 bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500 hover:text-white rounded transition-colors font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-[0_2px_5px_rgba(0,0,0,0.5)]"

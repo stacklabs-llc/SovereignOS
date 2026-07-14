@@ -210,7 +210,7 @@ export default function EditTicketModal({ isOpen, onClose, ticket, onSave }: Edi
                    <h2 className="text-2xl font-bold text-white uppercase tracking-widest">{ticket.id}</h2>
                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase border ${priority === 'P1' ? 'border-red-500 text-red-500 bg-red-500/10' : priority === 'P2' ? 'border-orange-500 text-orange-500 bg-orange-500/10' : 'border-[#8E9CAA] text-[#8E9CAA] bg-white/5'}`}>{priority}</span>
                 </div>
-                <div className="text-sm font-mono text-[#8E9CAA]">rm_story / Sovereign OS</div>
+                <div className="text-sm font-mono text-[#8E9CAA]">sovereign_tickets / Sovereign OS</div>
               </div>
             </div>
             <div className="flex items-center gap-2">

@@ -44,6 +44,14 @@ export default function SovereignThemeManager() {
       iconHighlight: '#333333',
       borderColor: '#333333',
       notification: '#111111'
+    },
+    'sny-classic': {
+      primaryAccent: '#ff5910',
+      background: '#090e1a',
+      textGlow: '#ff5910',
+      iconHighlight: '#00b4d8',
+      borderColor: '#ff5910',
+      notification: '#00b4d8'
     }
   };
 

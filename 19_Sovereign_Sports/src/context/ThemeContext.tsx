@@ -8,6 +8,14 @@ interface ThemeContextProps {
   setDecorumLevel: (level: number) => void;
   activeTheme: string;
   setActiveTheme: (theme: string) => void;
+  fundiesGrid: boolean;
+  setFundiesGrid: (active: boolean) => void;
+  pinEngineActive: boolean;
+  setPinEngineActive: (active: boolean) => void;
+  isSidebarCollapsed: boolean;
+  setIsSidebarCollapsed: (collapsed: boolean) => void;
+  isUmpireOpen: boolean;
+  setUmpireOpen: (open: boolean) => void;
 }
 
 const ThemeContext = createContext<ThemeContextProps | undefined>(undefined);
@@ -23,6 +31,20 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return saved !== null ? saved : 'sovereign-cyan';
   });
 
+  const [fundiesGrid, setFundiesGridState] = useState<boolean>(() => {
+    return localStorage.getItem('fundiesGrid') === 'true';
+  });
+
+  const [pinEngineActive, setPinEngineActiveState] = useState<boolean>(() => {
+    return localStorage.getItem('pinEngineActive') === 'true';
+  });
+
+  const [isSidebarCollapsed, setIsSidebarCollapsedState] = useState<boolean>(() => {
+    return localStorage.getItem('sovereign_sports_nav_collapsed') === 'true';
+  });
+
+  const [isUmpireOpen, setUmpireOpen] = useState<boolean>(false);
+
   const setDecorumLevel = (level: number) => {
     setDecorumLevelState(level);
     localStorage.setItem('decorumLevel', level.toString());
@@ -33,6 +55,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     localStorage.setItem('activeTheme', theme);
   };
 
+  const setFundiesGrid = (active: boolean) => {
+    setFundiesGridState(active);
+    localStorage.setItem('fundiesGrid', active ? 'true' : 'false');
+  };
+
+  const setPinEngineActive = (active: boolean) => {
+    setPinEngineActiveState(active);
+    localStorage.setItem('pinEngineActive', active ? 'true' : 'false');
+  };
+
+  const setIsSidebarCollapsed = (collapsed: boolean) => {
+    setIsSidebarCollapsedState(collapsed);
+    localStorage.setItem('sovereign_sports_nav_collapsed', collapsed ? 'true' : 'false');
+  };
+
   useEffect(() => {
     const handleStorage = (e: StorageEvent) => {
       if (e.key === 'decorumLevel' && e.newValue !== null) {
@@ -40,6 +77,15 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
       if (e.key === 'activeTheme' && e.newValue !== null) {
         setActiveThemeState(e.newValue);
+      }
+      if (e.key === 'fundiesGrid' && e.newValue !== null) {
+        setFundiesGridState(e.newValue === 'true');
+      }
+      if (e.key === 'pinEngineActive' && e.newValue !== null) {
+        setPinEngineActiveState(e.newValue === 'true');
+      }
+      if (e.key === 'sovereign_sports_nav_collapsed' && e.newValue !== null) {
+        setIsSidebarCollapsedState(e.newValue === 'true');
       }
     };
     window.addEventListener('storage', handleStorage);
@@ -53,6 +99,14 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Add current theme class
     root.classList.add(activeTheme);
   }, [activeTheme]);
+
+  useEffect(() => {
+    if (fundiesGrid) {
+      document.body.classList.add('fundies-grid-active');
+    } else {
+      document.body.classList.remove('fundies-grid-active');
+    }
+  }, [fundiesGrid]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -116,7 +170,20 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, [decorumLevel]);
 
   return (
-    <ThemeContext.Provider value={{ decorumLevel, setDecorumLevel, activeTheme, setActiveTheme }}>
+    <ThemeContext.Provider value={{ 
+      decorumLevel, 
+      setDecorumLevel, 
+      activeTheme, 
+      setActiveTheme,
+      fundiesGrid,
+      setFundiesGrid,
+      pinEngineActive,
+      setPinEngineActive,
+      isSidebarCollapsed,
+      setIsSidebarCollapsed,
+      isUmpireOpen,
+      setUmpireOpen
+    }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -573,28 +573,31 @@ async def print_dossier_pdf(ids: str = None, background_tasks: BackgroundTasks =
     
     .media-catalog {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-        gap: 10px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
     }
     
     .catalog-card {
-        background-color: #020617;
+        background-color: #090d16;
         border: 1px solid #1e293b;
-        border-radius: 6px;
-        padding: 6px;
+        border-radius: 8px;
+        padding: 10px;
         display: flex;
-        align-items: center;
+        flex-direction: column;
         gap: 8px;
     }
     
     .thumbnail-wrapper {
-        width: 36px;
-        height: 36px;
-        border-radius: 4px;
+        width: 100%;
+        height: 120px;
+        border-radius: 6px;
         overflow: hidden;
         border: 1px solid #334155;
-        background-color: #090d16;
+        background-color: #020617;
         flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
     
     .thumbnail {
@@ -609,7 +612,7 @@ async def print_dossier_pdf(ids: str = None, background_tasks: BackgroundTasks =
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 10px;
+        font-size: 14px;
         font-family: 'Share Tech Mono', monospace;
         color: #475569;
     }
@@ -617,30 +620,26 @@ async def print_dossier_pdf(ids: str = None, background_tasks: BackgroundTasks =
     .catalog-details {
         display: flex;
         flex-direction: column;
-        min-width: 0;
+        gap: 2px;
     }
     
     .catalog-details strong {
-        font-size: 8px;
-        color: #cbd5e1;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        font-size: 10px;
+        color: #ffffff;
+        text-transform: capitalize;
     }
     
     .catalog-details .hash-code {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 6.5px;
+        font-size: 7px;
         color: #f59e0b;
     }
     
     .catalog-details .path-code {
         font-family: 'Share Tech Mono', monospace;
-        font-size: 6px;
-        color: #475569;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        font-size: 6.5px;
+        color: #64748b;
+        word-break: break-all;
     }
     
     .takes-box {
@@ -694,8 +693,14 @@ async def print_dossier_pdf(ids: str = None, background_tasks: BackgroundTasks =
     temp_html.close()
     temp_html_path = temp_html.name
     
-    # Generate PDF via Chrome headless
-    temp_pdf_path = temp_html_path.replace(".html", ".pdf")
+    # Dynamically determine filename based on selection size and route to media_vault
+    out_filename = "sovereign_advocates_dossier.pdf"
+    if len(personas) == 1:
+        out_filename = f"{personas[0].get('user_name', 'sovereign_advocate')}_dossier.pdf"
+        
+    output_dir = "/home/james/SovereignOS/media_vault/03_Assets/Lookbooks"
+    os.makedirs(output_dir, exist_ok=True)
+    temp_pdf_path = os.path.join(output_dir, out_filename)
     
     import shutil
     chrome_path = None
@@ -744,15 +749,9 @@ async def print_dossier_pdf(ids: str = None, background_tasks: BackgroundTasks =
             os.remove(temp_pdf_path)
         raise HTTPException(status_code=500, detail=f"PDF generation process failed: {str(e)}")
         
-    # Queue cleanup tasks
+    # Queue cleanup tasks (keep the persistent PDF file)
     if background_tasks:
         background_tasks.add_task(os.remove, temp_html_path)
-        background_tasks.add_task(os.remove, temp_pdf_path)
-        
-    # Dynamically determine filename based on selection size
-    out_filename = "sovereign_advocates_dossier.pdf"
-    if len(personas) == 1:
-        out_filename = f"{personas[0].get('user_name', 'sovereign_advocate')}_dossier.pdf"
         
     return FileResponse(
         temp_pdf_path, 
@@ -1131,7 +1130,9 @@ async def print_lookbook_pdf(advocate: str, ids: str = None, background_tasks: B
     temp_html.close()
     temp_html_path = temp_html.name
     
-    temp_pdf_path = temp_html_path.replace(".html", ".pdf")
+    output_dir = "/home/james/SovereignOS/media_vault/03_Assets/Lookbooks"
+    os.makedirs(output_dir, exist_ok=True)
+    temp_pdf_path = os.path.join(output_dir, f"{advocate}_lookbook.pdf")
     
     chrome_path = None
     for name in ["google-chrome", "google-chrome-stable", "chromium-browser", "chromium"]:
@@ -1170,14 +1171,14 @@ async def print_lookbook_pdf(advocate: str, ids: str = None, background_tasks: B
     except Exception as e:
         if os.path.exists(temp_html_path):
             os.unlink(temp_html_path)
+        if os.path.exists(temp_pdf_path):
+            os.unlink(temp_pdf_path)
         raise HTTPException(status_code=500, detail=f"Headless Chrome compilation failed: {e}")
         
     def cleanup_files():
         try:
             if os.path.exists(temp_html_path):
                 os.unlink(temp_html_path)
-            if os.path.exists(temp_pdf_path):
-                os.unlink(temp_pdf_path)
         except Exception:
             pass
             

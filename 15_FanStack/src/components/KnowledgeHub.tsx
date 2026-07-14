@@ -14,7 +14,7 @@ export default function KnowledgeHub() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 z-10 flex-1">
         
         {/* Savant Query Refinery */}
-        <div className="group border border-slate-800 bg-[#0B0E14]/80 p-6 rounded-xl hover:border-[#FF5910] transition-all flex flex-col items-start cursor-pointer shadow-lg " onClick={() => window.open('http://192.168.1.183:8000/wardy_savant_query.html', '_blank')}>
+        <div className="group border border-slate-800 bg-[#0B0E14]/80 p-6 rounded-xl hover:border-[#FF5910] transition-all flex flex-col items-start cursor-pointer shadow-lg " onClick={() => window.open(`http://${window.location.hostname}:8000/wardy_savant_query.html`, '_blank')}>
           <div className="bg-[#FF5910]/20 p-3 rounded-lg mb-4 text-[#FF5910] group-hover:bg-[#FF5910] group-hover:text-white transition-colors">
             <Zap size={24} />
           </div>

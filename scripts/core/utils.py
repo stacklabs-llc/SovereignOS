@@ -45,7 +45,7 @@ async def run_vertex_prompt(prompt: str, system_instruction: str = "") -> str:
         
     def _call_gemini():
         sys_prompt = system_instruction or "You are a brand intelligence assistant for Sovereign OS."
-        gemini_model = GenerativeModel("gemini-flash-latest", system_instruction=[sys_prompt])
+        gemini_model = GenerativeModel("gemini-2.5-flash", system_instruction=[sys_prompt])
         res = gemini_model.generate_content(
             prompt,
             generation_config={"temperature": 0.7}

@@ -13,9 +13,9 @@
   },
   "creatorPortal": {
     "url": "https://clio.taila01894.ts.net:3010/creator-portal",
-    "commandDeckVisible": false,
+    "commandDeckVisible": true,
     "toxicityIndexVisible": false,
     "mardCoreVisible": false
   },
-  "timestamp": "2026-06-28T18:22:47.941Z"
+  "timestamp": "2026-07-03T23:47:48.071Z"
 }

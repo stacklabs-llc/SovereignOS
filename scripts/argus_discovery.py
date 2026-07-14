@@ -5,16 +5,48 @@ import json
 
 DB_PATH = '/home/james/SovereignOS/dna/sovereign_now.db'
 
-# Devices provided by the user
-TARGET_NODES = {
-    "192.168.1.183": "clio",
-    "192.168.1.75": "Raspberry Pi 5",
-    "192.168.1.114": "hobbes",
-    "192.168.1.115": "calvin",
-    "192.168.1.117": "grogu",
-    "192.168.1.64": "artemis",
-    "192.168.1.177": "pegasus"
-}
+def load_target_nodes_from_cmdb():
+    nodes = {}
+    try:
+        con = sqlite3.connect(DB_PATH)
+        cur = con.cursor()
+        cur.execute("""
+            SELECT h.ip_address, c.name, c.short_description
+            FROM cmdb_ci c
+            JOIN cmdb_ci_hardware h ON c.sys_id = h.sys_id
+            WHERE h.ip_address IS NOT NULL AND h.ip_address != ''
+        """)
+        rows = cur.fetchall()
+        
+        system_hosts = {'clio', 'argo', 'hobbes', 'calvin', 'grogu', 'artemis', 'pegasus', 'metsy-prime'}
+        
+        for ip, name, desc in rows:
+            name_lower = name.lower()
+            desc_lower = desc.lower() if desc else ""
+            
+            is_cam = ('c120' in name_lower or 'cam' in name_lower or 
+                      'camera' in desc_lower or 'webcam' in desc_lower)
+            
+            if name_lower in system_hosts:
+                nodes[ip] = (name_lower, "host")
+            elif is_cam:
+                nodes[ip] = (name, "camera")
+        con.close()
+    except Exception as e:
+        print(f"[DB ERROR] Failed to load target nodes from CMDB: {e}")
+        
+    if not nodes:
+        nodes = {
+            "192.168.1.183": ("clio", "host"),
+            "192.168.1.75": ("argo", "host"),
+            "192.168.1.114": ("hobbes", "host"),
+            "192.168.1.115": ("calvin", "host"),
+            "192.168.1.117": ("grogu", "host"),
+            "192.168.1.64": ("artemis", "host"),
+            "192.168.1.177": ("pegasus", "host")
+        }
+    return nodes
+
 
 def get_or_create_hardware_ci(cur, ip, name):
     # Check if exists by IP or Name
@@ -91,10 +123,24 @@ def main():
     con = sqlite3.connect(DB_PATH)
     cur = con.cursor()
     
-    for ip, name in TARGET_NODES.items():
+    target_nodes = load_target_nodes_from_cmdb()
+    for ip, (name, node_type) in target_nodes.items():
         # Ensure HW node exists
         hw_sys_id = get_or_create_hardware_ci(cur, ip, name)
         
+        if node_type == "camera":
+            print(f"\n[SCANNING CAMERA] {name} ({ip})...")
+            # Network cameras are verified via ping instead of SSH
+            ping_cmd = f"ping -c 1 -W 2 {ip}"
+            res = subprocess.run(ping_cmd, shell=True, capture_output=True)
+            status = "Online" if res.returncode == 0 else "Offline"
+            print(f"  [STATUS] Camera {name} is {status}.")
+            
+            # Update operational status
+            op_status = 1 if status == "Online" else 2
+            cur.execute("UPDATE cmdb_ci SET operational_status = ? WHERE sys_id = ?", (op_status, hw_sys_id))
+            continue
+            
         # Scan processes
         processes = scan_node(ip, name)
         
@@ -118,6 +164,7 @@ def main():
     con.commit()
     con.close()
     print("\n[COMPLETE] Argus Discovery Run Finished.")
+
 
 if __name__ == '__main__':
     main()

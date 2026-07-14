@@ -1,7 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { 
   Users, Zap, Check, Search, Grid, List, RefreshCw, Play, Square, 
-  ShieldAlert, Award, Star, Compass, UserCheck, Flame, Cpu, Layout, HelpCircle
+  ShieldAlert, Award, Star, Compass, UserCheck, Flame, Cpu, Layout, HelpCircle,
+  X, Save
 } from 'lucide-react';
 
 interface Persona {
@@ -13,6 +14,16 @@ interface Persona {
   behavior_notes?: string;
   governance?: string;
   color?: string;
+  display_name?: string;
+  avatar_url?: string;
+  active?: number;
+  email_alias?: string;
+  cadence?: string;
+  boggs_level?: number;
+  u_visual_style?: string;
+  avatar_prompt?: string;
+  character_map_prompt?: string;
+  u_deployment_zone?: string;
 }
 
 interface Room {
@@ -31,11 +42,79 @@ interface RoomBuilderProps {
   onSelectGame?: (gamePk: string) => void;
 }
 
+const mlbTeams = [
+  "GLOBAL", "NYM", "ATL", "PHI", "MIA", "WSH", "CHC", "CIN", "MIL", "PIT", "STL",
+  "ARI", "COL", "LAD", "SD", "SF", "BAL", "BOS", "NYY", "TB", "TOR",
+  "CWS", "CLE", "DET", "KC", "MIN", "HOU", "LAA", "OAK", "SEA", "TEX"
+];
+
 export default function RoomBuilder({ activeGamedayPk, onSelectGame }: RoomBuilderProps) {
   // Roster states
   const [allPersonas, setAllPersonas] = useState<Persona[]>([]);
   const [stagedPersonas, setStagedPersonas] = useState<string[]>([]);
   const [loadingPersonas, setLoadingPersonas] = useState(false);
+
+  // Edit Persona Modal states
+  const [editingPersona, setEditingPersona] = useState<Persona | null>(null);
+  const [editForm, setEditForm] = useState<Partial<Persona>>({});
+  const [isSavingPersona, setIsSavingPersona] = useState(false);
+  const [activeModalTab, setActiveModalTab] = useState<'core' | 'narrative' | 'art'>('core');
+
+  useEffect(() => {
+    if (editingPersona) {
+      setEditForm({ ...editingPersona });
+      setActiveModalTab('core'); // Reset tab when modal opens
+    } else {
+      setEditForm({});
+    }
+  }, [editingPersona]);
+
+  const handleSavePersona = async () => {
+    if (!editingPersona || !editingPersona.sys_id) return;
+    setIsSavingPersona(true);
+    try {
+      const res = await fetch(`/api/now/table/cmdb_ci_ai_persona/${editingPersona.sys_id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          user_name: editForm.user_name,
+          first_name: editForm.display_name,
+          assigned_to: editForm.team,
+          u_system_prompt: editForm.system_prompt,
+          u_behavior_expectations: editForm.behavior_notes,
+          u_deep_lore: editForm.deep_lore,
+          u_governance_boundaries: editForm.governance,
+          color: editForm.color,
+          avatar_url: editForm.avatar_url,
+          active: editForm.active,
+          email_alias: editForm.email_alias,
+          u_cadence: editForm.cadence,
+          u_boggs_reactivity: editForm.boggs_level,
+          u_visual_style: editForm.u_visual_style,
+          u_avatar_prompt: editForm.avatar_prompt,
+          u_character_map_prompt: editForm.character_map_prompt,
+          u_deployment_zone: editForm.u_deployment_zone
+        })
+      });
+      if (res.ok) {
+        setSaveStatus("PERSONA UPDATED!");
+        setTimeout(() => setSaveStatus(null), 2500);
+        await fetchAllPersonas();
+        setEditingPersona(null);
+      } else {
+        setSaveStatus("ERROR UPDATING PERSONA");
+        setTimeout(() => setSaveStatus(null), 3000);
+      }
+    } catch (e) {
+      console.error(e);
+      setSaveStatus("ERROR UPDATING PERSONA");
+      setTimeout(() => setSaveStatus(null), 3000);
+    } finally {
+      setIsSavingPersona(false);
+    }
+  };
 
   // Today's games/rooms list
   const [games, setGames] = useState<Room[]>([]);
@@ -482,8 +561,17 @@ export default function RoomBuilder({ activeGamedayPk, onSelectGame }: RoomBuild
                       </div>
                     </div>
 
-                    {/* Right: Team Tag */}
-                    <div className="flex-shrink-0">
+                    {/* Right: Team Tag & Edit */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingPersona(p);
+                        }}
+                        className="px-2.5 py-1 text-[8px] font-bold text-[#38bdf8] hover:text-white bg-[#38bdf8]/10 hover:bg-[#38bdf8]/20 border border-[#38bdf8]/30 hover:border-[#38bdf8]/60 rounded-md transition-all font-mono uppercase shrink-0"
+                      >
+                        Edit
+                      </button>
                       <span 
                         className="text-[8px] font-mono font-black px-1.5 py-0.5 rounded border uppercase tracking-widest"
                         style={{ 
@@ -541,6 +629,15 @@ export default function RoomBuilder({ activeGamedayPk, onSelectGame }: RoomBuild
                           {p.team}
                         </span>
                       </div>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingPersona(p);
+                        }}
+                        className="px-2 py-1 text-[8px] font-bold text-[#38bdf8] hover:text-white bg-[#38bdf8]/10 hover:bg-[#38bdf8]/20 border border-[#38bdf8]/30 hover:border-[#38bdf8]/60 rounded-md transition-all font-mono uppercase shrink-0"
+                      >
+                        Edit
+                      </button>
                       <div className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center transition-all border ${
                         isSelected ? 'bg-[#38bdf8] border-[#38bdf8] text-black font-bold' : 'border-white/20 bg-black/40'
                       }`}>
@@ -610,6 +707,353 @@ export default function RoomBuilder({ activeGamedayPk, onSelectGame }: RoomBuild
 
       {/* Grid Pattern BG */}
       <div className="absolute inset-0 pointer-events-none opacity-[0.02] bg-[linear-gradient(to_right,#808080_1px,transparent_1px),linear-gradient(to_bottom,#808080_1px,transparent_1px)] bg-[size:32px_32px]" />
+
+      {/* Edit Advocate Modal */}
+      {editingPersona && (
+        <div 
+          className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-[999] animate-fade-in"
+          onClick={() => setEditingPersona(null)}
+        >
+          <div 
+            className="w-full max-w-2xl bg-[#0b0f19] border border-slate-800 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col max-h-[90vh]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="px-6 py-4 border-b border-slate-800 bg-slate-950/40 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <img 
+                  src={editForm.avatar_url || `/api/persona_image/${editForm.user_name}`}
+                  className="w-9 h-9 rounded-full object-cover border bg-black shrink-0"
+                  style={{ borderColor: editForm.color || '#38bdf8' }}
+                  onError={(e) => {
+                    e.currentTarget.src = 'https://www.transparenttextures.com/patterns/carbon-fibre.png';
+                  }}
+                />
+                <div>
+                  <h3 className="text-sm font-black text-white tracking-wider uppercase font-mono">
+                    Edit Advocate Profile
+                  </h3>
+                  <p className="text-[10px] text-gray-500 font-mono uppercase tracking-widest mt-0.5">
+                    {editForm.user_name}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setEditingPersona(null)}
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Modal Tabs */}
+            <div className="flex border-b border-slate-800 bg-slate-950/20 px-6 shrink-0">
+              <button
+                onClick={() => setActiveModalTab('core')}
+                className={`py-3 px-4 text-[10px] font-mono font-bold uppercase tracking-widest border-b-2 transition-all ${
+                  activeModalTab === 'core'
+                    ? 'border-[#38bdf8] text-[#38bdf8]'
+                    : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                Core Settings
+              </button>
+              <button
+                onClick={() => setActiveModalTab('narrative')}
+                className={`py-3 px-4 text-[10px] font-mono font-bold uppercase tracking-widest border-b-2 transition-all ${
+                  activeModalTab === 'narrative'
+                    ? 'border-[#38bdf8] text-[#38bdf8]'
+                    : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                Narrative & Backstory
+              </button>
+              <button
+                onClick={() => setActiveModalTab('art')}
+                className={`py-3 px-4 text-[10px] font-mono font-bold uppercase tracking-widest border-b-2 transition-all ${
+                  activeModalTab === 'art'
+                    ? 'border-[#38bdf8] text-[#38bdf8]'
+                    : 'border-transparent text-gray-500 hover:text-gray-300'
+                }`}
+              >
+                Artwork & Prompts
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto space-y-4 custom-scrollbar text-left flex-1">
+              {activeModalTab === 'core' && (
+                <>
+                  {/* Identity Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                        Username
+                      </label>
+                      <input 
+                        type="text"
+                        value={editForm.user_name || ''}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, user_name: e.target.value }))}
+                        className="w-full bg-black/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                        Display Name
+                      </label>
+                      <input 
+                        type="text"
+                        value={editForm.display_name || ''}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, display_name: e.target.value }))}
+                        className="w-full bg-black/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Roster & Status Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                        Team Assignment
+                      </label>
+                      <select 
+                        value={editForm.team || ''}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, team: e.target.value }))}
+                        className="w-full bg-black/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono"
+                      >
+                        <option value="">GLOBAL (No Team)</option>
+                        {mlbTeams.map(t => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                        Persona Status
+                      </label>
+                      <select 
+                        value={editForm.active !== undefined ? editForm.active : 1}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, active: parseInt(e.target.value) }))}
+                        className="w-full bg-black/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono"
+                      >
+                        <option value={1}>ACTIVE / OPERATIONAL</option>
+                        <option value={0}>INACTIVE / OFFLINE</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                        Hex Color Accent
+                      </label>
+                      <div className="flex gap-2">
+                        <div 
+                          className="w-8 h-8 rounded-lg border border-slate-800 shrink-0" 
+                          style={{ backgroundColor: editForm.color || '#38bdf8' }}
+                        />
+                        <input 
+                          type="text"
+                          value={editForm.color || ''}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, color: e.target.value }))}
+                          placeholder="#38bdf8"
+                          className="w-full bg-black/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono uppercase"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Ingestion & Metadata Grid */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                        Email Alias
+                      </label>
+                      <input 
+                        type="email"
+                        value={editForm.email_alias || ''}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, email_alias: e.target.value }))}
+                        placeholder="sovereign.fanstack+name@gmail.com"
+                        className="w-full bg-black/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                        Deployment Zone (Room PK)
+                      </label>
+                      <input 
+                        type="text"
+                        value={editForm.u_deployment_zone || ''}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, u_deployment_zone: e.target.value }))}
+                        placeholder="824904"
+                        className="w-full bg-black/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                        Cadence
+                      </label>
+                      <select 
+                        value={editForm.cadence || 'pacer'}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, cadence: e.target.value }))}
+                        className="w-full bg-black/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono"
+                      >
+                        <option value="pacer">Pacer (Standard)</option>
+                        <option value="chatterbox">Chatterbox (Fast)</option>
+                        <option value="silent">Silent (Muted)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                        Boggs Level (Reactivity)
+                      </label>
+                      <input 
+                        type="number"
+                        min={1}
+                        max={5}
+                        value={editForm.boggs_level || 3}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, boggs_level: parseInt(e.target.value) }))}
+                        className="w-full bg-black/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                        Visual Style
+                      </label>
+                      <input 
+                        type="text"
+                        value={editForm.u_visual_style || 'style_felt'}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, u_visual_style: e.target.value }))}
+                        className="w-full bg-black/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {activeModalTab === 'narrative' && (
+                <>
+                  {/* Prompt Textarea */}
+                  <div>
+                    <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                      System Prompt Core
+                    </label>
+                    <textarea 
+                      value={editForm.system_prompt || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, system_prompt: e.target.value }))}
+                      rows={5}
+                      className="w-full bg-black/60 border border-slate-800 rounded-lg p-3 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono leading-relaxed"
+                      placeholder="The primary LLM instructions directing this chatbot's personality and voice..."
+                    />
+                  </div>
+
+                  {/* Behavior expectations */}
+                  <div>
+                    <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                      Behavior & Tone Expectations
+                    </label>
+                    <textarea 
+                      value={editForm.behavior_notes || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, behavior_notes: e.target.value }))}
+                      rows={3}
+                      className="w-full bg-black/60 border border-slate-800 rounded-lg p-3 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono leading-relaxed"
+                      placeholder="Key instructions to influence demeanor, length of replies, or trigger topics..."
+                    />
+                  </div>
+
+                  {/* Deep Lore */}
+                  <div>
+                    <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                      Deep Lore & Backstory
+                    </label>
+                    <textarea 
+                      value={editForm.deep_lore || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, deep_lore: e.target.value }))}
+                      rows={3}
+                      className="w-full bg-black/60 border border-slate-800 rounded-lg p-3 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono leading-relaxed"
+                      placeholder="Specific events, inside jokes, and histories this advocate will refer to..."
+                    />
+                  </div>
+
+                  {/* Governance Boundaries */}
+                  <div>
+                    <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                      Governance & Compliance Boundaries
+                    </label>
+                    <textarea 
+                      value={editForm.governance || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, governance: e.target.value }))}
+                      rows={3}
+                      className="w-full bg-black/60 border border-slate-800 rounded-lg p-3 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono leading-relaxed"
+                      placeholder="Hard filters on output topics, prohibited words, and redline compliance rules..."
+                    />
+                  </div>
+                </>
+              )}
+
+              {activeModalTab === 'art' && (
+                <>
+                  <div>
+                    <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                      Avatar Image URL
+                    </label>
+                    <input 
+                      type="text"
+                      value={editForm.avatar_url || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, avatar_url: e.target.value }))}
+                      placeholder="/avatars/custom_avatar.png"
+                      className="w-full bg-black/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                      Avatar Generation Prompt
+                    </label>
+                    <textarea 
+                      value={editForm.avatar_prompt || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, avatar_prompt: e.target.value }))}
+                      rows={5}
+                      className="w-full bg-black/60 border border-slate-800 rounded-lg p-3 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono leading-relaxed"
+                      placeholder="The text prompt used to generate the character sheet or avatar..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[9px] font-mono font-bold tracking-widest text-gray-500 uppercase mb-1.5 font-sans">
+                      Character Map Generation Prompt
+                    </label>
+                    <textarea 
+                      value={editForm.character_map_prompt || ''}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, character_map_prompt: e.target.value }))}
+                      rows={5}
+                      className="w-full bg-black/60 border border-slate-800 rounded-lg p-3 text-xs text-white focus:border-[#38bdf8]/50 outline-none transition-colors font-mono leading-relaxed"
+                      placeholder="The text prompt used to generate the full 3x3 character maps (different poses)..."
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-slate-800 bg-slate-950/40 flex justify-end gap-3 shrink-0">
+              <button 
+                onClick={() => setEditingPersona(null)}
+                className="px-4 py-2 border border-slate-800 hover:border-slate-700 text-gray-400 hover:text-white rounded-xl text-[10px] font-mono font-bold uppercase tracking-widest transition-all"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSavePersona}
+                disabled={isSavingPersona}
+                className="px-5 py-2.5 bg-[#38bdf8] hover:bg-[#0ea5e9] disabled:opacity-50 text-black font-black uppercase tracking-widest text-[10px] font-mono rounded-xl transition-all shadow-[0_0_15px_rgba(56,189,248,0.2)]"
+              >
+                {isSavingPersona ? 'Saving...' : 'Save Persona'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

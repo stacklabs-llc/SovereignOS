@@ -564,42 +564,55 @@ export default function LiveChatSniper({ onClose, globalBoggsOverride }: LiveCha
                                                onClick={async () => {
                                                     const producerNote = userChatInput.trim() ? ` Additional context: ${userChatInput}` : '';
                                                     // Use full DB system prompt if loaded, else fallback voice
-                                                    const dbPersona = personaData[p.name];
+                                                    const dbPersona = personaData[p.name.toLowerCase()];
                                                     const voice = dbPersona?.system_prompt
                                                          ? `${dbPersona.system_prompt}\n\nDeep Lore: ${dbPersona.deep_lore || ''}\n\nCurrent Season Context (2026): ${(dbPersona as any).behavior_notes || ''}\n\nYou are responding in a LIVE YouTube chat. Keep your response under 200 characters. Be specific — use 2026 Mets facts, real player names. NEVER use generic phrases like "Mets gonna Met". Output ONLY the chat message, no quotes, no labels.`
                                                         : (PERSONA_VOICES[p.id] || `You are ${p.alias}, a passionate Mets fan. Under 200 characters.`);
-                                                    const prompt = `${replyTarget.author} said in YouTube chat: "${replyTarget.text}"${producerNote}\n\nReact to this comment in character. Output ONLY your chat response, nothing else.`;
+                                                    const prompt = `You are a real fan chatting live in a YouTube stream.
+${replyTarget.author} said: "${replyTarget.text}"
+${producerNote ? `${producerNote}\n` : ''}
+React to this comment naturally in character. 
+Guidelines:
+- Respond directly to what they said. Do not output canned catchphrases out of context.
+- Keep it punchy, short, and conversational.
+- Output ONLY the raw chat response text, no quotes or metadata labels.`;
 
                                                     setShotModal({ persona: p.alias, text: '', loading: true });
                                                     setReplyTarget(null);
                                                     setUserChatInput('');
                                                     try {
-                                                        const token = localStorage.getItem('sovereign_session_token') || '';
-                                                        const res = await fetch('/api/hot_take_sniper', {
-                                                            method: 'POST',
-                                                            headers: { 
-                                                                'Content-Type': 'application/json',
-                                                                'Authorization': `Bearer ${token}`
-                                                            },
-                                                            body: JSON.stringify({
-                                                                voice: voice,
-                                                                prompt: prompt
-                                                            })
-                                                        });
-                                                        const data = await res.json();
-                                                        let text = data?.text?.trim() || 'No response generated.';
-                                                        if (text !== 'No response generated.') {
-                                                            // Strip any @ the model already prepended, then add exactly one
-                                                            text = text.replace(/^@+/, '');
-                                                            const cleanAuthor = replyTarget.author.replace(/^@+/, '');
-                                                            text = `@${cleanAuthor} ${text}`;
-                                                        }
-                                                        setShotModal({ persona: p.alias, text, loading: false });
-                                                        // WS broadcast removed: persona responses are copy/paste only, not auto-posted to chat
-                                                    } catch (err) {
-                                                        setShotModal({ persona: p.alias, text: 'Error calling backend sniper proxy.', loading: false });
-                                                    }
-                                                }}
+                                                         const token = localStorage.getItem('sovereign_session_token') || '';
+                                                         const res = await fetch('/api/hot_take_sniper', {
+                                                             method: 'POST',
+                                                             headers: { 
+                                                                 'Content-Type': 'application/json',
+                                                                 'Authorization': `Bearer ${token}`
+                                                             },
+                                                             body: JSON.stringify({
+                                                                 voice: voice,
+                                                                 prompt: prompt
+                                                             })
+                                                         });
+                                                         const data = await res.json();
+                                                         let text = data?.text?.trim();
+                                                         if (!res.ok) {
+                                                             text = data?.detail || 'Error calling backend sniper proxy.';
+                                                         }
+                                                         if (!text) {
+                                                             text = 'No response generated.';
+                                                         }
+                                                         if (res.ok && text !== 'No response generated.') {
+                                                             // Strip any @ the model already prepended, then add exactly one
+                                                             text = text.replace(/^@+/, '');
+                                                             const cleanAuthor = replyTarget.author.replace(/^@+/, '');
+                                                             text = `@${cleanAuthor} ${text}`;
+                                                         }
+                                                         setShotModal({ persona: p.alias, text, loading: false });
+                                                         // WS broadcast removed: persona responses are copy/paste only, not auto-posted to chat
+                                                     } catch (err) {
+                                                         setShotModal({ persona: p.alias, text: 'Error calling backend sniper proxy.', loading: false });
+                                                     }
+                                               }}
                                                className="flex items-center gap-2 bg-black/40 hover:bg-blue-600/50 border border-white/10 hover:border-blue-400 rounded-full pr-3 pl-1 py-1 transition-all"
                                                title={`Command ${p.alias} to reply. Add optional instructions in the chat box first.`}
                                            >

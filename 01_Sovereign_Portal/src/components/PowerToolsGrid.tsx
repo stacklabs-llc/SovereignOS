@@ -66,7 +66,7 @@ export default function PowerToolsGrid({ onNavigate }: PowerToolsGridProps) {
       onNavigate('GLOBAL', 'hot_takes');
       return;
     }
-    if (name === 'stream_sniper') {
+    if (name === 'stream_sniper' || name === 'local_transcribe') {
       onNavigate('GLOBAL', 'stream_sniper');
       return;
     }
@@ -135,6 +135,57 @@ export default function PowerToolsGrid({ onNavigate }: PowerToolsGridProps) {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {/* Promoted CLI Operator Shell Card */}
+        <div
+          className="relative p-6 rounded-2xl flex flex-col justify-between gap-6 transition-all group shadow-lg overflow-hidden backdrop-blur-md"
+          style={{
+            backgroundColor: `#00b4d808`,
+            border: `1px solid #00b4d822`,
+            boxShadow: `0 0 20px #00b4d808`,
+          }}
+        >
+          {/* Highlight bar */}
+          <div
+            className="absolute top-0 left-0 w-full h-0.5 opacity-60"
+            style={{ background: `linear-gradient(90deg, #00b4d8, transparent)` }}
+          />
+
+          <div className="space-y-4">
+            <div className="flex justify-between items-start">
+              <div
+                className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl bg-black/40 border border-[#00b4d833] text-[#00b4d8]"
+              >
+                🖥️
+              </div>
+              <div className="flex flex-col items-end gap-1.5 font-mono text-[9px] font-bold tracking-widest">
+                <span className="text-[#00FF88] flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 bg-[#00FF88] rounded-full animate-pulse"></span>
+                  ACTIVE
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-display font-bold text-lg text-white uppercase tracking-wider group-hover:text-white/90">
+                CLI Operator Shell
+              </h3>
+              <p className="text-xs text-white/60 mt-1 line-clamp-2 min-h-[2.5rem]">
+                Secure gateway terminal to query active configuration items and manage system state.
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => {
+              window.history.pushState({}, '', '/shell');
+              onNavigate('GLOBAL', 'shell');
+            }}
+            className="w-full py-2.5 rounded-xl font-mono text-xs font-bold uppercase tracking-wider transition-all border flex items-center justify-center gap-2 cursor-pointer bg-white/5 text-white hover:bg-white/10 border-[#00b4d844] text-[#00b4d8]"
+          >
+            Access Tool <ArrowUpRight size={14} />
+          </button>
+        </div>
+
         {tools.map((tool) => {
           const color = tool.color || '#a855f7';
           return (

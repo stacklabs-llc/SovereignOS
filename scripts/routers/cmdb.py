@@ -112,9 +112,12 @@ class SingleAdvocateGenerateRequest(BaseModel):
     u_governance_boundaries: str = ""
     color: str = "#7dd3fc"
     avatar_url: str = ""
-    u_visual_style: str = "style_felt"
+    u_visual_style: str = "style_2d"
     u_deployment_zone: str = ""
     unstructured_lore: str | None = None
+    u_avatar_prompt: str = ""
+    u_character_map_prompt: str = ""
+    u_canned_takes: str = "[]"
 
 
 @router.post("/api/now/table/cmdb_ci_ai_persona/generate")
@@ -144,7 +147,10 @@ async def generate_ai_persona(req: SingleAdvocateGenerateRequest, user: dict = D
         - u_governance_boundaries: Any constraints, guardrails, or rules they must follow.
         - color: A hex color code that fits their team or aesthetic (e.g., "#002D72" or "#FF5910" for Mets NYM).
         - avatar_url: An empty string or a default Dicebear URL like "https://api.dicebear.com/7.x/initials/svg?seed=Keith".
-        - u_visual_style: One of "style_felt", "style_pixel", "style_clay", "style_apathetic". (Default: "style_felt").
+        - u_visual_style: One of "style_felt", "style_pixel", "style_clay", "style_apathetic", "style_2d". (Default: "style_2d").
+        - u_avatar_prompt: A detailed DALL-E 3 image generation prompt for creating the avatar image of this advocate (matching the visual style).
+        - u_character_map_prompt: A detailed DALL-E 3 image generation prompt for creating a 3x3 character sheet matrix grid of this advocate (matching the visual style).
+        - u_canned_takes: A list of 3-5 typical short hot takes or commentary reactions this fan would make, represented as a JSON array of strings (e.g., ["Keith Hernandez is a legend!", "Let's go Mets!"]).
         - u_deployment_zone: The key of the deployment zone or room (e.g. "nym_room", "sports_bar", etc. or "global_zone").
 
         Return ONLY the raw JSON object, no markdown wrappers.
@@ -168,8 +174,16 @@ async def generate_ai_persona(req: SingleAdvocateGenerateRequest, user: dict = D
     u_governance_boundaries = parsed_data.get("u_governance_boundaries") or req.u_governance_boundaries or ""
     color = parsed_data.get("color") or req.color or "#7dd3fc"
     avatar_url = parsed_data.get("avatar_url") or req.avatar_url or ""
-    u_visual_style = parsed_data.get("u_visual_style") or req.u_visual_style or "style_felt"
+    u_visual_style = parsed_data.get("u_visual_style") or req.u_visual_style or "style_2d"
     u_deployment_zone = parsed_data.get("u_deployment_zone") or req.u_deployment_zone or ""
+    u_avatar_prompt = parsed_data.get("u_avatar_prompt") or parsed_data.get("avatar_prompt") or req.u_avatar_prompt or ""
+    u_character_map_prompt = parsed_data.get("u_character_map_prompt") or parsed_data.get("character_map_prompt") or req.u_character_map_prompt or ""
+    
+    canned_takes_raw = parsed_data.get("u_canned_takes") or parsed_data.get("canned_takes") or req.u_canned_takes or "[]"
+    if isinstance(canned_takes_raw, list):
+        u_canned_takes = json.dumps(canned_takes_raw)
+    else:
+        u_canned_takes = str(canned_takes_raw)
 
     # Ensure KI-044 is enforced
     DENIAL_PATTERNS = [
@@ -234,19 +248,20 @@ human biological existence.
     
     cur.execute("INSERT INTO cmdb_ci (sys_id, name, sys_class_name, short_description, operational_status, assigned_to) VALUES (?, ?, 'cmdb_ci_ai_persona', ?, 1, ?)",
                 (sys_id, first_name, u_behavior_expectations, assigned_to))
-    cur.execute("INSERT INTO cmdb_ci_ai_persona (sys_id, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence, u_deep_lore, u_behavior_expectations, u_governance_boundaries, u_visual_style) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (sys_id, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence, u_deep_lore, u_behavior_expectations, u_governance_boundaries, u_visual_style))
+    
+    cur.execute("INSERT INTO cmdb_ci_ai_persona (sys_id, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence, u_deep_lore, u_behavior_expectations, u_governance_boundaries, u_visual_style, u_avatar_prompt, u_character_map_prompt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (sys_id, u_system_prompt, u_deployment_zone, u_boggs_reactivity, u_cadence, u_deep_lore, u_behavior_expectations, u_governance_boundaries, u_visual_style, u_avatar_prompt, u_character_map_prompt))
 
     cur.execute("""
         INSERT INTO persona (
             id, user_name, display_name, team, system_prompt, boggs_level, 
             avatar_url, color, cadence, deep_lore, behavior_notes, governance, email_alias, u_visual_style,
-            u_deployment_zone
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            u_deployment_zone, avatar_prompt, character_map_prompt, canned_takes
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         sys_id, user_name, first_name, assigned_to, u_system_prompt, u_boggs_reactivity,
         avatar_url, color, u_cadence, u_deep_lore, u_behavior_expectations, u_governance_boundaries, email_alias, u_visual_style,
-        u_deployment_zone
+        u_deployment_zone, u_avatar_prompt, u_character_map_prompt, u_canned_takes
     ))
     
     con.commit()
@@ -381,6 +396,7 @@ async def update_ai_persona(sys_id: str, request: Request):
     if "active" in data:
         active_val = int(data["active"])
         cur.execute("UPDATE cmdb_ci SET operational_status = ? WHERE sys_id = ?", (active_val, canonical_id))
+        cur.execute("UPDATE sys_user SET active = ? WHERE sys_id = ?", (active_val, canonical_id))
 
     con.commit()
     con.close()

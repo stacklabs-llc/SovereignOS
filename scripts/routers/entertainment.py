@@ -9,6 +9,20 @@ from core.security import get_current_user, require_pilot, require_manager_or_pi
 router = APIRouter()
 
 
+def discover_service_url(port: int, service_name: str, path_prefix: str = "") -> str:
+    import socket
+    hosts = ["127.0.0.1", "clio.taila01894.ts.net"]
+    for host in hosts:
+        try:
+            with socket.create_connection((host, port), timeout=0.2):
+                return f"http://{host}:{port}{path_prefix}"
+        except OSError:
+            continue
+    # Fallback to local
+    return f"http://127.0.0.1:{port}{path_prefix}"
+
+
+
 @router.post("/api/vengeance/process")
 async def process_vengeance(audio: UploadFile = File(...)):
     try:
@@ -96,6 +110,16 @@ class TheaterCommand(BaseModel):
 
 @router.post("/api/theater/command")
 async def send_theater_command(req: TheaterCommand):
+    # Broadcast to all active websockets first
+    await theater_manager.broadcast({
+        "type": "THEATER_COMMAND",
+        "command": req.command,
+        "target": req.target,
+        "time": req.time,
+        "volume": req.volume,
+        "extra": req.extra
+    })
+
     # Full X11+DBUS session environment required for all xdotool calls
     x_env = {
         "DISPLAY": ":0",
@@ -270,7 +294,7 @@ async def send_theater_command(req: TheaterCommand):
         )
     elif req.command == 'launch_cinema':
         # Launch Chrome on clio's display. Must pass full X11+DBUS session env or Chrome silently fails.
-        cinema_url = "http://clio.taila01894.ts.net:3008/cinema-portal/?room=living_room"
+        cinema_url = "https://clio.taila01894.ts.net:3008/cinema-portal/?room=living_room"
         launch_env = {
             "DISPLAY": ":0",
             "XAUTHORITY": "/home/james/.Xauthority",
@@ -459,7 +483,8 @@ async def api_cinema_search(term: str, media_type: str = "movie"):
     
     if media_type == "tv":
         try:
-            url = f"http://clio.taila01894.ts.net:8989/sonarr/api/v3/series/lookup?term={requests.utils.quote(term)}"
+            sonarr_url = discover_service_url(8989, "sonarr", "/sonarr")
+            url = f"{sonarr_url}/api/v3/series/lookup?term={requests.utils.quote(term)}"
             res = requests.get(url, headers=headers, timeout=5)
             if res.status_code == 200:
                 for item in res.json():
@@ -486,7 +511,8 @@ async def api_cinema_search(term: str, media_type: str = "movie"):
             
     else: # movie
         try:
-            url = f"http://clio.taila01894.ts.net:7878/api/v3/movie/lookup?term={requests.utils.quote(term)}"
+            radarr_url = discover_service_url(7878, "radarr", "")
+            url = f"{radarr_url}/api/v3/movie/lookup?term={requests.utils.quote(term)}"
             res = requests.get(url, headers=headers, timeout=5)
             if res.status_code == 200:
                 for item in res.json():
@@ -546,7 +572,8 @@ async def cinema_request(req: CinemaRequest):
                 search_term = req.title
                 if req.title.lower() == "seinfeld":
                     search_term = "tvdb:79169"
-                lookup_url = f"http://clio.taila01894.ts.net:8989/sonarr/api/v3/series/lookup?term={requests.utils.quote(search_term)}"
+                sonarr_url = discover_service_url(8989, "sonarr", "/sonarr")
+                lookup_url = f"{sonarr_url}/api/v3/series/lookup?term={requests.utils.quote(search_term)}"
                 res = requests.get(lookup_url, headers=headers, timeout=5)
                 if res.status_code == 200:
                     results = res.json()
@@ -555,7 +582,7 @@ async def cinema_request(req: CinemaRequest):
                         series_id = best_match.get("id")
                         if series_id is not None:
                             cmd_payload = {"name": "SeriesSearch", "seriesId": series_id}
-                            requests.post("http://clio.taila01894.ts.net:8989/sonarr/api/v3/command", json=cmd_payload, headers=headers, timeout=5)
+                            requests.post(f"{sonarr_url}/api/v3/command", json=cmd_payload, headers=headers, timeout=5)
                         else:
                             add_payload = {
                                 "title": best_match["title"],
@@ -570,7 +597,7 @@ async def cinema_request(req: CinemaRequest):
                                     "searchForMissingEpisodes": True
                                 }
                             }
-                            requests.post("http://clio.taila01894.ts.net:8989/sonarr/api/v3/series", json=add_payload, headers=headers, timeout=5)
+                            requests.post(f"{sonarr_url}/api/v3/series", json=add_payload, headers=headers, timeout=5)
             except Exception as e:
                 print(f"Silent Sonarr trigger failed: {e}")
         
@@ -599,7 +626,8 @@ async def cinema_request(req: CinemaRequest):
         def trigger_radarr():
             try:
                 headers = {"X-Api-Key": "3a86bddfeefa4c93b104f33a534ffb72"}
-                lookup_url = f"http://clio.taila01894.ts.net:7878/api/v3/movie/lookup?term={requests.utils.quote(req.title)}"
+                radarr_url = discover_service_url(7878, "radarr", "")
+                lookup_url = f"{radarr_url}/api/v3/movie/lookup?term={requests.utils.quote(req.title)}"
                 res = requests.get(lookup_url, headers=headers, timeout=5)
                 if res.status_code == 200:
                     results = res.json()
@@ -608,7 +636,7 @@ async def cinema_request(req: CinemaRequest):
                         movie_id = best_match.get("id")
                         if movie_id is not None:
                             cmd_payload = {"name": "MoviesSearch", "movieIds": [movie_id]}
-                            requests.post("http://clio.taila01894.ts.net:7878/api/v3/command", json=cmd_payload, headers=headers, timeout=5)
+                            requests.post(f"{radarr_url}/api/v3/command", json=cmd_payload, headers=headers, timeout=5)
                         else:
                             add_payload = {
                                 "title": best_match["title"],
@@ -620,7 +648,7 @@ async def cinema_request(req: CinemaRequest):
                                     "searchForMovie": True
                                 }
                             }
-                            requests.post("http://clio.taila01894.ts.net:7878/api/v3/movie", json=add_payload, headers=headers, timeout=5)
+                            requests.post(f"{radarr_url}/api/v3/movie", json=add_payload, headers=headers, timeout=5)
             except Exception as e:
                 print(f"Silent Radarr trigger failed: {e}")
                 
@@ -714,3 +742,19 @@ async def cinema_request(req: CinemaRequest):
 @router.get("/cinema")
 async def get_cinema_ui():
     return FileResponse("/home/james/SovereignOS/media_vault/cinema_remote.html")
+
+class ManuelChatRequest(BaseModel):
+    message: str
+    history: list[dict] = []
+
+@router.post("/api/cinema/manuel")
+async def chat_with_manuel(req: ManuelChatRequest):
+    try:
+        import sys
+        if '/home/james/SovereignOS/scripts' not in sys.path:
+            sys.path.insert(0, '/home/james/SovereignOS/scripts')
+        from media_manuel_agent import ask_manuel
+        response = ask_manuel(req.message, req.history)
+        return {"response": response}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

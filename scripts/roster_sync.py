@@ -9,7 +9,10 @@ DB_PATH = "/home/james/SovereignOS/dna/sovereign_now.db"
 
 def init_db():
     print(f"[ROSTER SYNC] Connecting to database at {DB_PATH}...")
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA foreign_keys=ON;")
     cursor = conn.cursor()
     
     # Create the mlb_rosters table
@@ -50,9 +53,12 @@ def sync_rosters():
         print("[ROSTER SYNC ERROR] No teams found in StatsAPI response.", file=sys.stderr)
         return False
 
-    print(f"[ROSTER SYNC] Found {len(teams)} teams. Processing 40-man rosters...")
+    print(f"[ROSTER SYNC] Found {len(teams)} teams. Processing active 26-man rosters...")
     
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA foreign_keys=ON;")
     cursor = conn.cursor()
     
     sync_timestamp = datetime.datetime.now().isoformat()
@@ -73,7 +79,7 @@ def sync_rosters():
         print(f"[{idx+1}/{len(teams)}] Syncing {team_full} ({team_abbr})...")
         
         try:
-            roster_url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster/40Man"
+            roster_url = f"https://statsapi.mlb.com/api/v1/teams/{team_id}/roster/active"
             roster_resp = requests.get(roster_url, timeout=10)
             roster_resp.raise_for_status()
             roster_data = roster_resp.json()

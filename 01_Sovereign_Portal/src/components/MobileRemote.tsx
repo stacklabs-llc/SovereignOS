@@ -85,7 +85,7 @@ export default function MobileRemote() {
                     <h2 className="text-[10px] text-white/40 uppercase tracking-[0.2em] mb-2 px-2">2. Execute Deployment Target</h2>
                     <div className="grid grid-cols-1 gap-4">
                         <button 
-                            onClick={() => castToTV('192.168.1.68', '65-INCH TV')}
+                            onClick={() => castToTV('192.168.1.192', '65-INCH TV')}
                             className="bg-[#4285F4]/20 border border-[#4285F4]/50 py-6 rounded-2xl font-bold uppercase tracking-[0.2em] text-[#4285F4] hover:bg-[#4285F4] hover:text-white transition-colors active:scale-95 "
                         >
                             Deploy to 65" TV

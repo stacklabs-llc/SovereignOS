@@ -47,7 +47,7 @@ def load_game_state(game_pk: str) -> Optional[dict]:
         return None
 
 
-def get_inning_context(game_pk: str, max_scoring_innings: int = 3) -> str:
+def get_inning_context(game_pk: str, max_scoring_innings: int = 3, live_state: dict = None) -> str:
     """
     Returns a compact, human-readable scoring summary string for the given game.
 
@@ -62,6 +62,7 @@ def get_inning_context(game_pk: str, max_scoring_innings: int = 3) -> str:
         max_scoring_innings:  Maximum number of scoring innings to include in
                               the summary. Capped to prevent token creep.
                               Default: 3 (the last 3 innings where runs scored).
+        live_state:           Optional dictionary containing live telemetry variables to hot-override.
 
     Returns:
         A pre-formatted string like:
@@ -71,15 +72,26 @@ def get_inning_context(game_pk: str, max_scoring_innings: int = 3) -> str:
 
     Example usage in fanstack_chatbots.py STATE_UPDATE handler:
         if is_massive_event:
-            inning_ctx = get_inning_context(str(game_pk))
+            inning_ctx = get_inning_context(str(game_pk), live_state=state)
         else:
             inning_ctx = ""
     """
     doc = load_game_state(game_pk)
     if not doc:
-        return ""
+        if live_state:
+            doc = {}
+        else:
+            return ""
 
     try:
+        # Override doc fields with live_state fields if present
+        if live_state:
+            for key in ["away_team", "home_team", "away_score", "home_score", "inning", "innings_detail"]:
+                if key in live_state and live_state[key] is not None:
+                    doc[key] = live_state[key]
+                if key == "inning" and "inning" not in live_state and "current_inning" in live_state:
+                    doc["inning"] = live_state["current_inning"]
+
         away      = doc.get("away_team", "AWY")
         home      = doc.get("home_team", "HME")
         away_score = doc.get("away_score", 0)
@@ -115,7 +127,7 @@ def get_inning_context(game_pk: str, max_scoring_innings: int = 3) -> str:
         return ""
 
 
-def get_recent_plays(game_pk: str, n: int = 3) -> str:
+def get_recent_plays(game_pk: str, n: int = 3, live_state: dict = None) -> str:
     """
     Returns the last N play descriptions from the cached game document as a
     compact pipe-delimited string.
@@ -132,6 +144,7 @@ def get_recent_plays(game_pk: str, n: int = 3) -> str:
         n:       Number of recent plays to return. Default: 3.
                  Hard ceiling of 5 is enforced internally to prevent token creep
                  even if a caller passes a higher value.
+        live_state: Optional dictionary containing live telemetry variables to hot-override.
 
     Returns:
         A pre-formatted string like:
@@ -141,9 +154,27 @@ def get_recent_plays(game_pk: str, n: int = 3) -> str:
     """
     doc = load_game_state(game_pk)
     if not doc:
-        return ""
+        if live_state:
+            doc = {}
+        else:
+            return ""
 
     try:
+        # Override doc fields with live_state fields if present
+        if live_state:
+            if "recent_plays" in live_state and live_state["recent_plays"] is not None:
+                doc["recent_plays"] = live_state["recent_plays"]
+            elif "status_msg" in live_state and live_state["status_msg"]:
+                plays = list(doc.get("recent_plays", []))
+                current_desc = live_state["status_msg"]
+                current_inn = live_state.get("inning", "")
+                if not plays or plays[-1].get("description") != current_desc:
+                    plays.append({
+                        "inning": current_inn,
+                        "description": current_desc
+                    })
+                doc["recent_plays"] = plays
+
         plays = doc.get("recent_plays", [])
         if not plays:
             return ""

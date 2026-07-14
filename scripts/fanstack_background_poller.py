@@ -6,8 +6,18 @@ import traceback
 import sys
 import time
 import requests
+import argparse
 
-WS_URL         = "ws://localhost:8008"
+parser = argparse.ArgumentParser()
+parser.add_argument("--start-play-index", type=int, default=None, help="Index to start polling from")
+parser.add_argument("--game-id", type=str, default=None, help="Specific game ID to poll")
+parser.add_argument("--port", type=int, default=8008, help="WebSocket Relay port")
+args, unknown = parser.parse_known_args()
+
+WS_URL         = f"ws://localhost:{args.port}"
+START_PLAY_INDEX = args.start_play_index
+TARGET_GAME_ID = args.game_id
+
 SCHEDULE_URL   = "https://statsapi.mlb.com/api/v1/schedule?sportId=1"
 LIVE_FEED_BASE = "https://statsapi.mlb.com/api/v1.1/game/{}/feed/live"
 GAME_STATE_DIR = "/home/james/SovereignOS/game_states"
@@ -121,12 +131,23 @@ def _write_game_state_cache(game_pk: int, feed: dict, payload_data: dict) -> Non
     os.replace(tmp_path, target_path)
 
 
+DB_PATH = '/home/james/SovereignOS/dna/sovereign_now.db'
+
+def get_db(row_factory=True):
+    import sqlite3
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.execute("PRAGMA foreign_keys=ON;")
+    if row_factory:
+        conn.row_factory = sqlite3.Row
+    return conn
+
 stateful_triggers_notified = {}
 
 def check_trigger_enabled(trigger_name):
     try:
-        import sqlite3
-        conn = sqlite3.connect('/home/james/SovereignOS/dna/sovereign_now.db')
+        conn = get_db(row_factory=False)
         row = conn.execute("SELECT value FROM sys_user_preference WHERE user_name = 'james' AND name = 'tmi_configured_events'").fetchone()
         conn.close()
         if row:
@@ -532,6 +553,14 @@ async def poll_games(ws):
         if not feed: continue
         pk, status, detailed_status, delta_mins = active_games[i]
         
+        # Check start-play-index limit if specified
+        if TARGET_GAME_ID and str(pk) == str(TARGET_GAME_ID) and START_PLAY_INDEX is not None:
+            plays = feed.get("liveData", {}).get("plays", {})
+            targetPlay = plays.get("currentPlay", {})
+            current_idx = targetPlay.get("about", {}).get("atBatIndex")
+            if current_idx is not None and current_idx < START_PLAY_INDEX:
+                continue
+        
         linescore = feed.get("liveData", {}).get("linescore", {})
         inning = linescore.get("currentInningOrdinal", "-")
         is_top = linescore.get("isTopInning", True)
@@ -821,8 +850,7 @@ async def poll_games(ws):
         # Root cause: chatbots slept for 50min because Pre-Game state_hash never changed after room activation
         db_room_state = "staged"
         try:
-            import sqlite3 as _sq
-            _con = _sq.connect('/home/james/SovereignOS/dna/sovereign_now.db')
+            _con = get_db(row_factory=False)
             _cur = _con.cursor()
             _cur.execute("SELECT room_state FROM mlb_schedule WHERE game_pk = ?", (str(pk),))
             _row = _cur.fetchone()
@@ -870,6 +898,54 @@ async def poll_games(ws):
             
         b_player = find_player(batter_id)
         p_player = find_player(pitcher_id)
+        
+        # Teammate Collision Prevention
+        is_teammate_collision = False
+        if batter_id and pitcher_id:
+            # Check boxscore home/away players
+            batter_is_home = f"ID{batter_id}" in home_players
+            batter_is_away = f"ID{batter_id}" in away_players
+            pitcher_is_home = f"ID{pitcher_id}" in home_players
+            pitcher_is_away = f"ID{pitcher_id}" in away_players
+            
+            b_team = "home" if batter_is_home else ("away" if batter_is_away else None)
+            p_team = "home" if pitcher_is_home else ("away" if pitcher_is_away else None)
+            
+            # Fallback to mlb_rosters database to determine team_abbr
+            if not b_team:
+                try:
+                    conn = get_db(row_factory=False)
+                    c = conn.cursor()
+                    c.execute("SELECT team_abbr FROM mlb_rosters WHERE sys_id LIKE ?", (f"%_{batter_id}",))
+                    row = c.fetchone()
+                    if row:
+                        b_team = row[0].upper()
+                    conn.close()
+                except Exception:
+                    pass
+            else:
+                b_team = home_team.upper() if b_team == "home" else away_team.upper()
+                
+            if not p_team:
+                try:
+                    conn = get_db(row_factory=False)
+                    c = conn.cursor()
+                    c.execute("SELECT team_abbr FROM mlb_rosters WHERE sys_id LIKE ?", (f"%_{pitcher_id}",))
+                    row = c.fetchone()
+                    if row:
+                        p_team = row[0].upper()
+                    conn.close()
+                except Exception:
+                    pass
+            else:
+                p_team = home_team.upper() if p_team == "home" else away_team.upper()
+                
+            if b_team and p_team and b_team == p_team:
+                print(f"[POLLER WARNING] Teammate collision detected (both on {b_team}): batter={batterName} ({batter_id}), pitcher={pitcherName} ({pitcher_id}). Skipping play payload.")
+                is_teammate_collision = True
+
+        if is_teammate_collision:
+            continue
         
         batter_avg = "---"
         batter_obp = "---"
@@ -977,8 +1053,29 @@ async def poll_games(ws):
             except Exception as e:
                 print(f"[POLLER] Failed to write to statcast telemetry log: {e}")
             try:
+                import uuid
+                msg_id = uuid.uuid4().hex
+                payload["msg_id"] = msg_id
                 await ws.send(json.dumps(payload))
-                last_status_map[pk] = state_hash
+                
+                # Application-layer ACK handshake
+                ack_received = False
+                try:
+                    # Wait for CMD_SYNC_ACK
+                    while True:
+                        response_str = await asyncio.wait_for(ws.recv(), timeout=2.0)
+                        resp = json.loads(response_str)
+                        if resp.get("type") == "CMD_SYNC_ACK" and resp.get("msg_id") == msg_id:
+                            print(f"[POLLER] Received ACK for state sync {msg_id}")
+                            ack_received = True
+                            break
+                except asyncio.TimeoutError:
+                    print(f"[POLLER] ACK timeout/missing for state_hash: {state_hash}")
+                except Exception as read_err:
+                    print(f"[POLLER] Error reading ACK response: {read_err}")
+                
+                if ack_received:
+                    last_status_map[pk] = state_hash
 
                 if event_type == "strikeout" and db_room_state == 'active':
                     keith_payload = {
@@ -989,9 +1086,48 @@ async def poll_games(ws):
                     }
                     try:
                         await ws.send(json.dumps(keith_payload))
-                        print(f"[POLLER] Keith Hernandez overlay triggered for strikeout in game {pk}!")
+                        print(f"[POLLER] Keith overlay triggered for strikeout in game {pk}!")
                     except Exception as keith_err:
                         print(f"[POLLER] Failed to send Keith overlay: {keith_err}")
+
+                # Air Bender Takeover Overlay trigger (Remapped to Devon Williams pitching)
+                if pitcherName in ("Devon Williams", "Devin Williams") and db_room_state == 'active':
+                    airbender_payload = {
+                        "type": "webslinger_trigger",
+                        "event_name": "AIRBENDER_OVERLAY",
+                        "data": {
+                            "trigger": "AIRBENDER_OVERLAY",
+                            "animation": "airbender",
+                            "batter": batterName,
+                            "pitcher": pitcherName
+                        },
+                        "room_id": str(pk)
+                    }
+                    try:
+                        await ws.send(json.dumps(airbender_payload))
+                        print(f"[POLLER] Air Bender overlay triggered for Devon Williams pitching in game {pk}!")
+                    except Exception as airbender_err:
+                        print(f"[POLLER] Failed to send Air Bender overlay: {airbender_err}")
+
+                # Keith Hernandez "Go Sit Down" Takeover Overlay trigger (INC9005897)
+                try:
+                    p_desc_lower = playDesc.lower()
+                    if (
+                        "challenged" in p_desc_lower
+                        and "call on the field was confirmed" in p_desc_lower
+                        and ("called out on strikes" in p_desc_lower or ("strikes out" in p_desc_lower and strikes == 3))
+                    ):
+                        sit_down_payload = {
+                            "type": "CMD_SIT_DOWN",
+                            "media_url": "/media/Keith_thrusts_arm__GO_SIT_202606201553.mp4",
+                            "sprite_url": "/media/go_sit_down_keith_fanboy_transparent.png",
+                            "duration_ms": 4500,
+                            "game_pk": str(pk)
+                        }
+                        await ws.send(json.dumps(sit_down_payload))
+                        print(f"[POLLER] Keith Hernandez 'Go Sit Down' overlay triggered for game {pk}: {playDesc}")
+                except Exception as sit_down_err:
+                    print(f"[POLLER] Failed to process/send CMD_SIT_DOWN: {sit_down_err}")
 
                 # PRECOG 50-SECOND PREDICTIVE VIDEO PIPELINE TRIGGER
                 try:
@@ -1164,8 +1300,7 @@ async def poll_games(ws):
                     # Transition to Delayed! Fire TMI
                     delay_state_map[pk] = True
                     try:
-                        import sqlite3
-                        con = sqlite3.connect('/home/james/SovereignOS/dna/sovereign_now.db')
+                        con = get_db(row_factory=False)
                         cur = con.cursor()
                         # Favor scenarios specifically mapped to this game_pk, fallback to any random scenario if none found
                         cur.execute("SELECT name, payload FROM cmdb_ci_tmi_scenario WHERE game_pk = ? ORDER BY RANDOM() LIMIT 1", (str(pk),))
@@ -1255,10 +1390,14 @@ async def poll_games(ws):
 async def main():
     while True:
         try:
-            # ping_interval=None, ping_timeout=None keeps the TCP connection alive
-            # without blocking the asyncio event loop on idle game nights
-            async with websockets.connect(WS_URL, ping_interval=None, ping_timeout=None) as ws:
+            async with websockets.connect(WS_URL, ping_interval=10, ping_timeout=20) as ws:
                 print("[BACKGROUND POLLER] Connected to Sovereign Mesh!")
+                # Register as a POLLER room to avoid receiving standard broadcasts
+                await ws.send(json.dumps({
+                    "type": "JOIN_ROOM",
+                    "target_game_pk": "POLLER",
+                    "room": "POLLER"
+                }))
                 # Clear state hash cache on new connection/reconnection to force state re-sync
                 last_status_map.clear()
                 while True:

@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { HelpCircle, Mic, X, Shield } from 'lucide-react';
+import { useTheme } from '../context/ThemeContext';
 
 export default function VocalMatrix() {
-  const [isOpen, setIsOpen] = useState(false);
+  const { isUmpireOpen, setUmpireOpen } = useTheme();
   const [isAsking, setIsAsking] = useState(false);
   const [umpireResponse, setUmpireResponse] = useState<string | null>(null);
 
@@ -14,7 +15,7 @@ export default function VocalMatrix() {
     setTimeout(() => {
       setIsAsking(false);
       const responses = [
-        "DECISION: SAFE! The base-runner beat the tag at second by 0.04 seconds. M.A.R.D. telemetry confirmed.",
+        "DECISION: SAFE! The base-runner beat the tag at second by 0.04 seconds. TMI telemetry confirmed.",
         "DECISION: OUT! High heat pitch caught the black corner. Strike three called. Underpants Bandito approved.",
         "DECISION: FOUL BALL! The ball landed 2 inches left of the left-field line. No Home Run.",
         "DECISION: NO PLAY! Time was called by the batter prior to the pitcher releasing the ball."
@@ -26,48 +27,12 @@ export default function VocalMatrix() {
 
   return (
     <>
-      {/* 1. Floating Umpire Toggle Button */}
-      <button
-        onClick={() => setIsOpen(true)}
-        style={{
-          position: 'fixed',
-          bottom: '24px',
-          right: '24px',
-          width: '60px',
-          height: '60px',
-          borderRadius: '50%',
-          background: 'radial-gradient(circle, #1E3A8A 0%, #0D1B2A 100%)',
-          border: '2px solid #3B82F6',
-          boxShadow: '0 0 20px rgba(59, 130, 246, 0.6), inset 0 0 10px rgba(0, 0, 0, 0.5)',
-          color: '#3B82F6',
-          cursor: 'pointer',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          transition: 'all 0.3s ease',
-          animation: 'floatButton 3s ease-in-out infinite'
-        }}
-        onMouseEnter={(e) => {
-          e.currentTarget.style.transform = 'scale(1.1)';
-          e.currentTarget.style.borderColor = '#00FFCC';
-          e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 255, 204, 0.8)';
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.transform = 'scale(1)';
-          e.currentTarget.style.borderColor = '#3B82F6';
-          e.currentTarget.style.boxShadow = '0 0 20px rgba(59, 130, 246, 0.6)';
-        }}
-      >
-        <Shield size={26} style={{ animation: 'spinPulse 4s linear infinite' }} />
-      </button>
-
       {/* 2. Slide-over Glassmorphic Umpire Drawer */}
-      {isOpen && (
+      {isUmpireOpen && (
         <>
           {/* Backdrop */}
           <div
-            onClick={() => setIsOpen(false)}
+            onClick={() => setUmpireOpen(false)}
             style={{
               position: 'fixed',
               inset: 0,
@@ -108,7 +73,7 @@ export default function VocalMatrix() {
                 </span>
               </div>
               <button
-                onClick={() => setIsOpen(false)}
+                onClick={() => setUmpireOpen(false)}
                 style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '4px' }}
               >
                 <X size={20} />
@@ -237,7 +202,7 @@ export default function VocalMatrix() {
 
             {/* Footer */}
             <div style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)', textAlign: 'center', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '1rem' }}>
-              M.A.R.D. RULEBOOK MATRIX // DECISION LOG: ACTIVE
+              SOVEREIGN RULEBOOK MATRIX // DECISION LOG: ACTIVE
             </div>
           </div>
         </>
@@ -265,6 +230,12 @@ export default function VocalMatrix() {
         @keyframes pingGlow {
           0% { transform: scale(1); opacity: 0.8; }
           100% { transform: scale(1.15); opacity: 0; }
+        }
+        @media (max-width: 1024px) {
+          .vocal-matrix-toggle {
+            left: 24px !important;
+            right: auto !important;
+          }
         }
       `}} />
     </>

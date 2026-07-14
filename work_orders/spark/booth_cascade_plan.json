@@ -1,0 +1,37 @@
+{
+  "action": "CONFIGURE_3_MAN_BOOTH",
+  "target_game_pk": "824904",
+  "booth_personas": [
+    "gary_bot",
+    "keith_fanboy",
+    "ron_bot"
+  ],
+  "deactivated_personas": [
+    "dot",
+    "dr_terp",
+    "spin_rate_sylvia"
+  ],
+  "active_roster": [
+    "deferred_dread_mets",
+    "barf",
+    "7_train_terry",
+    "UncleStevieStan",
+    "metsfan_86",
+    "dr_kosmos",
+    "section_512_sal",
+    "keith_fanboy",
+    "coach_shrubbs",
+    "tomahawk",
+    "battery_chucker_jr",
+    "the_chop_shop",
+    "spitfire_spud",
+    "waffle_house_warrior",
+    "gary_bot",
+    "ron_bot"
+  ],
+  "engine_settings": {
+    "cascade_enabled": true,
+    "cascade_delay_ms": 2500,
+    "booth_only_ball_strike_calling": true
+  }
+}

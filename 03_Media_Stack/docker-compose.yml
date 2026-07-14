@@ -11,7 +11,7 @@ services:
       - /home/james/SovereignOS/03_Media_Stack/sabnzbd/config:/config
       - /home/james/SovereignOS/media_vault:/media_vault
     ports:
-      - 8081:8080
+      - 8086:8080
     deploy:
       resources:
         limits:
@@ -36,3 +36,23 @@ services:
         limits:
           memory: 2G
     restart: unless-stopped
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=America/New_York
+    volumes:
+      - /home/james/SovereignOS/03_Media_Stack/radarr/config:/config
+      - /home/james/SovereignOS/03_Media_Stack/sabnzbd/config/Downloads:/config/Downloads
+      - /home/james/SovereignOS/media_vault:/media_vault
+    ports:
+      - 7878:7878
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    restart: unless-stopped
+

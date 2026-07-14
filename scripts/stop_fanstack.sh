@@ -128,6 +128,7 @@ _check_core "Sovereign Core API"      "sovereign_core_api.py"
 _check_core "CMDB Server"             "cmdb_server.py"
 _check_core "SDLC Ticketing Server"   "sdlc_portal_server.py"
 _check_core "Persona Manager Server"  "persona_manager_server.py"
+_check_core "Comet Relay"             "comet_relay.py"
 
 echo ""
 log_ok "=== FANSTACK HIBERNATION COMPLETE. CORE SERVICES PRESERVED. ==="

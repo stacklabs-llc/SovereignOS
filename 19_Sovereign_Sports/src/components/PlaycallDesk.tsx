@@ -205,7 +205,7 @@ export default function PlaycallDesk() {
 
     socket.onopen = () => {
       setWsConnected(true);
-      console.log('[CreatorConsole] Connected to M.A.R.D WebSocket broadcast loop.');
+      console.log('[CreatorConsole] Connected to TMI WebSocket broadcast loop.');
       socket.send(JSON.stringify({ 
         type: 'JOIN_ROOM', 
         target_game_pk: activeGameRoomId, 
@@ -406,6 +406,7 @@ export default function PlaycallDesk() {
       
       {/* Upper Status / Header Area */}
       <div style={{
+        position: 'relative',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -419,6 +420,10 @@ export default function PlaycallDesk() {
         backdropFilter: 'blur(20px)',
         boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.3)'
       }}>
+        {/* Target Zone Badge */}
+        <div className="zone-badge" style={{ top: '12px', left: '12px' }}>
+          [ZONE-2] UPPER CONTROL BAR
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
           <div style={{
             background: 'linear-gradient(135deg, #0A84FF, #00FFCC)',
@@ -439,8 +444,8 @@ export default function PlaycallDesk() {
           </div>
         </div>
 
-        {/* Room selector & connection indicators */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+        {/* Room selector, connection indicators, and global dormant switch */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>
               Target Game Room
@@ -495,6 +500,57 @@ export default function PlaycallDesk() {
               {wsConnected ? 'CROSSTALK ACTIVE' : 'DESK OFFLINE'}
             </div>
           </div>
+
+          {/* Always Visible Dormant Switch (The Cognitive Safeguard) */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>
+              Dormant Switch
+            </span>
+            <div 
+              title="When toggled ON, the console spawns low-latency WebSocket connection loops and enables visual triggers. Toggling OFF safely shuts down all loops."
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '12px',
+                padding: '8px 14px',
+                borderRadius: '8px',
+                background: isDeskInteractive ? 'rgba(10, 132, 255, 0.1)' : 'rgba(0, 0, 0, 0.25)',
+                border: isDeskInteractive ? '1px solid rgba(10, 132, 255, 0.25)' : '1px solid rgba(255, 255, 255, 0.15)',
+                fontSize: '0.85rem',
+                color: isDeskInteractive ? '#0A84FF' : '#fff',
+                fontWeight: 600,
+                height: '38px',
+                boxSizing: 'border-box'
+              }}
+            >
+              <Power size={14} color={isDeskInteractive ? '#0A84FF' : 'rgba(255,255,255,0.4)'} />
+              <span>{isDeskInteractive ? 'INTERACTIVE' : 'DORMANT'}</span>
+              <div 
+                style={{
+                  position: 'relative',
+                  width: '36px',
+                  height: '20px',
+                  background: isDeskInteractive ? '#0A84FF' : '#1e293b',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  transition: 'background 0.3s'
+                }} 
+                onClick={() => setIsDeskInteractive(!isDeskInteractive)}
+              >
+                <div style={{
+                  position: 'absolute',
+                  top: '2px',
+                  left: isDeskInteractive ? '18px' : '2px',
+                  width: '16px',
+                  height: '16px',
+                  background: '#fff',
+                  borderRadius: '50%',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.3)',
+                  transition: 'left 0.3s'
+                }} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
       {/* Premium Frosted Tab Bar */}
@@ -547,6 +603,7 @@ export default function PlaycallDesk() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' }}>
             {/* Command Deck Panel */}
             <div style={{
+              position: 'relative',
               background: 'rgba(10, 15, 30, 0.45)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: '20px',
@@ -554,6 +611,10 @@ export default function PlaycallDesk() {
               backdropFilter: 'blur(20px)',
               boxShadow: '0 4px 24px rgba(0,0,0,0.2)'
             }}>
+              {/* Target Zone Badge */}
+              <div className="zone-badge" style={{ top: '12px', left: '12px' }}>
+                [ZONE-3] WEBSLINGER EVENTS
+              </div>
               <h3 style={{ margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px' }}>
                 <Radio size={18} color="#0A84FF" /> Web-Slinger Command Deck
               </h3>
@@ -643,7 +704,7 @@ export default function PlaycallDesk() {
             </div>
 
             {/* Telemetry Trigger Mapper */}
-            <TelemetryMapper isDeskInteractive={isDeskInteractive} />
+            <TelemetryMapper isDeskInteractive={isDeskInteractive} availableGames={availableGames} />
           </div>
         )}
 
@@ -651,6 +712,7 @@ export default function PlaycallDesk() {
           <div style={{ maxWidth: '800px', margin: '0 auto' }}>
             {/* Tactile Soundboard Card */}
             <div style={{
+              position: 'relative',
               background: 'rgba(10, 15, 30, 0.45)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: '20px',
@@ -658,6 +720,10 @@ export default function PlaycallDesk() {
               backdropFilter: 'blur(20px)',
               boxShadow: '0 4px 24px rgba(0,0,0,0.2)'
             }}>
+              {/* Target Zone Badge */}
+              <div className="zone-badge" style={{ top: '12px', left: '12px' }}>
+                [ZONE-5] TACTILE SOUNDBOARD
+              </div>
               <h3 style={{ margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px' }}>
                 <Volume2 size={18} color="#FF5910" style={{ flexShrink: 0 }} /> Tactile Soundboard
               </h3>
@@ -672,19 +738,21 @@ export default function PlaycallDesk() {
         )}
 
         {activeTab === 'overrides' && (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' }}>
+          <div style={{ maxWidth: '800px', margin: '0 auto' }}>
             {/* Active Room States Controller */}
             <div style={{
+              position: 'relative',
               background: 'rgba(10, 15, 30, 0.45)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: '20px',
               padding: '1.75rem',
               backdropFilter: 'blur(20px)',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between'
+              boxShadow: '0 4px 24px rgba(0,0,0,0.2)'
             }}>
+              {/* Target Zone Badge */}
+              <div className="zone-badge" style={{ top: '12px', left: '12px' }}>
+                [ZONE-6] SYSTEM OVERRIDES
+              </div>
               <div>
                 <h3 style={{ margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px' }}>
                   <Cpu size={18} color="#ef4444" /> Active Room State Override
@@ -700,7 +768,7 @@ export default function PlaycallDesk() {
                   {/* MARD Engine Override */}
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>M.A.R.D. Core Engine</span>
+                      <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>TMI Core Engine</span>
                       <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>Real-time telemetry telemetry polling</span>
                     </div>
                     <button
@@ -805,48 +873,6 @@ export default function PlaycallDesk() {
                 </div>
               </div>
             </div>
-
-            {/* Dormant Switch (The Cognitive Safeguard) */}
-            <div style={{
-              padding: '1.25rem',
-              borderRadius: '16px',
-              background: isDeskInteractive ? 'rgba(10, 132, 255, 0.08)' : 'rgba(0, 0, 0, 0.3)',
-              border: isDeskInteractive ? '1px solid rgba(10, 132, 255, 0.3)' : '1px solid rgba(255,255,255,0.06)',
-              boxShadow: isDeskInteractive ? '0 0 20px rgba(10, 132, 255, 0.15)' : 'none',
-              transition: 'all 0.3s ease',
-              alignSelf: 'start'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Power size={18} color={isDeskInteractive ? '#0A84FF' : 'rgba(255,255,255,0.3)'} />
-                  <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Dormant Switch</span>
-                </div>
-                <div style={{
-                  position: 'relative',
-                  width: '50px',
-                  height: '26px',
-                  background: isDeskInteractive ? '#0A84FF' : '#1e293b',
-                  borderRadius: '15px',
-                  cursor: 'pointer',
-                  transition: 'background 0.3s'
-                }} onClick={() => setIsDeskInteractive(!isDeskInteractive)}>
-                  <div style={{
-                    position: 'absolute',
-                    top: '3px',
-                    left: isDeskInteractive ? '27px' : '3px',
-                    width: '20px',
-                    height: '20px',
-                    background: '#fff',
-                    borderRadius: '50%',
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
-                    transition: 'left 0.3s'
-                  }} />
-                </div>
-              </div>
-              <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.45)', lineHeight: '1.4' }}>
-                When toggled ON, the console spawns low-latency WebSocket connection loops and enables visual triggers. Toggling OFF safely shuts down all loops.
-              </p>
-            </div>
           </div>
         )}
 
@@ -854,6 +880,7 @@ export default function PlaycallDesk() {
           <div style={{ maxWidth: '800px', margin: '0 auto' }}>
             {/* Custom Video Broadcast Card */}
             <div style={{
+              position: 'relative',
               background: 'rgba(10, 15, 30, 0.45)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: '20px',
@@ -861,6 +888,10 @@ export default function PlaycallDesk() {
               backdropFilter: 'blur(20px)',
               boxShadow: '0 4px 24px rgba(0,0,0,0.2)'
             }}>
+              {/* Target Zone Badge */}
+              <div className="zone-badge" style={{ top: '12px', left: '12px' }}>
+                [ZONE-7] VIDEO BROADCAST
+              </div>
               <h3 style={{ margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px' }}>
                 <Play size={18} color="#00FFCC" style={{ flexShrink: 0 }} /> Custom Video Broadcast
               </h3>
@@ -883,6 +914,7 @@ export default function PlaycallDesk() {
           <div style={{ maxWidth: '800px', margin: '0 auto' }}>
             {/* Media Injection Node */}
             <div style={{
+              position: 'relative',
               background: 'rgba(10, 15, 30, 0.45)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: '20px',
@@ -890,6 +922,10 @@ export default function PlaycallDesk() {
               backdropFilter: 'blur(20px)',
               boxShadow: '0 4px 24px rgba(0,0,0,0.2)'
             }}>
+              {/* Target Zone Badge */}
+              <div className="zone-badge" style={{ top: '12px', left: '12px' }}>
+                [ZONE-8] MEDIA INJECTION
+              </div>
               <h3 style={{ margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px' }}>
                 <Upload size={18} color="#00FFCC" /> Media Injection Node
               </h3>
@@ -978,6 +1014,7 @@ export default function PlaycallDesk() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
             {/* Macro Overrides Card */}
             <div style={{
+              position: 'relative',
               background: 'rgba(10, 15, 30, 0.45)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: '20px',
@@ -985,6 +1022,10 @@ export default function PlaycallDesk() {
               backdropFilter: 'blur(20px)',
               boxShadow: '0 4px 24px rgba(0,0,0,0.2)'
             }}>
+              {/* Target Zone Badge */}
+              <div className="zone-badge" style={{ top: '12px', left: '12px' }}>
+                [ZONE-9] MACRO ATMOSPHERE OVERRIDES
+              </div>
               <h3 style={{ margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px', color: '#FFF' }}>
                 ⚡ Macro Override Switches
               </h3>
@@ -1029,6 +1070,7 @@ export default function PlaycallDesk() {
 
             {/* Manual Overlay Triggers Card */}
             <div style={{
+              position: 'relative',
               background: 'rgba(10, 15, 30, 0.45)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: '20px',
@@ -1036,6 +1078,10 @@ export default function PlaycallDesk() {
               backdropFilter: 'blur(20px)',
               boxShadow: '0 4px 24px rgba(0,0,0,0.2)'
             }}>
+              {/* Target Zone Badge */}
+              <div className="zone-badge" style={{ top: '12px', left: '12px' }}>
+                [ZONE-10] MANUAL OVERLAY TRIGGERS
+              </div>
               <h3 style={{ margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px', color: '#FFF' }}>
                 🖼️ Manual Overlay Triggers
               </h3>
@@ -1127,12 +1173,17 @@ export default function PlaycallDesk() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
             {/* Condition Form Card */}
             <div style={{
+              position: 'relative',
               background: 'rgba(10, 15, 30, 0.45)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: '20px',
               padding: '1.75rem',
               backdropFilter: 'blur(20px)'
             }}>
+              {/* Target Zone Badge */}
+              <div className="zone-badge" style={{ top: '12px', left: '12px' }}>
+                [ZONE-11] NO-CODE RULE BUILDER
+              </div>
               <h3 style={{ margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px', color: '#FFF' }}>
                 🛠️ No-Code Telemetry Condition Builder
               </h3>
@@ -1161,6 +1212,7 @@ export default function PlaycallDesk() {
                     <option value="outs">Outs</option>
                     <option value="inning">Inning</option>
                     <option value="events">Event (Play Result)</option>
+                    <option value="status_msg">Status Message (text)</option>
                   </select>
                 </div>
 
@@ -1174,7 +1226,7 @@ export default function PlaycallDesk() {
                     <option value=">">&gt; (Greater Than)</option>
                     <option value="<">&lt; (Less Than)</option>
                     <option value="==">== (Equals)</option>
-                    <option value="contains">contains</option>
+                    <option value="CONTAINS">CONTAINS (Substring Match)</option>
                   </select>
                 </div>
 
@@ -1226,12 +1278,17 @@ export default function PlaycallDesk() {
 
             {/* Rules Listing Card */}
             <div style={{
+              position: 'relative',
               background: 'rgba(10, 15, 30, 0.45)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
               borderRadius: '20px',
               padding: '1.75rem',
               backdropFilter: 'blur(20px)'
             }}>
+              {/* Target Zone Badge */}
+              <div className="zone-badge" style={{ top: '12px', left: '12px' }}>
+                [ZONE-12] PERSISTED RULES LIST
+              </div>
               <h3 style={{ margin: '0 0 1.25rem 0', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '1.15rem', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px', color: '#FFF' }}>
                 📋 Persisted Telemetry Rules List
               </h3>

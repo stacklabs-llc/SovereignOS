@@ -1,10 +1,10 @@
 // api-host.ts — Portable host resolution
 export function getApiHost(port: number = 8096): string {
-  if (import.meta.env.VITE_API_BASE) {
-    return import.meta.env.VITE_API_BASE;
-  }
   if (window.location.protocol === "https:") {
     return window.location.origin;
+  }
+  if (import.meta.env.VITE_API_BASE) {
+    return import.meta.env.VITE_API_BASE;
   }
   return `http://${window.location.hostname}:${port}`;
 }

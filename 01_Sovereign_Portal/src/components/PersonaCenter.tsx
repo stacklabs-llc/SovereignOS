@@ -55,6 +55,67 @@ const VM = {
   fontBody: "'Rajdhani', sans-serif",
 } as const;
 
+const FIELD_HELP_TEXTS: Record<string, string> = {
+  user_name: "A unique, safe lowercase alphanumeric handle used as their system identifier.",
+  first_name: "The user-facing display name shown in chats, rosters, and reports.",
+  email_alias: "Internal email routing address mapped to this AI persona.",
+  color: "Hex color code representing the avatar contour glow and chat accent theme.",
+  title: "The professional role or fandom title assigned to the advocate.",
+  assigned_to: "The MLB team affiliation defining their base regional context.",
+  active: "Controls whether the persona is operational and responsive to triggers.",
+  u_deployment_zone: "The target context room or space where the persona primarily operates.",
+  u_cadence: "Determines the interaction frequency: Pacer (Standard), Lurker (Quiet), Agitator (Frequent), or Reactant (Event Only).",
+  u_visual_style: "Enforced visual aesthetic tier used for generating lookbooks and sprite sheets.",
+  u_boggs_reactivity: "Reactivity/entropy volatility index (1-11) governing brand behavior scaling.",
+  introduction: "A short public biography summarizing the advocate's persona.",
+  u_system_prompt: "The foundational instructions defining the persona's inner monologue, logic directives, and tone of voice.",
+  u_behavior_expectations: "Core behavioral constraints and stylistic expectations guiding their discourse.",
+  u_governance_boundaries: "Regulatory guidelines and safety guardrails they are strictly forbidden from crossing.",
+  u_deep_lore: "Detailed backstory, personal preferences, and historical memory triggers.",
+  u_avatar_prompt: "DALL-E / Pollinations prompt string used for synthesizing the advocate's avatar headshot.",
+  u_character_map_prompt: "Prompt template for generating the 3x3 character sheet matrix grid.",
+  u_canned_takes: "A JSON string array of pre-approved hot takes and canned message injections."
+};
+
+const FieldTooltip = ({ text }: { text: string }) => {
+  const [visible, setVisible] = useState(false);
+  return (
+    <div 
+      style={{ display: "inline-flex", position: "relative", marginLeft: "6px", cursor: "help", verticalAlign: "middle", alignItems: "center", justifyContent: "center" }}
+      onMouseEnter={() => setVisible(true)}
+      onMouseLeave={() => setVisible(false)}
+    >
+      <span style={{ fontSize: "0.65rem", color: VM.emerald, border: `1px solid ${VM.emerald}80`, borderRadius: "50%", width: "12px", height: "12px", display: "inline-flex", alignItems: "center", justifyContent: "center", fontStyle: "normal", fontWeight: "bold", lineHeight: "1" }}>i</span>
+      {visible && (
+        <div style={{
+          position: "absolute",
+          bottom: "100%",
+          left: "50%",
+          transform: "translateX(-50%)",
+          marginBottom: "6px",
+          background: VM.card,
+          border: `1px solid ${VM.emerald}`,
+          borderRadius: "6px",
+          color: VM.text,
+          padding: "8px 12px",
+          width: "220px",
+          zIndex: 9999,
+          fontSize: "0.7rem",
+          fontFamily: VM.fontMono,
+          lineHeight: "1.4",
+          boxShadow: `0 4px 20px rgba(0,255,136,0.15)`,
+          whiteSpace: "normal",
+          pointerEvents: "none",
+          textTransform: "none",
+          letterSpacing: "normal"
+        }}>
+          {text}
+        </div>
+      )}
+    </div>
+  );
+};
+
 /* ── Type Definitions ── */
 interface AiPersona {
   sys_id: string;
@@ -427,8 +488,10 @@ export default function PersonaCenter() {
       if (!res.ok) throw new Error(json.message || `HTTP ${res.status}`);
       setUploadStatus({ ok: true, msg: `✅ Avatar updated` });
       // Use the static file path from server response — no API lookup, loads instantly
-      const newUrl = (json.avatar_url || `/avatars/${personaName}`) + `?t=${Date.now()}`;
+      const cleanUrl = json.avatar_url || `/api/persona_image/${personaName}`;
+      const newUrl = cleanUrl + `?t=${Date.now()}`;
       setLiveAvatarUrl(newUrl);
+      setEditForm((prev: any) => prev ? { ...prev, avatar_url: cleanUrl } : null);
     } catch (err: any) {
       setUploadStatus({ ok: false, msg: `❌ Upload failed: ${err.message}` });
     } finally {
@@ -1818,7 +1881,10 @@ export default function PersonaCenter() {
                       { key: "u_boggs_reactivity", label: "Brand Entropy Level (1 - 11)", type: "entropy-slider" },
                     ].map(({ key, label, type }) => (
                       <div key={key} style={{ gridColumn: type === "entropy-slider" ? "span 2" : "span 1" }}>
-                        <label style={{ display: "block", fontFamily: VM.fontMono, fontSize: "0.65rem", color: VM.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px" }}>{label}</label>
+                        <label style={{ display: "flex", alignItems: "center", fontFamily: VM.fontMono, fontSize: "0.65rem", color: VM.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px" }}>
+                          {label}
+                          <FieldTooltip text={FIELD_HELP_TEXTS[key] || "Advocate configuration field."} />
+                        </label>
                         {type === "team-select" ? (
                           <select value={String(editForm[key] || "")} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })} disabled={!isAuthorized}
                             style={{ width: "100%", background: VM.surface, border: `1px solid ${VM.border}`, borderRadius: "6px", color: VM.text, padding: "10px 12px", fontFamily: VM.fontMono, fontSize: "0.82rem", outline: "none" }}
@@ -1859,6 +1925,7 @@ export default function PersonaCenter() {
                             <option value="style_pixel">Style B: 16-Bit Pixel Grid</option>
                             <option value="style_clay">Style C: Unraveled Claymation</option>
                             <option value="style_apathetic">Style D: Apathetic Claymation</option>
+                            <option value="style_2d">Style E: Flat 2D Vector Comic</option>
                           </select>
                         ) : type === "entropy-slider" ? (
                           <div style={{ display: "flex", alignItems: "center", gap: "12px", background: VM.surface, padding: "8px 12px", borderRadius: "6px", border: `1px solid ${VM.border}` }}>
@@ -1884,7 +1951,10 @@ export default function PersonaCenter() {
                   <div style={{ fontFamily: VM.fontMono, fontSize: "0.65rem", color: VM.muted, textTransform: "uppercase", letterSpacing: "0.2em", marginBottom: "14px", paddingBottom: "8px", borderBottom: `1px solid ${VM.border}` }}>
                     Bio
                   </div>
-                  <label style={{ display: "block", fontFamily: VM.fontMono, fontSize: "0.65rem", color: VM.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px" }}>Introduction / Short Bio</label>
+                  <label style={{ display: "flex", alignItems: "center", fontFamily: VM.fontMono, fontSize: "0.65rem", color: VM.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px" }}>
+                    Introduction / Short Bio
+                    <FieldTooltip text={FIELD_HELP_TEXTS["introduction"] || "A short public biography summarizing the advocate."} />
+                  </label>
                   <textarea value={String(editForm.introduction || "")} onChange={(e) => setEditForm({ ...editForm, introduction: e.target.value })} disabled={!isAuthorized}
                     style={{ width: "100%", height: "90px", background: VM.surface, border: `1px solid ${VM.border}`, borderRadius: "6px", color: VM.text, padding: "12px", fontFamily: VM.fontMono, fontSize: "0.82rem", outline: "none", resize: "vertical", boxSizing: "border-box" }}
                     onFocus={(e) => e.target.style.borderColor = VM.emerald} onBlur={(e) => e.target.style.borderColor = VM.border} />
@@ -1906,7 +1976,10 @@ export default function PersonaCenter() {
                       { key: "u_canned_takes",          label: "Canned Injections / Takes (JSON Array)", h: "120px" },
                     ].map(({ key, label, h }) => (
                       <div key={key}>
-                        <label style={{ display: "block", fontFamily: VM.fontMono, fontSize: "0.65rem", color: VM.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px" }}>{label}</label>
+                        <label style={{ display: "flex", alignItems: "center", fontFamily: VM.fontMono, fontSize: "0.65rem", color: VM.muted, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: "6px" }}>
+                          {label}
+                          <FieldTooltip text={FIELD_HELP_TEXTS[key] || "Lore configuration field."} />
+                        </label>
                         <textarea value={String(editForm[key] || "")} onChange={(e) => setEditForm({ ...editForm, [key]: e.target.value })} disabled={!isAuthorized}
                           style={{ width: "100%", height: h, background: VM.surface, border: `1px solid ${VM.border}`, borderRadius: "6px", color: VM.text, padding: "12px", fontFamily: VM.fontMono, fontSize: "0.82rem", outline: "none", resize: "vertical", lineHeight: "1.5", boxSizing: "border-box" }}
                           onFocus={(e) => e.target.style.borderColor = VM.emerald} onBlur={(e) => e.target.style.borderColor = VM.border} />

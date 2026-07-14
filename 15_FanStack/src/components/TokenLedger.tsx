@@ -213,7 +213,7 @@ export default function TokenLedger() {
       </div>
 
       {/* ── Fleet Summary Cards ── */}
-      {fleet && (
+      {fleet && fleet.totals && fleet.credit_runway && (
         <div className="px-6 py-4 grid grid-cols-2 md:grid-cols-4 gap-3">
           <StatCard
             label="All-Time Tokens"

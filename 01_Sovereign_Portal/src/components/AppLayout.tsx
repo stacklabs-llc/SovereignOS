@@ -10,6 +10,8 @@ import CometMessenger from './CometMessenger';
 import Soundboard from './Soundboard';
 import SyncWorkOrders from './SyncWorkOrders';
 import GlobalDropZone from './GlobalDropZone';
+import ReleaseSpotlightModal from './ReleaseSpotlightModal';
+
 
 interface AppLayoutProps {
   configuration: any;
@@ -36,8 +38,67 @@ export default function AppLayout({
     return true;
   });
 
+  const [spotlightOpen, setSpotlightOpen] = useState(false);
+  const [spotlightArticles, setSpotlightArticles] = useState<any[]>([]);
+  const [unacknowledgedCount, setUnacknowledgedCount] = useState(0);
+
+  useEffect(() => {
+    fetch('/api/system/kb')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.kb_articles) {
+          const releaseArticles = data.kb_articles.filter((art: any) => 
+            art.u_tags === 'release-notes' || (art.number && art.number.startsWith('KB_'))
+          );
+          
+          if (releaseArticles.length > 0) {
+            const lastSeenStr = localStorage.getItem('sovereign_spotlight_last_seen_date');
+            
+            let newArticles = [];
+            if (!lastSeenStr) {
+              newArticles = releaseArticles.slice(0, 3);
+            } else {
+              const lastSeenTime = new Date(lastSeenStr).getTime();
+              newArticles = releaseArticles.filter((art: any) => 
+                new Date(art.sys_updated_on).getTime() > lastSeenTime
+              );
+            }
+
+            setUnacknowledgedCount(newArticles.length);
+
+            if (newArticles.length > 0) {
+              Promise.all(
+                newArticles.map((art: any) => 
+                  fetch(`/api/system/kb/${art.sys_id}`)
+                    .then(res => res.json())
+                    .catch(() => null)
+                )
+              ).then(fullArticles => {
+                const validArticles = fullArticles.filter(Boolean);
+                if (validArticles.length > 0) {
+                  setSpotlightArticles(validArticles);
+                  setSpotlightOpen(true);
+                }
+              });
+            }
+          }
+        }
+      })
+      .catch(err => console.error("Error fetching KB articles for spotlight:", err));
+  }, []);
+
+  const handleCloseSpotlight = () => {
+    setSpotlightOpen(false);
+    setUnacknowledgedCount(0);
+    localStorage.setItem('sovereign_spotlight_last_seen_date', new Date().toISOString());
+  };
+
   const handleNavigate = (domain: string, room: string | null) => {
     onNavigate(domain, room);
+    if (room === 'knowledge_hub') {
+      setUnacknowledgedCount(0);
+      localStorage.setItem('sovereign_spotlight_last_seen_date', new Date().toISOString());
+    }
     if (typeof window !== 'undefined' && window.innerWidth < 768) {
       setSidebarOpen(false);
     }
@@ -173,6 +234,18 @@ export default function AppLayout({
           </button>
 
           <button 
+            onClick={() => handleNavigate('GLOBAL', 'arbitrage_sim')}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
+              activeRoom === 'arbitrage_sim' 
+                ? 'bg-white/10 text-[#38bdf8]' 
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <Activity size={16} />
+            {sidebarOpen && 'DeFi Simulator'}
+          </button>
+
+          <button 
             onClick={() => handleNavigate('GLOBAL', 'power_tools')}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
               activeRoom === 'power_tools' 
@@ -186,14 +259,22 @@ export default function AppLayout({
 
           <button 
             onClick={() => handleNavigate('GLOBAL', 'knowledge_hub')}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
+            className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
               activeRoom === 'knowledge_hub' 
                 ? 'bg-white/10 text-[#38bdf8]' 
                 : 'text-white/60 hover:text-white hover:bg-white/5'
             }`}
           >
-            <BookOpen size={16} />
-            {sidebarOpen && 'Knowledge Hub'}
+            <div className="flex items-center gap-3">
+              <BookOpen size={16} />
+              {sidebarOpen && 'Knowledge Hub'}
+            </div>
+            {unacknowledgedCount > 0 && (
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+              </span>
+            )}
           </button>
 
           {(auth?.role === 'pilot' || auth?.role === 'creator' || auth?.role === 'admin') && (
@@ -262,6 +343,21 @@ export default function AppLayout({
           >
             <Camera size={16} className={activeRoom === 'metsy_adventures' ? "text-[#f59e0b]" : ""} />
             {sidebarOpen && "Metsy's Scrapbook"}
+          </button>
+
+          <button 
+            onClick={() => {
+              window.history.pushState({}, '', '/shell');
+              handleNavigate('GLOBAL', 'shell');
+            }}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider font-mono transition-all ${
+              activeRoom === 'shell'
+                ? 'bg-white/10 text-[#38bdf8]' 
+                : 'text-white/60 hover:text-white hover:bg-white/5'
+            }`}
+          >
+            <span className={activeRoom === 'shell' ? "text-[#38bdf8] font-bold" : "text-white/60 font-bold"}>[&gt;_]</span>
+            {sidebarOpen && 'CLI Operator Shell'}
           </button>
 
           <button 
@@ -438,6 +534,13 @@ export default function AppLayout({
         
         {/* Global collapsible pixel drop zone staging drawer */}
         <GlobalDropZone />
+
+        {/* Release Spotlight Modal */}
+        <ReleaseSpotlightModal 
+          isOpen={spotlightOpen} 
+          onClose={handleCloseSpotlight} 
+          articles={spotlightArticles} 
+        />
       </div>
     </div>
   );

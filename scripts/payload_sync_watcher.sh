@@ -41,6 +41,10 @@ while true; do
         rclone copy "/mnt/node_177" "$GDRIVE_ROOT/Pegasus_MARD_Artifacts/" -v 2>> "$LOG"
     fi
     
+    # Run the SQLite Media Cataloger (WO-2026-115)
+    echo "[PAYLOAD SYNC] $(date) — Commencing SQLite Media Cataloging..." >> "$LOG"
+    python3 /home/james/SovereignOS/scripts/catalog_media.py >> "$LOG" 2>&1
+    
     echo "[PAYLOAD SYNC] $(date) — Sweep complete. Sleeping 60s." >> "$LOG"
     sleep 60
 done

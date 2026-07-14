@@ -305,7 +305,7 @@ function triggerAirBenderTakeover() {
       
       ctx.font = "italic 1.5rem Inter, system-ui";
       ctx.fillStyle = "#00FFCC";
-      ctx.fillText("THE AIR BENDER PITCHES!", centerX, centerY + 180);
+      ctx.fillText("THE AIR BENDER PITCH!", centerX, centerY + 180);
       ctx.restore();
       
       frame++;
@@ -657,7 +657,7 @@ const checkLinguisticOverlap = (_textA: string, _textB: string): boolean => {
 };
 
 export default function VideoPlayer() {
-  const { decorumLevel, setDecorumLevel } = useTheme();
+  const { activeTheme, setActiveTheme } = useTheme();
   const { gameId } = useParams();
   const videoRef = useRef<HTMLVideoElement>(null);
   const navigate = useNavigate();
@@ -730,6 +730,7 @@ export default function VideoPlayer() {
 
   const [streamUrl, setStreamUrl] = useState<string | null>(null);
   const [streamHeaders, setStreamHeaders] = useState<Record<string, string> | null>(null);
+  const [availableStreams, setAvailableStreams] = useState<any[]>([]);
   const [customStreamInput, setCustomStreamInput] = useState('');
   const [isUpdatingStream, setIsUpdatingStream] = useState(false);
   const [gameState, setGameState] = useState<GameState | null>(null);
@@ -752,14 +753,14 @@ export default function VideoPlayer() {
     { 
       id: '1', 
       user: 'Scruffy (Bartender)', 
-      text: "Welcome to Scruffy's Tavern. Tag a fan with @ (like @barf, @dot, or @uncle_stevie) to start the chat. Now buy a drink or get out.", 
+      text: "Welcome to Scruffy's Tavern. Tag a fan with @ (like @barf, @dot, or @UncleStevieStan) to start the chat. Now buy a drink or get out.", 
       time: 'Now', 
       isPersona: true, 
       color: '#8B4513' 
     }
   ]);
   const [inputText, setInputText] = useState('');
-  const [roomPersonas, setRoomPersonas] = useState<string[]>(['@barf', '@dot', '@uncle_stevie', '@coach_shrubbs', '@scruffy', '@wardy']);
+  const [roomPersonas, setRoomPersonas] = useState<string[]>(['@barf', '@dot', '@UncleStevieStan', '@coach_shrubbs', '@scruffy', '@wardy']);
   const [mentionState, setMentionState] = useState({ active: false, filter: '', cursorIndex: -1, selectedIndex: 0 });
   const [isSending, setIsSending] = useState(false);
   const [activeRoster, setActiveRoster] = useState<any[]>([]);
@@ -778,6 +779,7 @@ export default function VideoPlayer() {
   const [activeCall, setActiveCall] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [isHoloLinkExpanded, setIsHoloLinkExpanded] = useState(false);
   const peerConnRef = useRef<RTCPeerConnection | null>(null);
   const micStreamRef = useRef<MediaStream | null>(null);
 
@@ -791,6 +793,11 @@ export default function VideoPlayer() {
           setStreamHeaders(response.data.stream_headers);
         } else {
           setStreamHeaders(null);
+        }
+        if (response.data.available_streams) {
+          setAvailableStreams(response.data.available_streams);
+        } else {
+          setAvailableStreams([]);
         }
       } catch (err) {
         console.error('Failed to get stream url', err);
@@ -908,7 +915,7 @@ export default function VideoPlayer() {
     }
   }, [debugMode, gameId]);
 
-  // 3. M.A.R.D Telemetry WebSocket (Port 8008 Proxy)
+  // 3. TMI Telemetry WebSocket (Port 8008 Proxy)
   useEffect(() => {
     if (!gameId) return;
 
@@ -916,12 +923,12 @@ export default function VideoPlayer() {
     const connectWs = () => {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.host}/ws`;
-      console.log(`Connecting to M.A.R.D Telemetry WS: ${wsUrl}`);
+      console.log(`Connecting to TMI Telemetry WS: ${wsUrl}`);
       ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('Connected to M.A.R.D Telemetry WS Relay');
+        console.log('Connected to TMI Telemetry WS Relay');
         setWsConnected(true);
         ws?.send(JSON.stringify({ type: 'JOIN_ROOM', target_game_pk: gameId, room: gameId }));
       };
@@ -1126,18 +1133,18 @@ export default function VideoPlayer() {
             }
           }
         } catch (e) {
-          console.error('Error parsing M.A.R.D state message', e);
+          console.error('Error parsing TMI state message', e);
         }
       };
 
       ws.onclose = () => {
-        console.log('M.A.R.D Telemetry WS disconnected. Reconnecting...');
+        console.log('TMI Telemetry WS disconnected. Reconnecting...');
         setWsConnected(false);
         setTimeout(connectWs, 3000);
       };
 
       ws.onerror = (err) => {
-        console.error('M.A.R.D WS error:', err);
+        console.error('TMI WS error:', err);
       };
     };
 
@@ -1503,6 +1510,25 @@ export default function VideoPlayer() {
     }
   };
 
+  const handleSelectStream = async (url: string, name: string) => {
+    setIsUpdatingStream(true);
+    try {
+      const response = await axios.post(`/api/stream/${gameId}`, {
+        stream_url: url,
+        stream_source: name,
+        stream_headers: {}
+      });
+      if (response.data && response.data.status === 'success') {
+        setStreamUrl(url);
+        setStreamHeaders({});
+      }
+    } catch (err) {
+      console.error("Failed to select stream:", err);
+    } finally {
+      setIsUpdatingStream(false);
+    }
+  };
+
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60).toString().padStart(2, '0');
     const s = (secs % 60).toString().padStart(2, '0');
@@ -1618,18 +1644,30 @@ export default function VideoPlayer() {
             }}
           >
             <Radio size={14} />
-            {wsConnected ? 'M.A.R.D ONLINE' : 'OFFLINE'}
+            {wsConnected ? 'ONLINE' : 'OFFLINE'}
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '0.4rem 0.8rem', borderRadius: '6px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', fontFamily: 'monospace' }}>DECORUM: {decorumLevel}</span>
-            <input 
-              type="range" 
-              min="0" 
-              max="11" 
-              value={decorumLevel} 
-              onChange={(e) => setDecorumLevel(parseInt(e.target.value))} 
-              style={{ width: '80px', cursor: 'pointer' }}
-            />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '0.4rem 0.8rem', borderRadius: '6px' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 'bold', fontFamily: 'monospace', color: 'rgba(255, 255, 255, 0.6)' }}>THEME:</span>
+            <select 
+              value={activeTheme} 
+              onChange={(e) => setActiveTheme(e.target.value)}
+              style={{
+                background: '#090e1a',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                color: '#fff',
+                borderRadius: '4px',
+                padding: '4px 8px',
+                outline: 'none',
+                fontSize: '0.8rem',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="sovereign-cyan">Sovereign Cyan</option>
+              <option value="retro-16bit">16-Bit Retro</option>
+              <option value="the-show-sim">The Show Sim</option>
+              <option value="sny-cinematic">SNY Cinematic</option>
+              <option value="muppet-hell">Muppet Hell</option>
+            </select>
           </div>
           <button
             onClick={() => setDebugMode(prev => !prev)}
@@ -1744,6 +1782,55 @@ export default function VideoPlayer() {
                 </span>
               )}
             </div>
+
+            {availableStreams && availableStreams.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                <span style={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                  Select Broadcast Feed
+                </span>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  {availableStreams.map((stream: any) => {
+                    const isActive = streamUrl === stream.url;
+                    return (
+                      <button
+                        key={stream.name}
+                        onClick={() => handleSelectStream(stream.url, stream.name)}
+                        disabled={isUpdatingStream}
+                        style={{
+                          background: isActive 
+                            ? 'linear-gradient(135deg, rgba(0, 180, 216, 0.2) 0%, rgba(0, 180, 216, 0.05) 100%)' 
+                            : 'rgba(255,255,255,0.03)',
+                          border: isActive 
+                            ? '1px solid rgba(0, 180, 216, 0.6)' 
+                            : '1px solid rgba(255,255,255,0.08)',
+                          boxShadow: isActive ? '0 0 10px rgba(0, 180, 216, 0.15)' : 'none',
+                          borderRadius: '20px',
+                          padding: '0.35rem 0.9rem',
+                          color: isActive ? '#00b4d8' : 'rgba(255,255,255,0.7)',
+                          fontSize: '0.75rem',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                        className="feed-selector-pill"
+                      >
+                        <span style={{ 
+                          width: '6px', 
+                          height: '6px', 
+                          borderRadius: '50%', 
+                          background: isActive ? '#00b4d8' : 'rgba(255,255,255,0.3)',
+                          boxShadow: isActive ? '0 0 8px #00b4d8' : 'none'
+                        }} />
+                        {stream.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input
                 type="text"
@@ -2172,52 +2259,62 @@ export default function VideoPlayer() {
         <div className={`grid-chat-pane ${activeTab !== 'chat' ? 'mobile-hidden' : ''}`} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           
           {/* HoloLink WebRTC dial card */}
-          <div className="vm-panel-glass" style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div className="vm-panel-glass" style={{ padding: '1.25rem', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', display: 'flex', flexDirection: 'column', gap: isHoloLinkExpanded ? '1rem' : '0' }}>
+            <div 
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}
+              onClick={() => setIsHoloLinkExpanded(!isHoloLinkExpanded)}
+            >
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <Phone size={16} style={{ color: '#FF3366' }} />
                 <h3 style={{ margin: 0, fontSize: '0.9rem', color: 'rgba(255,255,255,0.85)' }}>HoloLink Telepresence</h3>
               </div>
-              {activeCall && (
-                <span style={{ fontSize: '0.75rem', background: 'rgba(255,51,102,0.15)', color: '#FF3366', padding: '0.2rem 0.6rem', borderRadius: '4px', fontWeight: 'bold', animation: 'pulse-live 1.5s infinite' }}>
-                  CALL ACTIVE ({formatTime(callDuration)})
-                </span>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {activeCall && (
+                  <span style={{ fontSize: '0.75rem', background: 'rgba(255,51,102,0.15)', color: '#FF3366', padding: '0.2rem 0.6rem', borderRadius: '4px', fontWeight: 'bold', animation: 'pulse-live 1.5s infinite' }}>
+                    CALL ACTIVE ({formatTime(callDuration)})
+                  </span>
+                )}
+                {isHoloLinkExpanded ? <ChevronDown size={16} style={{ color: 'rgba(255,255,255,0.6)' }} /> : <ChevronRight size={16} style={{ color: 'rgba(255,255,255,0.6)' }} />}
+              </div>
             </div>
 
-            <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
-              Establish a secure 1-on-1 WebRTC audio link with the room's primary persona (Barf). Dial directly from your microphone.
-            </p>
+            {isHoloLinkExpanded && (
+              <>
+                <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
+                  Establish a secure 1-on-1 WebRTC audio link with the room's primary persona (Barf). Dial directly from your microphone.
+                </p>
 
-            <button 
-              onClick={handleDialCall}
-              style={{
-                width: '100%',
-                padding: '0.8rem',
-                border: 'none',
-                background: activeCall ? '#FF3366' : 'rgba(255, 255, 255, 0.08)',
-                color: '#fff',
-                fontWeight: 'bold',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '0.5rem',
-                transition: 'all 0.2s ease',
-                boxShadow: activeCall ? '0 0 12px rgba(255,51,102,0.4)' : 'none'
-              }}
-            >
-              {activeCall ? (
-                <>
-                  <PhoneOff size={16} /> Hang Up (Barf)
-                </>
-              ) : (
-                <>
-                  <Phone size={16} /> Dial Barf (Underpants Bandito)
-                </>
-              )}
-            </button>
+                <button 
+                  onClick={handleDialCall}
+                  style={{
+                    width: '100%',
+                    padding: '0.8rem',
+                    border: 'none',
+                    background: activeCall ? '#FF3366' : 'rgba(255, 255, 255, 0.08)',
+                    color: '#fff',
+                    fontWeight: 'bold',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    transition: 'all 0.2s ease',
+                    boxShadow: activeCall ? '0 0 12px rgba(255,51,102,0.4)' : 'none'
+                  }}
+                >
+                  {activeCall ? (
+                    <>
+                      <PhoneOff size={16} /> Hang Up (Barf)
+                    </>
+                  ) : (
+                    <>
+                      <Phone size={16} /> Dial Barf (Underpants Bandito)
+                    </>
+                  )}
+                </button>
+              </>
+            )}
           </div>
 
           {/* Embedded chat list panel */}

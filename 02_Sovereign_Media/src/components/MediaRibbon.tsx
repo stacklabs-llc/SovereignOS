@@ -98,7 +98,7 @@ export default function MediaRibbon({ title, fetchUrl, onSelectVideo, isActiveRo
 
   return (
     <div className="flex flex-col gap-2 group">
-      <h3 className="text-5xl md:text-6xl font-semibold text-white/90 px-4 transition-colors group-hover:text-white">
+      <h3 className="text-lg md:text-xl font-bold text-white/90 px-4 tracking-wide transition-colors group-hover:text-white">
         {title}
       </h3>
       
@@ -109,7 +109,7 @@ export default function MediaRibbon({ title, fetchUrl, onSelectVideo, isActiveRo
         >
           <ChevronLeft size={32} />
         </button>
-
+ 
         <div 
           ref={rowRef}
           className="flex gap-2 overflow-x-auto hide-scrollbar px-4 pb-4 pt-2 snap-x snap-mandatory"
@@ -129,7 +129,7 @@ export default function MediaRibbon({ title, fetchUrl, onSelectVideo, isActiveRo
               }}
               whileHover={{ scale: 1.05, zIndex: 10 }}
               transition={{ duration: 0.4, ease: [0.25, 0.8, 0.25, 1] }}
-              className={`relative flex-none w-[350px] aspect-[2/3] rounded-xl overflow-hidden bg-vm-panel cursor-pointer snap-start transition-all duration-500 ease-out ${isFocused ? 'ring-[4px] ring-white/80 scale-[1.2] z-30 shadow-[0_0_50px_rgba(255,255,255,0.3)] opacity-100 saturate-100' : 'ring-1 ring-white/5 opacity-50 saturate-50 hover:opacity-80'}`}
+              className={`relative flex-none w-[150px] sm:w-[170px] md:w-[190px] aspect-[2/3] rounded-lg overflow-hidden bg-vm-panel cursor-pointer snap-start transition-all duration-500 ease-out ${isFocused ? 'ring-[3px] ring-white/90 scale-[1.1] z-30 shadow-[0_0_30px_rgba(255,255,255,0.25)] opacity-100 saturate-100' : 'ring-1 ring-white/5 opacity-55 saturate-75 hover:opacity-85'}`}
             >
               <img 
                 src={item.image} 
@@ -137,11 +137,11 @@ export default function MediaRibbon({ title, fetchUrl, onSelectVideo, isActiveRo
                 className="w-full h-full object-cover transition-transform duration-700 ease-out"
                 loading="lazy"
               />
-              <div className={`absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex items-end p-6 transition-all duration-500 ${isFocused ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 hover:opacity-100'}`}>
-                <span className="text-white font-bold text-3xl md:text-4xl drop-shadow-md tracking-wide leading-tight">{item.title}</span>
+              <div className={`absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent flex items-end p-3 transition-all duration-500 ${isFocused ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 hover:opacity-100'}`}>
+                <span className="text-white font-bold text-sm md:text-base drop-shadow-md tracking-wide leading-snug">{item.title}</span>
               </div>
               {isFocused && (
-                <div className="absolute inset-0 border border-white/20 rounded-xl mix-blend-overlay"></div>
+                <div className="absolute inset-0 border border-white/20 rounded-lg mix-blend-overlay"></div>
               )}
             </motion.div>
             );

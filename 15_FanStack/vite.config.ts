@@ -20,7 +20,11 @@ export default defineConfig(({mode}) => {
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify—file watching is disabled to prevent flickering during agent edits.
-      hmr: process.env.DISABLE_HMR !== 'true' && env.DISABLE_HMR !== 'true',
+      hmr: (process.env.DISABLE_HMR !== 'true' && env.DISABLE_HMR !== 'true') ? {
+        host: 'clio.taila01894.ts.net',
+        protocol: 'wss',
+        port: 3009,
+      } : false,
       port: 3009,
       allowedHosts: true,
       https: {
@@ -28,6 +32,11 @@ export default defineConfig(({mode}) => {
         cert: fs.readFileSync('./clio.taila01894.ts.net.crt'),
       },
       proxy: {
+        '/api/system/sync': {
+          target: 'http://127.0.0.1:8095',
+          changeOrigin: true,
+          secure: false,
+        },
         '/api/system': {
           target: 'http://127.0.0.1:8090',
           changeOrigin: true,
@@ -112,6 +121,10 @@ export default defineConfig(({mode}) => {
           target: 'http://127.0.0.1:8000',
           changeOrigin: true,
         },
+        '/api/switch_game': {
+          target: 'http://127.0.0.1:8000',
+          changeOrigin: true,
+        },
         '/api/chat': {
           target: 'http://127.0.0.1:8000',
           changeOrigin: true,
@@ -141,6 +154,14 @@ export default defineConfig(({mode}) => {
           ws: true,
           secure: false,
           changeOrigin: true,
+          configure: (proxy: any) => {
+            proxy.on('error', (err: any) => {
+              console.warn(`[Proxy Warning] Target offline: ws://127.0.0.1:8008 (${err.code || err.message})`);
+            });
+            proxy.on('proxyReqWs', (proxyReq: any) => {
+              proxyReq.setHeader('Connection', 'Upgrade');
+            });
+          }
         },
         '/api/telemetry': {
           target: 'http://127.0.0.1:8085',
@@ -216,9 +237,13 @@ export default defineConfig(({mode}) => {
           target: 'http://127.0.0.1:8095',
           changeOrigin: true,
         },
-        // ── Catch-all (Scruffy's Tavern relay, port 8000) ────────────────────
+        '/api/pins': {
+          target: 'http://127.0.0.1:8090',
+          changeOrigin: true,
+        },
+        // ── Catch-all (Core API, port 8090) ────────────────────
         '/api': {
-          target: 'http://127.0.0.1:8000',
+          target: 'http://127.0.0.1:8090',
           changeOrigin: true,
         },
         '/media_vault': {

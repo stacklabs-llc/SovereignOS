@@ -112,7 +112,7 @@ async def get_persona(persona_id: str, credentials: HTTPAuthorizationCredentials
 
 @router.get("/api/persona_image/{persona_id}")
 async def get_persona_image(persona_id: str):
-    import base64, sqlite3 as _sq, glob
+    import base64, sqlite3 as _sq, glob, os
     from fastapi.responses import Response, FileResponse, RedirectResponse
     
     # 0. Check if persona_id itself consists of digits. If so, redirect directly to MLB static.
@@ -122,37 +122,117 @@ async def get_persona_image(persona_id: str):
         )
         
     safe_id = persona_id.lower().replace(" ", "_")
-    # 1. Try DB blob first (canonical source of truth)
+    requested_norm = persona_id.lower().replace(" ", "").replace("_", "").replace("-", "")
+    
+    # 1. Try DB first (canonical source of truth)
+    matched_row = None
     try:
         con = _sq.connect(DB_PATH)
-        row = con.execute(
-            "SELECT avatar_blob, avatar_url FROM persona WHERE LOWER(user_name) = ? OR LOWER(id) = ?",
-            (safe_id, safe_id)
-        ).fetchone()
+        rows = con.execute("SELECT avatar_blob, avatar_url, user_name, id FROM persona").fetchall()
         con.close()
-        if row and row[0]:
-            blob_data = row[0]
-            if blob_data.startswith('data:'):
-                header, b64 = blob_data.split(',', 1)
-                mime = header.split(':')[1].split(';')[0]
-            else:
-                b64 = blob_data
-                mime = 'image/png'
-            return Response(content=base64.b64decode(b64), media_type=mime)
+        
+        # 1a. Exact match
+        for r in rows:
+            db_user_norm = r[2].lower().replace(" ", "").replace("_", "").replace("-", "") if r[2] else ""
+            db_id_norm = r[3].lower().replace(" ", "").replace("_", "").replace("-", "") if r[3] else ""
+            if requested_norm == db_user_norm or requested_norm == db_id_norm:
+                matched_row = r
+                break
+                
+        # 1b. Fuzzy match
+        if not matched_row:
+            for r in rows:
+                db_user_norm = r[2].lower().replace(" ", "").replace("_", "").replace("-", "") if r[2] else ""
+                db_id_norm = r[3].lower().replace(" ", "").replace("_", "").replace("-", "") if r[3] else ""
+                if (db_user_norm and (db_user_norm.startswith(requested_norm) or requested_norm.startswith(db_user_norm))) or \
+                   (db_id_norm and (db_id_norm.startswith(requested_norm) or requested_norm.startswith(db_id_norm))):
+                    matched_row = r
+                    break
     except Exception as e:
         print(f"[persona_image] DB lookup error: {e}")
-    # 2. Fall back to filesystem
-    for search_dir in [
+        
+    if matched_row:
+        # If DB blob exists, serve it
+        if matched_row[0]:
+            try:
+                blob_data = matched_row[0]
+                if blob_data.startswith('data:'):
+                    header, b64 = blob_data.split(',', 1)
+                    mime = header.split(':')[1].split(';')[0]
+                else:
+                    b64 = blob_data
+                    mime = 'image/png'
+                return Response(content=base64.b64decode(b64), media_type=mime)
+            except Exception as e:
+                print(f"[persona_image] error decoding base64 blob: {e}")
+                
+        # If DB url exists, try to serve file from disk
+        if matched_row[1]:
+            raw_url = matched_row[1].lstrip("/")
+            for base_dir in [
+                "/home/james/SovereignOS",
+                "/home/james/SovereignOS/archive_quarantine_eon1",
+                "/home/james/SovereignOS/avatars",
+                "/home/james/SovereignOS/15_FanStack/public"
+            ]:
+                candidate = os.path.normpath(os.path.join(base_dir, raw_url))
+                if os.path.exists(candidate) and os.path.isfile(candidate):
+                    return FileResponse(candidate)
+                    
+    # 2. Fall back to filesystem search
+    search_dirs = [
         "/home/james/SovereignOS/avatars",
         "/home/james/SovereignOS/archive_quarantine_eon1",
         "/home/james/SovereignOS/15_FanStack/public/avatars",
         "/home/james/SovereignOS/dna/media/avatars",
         "/home/james/SovereignOS/dna/media/character_maps"
-    ]:
+    ]
+    
+    for search_dir in search_dirs:
+        if not os.path.exists(search_dir):
+            continue
+            
+        # 2a. Direct file check
         for f in glob.glob(os.path.join(search_dir, f"{safe_id}.*")):
-            if f.lower().endswith(('.jpg','.jpeg','.png','.jfif','.webp')):
+            if f.lower().endswith(('.jpg','.jpeg','.png','.jfif','.webp','.svg')):
                 return FileResponse(f)
                 
+        # 2b. Subdirectory check - prioritize files containing 'avatar'
+        sub_dir = os.path.join(search_dir, safe_id)
+        files_in_sub = []
+        if os.path.isdir(sub_dir):
+            files_in_sub = glob.glob(os.path.join(sub_dir, "*"))
+            for f in files_in_sub:
+                if 'avatar' in os.path.basename(f).lower() and f.lower().endswith(('.jpg','.jpeg','.png','.jfif','.webp','.svg')):
+                    return FileResponse(f)
+                    
+        # 2c. Walk search - prioritize files containing 'avatar'
+        found_walk_files = []
+        for root, dirs, files in os.walk(search_dir):
+            depth = root[len(search_dir):].count(os.sep)
+            if depth > 1:
+                continue
+            for file in files:
+                file_norm = os.path.splitext(file)[0].lower().replace(" ", "").replace("_", "").replace("-", "")
+                if file_norm == requested_norm or file_norm.startswith(requested_norm) or requested_norm.startswith(file_norm):
+                    f = os.path.join(root, file)
+                    if f.lower().endswith(('.jpg','.jpeg','.png','.jfif','.webp','.svg')):
+                        found_walk_files.append(f)
+                        
+        for f in found_walk_files:
+            if 'avatar' in os.path.basename(f).lower():
+                return FileResponse(f)
+                
+        # 2d. Subdirectory check fallback (any image)
+        if os.path.isdir(sub_dir):
+            for f in files_in_sub:
+                if f.lower().endswith(('.jpg','.jpeg','.png','.jfif','.webp','.svg')):
+                    return FileResponse(f)
+                    
+        # 2e. Walk search fallback (any image)
+        if found_walk_files:
+            return FileResponse(found_walk_files[0])
+
     # 3. Fall back to mlb_rosters table matching name
     try:
         search_name = safe_id.replace("_", " ")
@@ -164,7 +244,6 @@ async def get_persona_image(persona_id: str):
         con.close()
         if row and row[0]:
             sys_id = row[0]
-            # Extract digits from sys_id (e.g. SF_686790 -> 686790)
             numeric_id = "".join([c for c in sys_id if c.isdigit()])
             if numeric_id:
                 return RedirectResponse(
@@ -172,6 +251,11 @@ async def get_persona_image(persona_id: str):
                 )
     except Exception as e:
         print(f"[persona_image] MLB roster lookup error: {e}")
+        
+    # 4. Final fallback: return the no_clue placeholder
+    fallback_path = "/home/james/SovereignOS/archive_quarantine_eon1/no_clue.jpg"
+    if os.path.exists(fallback_path):
+        return FileResponse(fallback_path)
         
     raise HTTPException(status_code=404, detail="Image not found")
 
@@ -185,16 +269,22 @@ async def upload_persona_image_blob(persona_id: str, file: UploadFile = File(...
     mime = file.content_type or 'image/png'
     b64 = base64.b64encode(raw).decode('utf-8')
     data_url = f"data:{mime};base64,{b64}"
+    avatar_path = f"/api/persona_image/{safe_id}"
     con = _sq.connect(DB_PATH)
     updated = con.execute(
-        "UPDATE persona SET avatar_blob = ? WHERE LOWER(user_name) = ? OR LOWER(id) = ?",
-        (data_url, safe_id, safe_id)
+        "UPDATE persona SET avatar_blob = ?, avatar_url = ? WHERE LOWER(user_name) = ? OR LOWER(id) = ?",
+        (data_url, avatar_path, safe_id, safe_id)
     ).rowcount
+    if updated > 0:
+        con.execute(
+            "UPDATE sys_user SET avatar_url = ? WHERE sys_id = (SELECT id FROM persona WHERE LOWER(user_name) = ? OR LOWER(id) = ?)",
+            (avatar_path, safe_id, safe_id)
+        )
     con.commit()
     con.close()
     if updated == 0:
         raise HTTPException(status_code=404, detail=f"Persona '{persona_id}' not found")
-    return {"status": "success", "user_name": safe_id, "avatar_url": f"/api/persona_image/{safe_id}"}
+    return {"status": "success", "user_name": safe_id, "avatar_url": avatar_path}
 
 
 @router.get("/api/personas/{user_name}/posts")

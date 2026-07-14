@@ -51,12 +51,12 @@ def seed_crosstalk():
     
     cur.execute("""
         INSERT OR REPLACE INTO cmdb_ci (sys_id, name, sys_class_name, short_description, operational_status, assigned_to)
-        VALUES ('ci_fan_portal_3010', 'Fan FanStack Portal', 'cmdb_ci_portal', 'Standalone Sports Fan Portal and Scoreboard.', 1, 'antigravity')
+        VALUES ('ci_fan_portal_3010', 'Sovereign Fan Portal', 'cmdb_ci_portal', 'Standalone Sports Fan Portal and Scoreboard.', 1, 'antigravity')
     """)
     
     cur.execute("""
         INSERT OR REPLACE INTO sys_module (id, module_name, display_name, description, icon, active, category, port)
-        VALUES (?, 'fan_portal', 'Fan FanStack Portal', 'Standalone Sports Fan Portal & Scoreboard', '⚾', 1, 'portal', 3010)
+        VALUES (?, 'fan_portal', 'Sovereign Fan Portal', 'Standalone Sports Fan Portal & Scoreboard', '⚾', 1, 'portal', 3010)
     """, (uuid.uuid4().hex,))
     
     # 1. Promote CHC @ SF room state to active on the dashboard

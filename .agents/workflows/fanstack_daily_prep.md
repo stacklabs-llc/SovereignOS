@@ -25,6 +25,10 @@ python3 /home/james/SovereignOS/scripts/stream_url_resolver.py
 ```
 
 ```bash
+/home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/mlb_news_crawler.py
+```
+
+```bash
 /home/james/SovereignOS/.venv/bin/python3 /home/james/SovereignOS/scripts/vertex_persona_audit.py
 ```
 

@@ -1,1 +1,10 @@
-[2026-06-28 17:52:49] [GLOBAL] MOMENTUM SHIFT (TMI ANOMALY): Houdini Escape! TOR successfully escapes a bases-loaded jam in the Top 1 without conceding a single run!
+[2026-07-11 22:29:03] [GLOBAL] MOMENTUM SHIFT (TMI ANOMALY): Houdini Escape! NYM successfully escapes a bases-loaded jam in the Top 5 without conceding a single run!
+[2026-07-11 23:05:19] [GLOBAL] MOMENTUM SHIFT (TMI ANOMALY): Houdini Escape! TB successfully escapes a bases-loaded jam in the Top 1 without conceding a single run!
+[2026-07-11 23:05:20] [GLOBAL] MOMENTUM SHIFT (TMI ANOMALY): Houdini Escape! MIA successfully escapes a bases-loaded jam in the Top 1 without conceding a single run!
+[2026-07-12 04:43:27] [GLOBAL] MOMENTUM SHIFT (TMI ANOMALY): Houdini Escape! PIT successfully escapes a bases-loaded jam in the Top 9 without conceding a single run!
+[2026-07-12 04:55:14] [GLOBAL] MOMENTUM SHIFT (TMI ANOMALY): Houdini Escape! PIT successfully escapes a bases-loaded jam in the Top 9 without conceding a single run!
+[2026-07-12 05:01:57] [GLOBAL] MOMENTUM SHIFT (TMI ANOMALY): Houdini Escape! NYM successfully escapes a bases-loaded jam in the Top 5 without conceding a single run!
+[2026-07-12 05:01:58] [GLOBAL] MOMENTUM SHIFT (TMI ANOMALY): Houdini Escape! TB successfully escapes a bases-loaded jam in the Top 1 without conceding a single run!
+[2026-07-12 05:01:59] [GLOBAL] MOMENTUM SHIFT (TMI ANOMALY): Houdini Escape! MIA successfully escapes a bases-loaded jam in the Top 1 without conceding a single run!
+[2026-07-12 18:21:03] [GLOBAL] MOMENTUM SHIFT (TMI ANOMALY): Houdini Escape! CLE successfully escapes a bases-loaded jam in the Bot 2 without conceding a single run!
+[2026-07-12 19:12:07] [GLOBAL] MOMENTUM SHIFT (TMI ANOMALY): Houdini Escape! CWS successfully escapes a bases-loaded jam in the Top 4 without conceding a single run!

@@ -133,19 +133,6 @@ export default function MlbScoreBar({ activeGamedayPk, onSelectGame }: MlbScoreB
             </div>
 
             <div className="flex items-center gap-2 pl-2 border-l border-white/10 shrink-0">
-                <button onClick={() => {
-                    if (activeGamedayPk) {
-                        const url = new URL(window.location.href);
-                        url.searchParams.set('_game_room', activeGamedayPk);
-                        navigator.clipboard.writeText(url.toString());
-                        alert('Game Room URL copied to clipboard!');
-                    } else {
-                        alert('Select a game first to copy the Game Room URL.');
-                    }
-                }} className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-[#38bdf8]/10 hover:bg-[#38bdf8]/20 border border-[#38bdf8]/30 text-[#38bdf8] font-['Outfit'] text-[10px] font-bold tracking-[0.05em] uppercase transition-all">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
-                    Copy URL
-                </button>
                 <div className={`shrink-0 font-['Outfit'] text-[10px] font-bold tracking-[0.05em] px-3 py-1.5 rounded-md flex items-center gap-2 border ${wsConnected ? 'border-[#22c55e]/30 text-[#22c55e] bg-[#22c55e]/10' : 'border-[#ef4444]/50 text-[#ef4444] bg-[#ef4444]/10 '}`}>
                     <span className={`w-1.5 h-1.5 rounded-full bg-current ${wsConnected ? 'animate-pulse' : ''}`}></span>
                     <span>{wsConnected ? `MESH` : 'OFF'}</span>

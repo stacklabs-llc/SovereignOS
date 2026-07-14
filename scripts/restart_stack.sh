@@ -66,6 +66,14 @@ log_ok "Log directory: ${LOG_DIR}"
 mkdir -p "${SOVEREIGN_HOME}/game_states"
 log_ok "Hot cache directory: ${SOVEREIGN_HOME}/game_states"
 
+# Sync UAT walkthroughs to Knowledge Hub database
+log_info "Synchronizing latest walkthroughs to Knowledge Hub..."
+"${VENV_PYTHON}" "${SCRIPTS_DIR}/sync_walkthroughs.py" || log_warn "Walkthrough synchronization failed, skipping."
+
+# Boot Alignment Check: Sync modules database
+log_info "Syncing modules configuration database..."
+"${VENV_PYTHON}" "${SCRIPTS_DIR}/sync_modules_db.py" || log_warn "Modules sync failed, skipping."
+
 # =============================================================================
 # PHASE 1: INBOX SYMLINK ADVANCEMENT
 # =============================================================================
@@ -162,6 +170,7 @@ _pkill_daemon "sdlc_portal_server"         "sdlc_portal_server.py"
 _pkill_daemon "sam_tracker_server"         "sam_tracker_server.py"
 _pkill_daemon "theater_media_server"       "theater_media_server.py"
 _pkill_daemon "mando_watchdog"              "mando_watchdog.py"
+_pkill_daemon "comet_relay"                 "comet_relay.py"
 
 # --- Grace period: allow asyncio loops to exit cleanly before SIGKILL ---
 log_info "Grace period (3s) for asyncio loops to drain..."
@@ -198,10 +207,11 @@ _pkill9_daemon "sdlc_portal_server"         "sdlc_portal_server.py"
 _pkill9_daemon "sam_tracker_server"         "sam_tracker_server.py"
 _pkill9_daemon "theater_media_server"       "theater_media_server.py"
 _pkill9_daemon "mando_watchdog"              "mando_watchdog.py"
+_pkill9_daemon "comet_relay"                 "comet_relay.py"
 
 # Release all Vite/React frontend port bindings if held
 log_info "Releasing frontend port bindings..."
-for port in 3000 3004 3006 3008 3009 3010 3015 3016 3017 3020 3022 3024 7300; do
+for port in 3000 3004 3006 3008 3009 3010 3016 3017 3020 3022 7300 8443 8015; do
     if fuser ${port}/tcp &>/dev/null; then
         log_warn "Port ${port} still bound. Releasing..."
         fuser -k ${port}/tcp 2>/dev/null || true
@@ -361,6 +371,10 @@ log_info "Launching Theater Media Server on Port 8085..."
 nohup "${VENV_PYTHON}" "${SCRIPTS_DIR}/theater_media_server.py" >> "${LOG_DIR}/theater_media_8085.log" 2>&1 &
 log_ok "Theater Media Server → PID $! → ${LOG_DIR}/theater_media_8085.log"
 
+log_info "Launching Comet Relay on Port 8015..."
+nohup "${VENV_PYTHON}" "${SCRIPTS_DIR}/comet_relay.py" >> "${LOG_DIR}/comet_relay.log" 2>&1 &
+log_ok "Comet Relay → PID $! → ${LOG_DIR}/comet_relay.log"
+
 # =============================================================================
 # PHASE 6.2: DYNAMIC FRONTEND STACK
 # =============================================================================
@@ -388,10 +402,10 @@ _launch_vite() {
 
 _launch_vite "StackLabs Monolith" "${SOVEREIGN_HOME}/16_StackLabsLLC" "3000" "--host 0.0.0.0" "vite_stacklabs.log"
 _launch_vite "Sovereign OS Portal" "${SOVEREIGN_HOME}/01_Sovereign_Portal" "3016" "--host 0.0.0.0" "vite_portal.log"
-_launch_vite "SamTracker Frontend" "${SOVEREIGN_HOME}/14_SamTracker" "3024" "" "vite_sam.log"
+_launch_vite "SamTracker Frontend" "${SOVEREIGN_HOME}/14_SamTracker" "3004" "" "vite_sam.log"
 _launch_vite "Sovereign Media" "${SOVEREIGN_HOME}/02_Sovereign_Media" "3008" "--host 0.0.0.0" "vite_cinema.log"
 _launch_vite "Sovereign Sports" "${SOVEREIGN_HOME}/19_Sovereign_Sports" "3010" "--host 0.0.0.0" "vite_sports.log"
-_launch_vite "Aether Vet Telemedicine" "${SOVEREIGN_HOME}/20_AetherVet" "3015" "--host 0.0.0.0" "aether_vet.log"
+_launch_vite "Aether Vet Telemedicine" "${SOVEREIGN_HOME}/20_AetherVet" "8443" "--host 0.0.0.0" "aether_vet.log"
 _launch_vite "Storybook Station" "${SOVEREIGN_HOME}/23_EileenStack" "3017" "" "vite_garden.log"
 _launch_vite "Barb's Stack" "${SOVEREIGN_HOME}/18_BarbStack" "3020" "" "vite_barb.log"
 _launch_vite "Catnip Wars Sandbox" "/home/james/SovereignOS-sandbox/catnip-wars" "7300" "" "vite_catnip_wars.log"
@@ -450,14 +464,15 @@ _check_proc "sdlc_portal_server.py"         "sdlc_portal_server.py"
 _check_proc "sam_tracker_server.py"         "sam_tracker_server.py"
 _check_proc "theater_media_server.py"       "theater_media_server.py"
 _check_proc "mando_watchdog.py"             "mando_watchdog.py"
+_check_proc "comet_relay.py"                "comet_relay.py"
 
 echo ""
 echo -e "${BLD}  PORT BINDINGS${RST}"
 echo -e "  ─────────────────────────────────────────────────"
-for port in 8008 3009 8082 8090 8095 8083 8085 8097 3000 3016 3004 3008 3010 3015 3017 3020 3022 7300; do
+for port in 8008 3009 8082 8090 8095 8083 8085 8097 3000 3016 3004 3008 3010 3017 3020 3022 7300 8443 8015; do
     if ss -tlnp 2>/dev/null | grep -q ":${port}"; then
         echo -e "  ${GRN}✓${RST} Port ${port} is bound"
-    else
+        else
         echo -e "  ${YLW}~${RST} Port ${port} not yet bound (may still be initializing)"
     fi
 done

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Activity, Radio, ShieldAlert } from 'lucide-react';
+import { Send, Activity, ChevronDown } from 'lucide-react';
+// @ts-ignore
+import { List } from 'react-window';
 import CitiFieldVector from './CitiFieldVector';
 
 interface ChatMessage {
@@ -27,6 +29,11 @@ interface SovereignSportsDashboardProps {
     appleMask?: boolean;
     weedstackProtocol?: boolean;
     stacklabsProtocol?: boolean;
+    strikeout?: boolean;
+    homerun?: boolean;
+    doublePlay?: boolean;
+    mascot?: boolean;
+    lfgm?: boolean;
   };
   triggerOverlayChange?: (overlayName: string, active: boolean) => void;
   roster?: any[];
@@ -113,7 +120,7 @@ interface TeamLogoProps {
   border?: string;
 }
 
-const TeamLogo: React.FC<TeamLogoProps> = ({ teamCode, size = 28, border }) => {
+const TeamLogo: React.FC<TeamLogoProps> = ({ teamCode, size = 34, border }) => {
   const code = (teamCode || 'AWY').toUpperCase();
   const colors = TEAM_COLORS[code] || { primary: "#1E293B", secondary: "#94A3B8" };
   const [hasError, setHasError] = useState(false);
@@ -129,14 +136,16 @@ const TeamLogo: React.FC<TeamLogoProps> = ({ teamCode, size = 28, border }) => {
         width: `${size}px`,
         height: `${size}px`,
         borderRadius: '50%',
-        background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.02) 70%)',
+        background: '#FFFFFF',
         border: border || `1.5px solid ${colors.secondary || 'rgba(255,255,255,0.2)'}`,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        overflow: 'visible',
-        boxShadow: '0 0 10px rgba(255, 255, 255, 0.1)',
-        flexShrink: 0
+        overflow: 'hidden',
+        boxShadow: `0 0 10px rgba(0, 0, 0, 0.5), 0 0 4px ${colors.primary}60`,
+        flexShrink: 0,
+        padding: '3px',
+        boxSizing: 'border-box'
       }}
     >
       {!hasError ? (
@@ -148,9 +157,8 @@ const TeamLogo: React.FC<TeamLogoProps> = ({ teamCode, size = 28, border }) => {
             width: '100%',
             height: '100%',
             objectFit: 'contain',
-            padding: '2px',
             boxSizing: 'border-box',
-            filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.6)) drop-shadow(0 0 3px rgba(255,255,255,0.5))'
+            filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.3))'
           }}
         />
       ) : (
@@ -158,7 +166,7 @@ const TeamLogo: React.FC<TeamLogoProps> = ({ teamCode, size = 28, border }) => {
           style={{ 
             fontSize: `${size * 0.4}px`, 
             fontWeight: '900', 
-            color: '#FFF', 
+            color: '#1E293B', 
             fontFamily: 'monospace' 
           }}
         >
@@ -169,11 +177,43 @@ const TeamLogo: React.FC<TeamLogoProps> = ({ teamCode, size = 28, border }) => {
   );
 };
 
+const getReadableColor = (hexColor: string): string => {
+  if (!hexColor || !hexColor.startsWith('#')) return hexColor;
+  
+  const hex = hexColor.replace('#', '');
+  const r = parseInt(hex.substring(0, 2), 16);
+  const g = parseInt(hex.substring(2, 4), 16);
+  const b = parseInt(hex.substring(4, 6), 16);
+  
+  if (isNaN(r) || isNaN(g) || isNaN(b)) return hexColor;
+  
+  // Calculate relative luminance (using standard formula)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  // If too dark (threshold 0.25 on dark void)
+  if (luminance < 0.25) {
+    let r_new = Math.min(255, Math.round(r + (255 - r) * 0.6));
+    let g_new = Math.min(255, Math.round(g + (255 - g) * 0.6));
+    let b_new = Math.min(255, Math.round(b + (255 - b) * 0.6));
+    
+    if (r_new < 100 && g_new < 100 && b_new < 100) {
+      return '#38bdf8'; // Sky blue neon fallback
+    }
+    
+    const toHex = (c: number) => {
+      const h = c.toString(16);
+      return h.length === 1 ? '0' + h : h;
+    };
+    return `#${toHex(r_new)}${toHex(g_new)}${toHex(b_new)}`;
+  }
+  
+  return hexColor;
+};
+
 export default function SovereignSportsDashboard({
   gameState,
   messages,
   sendMessage,
-  wsConnected,
   activeGamePk,
   activeOverlays = {},
   roster = [],
@@ -188,7 +228,165 @@ export default function SovereignSportsDashboard({
   setPinEngineActive,
 }: SovereignSportsDashboardProps) {
   const [inputText, setInputText] = useState('');
-  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const lastGamePkRef = useRef<string>(activeGamePk);
+  const chatInputRef = useRef<HTMLInputElement>(null);
+
+  const [mentionState, setMentionState] = useState({
+    active: false,
+    filter: '',
+    cursorIndex: -1,
+    selectedIndex: 0
+  });
+
+  const [displayedMessages, setDisplayedMessages] = useState<ChatMessage[]>([]);
+  const queueRef = useRef<ChatMessage[]>([]);
+  const isProcessingQueueRef = useRef<boolean>(false);
+  const prevLengthRef = useRef<number>(0);
+  const isInitialLoadRef = useRef<boolean>(true);
+
+  const [autoScrollEnabled, setAutoScrollEnabled] = useState(true);
+  const [dimensions, setDimensions] = useState({ width: 300, height: 600 });
+  const parentRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<any>(null);
+
+  // Reinitialize displayed messages on game swap
+  useEffect(() => {
+    setDisplayedMessages(messages);
+    queueRef.current = [];
+    isProcessingQueueRef.current = false;
+    setAutoScrollEnabled(true);
+  }, [activeGamePk]);
+
+  // Handle new incoming messages (buffering/queueing)
+  useEffect(() => {
+    if (isInitialLoadRef.current || displayedMessages.length === 0) {
+      setDisplayedMessages(messages);
+      queueRef.current = [];
+      isInitialLoadRef.current = false;
+      return;
+    }
+
+    const lastDisplayed = displayedMessages[displayedMessages.length - 1];
+    const lastIdx = messages.findIndex(m => m.id === lastDisplayed.id);
+
+    if (lastIdx === -1) {
+      // Discontinuous update (history reload or sync reset) -> replace entirely
+      setDisplayedMessages(messages);
+      queueRef.current = [];
+      return;
+    }
+
+    const newMessages = messages.slice(lastIdx + 1);
+    if (newMessages.length > 0) {
+      queueRef.current = [...queueRef.current, ...newMessages];
+    }
+  }, [messages]);
+
+  // Flush the message buffer queue every 2.5 seconds (Event Throttling)
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      if (queueRef.current.length > 0) {
+        const batch = [...queueRef.current];
+        queueRef.current = [];
+
+        setDisplayedMessages(prev => {
+          const nextMessages = [...prev, ...batch];
+          // Cap display list to 300 to maintain optimal memory & performance
+          if (nextMessages.length > 300) {
+            return nextMessages.slice(nextMessages.length - 300);
+          }
+          return nextMessages;
+        });
+      }
+    }, 2500);
+
+    return () => clearInterval(intervalId);
+  }, [activeGamePk]);
+
+  // Dynamically track height and width of the chat viewport (UI Virtualization support)
+  useEffect(() => {
+    const parent = parentRef.current;
+    if (!parent) return;
+
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        setDimensions({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height
+        });
+      }
+    });
+
+    resizeObserver.observe(parent);
+    return () => resizeObserver.disconnect();
+  }, []);
+
+
+
+  const filteredPersonas = (roster || [])
+    .map(u => `@${u.user_name}`)
+    .filter(p => p.toLowerCase().includes(mentionState.filter));
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setInputText(val);
+
+    const cursor = e.target.selectionStart || 0;
+    const textBeforeCursor = val.slice(0, cursor);
+    const match = textBeforeCursor.match(/@([a-zA-Z0-9_ -]*)$/);
+
+    if (match) {
+      setMentionState({
+        active: true,
+        filter: match[1].toLowerCase(),
+        cursorIndex: match.index as number,
+        selectedIndex: 0
+      });
+    } else {
+      setMentionState({
+        active: false,
+        filter: '',
+        cursorIndex: -1,
+        selectedIndex: 0
+      });
+    }
+  };
+
+  const selectMention = (persona: string) => {
+    const cleanPersona = persona.startsWith('@') ? persona : `@${persona}`;
+    const before = inputText.slice(0, mentionState.cursorIndex);
+    const after = inputText.slice(mentionState.cursorIndex + mentionState.filter.length + 1);
+    const updated = `${before}${cleanPersona} ${after}`;
+    setInputText(updated);
+    setMentionState({ active: false, filter: '', cursorIndex: -1, selectedIndex: 0 });
+    setTimeout(() => {
+      if (chatInputRef.current) {
+        chatInputRef.current.focus();
+        const cursorPoint = before.length + cleanPersona.length + 1;
+        chatInputRef.current.setSelectionRange(cursorPoint, cursorPoint);
+      }
+    }, 50);
+  };
+
+  const handleInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (mentionState.active && filteredPersonas.length > 0) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setMentionState(prev => ({ ...prev, selectedIndex: (prev.selectedIndex + 1) % filteredPersonas.length }));
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setMentionState(prev => ({ ...prev, selectedIndex: (prev.selectedIndex - 1 + filteredPersonas.length) % filteredPersonas.length }));
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        selectMention(filteredPersonas[mentionState.selectedIndex]);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        setMentionState({ active: false, filter: '', cursorIndex: -1, selectedIndex: 0 });
+      }
+    }
+  };
+
   const [feedMode, setFeedMode] = useState<'stream' | 'card'>('card');
 
   interface Pin {
@@ -288,10 +486,111 @@ export default function SovereignSportsDashboard({
   // WeedStack countdown state (420 seconds)
   const [weedSeconds, setWeedSeconds] = useState(420);
 
+  // Local state for Panel B media overlays
+  const [localStrikeoutOverlay, setLocalStrikeoutOverlay] = useState(false);
+  const [localHomerunOverlay, setLocalHomerunOverlay] = useState(false);
+  const [localDoublePlayOverlay, setLocalDoublePlayOverlay] = useState(false);
+  const [localMascotOverlay, setLocalMascotOverlay] = useState(false);
+  const [localLfgmOverlay, setLocalLfgmOverlay] = useState(false);
+
+  // Monitor game events for Strikeouts, Home Runs, Double Plays, and other major plays
+  useEffect(() => {
+    if (gameState) {
+      const msg = gameState.status_msg?.toLowerCase() || '';
+      const isStrikeout = gameState.event_type === 'strikeout' || 
+                          msg.includes('strikeout') || 
+                          msg.includes('struck out');
+      const isHomerun = gameState.event_type === 'home_run' || 
+                        msg.includes('home run') || 
+                        msg.includes('homers') ||
+                        msg.includes('its outta here');
+      const isDoublePlay = msg.includes('double play') || msg.includes('grounds into a double');
+
+      if (isStrikeout) {
+        setLocalStrikeoutOverlay(true);
+      } else if (isHomerun) {
+        setLocalHomerunOverlay(true);
+      } else if (isDoublePlay) {
+        setLocalDoublePlayOverlay(true);
+      } else if (msg.includes('singles') || msg.includes('doubles') || msg.includes('triples') || msg.includes('scores') || msg.includes('walks')) {
+        // Trigger mascot celebration for hits/runs
+        setLocalMascotOverlay(true);
+      }
+    }
+  }, [gameState?.event_type, gameState?.status_msg]);
+
+  // Manage overlay durations separately so they don't get canceled by subsequent updates
+  useEffect(() => {
+    if (localStrikeoutOverlay) {
+      const timer = setTimeout(() => setLocalStrikeoutOverlay(false), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [localStrikeoutOverlay]);
+
+  useEffect(() => {
+    if (localHomerunOverlay) {
+      const timer = setTimeout(() => setLocalHomerunOverlay(false), 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [localHomerunOverlay]);
+
+  useEffect(() => {
+    if (localDoublePlayOverlay) {
+      const timer = setTimeout(() => setLocalDoublePlayOverlay(false), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [localDoublePlayOverlay]);
+
+  useEffect(() => {
+    if (localMascotOverlay) {
+      const timer = setTimeout(() => setLocalMascotOverlay(false), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [localMascotOverlay]);
+
+  // Monitor chat messages for LFGM triggers
+  useEffect(() => {
+    if (messages && messages.length > 0) {
+      const lastMsg = messages[messages.length - 1];
+      const txt = lastMsg.text?.toLowerCase() || '';
+      if (txt.includes('lfgm') || txt.includes('lets go mets') || txt.includes("let's go mets")) {
+        setLocalLfgmOverlay(true);
+      }
+    }
+  }, [messages]);
+
+  useEffect(() => {
+    if (localLfgmOverlay) {
+      const timer = setTimeout(() => setLocalLfgmOverlay(false), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [localLfgmOverlay]);
+
   // Auto-scroll chat to bottom
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    const container = listRef.current?.element;
+    if (!container) return;
+
+    const gameSwapped = lastGamePkRef.current !== activeGamePk;
+    const isInitial = isInitialLoadRef.current || displayedMessages.length === 0 || gameSwapped;
+
+    if (isInitial) {
+      // Force instant scroll to bottom on initial load / game swap / refresh
+      if (displayedMessages.length > 0) {
+        listRef.current?.scrollToRow({ index: displayedMessages.length - 1, align: 'end' });
+      }
+      isInitialLoadRef.current = false;
+      lastGamePkRef.current = activeGamePk;
+      setAutoScrollEnabled(true);
+    } else if (displayedMessages.length > prevLengthRef.current) {
+      // For new incoming messages, scroll only if autoScrollEnabled is active
+      if (autoScrollEnabled && displayedMessages.length > 0) {
+        listRef.current?.scrollToRow({ index: displayedMessages.length - 1, align: 'end' });
+      }
+    }
+
+    prevLengthRef.current = displayedMessages.length;
+  }, [displayedMessages, activeGamePk, autoScrollEnabled]);
 
   // WeedStack Countdown timer
   useEffect(() => {
@@ -309,6 +608,7 @@ export default function SovereignSportsDashboard({
   const handleSendChat = (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputText.trim()) return;
+    setMentionState(prev => ({ ...prev, active: false }));
     sendMessage(inputText);
     setInputText('');
   };
@@ -547,69 +847,16 @@ export default function SovereignSportsDashboard({
           padding: '0 2rem',
           flexShrink: 0,
           zIndex: 50,
-          boxSizing: 'border-box'
+          boxSizing: 'border-box',
+          position: 'relative'
         }}
       >
-        {/* Left Section: Title & Connection Status */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <h1 
-              style={{
-                fontSize: '1.3rem',
-                fontWeight: 900,
-                color: '#FFF',
-                margin: 0,
-                textShadow: '0 0 15px rgba(0, 180, 216, 0.5)',
-                background: 'linear-gradient(90deg, #FFF 0%, #00F0FF 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                letterSpacing: '1px'
-              }}
-            >
-              Sovereign Sports
-            </h1>
-            {wsConnected ? (
-              <span 
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  background: 'rgba(0, 255, 204, 0.1)',
-                  border: '1px solid rgba(0, 255, 204, 0.3)',
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '0.65rem',
-                  color: '#00FFCC',
-                  fontWeight: 'bold',
-                  boxShadow: '0 0 8px rgba(0, 255, 204, 0.2)',
-                  animation: 'pulseLive 2s infinite'
-                }}
-              >
-                <Radio size={10} style={{ animation: 'pulseLive 1s infinite' }} /> LIVE
-              </span>
-            ) : (
-              <span 
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid rgba(239, 68, 68, 0.3)',
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  fontSize: '0.65rem',
-                  color: '#EF4444',
-                  fontWeight: 'bold'
-                }}
-              >
-                <ShieldAlert size={10} /> OFFLINE
-              </span>
-            )}
-          </div>
-          <span style={{ fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.4)', fontWeight: 'bold', letterSpacing: '2px' }}>
-            COMMAND CONSOLE v1.0.8
-          </span>
+        {/* Target Zone Badge */}
+        <div className="zone-badge" style={{ top: '12px', left: '12px' }}>
+          [ZONE-2] HEADER SCOREBAR
         </div>
+        {/* Left Section: Layout Spacer */}
+        <div style={{ width: '220px' }} />
 
         {/* Center Section: High-Fidelity Glassmorphic Scoreboard */}
         <div 
@@ -630,7 +877,7 @@ export default function SovereignSportsDashboard({
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             {/* Away Team */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <TeamLogo teamCode={awayTeam} size={28} />
+              <TeamLogo teamCode={awayTeam} size={34} />
               <span style={{ fontSize: '1.1rem', fontWeight: '900', letterSpacing: '0.5px', color: '#FFF' }}>
                 {awayTeam}
               </span>
@@ -666,7 +913,7 @@ export default function SovereignSportsDashboard({
               <span style={{ fontSize: '1.1rem', fontWeight: '900', letterSpacing: '0.5px', color: '#FFF' }}>
                 {homeTeam}
               </span>
-              <TeamLogo teamCode={homeTeam} size={28} />
+              <TeamLogo teamCode={homeTeam} size={34} />
             </div>
           </div>
 
@@ -793,6 +1040,10 @@ export default function SovereignSportsDashboard({
               boxSizing: 'border-box'
             }}
           >
+            {/* Target Zone Badge */}
+            <div className="zone-badge" style={{ top: '12px', left: '12px' }}>
+              [ZONE-3] MATCHUP CANVAS
+            </div>
             {/* Custom Video Player or Livestream Mock */}
             <div 
               style={{
@@ -1105,7 +1356,7 @@ export default function SovereignSportsDashboard({
                         📊 STACKLABS STRUCTURAL ANALYTICS (SYS_ID: {activeGamePk})
                       </div>
                       <div>CORE RUNTIME: OK</div>
-                      <div>M.A.R.D. TELEMETRY LATENCY: 4.2ms</div>
+                      <div>TMI TELEMETRY LATENCY: 4.2ms</div>
                       <div>BOGGS TOXICITY INDEX: COLD STATUS</div>
                     </div>
                     <div style={{ background: 'rgba(0,0,0,0.6)', padding: '6px', borderRadius: '4px', border: '1px solid #00FFCC' }}>
@@ -1129,6 +1380,10 @@ export default function SovereignSportsDashboard({
               display: panelBHeight === '0%' ? 'none' : 'block'
             }}
           >
+            {/* Target Zone Badge */}
+            <div className="zone-badge" style={{ top: '12px', left: '12px' }}>
+              [ZONE-4] VECTOR FIELD
+            </div>
             {/* Fundies Grid (Neon Green Arcade Grid over Vector Field) */}
             {activeOverlays.fundiesGrid && (
               <div 
@@ -1154,6 +1409,347 @@ export default function SovereignSportsDashboard({
               lastPlayEvent={gameState.status_msg}
               homeTeam={gameState?.home_team || ''}
             />
+
+            {/* Strikeout Overlay */}
+            {(localStrikeoutOverlay || activeOverlays?.strikeout) && (
+              <div 
+                style={{
+                  position: 'absolute',
+                  inset: '8px',
+                  zIndex: 250,
+                  background: 'rgba(2, 6, 23, 0.95)',
+                  border: '3px solid #00FFCC',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 0 30px rgba(0, 255, 204, 0.6), inset 0 0 15px rgba(0, 255, 204, 0.3)',
+                  animation: 'neonPulseStrikeout 0.8s infinite alternate',
+                  overflow: 'hidden'
+                }}
+              >
+                <video 
+                  src="/videos/strikeout_flow.mp4" 
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                  style={{
+                    maxHeight: '95%',
+                    maxWidth: '95%',
+                    objectFit: 'contain',
+                    borderRadius: '8px',
+                    animation: 'zoomInStrikeout 0.5s ease-out'
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Home Run Overlay */}
+            {(localHomerunOverlay || activeOverlays?.homerun) && (
+              <div 
+                style={{
+                  position: 'absolute',
+                  inset: '8px',
+                  zIndex: 250,
+                  background: 'rgba(2, 6, 23, 0.95)',
+                  border: '3px solid #FD5A1E',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 0 35px rgba(253, 90, 30, 0.7), inset 0 0 15px rgba(253, 90, 30, 0.4)',
+                  animation: 'neonPulseHomerun 0.8s infinite alternate',
+                  overflow: 'hidden'
+                }}
+              >
+                <video 
+                  src="/videos/Mets_Home_Run_Apple_dancing_202607032107.mp4" 
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                  style={{
+                    maxHeight: '95%',
+                    maxWidth: '95%',
+                    objectFit: 'contain',
+                    borderRadius: '8px',
+                    animation: 'zoomInHomerun 0.5s ease-out'
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Double Play Overlay */}
+            {(localDoublePlayOverlay || activeOverlays?.doublePlay) && (
+              <div 
+                style={{
+                  position: 'absolute',
+                  inset: '8px',
+                  zIndex: 250,
+                  background: 'rgba(2, 6, 23, 0.95)',
+                  border: '3px solid #00B4D8',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 0 30px rgba(0, 180, 216, 0.6), inset 0 0 15px rgba(0, 180, 216, 0.3)',
+                  animation: 'neonPulseDoublePlay 0.8s infinite alternate',
+                  overflow: 'hidden'
+                }}
+              >
+                <video 
+                  src="/videos/double_play_flow.mp4" 
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                  style={{
+                    maxHeight: '95%',
+                    maxWidth: '95%',
+                    objectFit: 'contain',
+                    borderRadius: '8px',
+                    animation: 'zoomInStrikeout 0.5s ease-out'
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Mascot Celebration Overlay */}
+            {(localMascotOverlay || activeOverlays?.mascot) && (
+              <div 
+                style={{
+                  position: 'absolute',
+                  inset: '8px',
+                  zIndex: 250,
+                  background: 'rgba(2, 6, 23, 0.95)',
+                  border: '3px solid #10B981',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 0 30px rgba(16, 185, 129, 0.6), inset 0 0 15px rgba(16, 185, 129, 0.3)',
+                  animation: 'neonPulseMascot 0.8s infinite alternate',
+                  overflow: 'hidden'
+                }}
+              >
+                <video 
+                  src={
+                    (() => {
+                      const home = gameState?.home_team?.toUpperCase() || '';
+                      const away = gameState?.away_team?.toUpperCase() || '';
+                      if (home === 'SD' || away === 'SD') {
+                        return "/videos/Swinging_Friar_Mascot_moonwalk_dance_dugout_roof_202607032330.mp4";
+                      }
+                      if (home === 'LAD' || away === 'LAD') {
+                        return "/videos/Dodgers_Mascot_moonwalk_dance_dugout_roof.mp4";
+                      }
+                      if (home === 'ATL' || away === 'ATL' || home === 'MIL' || away === 'MIL') {
+                        return "/videos/barf_Mascot_head_breakdancing_on_dugout_202607040002.mp4";
+                      }
+                      return "/videos/Mascot_moonwalk_dance_dugout_roof_202607032107.mp4";
+                    })()
+                  }
+                  onError={(e) => {
+                    (e.currentTarget as HTMLVideoElement).src = "/videos/Mascot_moonwalk_dance_dugout_roof_202607032107.mp4";
+                  }}
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                  style={{
+                    maxHeight: '95%',
+                    maxWidth: '95%',
+                    objectFit: 'contain',
+                    borderRadius: '8px',
+                    animation: 'zoomInStrikeout 0.5s ease-out'
+                  }}
+                />
+              </div>
+            )}
+
+            {/* LFGM Overlay */}
+            {(localLfgmOverlay || activeOverlays?.lfgm) && (
+              <div 
+                style={{
+                  position: 'absolute',
+                  inset: '8px',
+                  zIndex: 250,
+                  background: 'rgba(2, 6, 23, 0.95)',
+                  border: '3px solid #FC5C1D',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 0 30px rgba(252, 92, 29, 0.6), inset 0 0 15px rgba(252, 92, 29, 0.3)',
+                  animation: 'neonPulseLfgm 0.8s infinite alternate',
+                  overflow: 'hidden'
+                }}
+              >
+                <video 
+                  src="/videos/Letters_LFGM_land_on_baseball_202607032107.mp4" 
+                  autoPlay 
+                  loop 
+                  muted 
+                  playsInline
+                  style={{
+                    maxHeight: '95%',
+                    maxWidth: '95%',
+                    objectFit: 'contain',
+                    borderRadius: '8px',
+                    animation: 'zoomInHomerun 0.5s ease-out'
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Full Count Heartbeat Warning */}
+            {gameState && gameState.balls === 3 && gameState.strikes === 2 && (
+              <div 
+                style={{
+                  position: 'absolute',
+                  inset: '8px',
+                  zIndex: 240,
+                  background: 'rgba(15, 23, 42, 0.9)',
+                  border: '3px solid #EF4444',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 0 25px rgba(239, 68, 68, 0.5), inset 0 0 10px rgba(239, 68, 68, 0.35)',
+                  animation: 'heartbeatFlash 0.5s infinite alternate',
+                  overflow: 'hidden'
+                }}
+              >
+                <img 
+                  src="/images/fullcount_neon.png" 
+                  alt="FULL COUNT" 
+                  style={{
+                    maxHeight: '90%',
+                    maxWidth: '90%',
+                    objectFit: 'contain'
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Carson Benge High Tension Overlay */}
+            {gameState && gameState.outs === 1 && 
+             ((gameState.onFirst ? 1 : 0) + (gameState.onSecond ? 1 : 0) + (gameState.onThird ? 1 : 0) === 2) && 
+             gameState.batter?.toLowerCase().includes('benge') && (
+              <div 
+                style={{
+                  position: 'absolute',
+                  inset: '8px',
+                  zIndex: 245,
+                  background: 'radial-gradient(circle, rgba(11, 15, 25, 0.98) 0%, rgba(2, 6, 23, 0.99) 100%)',
+                  border: '3px solid #00b4d8',
+                  borderRadius: '12px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 0 40px rgba(0, 180, 216, 0.7), inset 0 0 20px rgba(0, 180, 216, 0.35)',
+                  animation: 'neonPulseBenge 1.5s infinite alternate',
+                  overflow: 'hidden',
+                  padding: '2rem',
+                  boxSizing: 'border-box'
+                }}
+              >
+                {/* Background scanning line effect */}
+                <div style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '2px',
+                  background: 'linear-gradient(90deg, transparent, #00b4d8, transparent)',
+                  top: '0%',
+                  animation: 'scannerBenge 3s linear infinite',
+                  opacity: 0.6
+                }} />
+
+                <div style={{
+                  fontSize: '0.75rem',
+                  fontFamily: 'monospace',
+                  color: '#00b4d8',
+                  letterSpacing: '0.4em',
+                  fontWeight: 'bold',
+                  marginBottom: '1rem',
+                  textTransform: 'uppercase',
+                  animation: 'flickerBenge 2s infinite'
+                }}>
+                  // CRITICAL THREAT WARNING
+                </div>
+
+                <h1 style={{
+                  fontSize: '2.5rem',
+                  fontWeight: 900,
+                  color: '#FFF',
+                  textShadow: '0 0 10px rgba(0, 180, 216, 0.8), 0 0 20px rgba(0, 180, 216, 0.4)',
+                  margin: '0 0 0.5rem 0',
+                  textAlign: 'center',
+                  letterSpacing: '0.05em',
+                  fontFamily: 'system-ui, sans-serif'
+                }}>
+                  CARSON BENGE
+                </h1>
+
+                <div style={{
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  color: '#FF5910',
+                  letterSpacing: '0.15em',
+                  marginBottom: '2rem',
+                  textTransform: 'uppercase',
+                  fontFamily: 'monospace'
+                }}>
+                  1 OUT • 2 RUNNERS ON
+                </div>
+
+                <div style={{
+                  background: 'rgba(255, 89, 16, 0.05)',
+                  border: '1px solid rgba(255, 89, 16, 0.3)',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  textAlign: 'center',
+                  maxWidth: '80%',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+                  backdropFilter: 'blur(8px)'
+                }}>
+                  <div style={{
+                    fontSize: '0.7rem',
+                    color: 'rgba(255, 255, 255, 0.5)',
+                    fontFamily: 'monospace',
+                    marginBottom: '4px'
+                  }}>
+                    HIGH TENSION INDEX
+                  </div>
+                  <div style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 900,
+                    color: '#FF5910',
+                    fontFamily: 'monospace',
+                    animation: 'textPulseBenge 0.8s infinite alternate'
+                  }}>
+                    98.7%
+                  </div>
+                </div>
+
+                {/* Aesthetic side elements */}
+                <div style={{
+                  position: 'absolute',
+                  bottom: '20px',
+                  display: 'flex',
+                  gap: '8px',
+                  fontFamily: 'monospace',
+                  fontSize: '0.6rem',
+                  color: 'rgba(0, 180, 216, 0.5)'
+                }}>
+                  <span>SYS: ARMING PLAYCALL DESK</span>
+                  <span>|</span>
+                  <span>SECTOR: ZONE-4</span>
+                </div>
+              </div>
+            )}
 
             {/* Pin Engine Overlay Layer */}
             {pinEngineActive && (
@@ -1419,6 +2015,10 @@ export default function SovereignSportsDashboard({
             boxSizing: 'border-box'
           }}
         >
+          {/* Target Zone Badge */}
+          <div className="zone-badge" style={{ top: '12px', left: '12px' }}>
+            [ZONE-5] CHAT REACTOR
+          </div>
           {/* Apple Mask Fade (faded 15% opacity Home Run Apple behind chat) */}
           {activeOverlays.appleMask && (
             <div 
@@ -1527,62 +2127,172 @@ export default function SovereignSportsDashboard({
             </div>
           </div>
 
-          {/* Chat Logs Reactor */}
-          <div 
-            style={{
-              flex: 1,
-              overflowY: 'auto',
-              padding: '1rem',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '0.85rem',
-              zIndex: 5
-            }}
-          >
-            {messages.map((msg) => (
-              <div 
-                key={msg.id} 
-                className="chat-message-bubble"
-                style={{
-                  background: msg.user === 'SYSTEM' ? 'rgba(10, 132, 255, 0.1)' : 'rgba(255, 255, 255, 0.02)',
-                  border: msg.user === 'SYSTEM' ? '1px solid rgba(10, 132, 255, 0.2)' : '1px solid rgba(255, 255, 255, 0.04)',
-                  padding: '0.65rem 0.8rem',
-                  borderRadius: '8px',
-                  transition: 'all 0.2s ease',
-                  fontSize: '0.85rem',
-                  lineHeight: '1.4'
-                }}
-              >
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <span 
-                    style={{ 
-                      fontWeight: 'bold', 
-                      color: msg.color || '#0A84FF',
-                      fontFamily: 'monospace',
-                      fontSize: '0.8rem'
+
+
+          {/* Chat Logs Row Renderer */}
+          {(() => {
+            const Row = ({ index, style }: { index: number; style: React.CSSProperties }) => {
+              const msg = displayedMessages[index];
+              if (!msg) return null;
+
+              return (
+                <div style={{ ...style, padding: '0.25rem 0.75rem', boxSizing: 'border-box' }}>
+                  <div 
+                    className="chat-message-bubble"
+                    style={{
+                      background: msg.user === 'SYSTEM' ? 'rgba(10, 132, 255, 0.1)' : 'rgba(255, 255, 255, 0.02)',
+                      border: msg.user === 'SYSTEM' ? '1px solid rgba(10, 132, 255, 0.2)' : '1px solid rgba(255, 255, 255, 0.04)',
+                      padding: '0.5rem 0.65rem',
+                      borderRadius: '8px',
+                      fontSize: '0.82rem',
+                      lineHeight: '1.3',
+                      display: 'flex',
+                      gap: '8px',
+                      alignItems: 'flex-start',
+                      height: '100%',
+                      boxSizing: 'border-box'
                     }}
                   >
-                    @{msg.user}
-                  </span>
-                  <span style={{ fontSize: '0.65rem', color: 'rgba(255,255,255,0.3)' }}>{msg.time}</span>
+                    {msg.user !== 'SYSTEM' && (
+                      <img 
+                        src={`/api/persona_image/${msg.user}`}
+                        alt={msg.user}
+                        style={{
+                          width: '26px',
+                          height: '26px',
+                          borderRadius: '50%',
+                          border: `1.5px solid ${getReadableColor(msg.color || '#0A84FF')}`,
+                          objectFit: 'cover',
+                          marginTop: '2px',
+                          flexShrink: 0
+                        }}
+                        onError={(e) => {
+                          e.currentTarget.src = 'https://api.dicebear.com/7.x/bottts/svg?seed=' + msg.user;
+                        }}
+                      />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }}>
+                        <span 
+                          style={{ 
+                            fontWeight: 'bold', 
+                            color: getReadableColor(msg.color || '#0A84FF'),
+                            fontFamily: 'monospace',
+                            fontSize: '0.78rem'
+                          }}
+                        >
+                          @{msg.user}
+                        </span>
+                        <span style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.3)' }}>{msg.time}</span>
+                      </div>
+                      <div 
+                        style={{ 
+                          color: '#E2E8F0', 
+                          overflowY: 'auto', 
+                          flex: 1, 
+                          fontSize: '0.78rem',
+                          wordBreak: 'break-word'
+                        }}
+                      >
+                        {msg.text}
+                      </div>
+                      {msg.image && (
+                        <div 
+                          onClick={() => window.open(msg.image, '_blank')}
+                          style={{ 
+                            fontSize: '0.65rem', 
+                            color: '#00FFCC', 
+                            marginTop: '2px', 
+                            fontFamily: 'monospace',
+                            cursor: 'pointer',
+                            textDecoration: 'underline'
+                          }}
+                        >
+                          [MEDIA ATTACHED: click to view]
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <div style={{ color: '#E2E8F0' }}>{msg.text}</div>
-                {msg.image && (
-                  <img 
-                    src={msg.image} 
-                    alt="attachment" 
-                    style={{ 
-                      maxWidth: '100%', 
-                      borderRadius: '4px', 
-                      marginTop: '8px', 
-                      border: '1px solid rgba(255,255,255,0.1)' 
-                    }} 
-                  />
+              );
+            };
+
+            return (
+              <div 
+                ref={parentRef}
+                style={{
+                  flex: 1,
+                  minHeight: 0,
+                  position: 'relative',
+                  zIndex: 5
+                }}
+              >
+                <List<{}>
+                  listRef={listRef}
+                  rowCount={displayedMessages.length}
+                  rowHeight={88}
+                  rowComponent={Row}
+                  rowProps={{}}
+                  style={{
+                    height: dimensions.height,
+                    width: dimensions.width
+                  }}
+                  onScroll={(e) => {
+                    const container = e.currentTarget;
+                    const threshold = 150; // px
+                    const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight <= threshold;
+                    setAutoScrollEnabled(isAtBottom);
+                  }}
+                />
+
+                {/* Catch Up floating button */}
+                {!autoScrollEnabled && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAutoScrollEnabled(true);
+                      if (displayedMessages.length > 0) {
+                        listRef.current?.scrollToRow({ index: displayedMessages.length - 1, align: 'end' });
+                      }
+                    }}
+                    style={{
+                      position: 'absolute',
+                      bottom: '16px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: 'rgba(11, 15, 25, 0.95)',
+                      backdropFilter: 'blur(8px)',
+                      border: '1.5px solid #00FFCC',
+                      boxShadow: '0 0 15px rgba(0, 255, 204, 0.4)',
+                      color: '#00FFCC',
+                      padding: '8px 16px',
+                      borderRadius: '9999px',
+                      fontSize: '0.72rem',
+                      fontWeight: 'bold',
+                      fontFamily: 'monospace',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      zIndex: 200,
+                      transition: 'all 0.2s ease-in-out'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.boxShadow = '0 0 25px rgba(0, 255, 204, 0.7)';
+                      e.currentTarget.style.borderColor = '#00e6b8';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.boxShadow = '0 0 15px rgba(0, 255, 204, 0.4)';
+                      e.currentTarget.style.borderColor = '#00FFCC';
+                    }}
+                  >
+                    <ChevronDown size={12} />
+                    CATCH UP
+                  </button>
                 )}
               </div>
-            ))}
-            <div ref={chatEndRef} />
-          </div>
+            );
+          })()}
 
           {/* Chat Input Field */}
           <form 
@@ -1593,13 +2303,53 @@ export default function SovereignSportsDashboard({
               background: 'rgba(15, 23, 42, 0.4)',
               display: 'flex',
               gap: '0.5rem',
-              zIndex: 10
+              zIndex: 10,
+              position: 'relative'
             }}
           >
+            {/* Autocomplete mention list overlay */}
+            {mentionState.active && filteredPersonas.length > 0 && (
+              <div style={{
+                position: 'absolute',
+                bottom: '100%',
+                left: 0,
+                width: '100%',
+                background: 'rgba(15, 23, 42, 0.98)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '8px 8px 0 0',
+                boxShadow: '0 -4px 12px rgba(0,0,0,0.5)',
+                zIndex: 300,
+                maxHeight: '180px',
+                overflowY: 'auto'
+              }}>
+                {filteredPersonas.map((p, idx) => (
+                  <div
+                    key={p}
+                    onClick={() => selectMention(p)}
+                    style={{
+                      padding: '8px 12px',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem',
+                      color: '#fff',
+                      background: idx === mentionState.selectedIndex ? 'rgba(0, 255, 204, 0.15)' : 'transparent',
+                      borderBottom: idx < filteredPersonas.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none'
+                    }}
+                    onMouseEnter={() => {
+                      setMentionState(prev => ({ ...prev, selectedIndex: idx }));
+                    }}
+                  >
+                    {p}
+                  </div>
+                ))}
+              </div>
+            )}
+
             <input 
+              ref={chatInputRef}
               type="text"
               value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
+              onChange={handleInputChange}
+              onKeyDown={handleInputKeyDown}
               placeholder="Inject advocate commentary..."
               style={{
                 flex: 1,
@@ -1630,12 +2380,38 @@ export default function SovereignSportsDashboard({
                 justifyContent: 'center',
                 transition: 'all 0.2s'
               }}
-              onMouseEnter={(e) => e.currentTarget.style.background = '#00E6B8'}
-              onMouseLeave={(e) => e.currentTarget.style.background = '#00FFCC'}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#00E6B8'; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = '#00FFCC'; }}
             >
               <Send size={16} />
             </button>
           </form>
+        </div>
+      </div>
+
+      {/* Bottom Telemetry Ticker */}
+      <div className="bottom-telemetry-ticker" style={{ position: 'relative', flexShrink: 0 }}>
+        {/* Target Zone Badge */}
+        <div className="zone-badge" style={{ top: '6px', left: '12px' }}>
+          [ZONE-6] TELEMETRY TICKER
+        </div>
+        <div className="ticker-track">
+          <div className="ticker-item">
+            <span className="ticker-badge">TMI ENGINE</span>
+            <span>STATUS: ACTIVE • CHANNELS: 16 • SYSTEM LATENCY: 4.2ms • BOGGS INDEX: NOMINAL STATE</span>
+          </div>
+          <div className="ticker-item">
+            <span className="ticker-badge">GAME DATA</span>
+            <span>ACTIVE PK: {activeGamePk} • {gameState.away_team} @ {gameState.home_team} • SCORE: {gameState.away_score}-{gameState.home_score} • BALLS: {gameState.balls} STRIKES: {gameState.strikes} OUTS: {gameState.outs}</span>
+          </div>
+          <div className="ticker-item">
+            <span className="ticker-badge">TMI ENGINE</span>
+            <span>STATUS: ACTIVE • CHANNELS: 16 • SYSTEM LATENCY: 4.2ms • BOGGS INDEX: NOMINAL STATE</span>
+          </div>
+          <div className="ticker-item">
+            <span className="ticker-badge">GAME DATA</span>
+            <span>ACTIVE PK: {activeGamePk} • {gameState.away_team} @ {gameState.home_team} • SCORE: {gameState.away_score}-{gameState.home_score} • BALLS: {gameState.balls} STRIKES: {gameState.strikes} OUTS: {gameState.outs}</span>
+          </div>
         </div>
       </div>
 
@@ -1678,6 +2454,57 @@ export default function SovereignSportsDashboard({
         @keyframes driftFog {
           from { transform: scale(1.0) translate(0, 0); }
           to { transform: scale(1.1) translate(10px, 5px); }
+        }
+        @keyframes neonPulseStrikeout {
+          from { border-color: #00FFCC; box-shadow: 0 0 20px rgba(0, 255, 204, 0.4), inset 0 0 10px rgba(0, 255, 204, 0.2); }
+          to { border-color: #00F0FF; box-shadow: 0 0 40px rgba(0, 255, 204, 0.8), inset 0 0 20px rgba(0, 255, 204, 0.4); }
+        }
+        @keyframes neonPulseHomerun {
+          from { border-color: #FD5A1E; box-shadow: 0 0 20px rgba(253, 90, 30, 0.5), inset 0 0 10px rgba(253, 90, 30, 0.2); }
+          to { border-color: #EF4444; box-shadow: 0 0 45px rgba(253, 90, 30, 0.9), inset 0 0 25px rgba(253, 90, 30, 0.5); }
+        }
+        @keyframes neonPulseDoublePlay {
+          from { border-color: #00B4D8; box-shadow: 0 0 20px rgba(0, 180, 216, 0.4), inset 0 0 10px rgba(0, 180, 216, 0.2); }
+          to { border-color: #0077B6; box-shadow: 0 0 40px rgba(0, 180, 216, 0.8), inset 0 0 20px rgba(0, 180, 216, 0.4); }
+        }
+        @keyframes neonPulseMascot {
+          from { border-color: #10B981; box-shadow: 0 0 20px rgba(16, 185, 129, 0.4), inset 0 0 10px rgba(16, 185, 129, 0.2); }
+          to { border-color: #059669; box-shadow: 0 0 40px rgba(16, 185, 129, 0.8), inset 0 0 20px rgba(16, 185, 129, 0.4); }
+        }
+        @keyframes neonPulseLfgm {
+          from { border-color: #FC5C1D; box-shadow: 0 0 20px rgba(252, 92, 29, 0.4), inset 0 0 10px rgba(252, 92, 29, 0.2); }
+          to { border-color: #005A9C; box-shadow: 0 0 40px rgba(252, 92, 29, 0.8), inset 0 0 20px rgba(252, 92, 29, 0.4); }
+        }
+        @keyframes heartbeatFlash {
+          0% { border-color: #EF4444; box-shadow: 0 0 15px rgba(239, 68, 68, 0.3), inset 0 0 8px rgba(239, 68, 68, 0.2); transform: scale(1.0); }
+          14% { transform: scale(1.03); }
+          28% { transform: scale(1.0); }
+          42% { transform: scale(1.03); }
+          70% { border-color: #DC2626; box-shadow: 0 0 35px rgba(239, 68, 68, 0.7), inset 0 0 18px rgba(239, 68, 68, 0.45); transform: scale(1.0); }
+        }
+        @keyframes zoomInStrikeout {
+          from { transform: scale(0.5); opacity: 0; }
+          to { transform: scale(1); opacity: 1; }
+        }
+        @keyframes zoomInHomerun {
+          from { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+          to { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes neonPulseBenge {
+          from { border-color: #00b4d8; box-shadow: 0 0 20px rgba(0, 180, 216, 0.4), inset 0 0 10px rgba(0, 180, 216, 0.2); }
+          to { border-color: #00FFCC; box-shadow: 0 0 45px rgba(0, 255, 204, 0.8), inset 0 0 25px rgba(0, 255, 204, 0.4); }
+        }
+        @keyframes scannerBenge {
+          0% { top: 0%; }
+          100% { top: 100%; }
+        }
+        @keyframes flickerBenge {
+          0%, 19.999%, 22%, 62.999%, 64%, 64.999%, 70%, 100% { opacity: 0.99; filter: none; }
+          20%, 21.999%, 63%, 63.999%, 65%, 69.999% { opacity: 0.4; filter: drop-shadow(0 0 1px #00b4d8); }
+        }
+        @keyframes textPulseBenge {
+          from { transform: scale(0.95); opacity: 0.8; }
+          to { transform: scale(1.05); opacity: 1; }
         }
       `}} />
     </div>

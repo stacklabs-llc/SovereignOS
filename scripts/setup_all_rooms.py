@@ -83,15 +83,52 @@ async def setup_game_room(game, data, candidates, dot, wordy):
             random.shuffle(matching)
             return matching[:3]
 
-        home_selected = get_team_personas(home_abbr, candidates)
-        temp_candidates = [c for c in candidates if c not in home_selected]
-        away_selected = get_team_personas(away_abbr, temp_candidates)
+        if (home_abbr == 'NYM' and away_abbr == 'ATL') or (home_abbr == 'ATL' and away_abbr == 'NYM'):
+            print(f"📡 SPECIAL METS-BRAVES BOOTH SEEDING ACTIVATED for game {game_pk}")
+            # For NYM-ATL, we want exactly the 3 commentators, plus a limited subset of home/away fans (3 NYM, 3 ATL)
+            nym_selected = get_team_personas('NYM', candidates)
+            temp_candidates = [c for c in candidates if c not in nym_selected]
+            atl_selected = get_team_personas('ATL', temp_candidates)
+            gkr_selected = [p for p in candidates if p['user_name'].lower() in ['gary_bot', 'ron_bot', 'keith_fanboy']]
+            members_set = {}
+            for p in nym_selected + atl_selected + gkr_selected:
+                members_set[p['id']] = p
+            members = list(members_set.values())
+        elif game_pk == '823604':
+            print(f"📡 SPECIAL METS-RED SOX RIVALRY SEEDING ACTIVATED for game {game_pk}")
+            # Ensure our newly onboarded rivalry advocates are seated
+            nym_selected = get_team_personas('NYM', candidates)
+            if not any(p['user_name'] == 'shea_vintage' for p in nym_selected):
+                shea_persona = next((p for p in candidates if p['user_name'] == 'shea_vintage'), None)
+                if shea_persona:
+                    if len(nym_selected) >= 3:
+                        nym_selected.pop()
+                    nym_selected.append(shea_persona)
+            
+            temp_candidates = [c for c in candidates if c not in nym_selected]
+            away_selected = get_team_personas('BOS', temp_candidates)
+            if not any(p['user_name'] == 'bucky_dent_blues' for p in away_selected):
+                bucky_persona = next((p for p in candidates if p['user_name'] == 'bucky_dent_blues'), None)
+                if bucky_persona:
+                    if len(away_selected) >= 3:
+                        away_selected.pop()
+                    away_selected.append(bucky_persona)
+            
+            members = nym_selected + away_selected
+        else:
+            home_selected = get_team_personas(home_abbr, candidates)
+            temp_candidates = [c for c in candidates if c not in home_selected]
+            away_selected = get_team_personas(away_abbr, temp_candidates)
+            members = home_selected + away_selected
 
         room_key = f"room_{game_pk}"
         boggs_level = 2 # default mid
         
         db_path = '/home/james/SovereignOS/dna/sovereign_now.db'
         conn = sqlite3.connect(db_path, timeout=60.0)
+        conn.execute("PRAGMA journal_mode = WAL;")
+        conn.execute("PRAGMA synchronous = NORMAL;")
+        conn.execute("PRAGMA foreign_keys = ON;")
         conn.execute("PRAGMA busy_timeout = 30000;")
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
@@ -114,14 +151,16 @@ async def setup_game_room(game, data, candidates, dot, wordy):
 
         # Assign personas
         cursor.execute("DELETE FROM game_persona WHERE game_pk = ?", (game_pk,))
-        members = home_selected + away_selected
-        if dot: members.append(dot)
-        if wordy: members.append(wordy)
+        if dot and dot['id'] not in [m['id'] for m in members]:
+            members.append(dot)
+        if wordy and wordy['id'] not in [m['id'] for m in members]:
+            members.append(wordy)
 
         for p in members:
             gp_id = str(uuid.uuid4()).replace('-', '')
             cursor.execute("INSERT INTO game_persona (id, game_pk, persona_id, seat_state) VALUES (?, ?, ?, ?)",
                            (gp_id, game_pk, p['id'], 'active'))
+            cursor.execute("UPDATE sys_user SET active = 1 WHERE sys_id = ?", (p['id'],))
             
         print(f"Room {room_name} configured with {len(members)} personas in game_persona.")
         conn.commit()
@@ -189,6 +228,9 @@ async def setup_game_room(game, data, candidates, dot, wordy):
                     scenarios = ast.literal_eval(clean_text)
                 
                 conn = sqlite3.connect(db_path, timeout=60.0)
+                conn.execute("PRAGMA journal_mode = WAL;")
+                conn.execute("PRAGMA synchronous = NORMAL;")
+                conn.execute("PRAGMA foreign_keys = ON;")
                 conn.execute("PRAGMA busy_timeout = 30000;")
                 cursor = conn.cursor()
                 for s in scenarios[:3]:
@@ -208,6 +250,9 @@ async def main_async(games, data, candidates, dot, wordy):
 def main():
     db_path = '/home/james/SovereignOS/dna/sovereign_now.db'
     conn = sqlite3.connect(db_path, timeout=60.0)
+    conn.execute("PRAGMA journal_mode = WAL;")
+    conn.execute("PRAGMA synchronous = NORMAL;")
+    conn.execute("PRAGMA foreign_keys = ON;")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
 
@@ -257,6 +302,9 @@ def main():
     # Deactivate past rooms to prevent stale entries from polluting the switcher dropdown
     try:
         cleanup_conn = sqlite3.connect(db_path, timeout=60.0)
+        cleanup_conn.execute("PRAGMA journal_mode = WAL;")
+        cleanup_conn.execute("PRAGMA synchronous = NORMAL;")
+        cleanup_conn.execute("PRAGMA foreign_keys = ON;")
         cleanup_conn.execute("PRAGMA busy_timeout = 30000;")
         cleanup_cursor = cleanup_conn.cursor()
         cleanup_cursor.execute("UPDATE mlb_schedule SET room_state = 'staged' WHERE game_date < ?", (target_date,))

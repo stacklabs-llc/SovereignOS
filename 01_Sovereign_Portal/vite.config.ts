@@ -28,6 +28,11 @@ export default defineConfig(({mode}) => {
         cert: fs.readFileSync('./clio.taila01894.ts.net.crt'),
       },
       proxy: {
+        '/api/ingress': {
+          target: 'http://127.0.0.1:8090',
+          changeOrigin: true,
+          secure: false,
+        },
         '/api/personas/print_dossier': {
           target: 'http://127.0.0.1:8090',
           changeOrigin: true,
@@ -40,6 +45,11 @@ export default defineConfig(({mode}) => {
         },
         '/api/voice': {
           target: 'http://127.0.0.1:8090',
+          changeOrigin: true,
+          secure: false,
+        },
+        '/api/system/sync': {
+          target: 'http://127.0.0.1:8095',
           changeOrigin: true,
           secure: false,
         },
@@ -166,6 +176,15 @@ export default defineConfig(({mode}) => {
           ws: true,
           secure: false,
           changeOrigin: true,
+          configure: (proxy, _options) => {
+            proxy.on('error', (err, _req, _res) => {
+              console.error('ws proxy error:', err);
+            });
+            proxy.on('proxyReqWs', (proxyReq, req, socket, options, head) => {
+              proxyReq.setHeader('Upgrade', 'websocket');
+              proxyReq.setHeader('Connection', 'Upgrade');
+            });
+          }
         },
         '/api/telemetry': {
           target: 'http://127.0.0.1:8085',
@@ -298,12 +317,12 @@ export default defineConfig(({mode}) => {
           ws: true,
           secure: false,
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/ws-relay/, ''),
           configure: (proxy, _options) => {
             proxy.on('error', (err, _req, _res) => {
-              console.log('proxy error', err);
+              console.error('ws-relay proxy error:', err);
             });
             proxy.on('proxyReqWs', (proxyReq, req, socket, options, head) => {
+              proxyReq.setHeader('Upgrade', 'websocket');
               proxyReq.setHeader('Connection', 'Upgrade');
             });
           }

@@ -79,13 +79,40 @@ def deploy_personas(game_pk, chaos_mode):
     cur.execute(f"SELECT sys_id, user_name FROM sys_user WHERE user_name IN ({sp_placeholders})", selected_personas)
     persona_id_map = {row[1]: row[0] for row in cur.fetchall()}
 
-    # Deactivate ALL personas first, then activate ONLY this room's roster
+    # Query game_persona for active personas in this room (carried-over personas)
+    cur.execute("""
+        SELECT u.sys_id, u.user_name FROM sys_user u
+        JOIN game_persona gp ON u.sys_id = gp.persona_id
+        WHERE gp.game_pk = ? AND gp.seat_state = 'active'
+    """, (game_pk,))
+    gp_active = cur.fetchall()
+
+    active_names = list(selected_personas)
+    for sys_id, user_name in gp_active:
+        if user_name not in active_names:
+            active_names.append(user_name)
+        persona_id_map[user_name] = sys_id
+
+    # Deactivate ALL personas first, then activate ONLY this room's combined active/carried-over personas
     # (prevents ghosts from prior rooms bleeding in)
     cur.execute("UPDATE sys_user SET active = 0 WHERE sys_id IN (SELECT sys_id FROM cmdb_ci_ai_persona)")
-    cur.execute(f"UPDATE sys_user SET active = 1 WHERE user_name IN ({sp_placeholders})", selected_personas)
-    cur.execute(f"UPDATE cmdb_ci SET operational_status = 1 WHERE name IN ({sp_placeholders})", selected_personas)
+    
+    if active_names:
+        active_placeholders = ",".join(["?"] * len(active_names))
+        cur.execute(f"UPDATE sys_user SET active = 1 WHERE user_name IN ({active_placeholders})", active_names)
+        cur.execute(f"UPDATE cmdb_ci SET operational_status = 1 WHERE name IN ({active_placeholders})", active_names)
+        
+        # Delete non-selected/non-active personas from m2m_persona_room for this room
+        active_sys_ids = [persona_id_map[name] for name in active_names if name in persona_id_map]
+        if active_sys_ids:
+            id_placeholders = ",".join(["?"] * len(active_sys_ids))
+            cur.execute(f"DELETE FROM m2m_persona_room WHERE room = ? AND persona NOT IN ({id_placeholders})", [game_pk] + active_sys_ids)
+        else:
+            cur.execute("DELETE FROM m2m_persona_room WHERE room = ?", (game_pk,))
+    else:
+        cur.execute("DELETE FROM m2m_persona_room WHERE room = ?", (game_pk,))
 
-    for persona_name in selected_personas:
+    for persona_name in active_names:
         persona_sys_id = persona_id_map.get(persona_name)
         if not persona_sys_id:
             print(f"  [WARN] No sys_user found for '{persona_name}' — skipping m2m insert")
@@ -100,7 +127,10 @@ def deploy_personas(game_pk, chaos_mode):
                         (new_id, persona_sys_id, game_pk, overlay_text))
             print(f"  [m2m] Inserted {persona_name} ({persona_sys_id}) into room {game_pk}")
 
-    cur.execute(f"UPDATE cmdb_ci_ai_persona SET u_deployment_zone = ? WHERE sys_id IN (SELECT sys_id FROM cmdb_ci WHERE name IN ({sp_placeholders}))", [game_pk] + selected_personas)
+    if active_names:
+        active_placeholders = ",".join(["?"] * len(active_names))
+        cur.execute(f"UPDATE cmdb_ci_ai_persona SET u_deployment_zone = ? WHERE sys_id IN (SELECT sys_id FROM cmdb_ci WHERE name IN ({active_placeholders}))", [game_pk] + active_names)
+    
     cur.execute("UPDATE mlb_schedule SET room_state = 'staged' WHERE game_pk != ? AND room_state = 'active'", (game_pk,))
     cur.execute("UPDATE cmdb_ci_fanstack_room SET room_state = 'staged' WHERE game_pk != ? AND room_state = 'active'", (game_pk,))
     cur.execute("UPDATE mlb_schedule SET room_state = 'active' WHERE game_pk = ?", (game_pk,))

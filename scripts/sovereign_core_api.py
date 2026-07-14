@@ -61,6 +61,7 @@ from routers.hailo import router as hailo_router
 from routers.personas import router as personas_router
 from routers.brand import router as brand_router
 from routers.media import router as media_router
+from routers.mam import router as mam_router
 
 fastapi_app.include_router(auth_router)
 fastapi_app.include_router(public_router)
@@ -74,6 +75,7 @@ fastapi_app.include_router(hailo_router)
 fastapi_app.include_router(personas_router)
 fastapi_app.include_router(brand_router)
 fastapi_app.include_router(media_router)
+fastapi_app.include_router(mam_router)
 
 
 @fastapi_app.exception_handler(Exception)

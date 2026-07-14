@@ -48,9 +48,9 @@ export default function PromptPreviewConsole() {
         setStagedPrompts(stagedList);
         
         // Select first pending staged prompt if none selected
-        const pending = stagedList.filter(p => p.status === "staged");
+        const pending = stagedList.filter(p => p.status === "staged" || p.status === "pending");
         if (pending.length > 0) {
-          if (!selectedPromptId || !stagedList.some(p => p.id === selectedPromptId && p.status === "staged")) {
+          if (!selectedPromptId || !stagedList.some(p => p.id === selectedPromptId && (p.status === "staged" || p.status === "pending"))) {
             const firstPending = pending[0];
             setSelectedPromptId(firstPending.id);
             setSystemInstructionText(firstPending.system_instruction || "");
@@ -251,7 +251,7 @@ export default function PromptPreviewConsole() {
                 <Layers className="w-3.5 h-3.5" /> STAGED TELEMETRY QUEUE
               </span>
               <span className="px-2 py-0.5 bg-stone-900 border border-stone-800 rounded-full text-[10px] font-mono text-stone-400">
-                {stagedPrompts.filter(p => p.status === "staged").length} Pending
+                {stagedPrompts.filter(p => p.status === "staged" || p.status === "pending").length} Pending
               </span>
             </div>
 
@@ -277,7 +277,7 @@ export default function PromptPreviewConsole() {
                     }`}
                   >
                     {/* Glowing highlight indicator */}
-                    {p.status === "staged" && (
+                    {(p.status === "staged" || p.status === "pending") && (
                       <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-[#00b4d8] rounded-bl-lg shadow-[0_0_10px_#00b4d8]" />
                     )}
                     
@@ -286,7 +286,7 @@ export default function PromptPreviewConsole() {
                         {p.persona || "Anonymous"}
                       </span>
                       <span className={`text-[9px] font-mono uppercase px-2 py-0.5 rounded border ${
-                        p.status === "staged"
+                        (p.status === "staged" || p.status === "pending")
                           ? "text-[#00b4d8] border-[#00b4d8]/30 bg-[#00b4d8]/5"
                           : p.status === "released"
                           ? "text-emerald-400 border-emerald-500/20 bg-emerald-500/5"
@@ -365,7 +365,7 @@ export default function PromptPreviewConsole() {
                   <textarea
                     value={systemInstructionText}
                     onChange={(e) => setSystemInstructionText(e.target.value)}
-                    disabled={selectedPrompt.status !== "staged"}
+                    disabled={selectedPrompt.status !== "staged" && selectedPrompt.status !== "pending"}
                     className="flex-1 w-full bg-black/60 border border-stone-800 rounded-xl p-3.5 font-mono text-xs text-stone-300 focus:outline-none focus:border-[#00b4d8] focus:ring-1 focus:ring-[#00b4d8] resize-none leading-relaxed"
                   />
                 </div>
@@ -379,7 +379,7 @@ export default function PromptPreviewConsole() {
                     <textarea
                       value={promptText}
                       onChange={(e) => setPromptText(e.target.value)}
-                      disabled={selectedPrompt.status !== "staged"}
+                      disabled={selectedPrompt.status !== "staged" && selectedPrompt.status !== "pending"}
                       className="flex-1 w-full bg-black/60 border border-stone-800 rounded-xl p-3.5 font-mono text-xs text-stone-300 focus:outline-none focus:border-[#00b4d8] focus:ring-1 focus:ring-[#00b4d8] resize-none leading-relaxed"
                     />
                     
@@ -399,7 +399,7 @@ export default function PromptPreviewConsole() {
                   STATUS: <span className="text-white font-bold">{selectedPrompt.status}</span>
                 </div>
                 
-                {selectedPrompt.status === "staged" ? (
+                {selectedPrompt.status === "staged" || selectedPrompt.status === "pending" ? (
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => handleRelease(selectedPrompt.id)}

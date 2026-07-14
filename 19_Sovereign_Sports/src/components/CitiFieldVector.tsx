@@ -25,11 +25,59 @@ export default function CitiFieldVector({
   const [showK, setShowK] = useState(false);
   const [showErrorAlert, setShowErrorAlert] = useState(false);
 
-  const isOraclePark = homeTeam?.toUpperCase() === 'SF' || homeTeam?.toUpperCase() === 'SFG';
-  
-  const stadiumName = isOraclePark ? "ORACLE PARK" : "CITI FIELD";
-  const stadiumLoc = isOraclePark ? "SAN FRANCISCO, CA" : "FLUSHING, NY";
-  const stadiumColor = isOraclePark ? "#F59E0B" : "#FD5A1E";
+  const stadiumDetails = (() => {
+    const t = homeTeam?.toUpperCase() || 'NYM';
+    const isOracle = t === 'SF' || t === 'SFG';
+    const STADIUM_MAP: Record<string, { name: string; loc: string; color: string; stroke: string }> = {
+      NYM: { name: "CITI FIELD", loc: "FLUSHING, NY", color: "#FD5A1E", stroke: "#0A84FF" },
+      SF: { name: "ORACLE PARK", loc: "SAN FRANCISCO, CA", color: "#F59E0B", stroke: "#F59E0B" },
+      SFG: { name: "ORACLE PARK", loc: "SAN FRANCISCO, CA", color: "#F59E0B", stroke: "#F59E0B" },
+      PHI: { name: "CITIZENS BANK PARK", loc: "PHILADELPHIA, PA", color: "#E81828", stroke: "#E81828" },
+      NYY: { name: "YANKEE STADIUM", loc: "BRONX, NY", color: "#0C2340", stroke: "#0C2340" },
+      BOS: { name: "FENWAY PARK", loc: "BOSTON, MA", color: "#BD3039", stroke: "#BD3039" },
+      CHC: { name: "WRIGLEY FIELD", loc: "CHICAGO, IL", color: "#0E3386", stroke: "#0E3386" },
+      LAD: { name: "DODGER STADIUM", loc: "LOS ANGELES, CA", color: "#005A9C", stroke: "#005A9C" },
+      ATL: { name: "TRUIST PARK", loc: "ATLANTA, GA", color: "#CE1141", stroke: "#CE1141" },
+      HOU: { name: "MINUTE MAID PARK", loc: "HOUSTON, TX", color: "#EB6E1F", stroke: "#EB6E1F" },
+      TOR: { name: "ROGERS CENTRE", loc: "TORONTO, ON", color: "#134A8E", stroke: "#134A8E" },
+      BAL: { name: "ORIOLE PARK", loc: "BALTIMORE, MD", color: "#DF4601", stroke: "#DF4601" },
+      TB: { name: "TROPICANA FIELD", loc: "ST. PETERSBURG, FL", color: "#092C5C", stroke: "#092C5C" },
+      TBR: { name: "TROPICANA FIELD", loc: "ST. PETERSBURG, FL", color: "#092C5C", stroke: "#092C5C" },
+      CLE: { name: "PROGRESSIVE FIELD", loc: "CLEVELAND, OH", color: "#E31937", stroke: "#E31937" },
+      DET: { name: "COMERICA PARK", loc: "DETROIT, MI", color: "#0C2340", stroke: "#0C2340" },
+      CWS: { name: "GUARANTEED RATE FIELD", loc: "CHICAGO, IL", color: "#27251F", stroke: "#27251F" },
+      CHW: { name: "GUARANTEED RATE FIELD", loc: "CHICAGO, IL", color: "#27251F", stroke: "#27251F" },
+      KC: { name: "KAUFFMAN STADIUM", loc: "KANSAS CITY, MO", color: "#004687", stroke: "#004687" },
+      KCR: { name: "KAUFFMAN STADIUM", loc: "KANSAS CITY, MO", color: "#004687", stroke: "#004687" },
+      MIN: { name: "TARGET FIELD", loc: "MINNEAPOLIS, MN", color: "#D31145", stroke: "#D31145" },
+      TEX: { name: "GLOBE LIFE FIELD", loc: "ARLINGTON, TX", color: "#003278", stroke: "#003278" },
+      OAK: { name: "OAKLAND COLISEUM", loc: "OAKLAND, CA", color: "#003831", stroke: "#003831" },
+      SEA: { name: "T-MOBILE PARK", loc: "SEATTLE, WA", color: "#0C2C56", stroke: "#0C2C56" },
+      LAA: { name: "ANGEL STADIUM", loc: "ANAHEIM, CA", color: "#BA0021", stroke: "#BA0021" },
+      MIA: { name: "LOANDEPOT PARK", loc: "MIAMI, FL", color: "#00A3E0", stroke: "#00A3E0" },
+      WSH: { name: "NATIONALS PARK", loc: "WASHINGTON, DC", color: "#AB0003", stroke: "#AB0003" },
+      WAS: { name: "NATIONALS PARK", loc: "WASHINGTON, DC", color: "#AB0003", stroke: "#AB0003" },
+      MIL: { name: "AMERICAN FAMILY FIELD", loc: "MILWAUKEE, WI", color: "#12284C", stroke: "#12284C" },
+      STL: { name: "BUSCH STADIUM", loc: "ST. LOUIS, MO", color: "#C41E3A", stroke: "#C41E3A" },
+      CIN: { name: "GREAT AMERICAN BALL PARK", loc: "CINCINNATI, OH", color: "#C6011F", stroke: "#C6011F" },
+      PIT: { name: "PNC PARK", loc: "PITTSBURGH, PA", color: "#FDB827", stroke: "#FDB827" },
+      ARI: { name: "CHASE FIELD", loc: "PHOENIX, AZ", color: "#A71930", stroke: "#A71930" },
+      COL: { name: "COORS FIELD", loc: "DENVER, CO", color: "#33006F", stroke: "#33006F" },
+      SD: { name: "PETCO PARK", loc: "SAN DIEGO, CA", color: "#2F241D", stroke: "#2F241D" },
+      SDP: { name: "PETCO PARK", loc: "SAN DIEGO, CA", color: "#2F241D", stroke: "#2F241D" }
+    };
+    
+    if (STADIUM_MAP[t]) {
+      return { ...STADIUM_MAP[t], isOraclePark: isOracle };
+    }
+    return { name: "BALLPARK", loc: "MLB VENUE", color: "#00FFCC", stroke: "#0A84FF", isOraclePark: isOracle };
+  })();
+
+  const isOraclePark = stadiumDetails.isOraclePark;
+  const stadiumName = stadiumDetails.name;
+  const stadiumLoc = stadiumDetails.loc;
+  const stadiumColor = stadiumDetails.color;
+  const stadiumStroke = stadiumDetails.stroke;
 
   const wallPath = isOraclePark 
     ? "M 50,250 C 70,210 115,165 175,115 C 215,95 240,90 280,85 C 330,90 365,70 385,130 C 400,170 410,210 420,275"
@@ -198,7 +246,7 @@ export default function CitiFieldVector({
         <path 
           d={wallPath} 
           fill="none" 
-          stroke={isOraclePark ? "#F59E0B" : "#0A84FF"} 
+          stroke={stadiumStroke} 
           strokeWidth="3.5" 
           filter="url(#neonGlowCyan)"
           strokeLinecap="round"

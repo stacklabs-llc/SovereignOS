@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getWsUrl } from '../api-host';
 
 interface MARDPayload {
   msg_type: string;
@@ -37,7 +38,7 @@ export default function FanStackSandbox() {
     // to listen to whatever the background python daemon is broadcasting.
     console.log("FanStack Sandbox initializing WebSocket to M.A.R.D Engine...");
     
-    wsRef.current = new WebSocket('ws://192.168.1.183:8008');
+    wsRef.current = new WebSocket(getWsUrl('/ws'));
     
     wsRef.current.onmessage = (event) => {
       try {
@@ -78,7 +79,7 @@ export default function FanStackSandbox() {
      setTheme('default');
      setMessages([]);
      // Optional: send a switch_game command back through the socket if MARD supports it, or hit REST
-     fetch(`http://192.168.1.183:8000/api/switch_game?gamePk=${gamePk}`)
+     fetch(`/api/switch_game?gamePk=${gamePk}`)
        .catch(err => console.error("Could not trigger remote sim:", err));
   };
 

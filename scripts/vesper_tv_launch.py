@@ -9,7 +9,7 @@ def check_adb():
 
 def main():
     check_adb()
-    tv_ip = "192.168.1.68:5555"
+    tv_ip = "192.168.1.192:5555"
     print(f"[*] Connecting to TV DOM node: {tv_ip}")
     os.system(f"adb connect {tv_ip}")
 

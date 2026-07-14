@@ -76,7 +76,11 @@ function App() {
 
   const handleSelectSeries = (series: any) => {
     setActiveMedia(series)
-    setActiveTab('series_view')
+    if (series.video_url || series.videoUrl) {
+      handleSelectVideo(series.video_url || series.videoUrl);
+    } else {
+      setActiveTab('series_view')
+    }
   }
 
   const [activeRowIndex, setActiveRowIndex] = useState(0);
@@ -106,6 +110,24 @@ function App() {
               window.location.reload();
               return;
             }
+
+            const keyMap: Record<string, string> = {
+              'up': 'ArrowUp',
+              'down': 'ArrowDown',
+              'left': 'ArrowLeft',
+              'right': 'ArrowRight',
+              'select': 'Enter',
+              'back': 'Escape'
+            };
+            const mappedKey = keyMap[data.command];
+            if (mappedKey) {
+              const event = new KeyboardEvent('keydown', {
+                key: mappedKey,
+                bubbles: true,
+                cancelable: true
+              });
+              window.dispatchEvent(event);
+            }
           }
         } catch (err) {}
       };
@@ -115,15 +137,47 @@ function App() {
     
     // Fallback: Physical keyboard listener (also enables xdotool support)
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (activeTab === 'home' || activeTab === 'movies' || activeTab === 'shows') {
+      if (['home', 'movies', 'shows', 'request'].includes(activeTab)) {
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Enter'].includes(e.key)) {
           e.preventDefault();
         }
-        if (e.key === 'ArrowUp') setActiveRowIndex(r => Math.max(0, r - 1));
-        if (e.key === 'ArrowDown') setActiveRowIndex(r => Math.min(1, r + 1));
-        if (e.key === 'ArrowLeft') setActiveColIndex(c => Math.max(0, c - 1));
-        if (e.key === 'ArrowRight') setActiveColIndex(c => Math.min(20, c + 1));
-        if (e.key === 'Enter') setSelectTriggerCount(t => t + 1);
+        if (e.key === 'ArrowUp') {
+          setActiveRowIndex(r => {
+            if (r === 0) return -1;
+            if (r === 1) return 0;
+            return r;
+          });
+        }
+        if (e.key === 'ArrowDown') {
+          setActiveRowIndex(r => {
+            if (r === -1) {
+              setActiveColIndex(0);
+              return 0;
+            }
+            if (r === 0 && activeTab === 'home') return 1;
+            return r;
+          });
+        }
+        if (e.key === 'ArrowLeft') {
+          setActiveColIndex(c => Math.max(0, c - 1));
+        }
+        if (e.key === 'ArrowRight') {
+          setActiveColIndex(c => {
+            const maxCol = (activeRowIndex === -1) ? 3 : 20;
+            return Math.min(maxCol, c + 1);
+          });
+        }
+        if (e.key === 'Enter') {
+          if (activeRowIndex === -1) {
+            const tabs: ('home' | 'movies' | 'shows' | 'request')[] = ['home', 'movies', 'shows', 'request'];
+            const nextTab = tabs[activeColIndex];
+            if (nextTab) {
+              setActiveTab(nextTab);
+            }
+          } else {
+            setSelectTriggerCount(t => t + 1);
+          }
+        }
       }
       if (e.key === 'Escape') {
         setActiveTab(prev => {
@@ -139,7 +193,7 @@ function App() {
       if (ws) ws.close();
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [activeTab]);
+  }, [activeTab, activeRowIndex, activeColIndex]);
 
   useEffect(() => {
     setActiveColIndex(0);
@@ -156,56 +210,101 @@ function App() {
     );
   }
 
+  const isTvMode = 
+    window.location.search.includes('scale=tv') || 
+    /Android.*(Silk|Fire|SmartTV|LargeScreen)/i.test(navigator.userAgent);
+
   return (
     <HoloLinkProvider user={user}>
-      <div className="w-screen h-screen bg-vm-bg text-vm-text font-sans overflow-hidden box-border p-[2vh_3vw]">
+      <div className={`w-screen h-screen bg-vm-bg text-vm-text font-sans overflow-hidden box-border p-[1.5vh_2.5vw] ${isTvMode ? 'tv-scale-mode' : ''}`}>
         <div className="relative w-full h-full flex flex-col">
         {/* Top Navigation */}
-        <nav className="absolute top-0 left-0 w-full z-50 bg-gradient-to-b from-black/80 to-transparent px-4 md:px-8 py-4 md:py-6 flex flex-row items-center justify-between gap-4 md:gap-0">
-          <div className="flex flex-row items-center gap-4 md:gap-8 w-auto">
+        <nav className="absolute top-0 left-0 w-full z-50 bg-gradient-to-b from-black/80 to-transparent px-4 md:px-8 py-2 md:py-4 flex flex-row items-center justify-between gap-4 md:gap-0">
+          <div className="flex flex-row items-center gap-4 md:gap-6 w-auto">
             <div className="flex flex-col">
-              <h1 className="text-3xl md:text-5xl font-bold tracking-wider text-vm-accent drop-shadow-[0_0_15px_rgba(56,189,248,0.5)]">
+              <h1 className="text-xl md:text-3xl font-extrabold tracking-wider text-vm-accent drop-shadow-[0_0_12px_rgba(56,189,248,0.5)]">
                 SOVEREIGN MEDIA
               </h1>
-              <span className="text-xs md:text-sm font-mono text-[#f2a900] tracking-widest mt-1 opacity-80 uppercase">▶ Now Playing on Clio</span>
+              <span className="text-[9px] md:text-xs font-mono text-[#f2a900] tracking-widest mt-0.5 opacity-80 uppercase">▶ Now Playing on Clio</span>
             </div>
-            <div className="flex gap-4 md:gap-8 text-xl md:text-2xl font-medium text-vm-text-muted overflow-x-auto w-full hide-scrollbar pb-1 md:pb-0">
+            <div className="flex gap-4 md:gap-6 text-sm md:text-base font-medium text-vm-text-muted overflow-x-auto w-full hide-scrollbar pb-1 md:pb-0">
               <button 
-                onClick={() => setActiveTab('home')}
-                className={`hover:text-white transition-colors ${activeTab === 'home' ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : ''}`}
+                onClick={() => { setActiveTab('home'); setActiveRowIndex(-1); setActiveColIndex(0); }}
+                className={`hover:text-white transition-all duration-200 px-3 py-1 rounded-md border ${
+                  activeTab === 'home' 
+                    ? 'text-white border-transparent bg-white/10' 
+                    : 'border-transparent'
+                } ${
+                  activeRowIndex === -1 && activeColIndex === 0 
+                    ? 'text-sky-400 border-sky-400/50 bg-sky-950/40 drop-shadow-[0_0_8px_rgba(56,189,248,0.5)] scale-105' 
+                    : ''
+                }`}
               >
                 Home
               </button>
               <button 
-                onClick={() => setActiveTab('movies')}
-                className={`hover:text-white transition-colors ${activeTab === 'movies' ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : ''}`}
+                onClick={() => { setActiveTab('movies'); setActiveRowIndex(-1); setActiveColIndex(1); }}
+                className={`hover:text-white transition-all duration-200 px-3 py-1 rounded-md border ${
+                  activeTab === 'movies' 
+                    ? 'text-white border-transparent bg-white/10' 
+                    : 'border-transparent'
+                } ${
+                  activeRowIndex === -1 && activeColIndex === 1 
+                    ? 'text-sky-400 border-sky-400/50 bg-sky-950/40 drop-shadow-[0_0_8px_rgba(56,189,248,0.5)] scale-105' 
+                    : ''
+                }`}
               >
                 Movies
               </button>
               <button 
-                onClick={() => setActiveTab('shows')}
-                className={`hover:text-white transition-colors ${activeTab === 'shows' ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : ''}`}
+                onClick={() => { setActiveTab('shows'); setActiveRowIndex(-1); setActiveColIndex(2); }}
+                className={`hover:text-white transition-all duration-200 px-3 py-1 rounded-md border ${
+                  activeTab === 'shows' 
+                    ? 'text-white border-transparent bg-white/10' 
+                    : 'border-transparent'
+                } ${
+                  activeRowIndex === -1 && activeColIndex === 2 
+                    ? 'text-sky-400 border-sky-400/50 bg-sky-950/40 drop-shadow-[0_0_8px_rgba(56,189,248,0.5)] scale-105' 
+                    : ''
+                }`}
               >
                 TV Shows
               </button>
               <button 
-                onClick={() => setActiveTab('request')}
-                className={`hover:text-white transition-colors ${activeTab === 'request' ? 'text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]' : ''}`}
+                onClick={() => { setActiveTab('request'); setActiveRowIndex(-1); setActiveColIndex(3); }}
+                className={`hover:text-white transition-all duration-200 px-3 py-1 rounded-md border ${
+                  activeTab === 'request' 
+                    ? 'text-white border-transparent bg-white/10' 
+                    : 'border-transparent'
+                } ${
+                  activeRowIndex === -1 && activeColIndex === 3 
+                    ? 'text-sky-400 border-sky-400/50 bg-sky-950/40 drop-shadow-[0_0_8px_rgba(56,189,248,0.5)] scale-105' 
+                    : ''
+                }`}
               >
                 Request & Ingress
               </button>
             </div>
           </div>
-          <div className="absolute right-4 md:right-8 top-4 md:top-6">
+          <div className="absolute right-4 md:right-8 top-3 md:top-5">
             <button className="text-vm-text-muted hover:text-white transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" className="md:w-6 md:h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" className="md:w-5 md:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             </button>
           </div>
         </nav>
 
         <main className="flex-1 flex flex-col overflow-hidden">
           {activeTab === 'player' ? (
-            <VideoPlayer videoUrl={selectedVideoUrl || '/01_Assets/Video/Inbox/SOVEREIGN_FLOWMERCIAL_FINAL.mp4'} onBack={() => setActiveTab('series_view')} />
+            <VideoPlayer 
+              videoUrl={selectedVideoUrl || '/01_Assets/Video/Inbox/SOVEREIGN_FLOWMERCIAL_FINAL.mp4'} 
+              onBack={() => {
+                if (activeMedia && (activeMedia.video_url || activeMedia.videoUrl)) {
+                  setActiveTab('home');
+                } else {
+                  setActiveTab('series_view');
+                }
+              }} 
+            />
           ) : activeTab === 'series_view' && activeMedia ? (
             <SeriesDetailView series={activeMedia} onPlayVideo={handleSelectVideo} />
           ) : activeTab === 'request' ? (

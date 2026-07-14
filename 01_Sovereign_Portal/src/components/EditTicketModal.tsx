@@ -32,9 +32,10 @@ interface EditTicketModalProps {
   onClose: () => void;
   ticket: Ticket | null;
   onSave: () => void;
+  assignees: string[];
 }
 
-export default function EditTicketModal({ isOpen, onClose, ticket, onSave }: EditTicketModalProps) {
+export default function EditTicketModal({ isOpen, onClose, ticket, onSave, assignees }: EditTicketModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [workNotes, setWorkNotes] = useState('');
@@ -44,7 +45,6 @@ export default function EditTicketModal({ isOpen, onClose, ticket, onSave }: Edi
   const [assignee, setAssignee] = useState('');
   const [affectedCi, setAffectedCi] = useState('');
   const [isSaving, setIsSaving] = useState(false);
-  const [agentCis, setAgentCis] = useState<CmdbCi[]>([]);
   const [allCis, setAllCis] = useState<CmdbCi[]>([]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -65,20 +65,6 @@ export default function EditTicketModal({ isOpen, onClose, ticket, onSave }: Edi
 
   useEffect(() => {
     if (isOpen) {
-      fetch('/api/cmdb_ci?sys_class_name=cmdb_ci_agent_house')
-        .then(res => res.json())
-        .then(data => {
-          // Fallback to hardcoded list to prevent persona leakage and duplicates
-          setAgentCis([
-            { sys_id: '1', name: 'ADVISORY_ENTITY', sys_class_name: 'cmdb_ci_agent_house' },
-            { sys_id: '2', name: 'HOUSE_OF_GLASS', sys_class_name: 'cmdb_ci_agent_house' },
-            { sys_id: '3', name: 'HOUSE_OF_LAW', sys_class_name: 'cmdb_ci_agent_house' },
-            { sys_id: '4', name: 'HOUSE_OF_METAL', sys_class_name: 'cmdb_ci_agent_house' },
-            { sys_id: '5', name: 'MANDO_WATCHDOG', sys_class_name: 'cmdb_ci_agent_house' }
-          ]);
-        })
-        .catch(err => console.error("Failed to load Agent CIs", err));
-
       fetch('/api/cmdb_ci')
         .then(res => res.json())
         .then(data => setAllCis(data))
@@ -210,7 +196,7 @@ export default function EditTicketModal({ isOpen, onClose, ticket, onSave }: Edi
                    <h2 className="text-2xl font-bold text-white uppercase tracking-widest">{ticket.id}</h2>
                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase border ${priority === 'P1' ? 'border-red-500 text-red-500 bg-red-500/10' : priority === 'P2' ? 'border-orange-500 text-orange-500 bg-orange-500/10' : 'border-[#8E9CAA] text-[#8E9CAA] bg-white/5'}`}>{priority}</span>
                 </div>
-                <div className="text-sm font-mono text-[#8E9CAA]">rm_story / Sovereign OS</div>
+                <div className="text-sm font-mono text-[#8E9CAA]">sovereign_tickets / Sovereign OS</div>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -301,9 +287,12 @@ export default function EditTicketModal({ isOpen, onClose, ticket, onSave }: Edi
                </div>
                <div className="md:col-span-1">
                  <label className="block font-mono text-[10px] text-[#f2a900] uppercase tracking-widest mb-2 flex items-center gap-1"><User size={12}/> Assignee</label>
-                 <select value={assignee} onChange={(e) => setAssignee(e.target.value)} className="w-full bg-black/60 border border-[#f2a900]/30 rounded-lg p-3 text-white font-bold text-sm focus:border-[#f2a900] outline-none">
-                   <option value="">-- Unassigned --</option>
-                   {agentCis.map(ci => <option key={ci.sys_id} value={ci.name}>{ci.name}</option>)}
+                 <select value={assignee} onChange={(e) => setAssignee(e.target.value)} className="w-full bg-black/60 border border-[#f2a900]/30 rounded-lg p-3 text-white font-bold text-sm focus:border-[#f2a900] outline-none font-mono">
+                   {assignees.map(ass => (
+                     <option key={ass} value={ass === 'UNASSIGNED' ? '' : ass}>
+                       {ass === 'UNASSIGNED' ? '-- Unassigned --' : ass}
+                     </option>
+                   ))}
                  </select>
                </div>
                <div className="md:col-span-2">

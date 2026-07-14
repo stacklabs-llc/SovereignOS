@@ -33,9 +33,43 @@ interface TelemetryRule {
 
 interface TelemetryMapperProps {
   isDeskInteractive: boolean;
+  availableGames?: any[];
 }
 
-export default function TelemetryMapper({ isDeskInteractive }: TelemetryMapperProps) {
+const TEAM_NAMES: Record<string, string> = {
+  NYM: 'New York Mets',
+  PHI: 'Philadelphia Phillies',
+  NYY: 'New York Yankees',
+  BOS: 'Boston Red Sox',
+  CHC: 'Chicago Cubs',
+  CWS: 'Chicago White Sox',
+  LAD: 'Los Angeles Dodgers',
+  LAA: 'Los Angeles Angels',
+  SF: 'San Francisco Giants',
+  SD: 'San Diego Padres',
+  HOU: 'Houston Astros',
+  OAK: 'Oakland Athletics',
+  SEA: 'Seattle Mariners',
+  TEX: 'Texas Rangers',
+  CLE: 'Cleveland Guardians',
+  DET: 'Detroit Tigers',
+  MIN: 'Minnesota Twins',
+  KC: 'Kansas City Royals',
+  BAL: 'Baltimore Orioles',
+  TB: 'Tampa Bay Rays',
+  TOR: 'Toronto Blue Jays',
+  ATL: 'Atlanta Braves',
+  MIA: 'Miami Marlins',
+  WSH: 'Washington Nationals',
+  CIN: 'Cincinnati Reds',
+  MIL: 'Milwaukee Brewers',
+  STL: 'St. Louis Cardinals',
+  PIT: 'Pittsburgh Pirates',
+  ARI: 'Arizona Diamondbacks',
+  COL: 'Colorado Rockies'
+};
+
+export default function TelemetryMapper({ isDeskInteractive, availableGames }: TelemetryMapperProps) {
   const [rules, setRules] = useState<TelemetryRule[]>([]);
   const [events, setEvents] = useState<WebslingerEvent[]>([]);
   const [loading, setLoading] = useState(false);
@@ -53,6 +87,25 @@ export default function TelemetryMapper({ isDeskInteractive }: TelemetryMapperPr
 
   // Master switch status (inferred from first rule or global state)
   const [autopilot, setAutopilot] = useState(true);
+
+  // Dynamically build the team list from active games
+  const getTeamOptions = () => {
+    const teams = new Set<string>();
+    if (availableGames && availableGames.length > 0) {
+      availableGames.forEach(game => {
+        if (game.away_team) teams.add(game.away_team);
+        if (game.home_team) teams.add(game.home_team);
+      });
+    } else {
+      return ['NYM', 'CIN', 'PHI', 'ATL'];
+    }
+    if (teamFilter && teamFilter !== 'GLOBAL') {
+      teams.add(teamFilter);
+    }
+    return Array.from(teams).sort();
+  };
+
+  const teamOptions = getTeamOptions();
 
   useEffect(() => {
     fetchRules();
@@ -175,6 +228,7 @@ export default function TelemetryMapper({ isDeskInteractive }: TelemetryMapperPr
 
   return (
     <div style={{
+      position: 'relative',
       background: 'rgba(10, 15, 30, 0.45)',
       border: '1px solid rgba(255, 255, 255, 0.08)',
       borderRadius: '20px',
@@ -183,6 +237,10 @@ export default function TelemetryMapper({ isDeskInteractive }: TelemetryMapperPr
       boxShadow: '0 4px 24px rgba(0,0,0,0.2)',
       marginTop: '1.5rem'
     }}>
+      {/* Target Zone Badge */}
+      <div className="zone-badge" style={{ top: '12px', left: '12px' }}>
+        [ZONE-4] TELEMETRY MAPPER
+      </div>
       {/* Header with Master Switch */}
       <div style={{
         display: 'flex',
@@ -330,6 +388,7 @@ export default function TelemetryMapper({ isDeskInteractive }: TelemetryMapperPr
               <option value="hit_data.launch_angle">hit_data.launch_angle (deg)</option>
               <option value="hit_data.hit_distance">hit_data.hit_distance (ft)</option>
               <option value="pitch_data.velocity">pitch_data.velocity (mph)</option>
+              <option value="status_msg">status_msg (text)</option>
             </select>
           </div>
         </div>
@@ -358,6 +417,7 @@ export default function TelemetryMapper({ isDeskInteractive }: TelemetryMapperPr
               <option value="=">= (Exactly Equal)</option>
               <option value=">">&gt; (Strictly Greater)</option>
               <option value="<">&lt; (Strictly Less)</option>
+              <option value="CONTAINS">CONTAINS (Substring Match)</option>
             </select>
           </div>
 
@@ -401,11 +461,12 @@ export default function TelemetryMapper({ isDeskInteractive }: TelemetryMapperPr
                 fontSize: '0.85rem'
               }}
             >
-              <option value="NYM">NYM (New York Mets Only)</option>
-              <option value="CIN">CIN (Cincinnati Reds Only)</option>
-              <option value="PHI">PHI (Philadelphia Phillies Only)</option>
-              <option value="ATL">ATL (Atlanta Braves Only)</option>
               <option value="GLOBAL">GLOBAL (No Team Limit)</option>
+              {teamOptions.map(team => (
+                <option key={team} value={team} style={{ background: '#090e1a' }}>
+                  {team} ({TEAM_NAMES[team] || team})
+                </option>
+              ))}
             </select>
           </div>
 

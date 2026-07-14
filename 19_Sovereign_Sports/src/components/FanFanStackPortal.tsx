@@ -393,7 +393,7 @@ function triggerAirBenderTakeover() {
     const maxFrames = 150;
     
     const img = new Image();
-    img.src = '/images/francisco_lindor_airbender.png';
+    img.src = '/images/devin_williams_airbender.png';
     
     const particles: Array<{
       angle: number;
@@ -473,11 +473,11 @@ function triggerAirBenderTakeover() {
       ctx.fillStyle = "#ffffff";
       ctx.shadowColor = "#00FFCC";
       ctx.shadowBlur = 15;
-      ctx.fillText("🌪️ FRANCISCO LINDOR 🌪️", centerX, centerY + 140);
+      ctx.fillText("🌪️ DEVON WILLIAMS 🌪️", centerX, centerY + 140);
       
       ctx.font = "italic 1.5rem Inter, system-ui";
       ctx.fillStyle = "#00FFCC";
-      ctx.fillText("THE AIR BENDER HIT!", centerX, centerY + 180);
+      ctx.fillText("THE AIR BENDER PITCH!", centerX, centerY + 180);
       ctx.restore();
       
       frame++;
@@ -825,7 +825,7 @@ function triggerMetsWinTakeover() {
 }
 
 export default function FanFanStackPortal() {
-  const { activeTheme, setActiveTheme } = useTheme();
+  const { activeTheme, setActiveTheme, fundiesGrid, setFundiesGrid, pinEngineActive, setPinEngineActive } = useTheme();
   const [volumeLevel, setVolumeLevel] = useState<number>(0.5);
 
   useEffect(() => {
@@ -865,6 +865,10 @@ export default function FanFanStackPortal() {
   const startSpideyTakeover = () => {
     triggerSpideyTakeover();
     setSpideyOverlayActive(true);
+    // Fail-safe to dismiss overlay after 5 seconds
+    setTimeout(() => {
+      setSpideyOverlayActive(false);
+    }, 5000);
   };
 
   const fetchProxies = async () => {
@@ -984,7 +988,6 @@ export default function FanFanStackPortal() {
   const chatInputRef = useRef<HTMLInputElement>(null);
   const [injectedSvg, setInjectedSvg] = useState<string | null>(null);
   const [personalityMode, setPersonalityMode] = useState('Matchup Focus');
-  const [pinEngineActive, setPinEngineActive] = useState(false);
 
 
   // TMI Anomaly (Cypher Cell Burn Tracker) states
@@ -1000,27 +1003,24 @@ export default function FanFanStackPortal() {
   const [selectedAdvocate, setSelectedAdvocate] = useState<string | null>(null);
   const [soundboardPhrases, setSoundboardPhrases] = useState<SoundboardPhrase[]>([]);
   const [loadingPhrases, setLoadingPhrases] = useState(false);
-  // Active overlays state for M.A.R.D. rule triggers
   const [activeOverlays, setActiveOverlays] = useState({
     spideyWipe: false,
     crimsonBleed: false,
     fundiesGrid: false,
     appleMask: false,
     weedstackProtocol: false,
-    stacklabsProtocol: false
+    stacklabsProtocol: false,
+    strikeout: false,
+    homerun: false,
+    doublePlay: false,
+    mascot: false,
+    lfgm: false
   });
 
-  // Sync fundiesGrid state to body class for global components (like Sidebar) to react
+  // Sync fundiesGrid state from context to activeOverlays state
   useEffect(() => {
-    if (activeOverlays.fundiesGrid) {
-      document.body.classList.add('fundies-grid-active');
-    } else {
-      document.body.classList.remove('fundies-grid-active');
-    }
-    return () => {
-      document.body.classList.remove('fundies-grid-active');
-    };
-  }, [activeOverlays.fundiesGrid]);
+    setActiveOverlays(prev => ({ ...prev, fundiesGrid }));
+  }, [fundiesGrid]);
 
   // Fetch and evaluate overlay rules from sys_overlay_registry every 5 seconds
   useEffect(() => {
@@ -1136,6 +1136,15 @@ export default function FanFanStackPortal() {
           const urlGamePk = params.get('_game_room') || params.get('game_room') || params.get('gamePk');
           if (urlGamePk) {
             setActiveGamePk(urlGamePk);
+          } else {
+            try {
+              const sessionRes = await axios.get('/api/session/active-stream');
+              if (sessionRes.data && sessionRes.data.game_pk) {
+                setActiveGamePk(sessionRes.data.game_pk);
+              }
+            } catch (sessErr) {
+              console.warn("Failed to fetch backend active stream:", sessErr);
+            }
           }
         }
       } catch (err) {
@@ -1342,7 +1351,7 @@ export default function FanFanStackPortal() {
     fetchPhrases();
   }, [selectedAdvocate]);
 
-  // Connect to M.A.R.D WebSocket depending on activeGamePk
+  // Connect to TMI WebSocket depending on activeGamePk
   useEffect(() => {
     if (!activeGamePk) {
       setWsConnected(false);
@@ -1351,9 +1360,26 @@ export default function FanFanStackPortal() {
     let ws: WebSocket | null = null;
     let isCurrent = true;
     let reconnectTimeout: any = null;
+    let reconnectDelay = 1000; // Exponential backoff initial delay: 1s
+
+    let resolveJoinRoom: (() => void) | null = null;
+    let joinRoomPromise = new Promise<void>((resolve) => {
+      resolveJoinRoom = resolve;
+    });
 
     const connectWs = () => {
       if (!isCurrent) return;
+
+      // Reset gatekeeper for new connection
+      let resolved = false;
+      joinRoomPromise = new Promise<void>((resolve) => {
+        resolveJoinRoom = () => {
+          if (!resolved) {
+            resolved = true;
+            resolve();
+          }
+        };
+      });
 
       const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const wsHost = window.location.host;
@@ -1369,21 +1395,60 @@ export default function FanFanStackPortal() {
           return;
         }
         setWsConnected(true);
+        reconnectDelay = 1000; // Reset delay on successful connection
         ws?.send(JSON.stringify({ type: 'JOIN_ROOM', target_game_pk: activeGamePk, room: activeGamePk }));
       };
 
-      ws.onmessage = (event) => {
+      ws.onmessage = async (event) => {
         if (!isCurrent) return;
         try {
           const msg = JSON.parse(event.data);
+
+          // Handle GAME_SWITCHED room transition immediately
+          if (msg.type === 'GAME_SWITCHED' && msg.game_pk) {
+            if (msg.game_pk !== activeGamePk) {
+              setActiveGamePk(msg.game_pk);
+            }
+            return;
+          }
+
+          // Handle CHAT_HISTORY immediately and resolve gatekeeper
+          if (msg.type === 'CHAT_HISTORY' && Array.isArray(msg.messages)) {
+            const history = msg.messages
+              .filter((m: any) => (String(m.target_game_pk) === activeGamePk || m.target_game_pk === 'GLOBAL') && m.type !== 'SYS_LOG')
+              .map((m: any) => {
+                const rawText = m.text || m.take || m.message || '';
+                const cleanedText = typeof rawText === 'string'
+                  ? rawText.replace(/^(Ambient Thought:|Sentence:|Observation:|Complaint:|Game Status Commentary:|Action:)\s*/i, '').replace(/^["']|["']$/g, '').trim()
+                  : JSON.stringify(rawText);
+                return {
+                  id: m.id || (Date.now().toString() + Math.random().toString()),
+                  user: m.user || m.persona || 'Advocate',
+                  text: cleanedText,
+                  time: m.time || m.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                  color: m.color,
+                  image: m.mediaUrl || m.media_url || m.image
+                };
+              });
+            setMessages(history);
+            resolveJoinRoom?.();
+            return;
+          }
+
+          // Await the JOIN_ROOM handshake completion (history loaded) before processing other messages
+          await joinRoomPromise;
 
           // Handle webslinger_trigger
           if (msg.type === 'webslinger_trigger') {
             const eventName = msg.event_name;
             const eventData = msg.data || {};
             
-            if (eventName === 'SPIDEY_THWIP_OVERLAY' || eventData.animation === 'web_blast' || eventName === 'EMIT_CHAT_FLASH_SPIDY') {
+            if (eventName === 'SPIDEY_THWIP_OVERLAY' || eventData.animation === 'web_blast' || eventName === 'EMIT_CHAT_FLASH_SPIDY' || eventName === 'OVERLAY_SPIDEY_WIPE') {
               startSpideyTakeover();
+              setActiveOverlays(prev => ({ ...prev, spideyWipe: true }));
+              setTimeout(() => {
+                setActiveOverlays(prev => ({ ...prev, spideyWipe: false }));
+              }, msg.duration_ms || eventData.duration_ms || 6000);
               const newMsg: ChatMessage = {
                 id: Date.now().toString() + Math.random().toString(),
                 user: "SYSTEM",
@@ -1392,6 +1457,97 @@ export default function FanFanStackPortal() {
                   : "🕸️ Spidey Web Blast activated! Multi-mesh overlay active.",
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 color: "#38BDF8"
+              };
+              setMessages(prev => [...prev, newMsg]);
+            } else if (eventName === 'OVERLAY_CRIMSON_BLEED' || eventName === 'MACRO_MENDOZA') {
+              setActiveOverlays(prev => ({ ...prev, crimsonBleed: true }));
+              setTimeout(() => {
+                setActiveOverlays(prev => ({ ...prev, crimsonBleed: false }));
+              }, msg.duration_ms || eventData.duration_ms || 6000);
+              const newMsg: ChatMessage = {
+                id: Date.now().toString() + Math.random().toString(),
+                user: "SYSTEM",
+                text: eventName === 'MACRO_MENDOZA'
+                  ? "🔴 MAX CHAOS INITIATED: Mendoza Firing sequence engaged!"
+                  : "🔴 Crimson Bleed overlay activated!",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                color: "#EF4444"
+              };
+              setMessages(prev => [...prev, newMsg]);
+            } else if (eventName === 'OVERLAY_FUNDIES_GRID') {
+              setActiveOverlays(prev => ({ ...prev, fundiesGrid: true }));
+              setTimeout(() => {
+                setActiveOverlays(prev => ({ ...prev, fundiesGrid: false }));
+              }, msg.duration_ms || eventData.duration_ms || 8000);
+              const newMsg: ChatMessage = {
+                id: Date.now().toString() + Math.random().toString(),
+                user: "SYSTEM",
+                text: "📐 Fundies Grid overlay activated!",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                color: "#00F0FF"
+              };
+              setMessages(prev => [...prev, newMsg]);
+            } else if (eventName === 'OVERLAY_APPLE_MASK') {
+              setActiveOverlays(prev => ({ ...prev, appleMask: true }));
+              setTimeout(() => {
+                setActiveOverlays(prev => ({ ...prev, appleMask: false }));
+              }, msg.duration_ms || eventData.duration_ms || 6000);
+              const newMsg: ChatMessage = {
+                id: Date.now().toString() + Math.random().toString(),
+                user: "SYSTEM",
+                text: "🍎 Apple Mask overlay activated! Let's Go Mets!",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                color: "#EF4444"
+              };
+              setMessages(prev => [...prev, newMsg]);
+            } else if (eventName === 'BRAND_WEEDSTACK') {
+              setActiveOverlays(prev => ({ ...prev, weedstackProtocol: true }));
+              setTimeout(() => {
+                setActiveOverlays(prev => ({ ...prev, weedstackProtocol: false }));
+              }, msg.duration_ms || eventData.duration_ms || 8000);
+              const newMsg: ChatMessage = {
+                id: Date.now().toString() + Math.random().toString(),
+                user: "SYSTEM",
+                text: "🍀 WeedStack Decompression sequence injected! Lavender fog active.",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                color: "#A855F7"
+              };
+              setMessages(prev => [...prev, newMsg]);
+            } else if (eventName === 'BRAND_STACKLABS') {
+              setActiveOverlays(prev => ({ ...prev, stacklabsProtocol: true }));
+              setTimeout(() => {
+                setActiveOverlays(prev => ({ ...prev, stacklabsProtocol: false }));
+              }, msg.duration_ms || eventData.duration_ms || 8000);
+              const newMsg: ChatMessage = {
+                id: Date.now().toString() + Math.random().toString(),
+                user: "SYSTEM",
+                text: "🔬 StackLabs Architectural Analysis sequence injected! Blueprint overlays active.",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                color: "#0284C7"
+              };
+              setMessages(prev => [...prev, newMsg]);
+            } else if (eventName === 'MACRO_NOMINAL') {
+              setActiveOverlays({
+                spideyWipe: false,
+                crimsonBleed: false,
+                fundiesGrid: false,
+                appleMask: false,
+                weedstackProtocol: false,
+                stacklabsProtocol: false,
+                strikeout: false,
+                homerun: false,
+                doublePlay: false,
+                mascot: false,
+                lfgm: false
+              });
+              document.getElementById('spidey-overlay-layer')?.remove();
+              document.getElementById('airbender-overlay-layer')?.remove();
+              const newMsg: ChatMessage = {
+                id: Date.now().toString() + Math.random().toString(),
+                user: "SYSTEM",
+                text: "🟢 RESTORE NOMINAL STATE: All active overlays and takeovers reset.",
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                color: "#10B981"
               };
               setMessages(prev => [...prev, newMsg]);
             } else if (eventName === 'OUTRAGE_PROXY_ALERT' || eventData.animation === 'screen_shake') {
@@ -1466,7 +1622,7 @@ export default function FanFanStackPortal() {
               const newMsg: ChatMessage = {
                 id: Date.now().toString() + Math.random().toString(),
                 user: "SYSTEM",
-                text: "🌪️ Francisco Lindor Air Bender Overlay activated!",
+                text: "🌪️ Devon Williams Air Bender Overlay activated!",
                 time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
                 color: "#00FFCC"
               };
@@ -1512,35 +1668,7 @@ export default function FanFanStackPortal() {
             return;
           }
 
-          // Handle GAME_SWITCHED room transition
-          if (msg.type === 'GAME_SWITCHED' && msg.game_pk) {
-            if (msg.game_pk !== activeGamePk) {
-              setActiveGamePk(msg.game_pk);
-            }
-            return;
-          }
-
-          // Handle CHAT_HISTORY
-          if (msg.type === 'CHAT_HISTORY' && Array.isArray(msg.messages)) {
-            const history = msg.messages
-              .filter((m: any) => String(m.target_game_pk) === activeGamePk || m.target_game_pk === 'GLOBAL')
-              .map((m: any) => {
-                const rawText = m.text || m.take || m.message || '';
-                const cleanedText = typeof rawText === 'string'
-                  ? rawText.replace(/^(Ambient Thought:|Sentence:|Observation:|Complaint:|Game Status Commentary:|Action:)\s*/i, '').replace(/^["']|["']$/g, '').trim()
-                  : JSON.stringify(rawText);
-                return {
-                  id: m.id || (Date.now().toString() + Math.random().toString()),
-                  user: m.user || m.persona || 'Advocate',
-                  text: cleanedText,
-                  time: m.time || m.timestamp || new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-                  color: m.color,
-                  image: m.mediaUrl || m.media_url || m.image
-                };
-              });
-            setMessages(history);
-            return;
-          }
+          // GAME_SWITCHED and CHAT_HISTORY are handled at the top of ws.onmessage to support gatekeeper flow
 
           // Handle outrage_proxy_deployed event
           if (msg.type === 'outrage_proxy_deployed') {
@@ -1557,6 +1685,29 @@ export default function FanFanStackPortal() {
             };
             setMessages(prev => [...prev, newMsg]);
             fetchProxies();
+            return;
+          }
+
+          // Handle CMD_EVENT_TRIGGER overlay trigger
+          if (msg.type === 'CMD_EVENT_TRIGGER' && String(msg.game_pk) === activeGamePk) {
+            console.log("[TMI SYSTEM] Broadcast event overlay trigger received:", msg);
+            const eventName = msg.event?.toLowerCase();
+            const duration = msg.duration_ms || 6000;
+            
+            let key: keyof typeof activeOverlays | null = null;
+            if (eventName === 'strikeout') key = 'strikeout';
+            else if (eventName === 'homerun' || eventName === 'home_run') key = 'homerun';
+            else if (eventName === 'double_play' || eventName === 'doubleplay') key = 'doublePlay';
+            else if (eventName === 'mascot' || eventName === 'mascot_dance') key = 'mascot';
+            else if (eventName === 'lfgm') key = 'lfgm';
+            
+            if (key) {
+              const overlayKey = key;
+              setActiveOverlays(prev => ({ ...prev, [overlayKey]: true }));
+              setTimeout(() => {
+                setActiveOverlays(prev => ({ ...prev, [overlayKey]: false }));
+              }, duration);
+            }
             return;
           }
 
@@ -1724,7 +1875,15 @@ export default function FanFanStackPortal() {
       ws.onclose = () => {
         setWsConnected(false);
         if (isCurrent) {
-          reconnectTimeout = setTimeout(connectWs, 3000);
+          // Exponential backoff with +/- 20% random jitter
+          const maxDelay = 30000;
+          const jitter = (Math.random() * 0.4 - 0.2) * reconnectDelay;
+          const targetDelay = Math.min(maxDelay, Math.max(1000, reconnectDelay + jitter));
+          
+          console.log(`[FanPortal] WS closed. Reconnecting in ${Math.round(targetDelay)}ms (base delay: ${reconnectDelay}ms)`);
+          reconnectTimeout = setTimeout(connectWs, targetDelay);
+          
+          reconnectDelay = Math.min(maxDelay, reconnectDelay * 2);
         }
       };
 
@@ -1921,11 +2080,11 @@ export default function FanFanStackPortal() {
           {/* Coordinate Grid Toggle Button */}
           <button
             id="fundies-grid-toggle-btn"
-            onClick={() => setActiveOverlays(prev => ({ ...prev, fundiesGrid: !prev.fundiesGrid }))}
+            onClick={() => setFundiesGrid(!fundiesGrid)}
             style={{
-              background: activeOverlays.fundiesGrid ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-              border: activeOverlays.fundiesGrid ? '1px solid #00F0FF' : '1px solid rgba(255, 255, 255, 0.15)',
-              color: activeOverlays.fundiesGrid ? '#00F0FF' : 'rgba(255, 255, 255, 0.7)',
+              background: fundiesGrid ? 'rgba(0, 240, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+              border: fundiesGrid ? '1px solid #00F0FF' : '1px solid rgba(255, 255, 255, 0.15)',
+              color: fundiesGrid ? '#00F0FF' : 'rgba(255, 255, 255, 0.7)',
               borderRadius: '6px',
               padding: '0.25rem 0.5rem',
               fontSize: '0.7rem',
@@ -1936,17 +2095,17 @@ export default function FanFanStackPortal() {
               alignItems: 'center',
               gap: '4px',
               transition: 'all 0.2s ease-in-out',
-              boxShadow: activeOverlays.fundiesGrid ? '0 0 10px rgba(0, 240, 255, 0.3)' : 'none',
+              boxShadow: fundiesGrid ? '0 0 10px rgba(0, 240, 255, 0.3)' : 'none',
               whiteSpace: 'nowrap'
             }}
           >
-            📐 GRID: {activeOverlays.fundiesGrid ? 'ON' : 'OFF'}
+            📐 GRID: {fundiesGrid ? 'ON' : 'OFF'}
           </button>
 
           {/* Pin Engine Toggle Button */}
           <button
             id="pin-engine-toggle-btn"
-            onClick={() => setPinEngineActive(prev => !prev)}
+            onClick={() => setPinEngineActive(!pinEngineActive)}
             style={{
               background: pinEngineActive ? 'rgba(253, 90, 30, 0.15)' : 'rgba(255, 255, 255, 0.05)',
               border: pinEngineActive ? '1px solid #FD5A1E' : '1px solid rgba(255, 255, 255, 0.15)',

@@ -111,29 +111,28 @@ def export_game_log(game_pk: str, format: str = "md"):
         pass
     game = dict(game_row) if game_row else {"game_pk": game_pk, "game_date": "Unknown", "away_team": "?", "home_team": "?", "venue": ""}
 
-    # Chat messages
-    chats = conn.execute("""
+    # Unified SQL union query to fetch and sort chat and play logs chronologically database-side
+    query = """
         SELECT 'chat' AS log_type, created_at AS ts, persona, text, model, msg_type,
                NULL AS inning, NULL AS half, NULL AS event_type,
                NULL AS batter, NULL AS pitcher, NULL AS pitch_speed, NULL AS description
         FROM game_chat WHERE game_pk = ?
-        ORDER BY created_at ASC
-    """, (game_pk,)).fetchall()
 
-    # Plays
-    plays = conn.execute("""
+        UNION ALL
+
         SELECT 'play' AS log_type, recorded_at AS ts, NULL AS persona, description AS text,
                NULL AS model, NULL AS msg_type,
                inning, half, event_type, batter, pitcher, pitch_speed, description
         FROM game_play WHERE game_pk = ?
-        ORDER BY recorded_at ASC
-    """, (game_pk,)).fetchall()
 
+        ORDER BY ts ASC
+    """
+    rows = conn.execute(query, (game_pk, game_pk)).fetchall()
     conn.close()
 
-    # Merge + sort by timestamp
-    all_events = [dict(r) for r in chats] + [dict(r) for r in plays]
-    all_events.sort(key=lambda e: e.get("ts") or "")
+    all_events = [dict(r) for r in rows]
+    chat_count = sum(1 for e in all_events if e["log_type"] == "chat")
+    play_count = len(all_events) - chat_count
 
     matchup = f"{game['away_team']} @ {game['home_team']}"
     game_date = game['game_date']
@@ -150,8 +149,8 @@ def export_game_log(game_pk: str, format: str = "md"):
             "",
             f"## Summary",
             f"- **Total Events:** {len(all_events)}",
-            f"- **Chat Messages:** {len(chats)}",
-            f"- **Plays Logged:** {len(plays)}",
+            f"- **Chat Messages:** {chat_count}",
+            f"- **Plays Logged:** {play_count}",
             "",
             "---",
             "",
@@ -195,7 +194,7 @@ def export_game_log(game_pk: str, format: str = "md"):
             "matchup": matchup,
             "venue": game.get("venue"),
             "exported_at": datetime.utcnow().isoformat(),
-            "summary": {"total": len(all_events), "chat": len(chats), "plays": len(plays)},
+            "summary": {"total": len(all_events), "chat": chat_count, "plays": play_count},
             "events": all_events,
         }
         return Response(

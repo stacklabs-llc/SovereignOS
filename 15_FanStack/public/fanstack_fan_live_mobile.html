@@ -702,7 +702,15 @@
                    <div class="chat-timestamp">${ts}</div>
                </div>
                ${cleanText ? `<div class="chat-text">${cleanText.replace(/\\n/g,'<br>')}</div>` : ''}
-               ${mediaUrl ? `<div class="chat-media" style="margin-top:8px;"><img src="${mediaUrl}" style="max-width:100%; max-height:250px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);" /></div>` : ''}
+               ${mediaUrl ? `
+                 <div class="chat-media" style="margin-top:8px;">
+                   ${mediaUrl.match(/\.(mp4|webm|ogg)(\?.*)?$/i) ? `
+                     <video src="${mediaUrl}" controls autoplay muted loop style="max-width:100%; max-height:250px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);"></video>
+                   ` : `
+                     <img src="${mediaUrl}" style="max-width:100%; max-height:250px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);" />
+                   `}
+                 </div>
+               ` : ''}
            </div>`;
 
       const isScrolledToBottom = chat.scrollHeight - chat.scrollTop <= chat.clientHeight + 50;

@@ -708,7 +708,8 @@ export default function PlaycallDesk() {
             <div className="flex-1 min-h-0 relative z-10 p-4 gap-4 mx-auto w-full grid" style={{ gridTemplateColumns: '300px 1fr 360px' }}>
                 
                 {/* Personas Panel */}
-                <div className="vm-panel-glass flex flex-col border border-white/10 overflow-hidden">
+                <div className="vm-panel-glass flex flex-col border border-white/10 overflow-hidden relative">
+                    <div className="zone-badge" style={{ top: '6px', left: '6px' }}>[ZONE-1] PERSONA SELECTOR</div>
                     <div className="flex items-center justify-between p-4 pb-2.5 bg-black/40 border-b border-white/10 shrink-0">
                         <span className="font-['Outfit'] text-[16px] font-bold tracking-[0.12em] text-[#64748b] uppercase">Personas</span>
                         <button onClick={() => openEditModal()} className="font-['Inter'] text-[15px] font-bold px-3 py-1.5 rounded-full border border-[#22c55e] text-[#22c55e] bg-[#22c55e]/10 uppercase tracking-[0.04em] hover:bg-[#22c55e]/20 hover:-translate-y-[1px] hover:shadow-[0_5px_15px_rgba(34,197,94,0.2)] transition-all">
@@ -772,7 +773,8 @@ export default function PlaycallDesk() {
                 </div>
 
                 {/* Feed Panel (Center) */}
-                <div className="vm-panel-glass flex flex-col border border-white/10 overflow-hidden bg-[#0B0E14]">
+                <div className="vm-panel-glass flex flex-col border border-white/10 overflow-hidden bg-[#0B0E14] relative">
+                    <div className="zone-badge" style={{ top: '6px', left: '6px' }}>[ZONE-2] LIVE CHAT MONITOR</div>
                     <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <span className="font-['Outfit'] text-[12px] font-black text-white tracking-[0.2em] uppercase">Sovereign Insights</span>
@@ -850,7 +852,8 @@ export default function PlaycallDesk() {
                 </div>
 
                 {/* Controls Panel (Right) */}
-                <div className="vm-panel-glass flex flex-col border border-white/10 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
+                <div className="vm-panel-glass flex flex-col border border-white/10 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none'] relative">
+                    <div className="zone-badge" style={{ top: '6px', right: '6px' }}>[ZONE-3] PRODUCER CONTROLS</div>
                     <div className="flex border-b border-white/10 bg-black/20 shrink-0">
                         {['EVENTS','BOARD','OVERRIDES','TAKES','SYSTEM'].map(tab => (
                             <button 

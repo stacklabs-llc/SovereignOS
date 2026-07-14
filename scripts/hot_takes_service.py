@@ -119,10 +119,16 @@ def _fetch_tweet(url: str) -> str:
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
+def get_db(timeout=30.0):
+    conn = sqlite3.connect(DB_PATH, timeout=timeout)
+    conn.execute("PRAGMA journal_mode=WAL;")
+    conn.execute("PRAGMA synchronous=NORMAL;")
+    conn.row_factory = sqlite3.Row
+    return conn
+
 def get_persona(user_name: str) -> dict:
     """Fetch persona record from the sovereign DB."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    conn = get_db()
     try:
         row = conn.execute(
             "SELECT * FROM persona WHERE LOWER(user_name) = LOWER(?)",
@@ -144,8 +150,7 @@ def get_roster_grounding(team_abbr: str, topic: str) -> str:
     if not team_abbr or str(team_abbr).lower() == 'global':
         return ""
     
-    conn = sqlite3.connect(DB_PATH, timeout=30.0)
-    conn.row_factory = sqlite3.Row
+    conn = get_db(timeout=30.0)
     try:
         # First, fetch the full active roster for the persona's team
         cursor = conn.cursor()
@@ -285,8 +290,67 @@ def call_ollama(model_name: str, system: str, prompt: str) -> str:
 
 
 def call_gemini(system: str, prompt: str) -> str:
-    """Direct Gemini call via Google GenAI SDK using Developer API Key."""
+    """Direct Gemini call trying Vertex AI first, and falling back to Developer API Key."""
+    # 1. Try Vertex AI
     try:
+        print("[GEMINI] Attempting generation via Vertex AI...")
+        safety_settings = [
+            SafetySetting(
+                category=HarmCategory.HARM_CATEGORY_HARASSMENT,
+                threshold=HarmBlockThreshold.BLOCK_NONE,
+            ),
+            SafetySetting(
+                category=HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+                threshold=HarmBlockThreshold.BLOCK_NONE,
+            ),
+            SafetySetting(
+                category=HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+                threshold=HarmBlockThreshold.BLOCK_NONE,
+            ),
+            SafetySetting(
+                category=HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+                threshold=HarmBlockThreshold.BLOCK_NONE,
+            ),
+        ]
+        
+        sys_instructions = [system] if system else None
+        
+        model = GenerativeModel("gemini-2.5-flash", system_instruction=sys_instructions)
+        response = model.generate_content(
+            prompt,
+            generation_config={
+                "temperature": 0.95,
+                "max_output_tokens": 2048,
+            },
+            safety_settings=safety_settings
+        )
+        
+        parts_text = []
+        if response and response.candidates and len(response.candidates) > 0:
+            candidate = response.candidates[0]
+            if candidate.content and candidate.content.parts:
+                for part in candidate.content.parts:
+                    if hasattr(part, "text") and part.text:
+                        parts_text.append(part.text)
+        if parts_text:
+            txt = "".join(parts_text)
+        else:
+            try:
+                txt = response.text or ""
+            except Exception:
+                txt = ""
+        
+        if txt:
+            print("[GEMINI] Vertex AI generation successful.")
+            return _strip_meta(txt.strip())
+        else:
+            print("[GEMINI] Vertex AI returned empty text, falling back.")
+    except Exception as e:
+        print(f"[GEMINI] Vertex AI failed: {e}. Falling back to Developer API key...")
+
+    # 2. Fallback to Developer API Key (GenAI Studio client)
+    try:
+        print("[GEMINI] Attempting generation via Google GenAI Studio client...")
         config = types.GenerateContentConfig(
             system_instruction=system,
             temperature=0.95,
@@ -330,6 +394,7 @@ def call_gemini(system: str, prompt: str) -> str:
             except Exception:
                 txt = ""
         if txt:
+            print("[GEMINI] GenAI Studio client generation successful.")
             return _strip_meta(txt.strip())
         raise Exception("Empty response returned from Gemini API.")
     except Exception as e:
@@ -395,7 +460,7 @@ def hot_take(req: HotTakeRequest):
 
     # Persist to sovereign_now.db — permanently, not just a log file
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db()
         conn.execute("""
             INSERT INTO hot_takes (persona, topic, response, engine, room_id, created_at)
             VALUES (?, ?, ?, ?, 'hot_takes', datetime('now'))
@@ -503,7 +568,7 @@ async def dub_video(
     if video is None or not video.filename:
         # Save direct live tweet to hot_takes DB table
         print(f"[HOT TAKES TWEET] persona={persona} | script={script}")
-        conn = sqlite3.connect(DB_PATH)
+        conn = get_db()
         try:
             conn.execute("""
                 INSERT INTO hot_takes (persona, topic, response, engine, room_id, created_at)
@@ -709,7 +774,15 @@ def hot_take_sniper(req: HotTakeSniperRequest):
     logger.info(f"Voice (System Instruction):\n{req.voice}")
     logger.info(f"User Prompt:\n{req.prompt}")
     try:
-        text = call_gemini(req.voice, req.prompt)
+        refined_voice = (
+            f"{req.voice}\n\n"
+            "CRITICAL INSTRUCTIONS FOR LIVE CHAT RESPONSES:\n"
+            "- React directly to the user's input. Do not regurgitate canned catchphrases from your profile unless they directly apply to the specific topic.\n"
+            "- Do not jump to unrelated players, injuries, or complaints (e.g., if the user talks about base stealing, do not talk about the bullpen or Edwin Diaz's injury).\n"
+            "- Keep it extremely raw, conversational, and natural. Keep it under 200 characters.\n"
+            "- Output ONLY the final plain text response, no quotes, no labels."
+        )
+        text = call_gemini(refined_voice, req.prompt)
         logger.info(f"Generated Hot Take response successfully: {text[:120]}...")
         return {"text": text}
     except Exception as e:

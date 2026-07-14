@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { DownloadCloud, Play, AlertTriangle } from 'lucide-react';
 import FanStackChat from './FanStackChat';
+import EventMediaCanvas from './EventMediaCanvas';
 import avatarMapData from '../avatarMap';
 
 export default function WatchPartyConsole() {
@@ -133,6 +134,7 @@ export default function WatchPartyConsole() {
         
         {/* VOD PLAYER */}
         <section className="flex-[3] bg-black rounded-xl border border-white/5 flex flex-col shadow-lg overflow-hidden relative">
+           <div className="zone-badge" style={{ top: '6px', left: '6px' }}>[ZONE-1] ROM CANVAS & EMULATION STAGE</div>
            <div className="flex-1 relative w-full h-full flex items-center justify-center overflow-hidden">
                <video 
                    key={isRomLoaded ? activeRom.id : 'idle_n64_loop'} 
@@ -144,6 +146,8 @@ export default function WatchPartyConsole() {
                    className="w-full h-full object-contain" 
                />
                
+                <EventMediaCanvas activeGamedayPk={activeRom.gamePk} />
+
                {/* Overlay Title */}
                <div className="absolute top-4 left-4 z-20 pointer-events-none">
                    <h2 className="text-white font-['Outfit'] text-xl drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] font-bold px-3 py-1 bg-black/40 rounded backdrop-blur-sm">
@@ -154,7 +158,8 @@ export default function WatchPartyConsole() {
         </section>
 
         {/* TWITCH CHAT */}
-        <aside className="w-[340px] shrink-0 flex flex-col bg-[#1e1e1e] rounded-xl border border-white/5 shadow-lg overflow-hidden">
+        <aside className="w-[340px] shrink-0 flex flex-col bg-[#1e1e1e] rounded-xl border border-white/5 shadow-lg overflow-hidden relative">
+            <div className="zone-badge" style={{ top: '6px', right: '6px' }}>[ZONE-2] MULTIVERSE CHAT FEED</div>
             <div className="h-10 bg-[#18181b] border-b border-white/5 flex items-center px-4 shrink-0 justify-between">
                 <span className="text-xs font-bold text-gray-300 tracking-wider">LIVE CHAT</span>
                 <button 
@@ -184,7 +189,8 @@ export default function WatchPartyConsole() {
       </main>
 
       {/* BOTTOM CONTROLS */}
-      <footer className="h-16 shrink-0 bg-[#1e1e1e] rounded-xl border border-white/5 shadow-lg flex items-center px-6 justify-between">
+      <footer className="h-16 shrink-0 bg-[#1e1e1e] rounded-xl border border-white/5 shadow-lg flex items-center px-6 justify-between relative">
+         <div className="zone-badge" style={{ top: '6px', left: '6px' }}>[ZONE-3] EMULATOR CONTROL PANELS</div>
          <div className="flex items-center gap-4">
             <div className="flex flex-col">
                 <label className="text-[10px] text-gray-400 font-semibold uppercase mb-1">Select ROM Payload</label>

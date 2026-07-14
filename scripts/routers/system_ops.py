@@ -20,7 +20,7 @@ async def sync_work_orders(pilot: dict = Depends(require_pilot)):
         cursor.execute("""
             INSERT INTO sovereign_tickets 
               (sys_id, number, type, short_description, description, state, priority, assigned_to, cmdb_ci, work_notes)
-            VALUES (?, ?, 'INC', 'Google Drive Work Order Sync Pipeline Execution', 'Sync pipeline execution started.', 2, 3, 'james', 'GoogleDriveSync', 'Initializing shell script pull_work_orders.sh')
+            VALUES (?, ?, 'INC', 'Google Drive Work Order Sync Pipeline Execution', 'Sync pipeline execution started.', 2, 3, 'james', 'GoogleDriveSync', 'Initializing shell script sovereign_pull_sync.sh')
         """, (sys_id, ticket_id))
         conn.commit()
     except Exception as e:
@@ -28,10 +28,10 @@ async def sync_work_orders(pilot: dict = Depends(require_pilot)):
     finally:
         conn.close()
 
-    # 2. Programmatically execute scripts/pull_work_orders.sh
+    # 2. Programmatically execute scripts/sovereign_pull_sync.sh
     try:
         process = await asyncio.create_subprocess_exec(
-            "/home/james/SovereignOS/scripts/pull_work_orders.sh",
+            "/home/james/SovereignOS/scripts/sovereign_pull_sync.sh",
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE
         )
@@ -44,14 +44,14 @@ async def sync_work_orders(pilot: dict = Depends(require_pilot)):
                 UPDATE sovereign_tickets 
                 SET state = 4, work_notes = ? 
                 WHERE sys_id = ?
-            """, (f"Execution of pull_work_orders.sh failed: {err_msg}", sys_id))
+            """, (f"Execution of sovereign_pull_sync.sh failed: {err_msg}", sys_id))
             conn.commit()
             conn.close()
             raise HTTPException(status_code=500, detail=f"Sync execution failed: {err_msg}")
     except Exception as e:
         if isinstance(e, HTTPException):
             raise e
-        raise HTTPException(status_code=500, detail=f"Failed to start pull_work_orders.sh: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to start sovereign_pull_sync.sh: {str(e)}")
 
     # 3. Execute scripts/execute_staged_orders.py
     staged_count = 0
@@ -818,8 +818,8 @@ class ServiceControlRequest(BaseModel):
 async def get_system_metrics():
     # 1. CPU Metrics
     try:
-        cpu_total = psutil.cpu_percent(interval=None)
-        cpu_cores = psutil.cpu_percent(interval=None, percpu=True)
+        cpu_cores = psutil.cpu_percent(interval=0.1, percpu=True)
+        cpu_total = round(sum(cpu_cores) / len(cpu_cores), 1) if cpu_cores else 0.0
     except Exception:
         cpu_total = 0.0
         cpu_cores = []
@@ -867,21 +867,26 @@ async def get_system_metrics():
         "sovereign_core_api.py": "Sovereign Core API",
         "tmi_daemon.py": "TMI Engine Daemon",
         "vesper_scheduler.py": "Vesper Scheduler Engine",
-        "fanstack_chatbots.py": "MARD Chat Engine"
+        "fanstack_chatbots.py": "MARD Chat Engine",
+        "statcast_ingestor.py": "Statcast Ingestor",
+        "statcast_sentinel.py": "Statcast Sentinel",
+        "sovereign_drive_pipeline.py": "Sovereign Drive Pipeline"
     }
 
     status_matrix = []
     
     # Scan running processes to match services
     found_procs = {}
-    for proc in psutil.process_iter(['pid', 'cmdline']):
+    for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         try:
             cmdline = proc.info['cmdline']
-            if cmdline:
-                cmd_str = " ".join(cmdline)
-                for script in services:
-                    if script in cmd_str:
-                        found_procs[script] = proc.info['pid']
+            name = proc.info['name'] or ''
+            if cmdline and len(cmdline) > 0:
+                is_python = 'python' in name.lower() or 'python' in cmdline[0].lower()
+                if is_python:
+                    for script in services:
+                        if any(script in arg for arg in cmdline):
+                            found_procs[script] = proc.info['pid']
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
 
@@ -1010,7 +1015,10 @@ async def control_system_service(payload: ServiceControlRequest):
         "sovereign_core_api.py": "/home/james/SovereignOS/scripts/sovereign_core_api.py",
         "tmi_daemon.py": "/home/james/SovereignOS/scripts/tmi_daemon.py",
         "vesper_scheduler.py": "/home/james/SovereignOS/scripts/vesper_scheduler.py",
-        "fanstack_chatbots.py": "/home/james/SovereignOS/scripts/fanstack_chatbots.py"
+        "fanstack_chatbots.py": "/home/james/SovereignOS/scripts/fanstack_chatbots.py",
+        "statcast_ingestor.py": "/home/james/SovereignOS/scripts/statcast_ingestor.py",
+        "statcast_sentinel.py": "/home/james/SovereignOS/scripts/statcast_sentinel.py",
+        "sovereign_drive_pipeline.py": "/home/james/SovereignOS/scripts/sovereign_drive_pipeline.py"
     }
 
     if script_name not in valid_scripts:
@@ -1030,11 +1038,35 @@ async def control_system_service(payload: ServiceControlRequest):
     # Terminate/Stop Actions
     if action in ["stop", "terminate", "restart"]:
         try:
-            # Safe SIGTERM
-            subprocess.run(["pkill", "-15", "-f", script_name])
-            await asyncio.sleep(0.8)
-            # SIGKILL mop up
-            subprocess.run(["pkill", "-9", "-f", script_name])
+            # Resolve the PID of the python process running the script specifically
+            target_pid = None
+            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                try:
+                    cmdline = proc.info['cmdline']
+                    name = proc.info['name'] or ''
+                    if cmdline and len(cmdline) > 0:
+                        is_python = 'python' in name.lower() or 'python' in cmdline[0].lower()
+                        if is_python and any(script_name in arg for arg in cmdline):
+                            target_pid = proc.info['pid']
+                            break
+                except Exception:
+                    pass
+
+            if target_pid:
+                # Safe SIGTERM targeting the PID specifically
+                subprocess.run(["kill", "-15", str(target_pid)])
+                await asyncio.sleep(0.8)
+                # SIGKILL mop up if it survived
+                try:
+                    p = psutil.Process(target_pid)
+                    p.kill()
+                except psutil.NoSuchProcess:
+                    pass
+            else:
+                # Fallback to standard pkill if pid not resolved cleanly (defensive)
+                subprocess.run(["pkill", "-15", "-f", script_name])
+                await asyncio.sleep(0.8)
+                subprocess.run(["pkill", "-9", "-f", script_name])
         except Exception as e:
             print(f"Error terminating {script_name}: {e}")
 

@@ -611,9 +611,9 @@ async def websocket_terminal_sync(websocket: WebSocket):
     await websocket.accept()
     print("[WS] Client connected to Interactive Sync Terminal.")
     try:
-        # Trigger the pull_work_orders.sh process
+        # Trigger the sovereign_pull_sync.sh process
         process = await asyncio.create_subprocess_exec(
-            "bash", "/home/james/SovereignOS/scripts/pull_work_orders.sh",
+            "bash", "/home/james/SovereignOS/scripts/sovereign_pull_sync.sh",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE
         )

@@ -366,7 +366,9 @@ export default function SovereignOsPortal({ onNavigate, globalBoggsOverride = 'N
                     icon: staticApp?.icon || <span className="font-['Outfit'] font-bold text-2xl" style={{ color: dbModule.color || '#38bdf8' }}>❖</span>,
                     category: (dbModule.category || staticApp?.category || 'stack') as 'stack' | 'utility' | 'config',
                     onClick: staticApp ? staticApp.onClick : (onNavigate: any) => {
-                      if (dbModule.port) {
+                      if (dbModule.module_name === 'local_transcribe' || dbModule.module_name === 'stream_sniper') {
+                        onNavigate('GLOBAL', 'stream_sniper');
+                      } else if (dbModule.port) {
                         window.open(`https://clio.taila01894.ts.net:${dbModule.port}/`, '_blank');
                       }
                     },
@@ -374,7 +376,8 @@ export default function SovereignOsPortal({ onNavigate, globalBoggsOverride = 'N
                       ? (dbModule.u_visible_on_main === 1 || dbModule.u_visible_on_main === '1' || dbModule.u_visible_on_main === true)
                       : (staticApp ? staticApp.defaultVisibleInMain : false),
                     defaultVisibleInDirectory: staticApp ? staticApp.defaultVisibleInDirectory : true,
-                    active: true
+                    active: true,
+                    badge: dbModule.port ? `PORT ${dbModule.port}` : (staticApp ? staticApp.badge : undefined)
                   };
                 });
             }

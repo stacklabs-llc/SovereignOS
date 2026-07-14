@@ -15,11 +15,18 @@ STAGED_DIR = "/home/james/SovereignOS/media_stack/ingest"
 WINNING_OUTPUT_SPORTS = "/home/james/SovereignOS/19_Sovereign_Sports/public/videos/precog_winning.mp4"
 WINNING_OUTPUT_SANDBOX = "/home/james/SovereignOS-sandbox/catnip-wars/public/videos/precog_winning.mp4"
 
-# Source template videos
-STRIKE_TEMPLATE = "/home/james/SovereignOS/media_vault/01_Assets/Video/Inbox/battery_chucker.mp4"
-WALK_TEMPLATE = "/home/james/SovereignOS/media_vault/01_Assets/Video/Inbox/Raspberry_Pi_5_202604241247_2.mp4"
-IN_PLAY_OUT_TEMPLATE = "/home/james/SovereignOS/media_vault/01_Assets/Video/Inbox/norm_1.mp4"
-IN_PLAY_HIT_TEMPLATE = "/home/james/SovereignOS/media_vault/01_Assets/Video/Inbox/Mets_fan_celebration,_202604210041.mp4"
+# Helper to dynamically fetch fallback assets from the vault
+def get_fallback_asset(outcome, vault_dir):
+    """
+    Finds a fallback video in vault_dir for the given outcome.
+    Scans the directory for any files matching *_3_2_{outcome}_v1.mp4.
+    """
+    import glob
+    pattern = os.path.join(vault_dir, f"*_3_2_{outcome}_v1.mp4")
+    matches = glob.glob(pattern)
+    if matches:
+        return sorted(matches)[0]
+    return None
 
 # Configure Gemini
 api_key = os.getenv("GEMINI_API_KEY")
@@ -52,13 +59,25 @@ def init_pregeneration(game_pk, batter, pitcher, batter_id=None, pitcher_id=None
         print(f"[PRECOG] Multiverse staged for Game {game_pk} from vault.")
         return
         
-    print(f"[PRECOG] Vault MISS for player {player_key}. Staging template files...")
+    print(f"[PRECOG] Vault MISS for player {player_key}. Finding vault fallbacks dynamically...")
     
-    # 1. Stage/copy the four template files
-    shutil.copy(STRIKE_TEMPLATE, f"{STAGED_DIR}/{game_pk}_strikeout.mp4")
-    shutil.copy(WALK_TEMPLATE, f"{STAGED_DIR}/{game_pk}_walk.mp4")
-    shutil.copy(IN_PLAY_OUT_TEMPLATE, f"{STAGED_DIR}/{game_pk}_in_play_out.mp4")
-    shutil.copy(IN_PLAY_HIT_TEMPLATE, f"{STAGED_DIR}/{game_pk}_in_play_hit.mp4")
+    for outcome in outcomes:
+        dest_path = f"{STAGED_DIR}/{game_pk}_{outcome}.mp4"
+        
+        # Check if the player-specific file exists (though all_cached was False, some might exist)
+        player_file = vault_files[outcome]
+        if os.path.exists(player_file):
+            shutil.copy(player_file, dest_path)
+            print(f"[PRECOG] Staged player-specific asset for {outcome}: {player_file}")
+            continue
+            
+        # Try dynamic fallback lookup in the vault
+        fallback_file = get_fallback_asset(outcome, vault_dir)
+        if fallback_file and os.path.exists(fallback_file):
+            shutil.copy(fallback_file, dest_path)
+            print(f"[PRECOG] Staged dynamic vault fallback for {outcome}: {fallback_file}")
+        else:
+            raise FileNotFoundError(f"[PRECOG ERROR] No asset (player-specific or fallback) found in {vault_dir} for outcome {outcome}!")
     
     # 2. Asynchronously fetch probabilities or prompts from Gemini
     prompt_str = f"Predictive MLB matchup: batter {batter} vs pitcher {pitcher}. Generate short dramatic captions (max 10 words) for 4 outcomes: Strikeout, Walk, In-Play Out, In-Play Hit."
@@ -90,7 +109,10 @@ def finalize_prediction(game_pk, batter, pitcher, actual_play_desc, batter_id=No
         dynamic_text = f"{batter} strikes out on a full count pitch from {pitcher}!"
     elif "walk" in actual_play_lower or "base on balls" in actual_play_lower or "hit by pitch" in actual_play_lower or "hbp" in actual_play_lower:
         winning_outcome = "walk"
-        dynamic_text = f"{batter} draws a patient full count Walk vs {pitcher}!"
+        if "hit by pitch" in actual_play_lower or "hbp" in actual_play_lower:
+            dynamic_text = f"{batter} is hit by pitch vs {pitcher}!"
+        else:
+            dynamic_text = f"{batter} draws a patient full count Walk vs {pitcher}!"
     elif any(h in actual_play_lower for h in ["hit", "single", "double", "triple", "home run", "homer", "run", "scores"]):
         if any(o in actual_play_lower for o in ["out", "flyout", "groundout", "lineout", "popout", "fielder's choice", "fielders choice", "double play"]):
             winning_outcome = "in_play_out"

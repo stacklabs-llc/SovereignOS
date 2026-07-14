@@ -165,7 +165,7 @@ export const PORTAL_APPS: PortalAppDef[] = [
     subtitle: 'Veterinary Portal',
     color: '#a78bfa',
     icon: <Stethoscope size={28} className="text-[#a78bfa]" />,
-    onClick: () => window.open('https://clio.taila01894.ts.net:3015/', '_blank'),
+    onClick: () => window.open('https://clio.taila01894.ts.net:8443/', '_blank'),
     defaultVisibleInMain: false,
     defaultVisibleInDirectory: true,
     category: 'stack'

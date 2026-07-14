@@ -4,6 +4,9 @@ import { getApiHost } from '../api-host';
 import { useAuth } from '../contexts/AuthContext';
 import { TOKEN_KEY_EXPORT } from './AuthGate';
 import FanProfileModal from './FanProfileModal';
+import { GLOBAL_SETTINGS } from '../config/SovereignConfig';
+import SyncStatusMonitor from './SyncStatusMonitor';
+
 
 interface GlobalSystemBarProps {
   osTheme: string;
@@ -75,60 +78,24 @@ export default function GlobalSystemBar({
 
 
       {/* Sovereign Oracle Toggle */}
-      {auth?.role === 'pilot' || auth?.role === 'creator' ? (
-      <>
-      <button
-        onClick={() => setIsVocalMatrixOpen(!isVocalMatrixOpen)}
-        className={`px-3 py-1.5 border rounded transition-colors font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-[0_2px_5px_rgba(0,0,0,0.5)] ${isVocalMatrixOpen
-            ? 'bg-[#38bdf8] text-white border-[#38bdf8]'
-            : 'bg-[#38bdf8]/20 text-[#38bdf8] border-[#38bdf8]/50 hover:bg-[#38bdf8] hover:text-white'
-          }`}
-      >
-        🎙️ Sovereign Oracle
-      </button>
-      <button
-        onClick={() => {
-          const params = new URLSearchParams(window.location.search);
-          params.set('domain', 'GLOBAL');
-          params.set('room', 'room_builder');
-          window.history.pushState({}, '', '?' + params.toString());
-          window.dispatchEvent(new PopStateEvent('popstate'));
-        }}
-        className="px-3 py-1.5 border border-[#38bdf8]/50 bg-[#38bdf8]/15 text-[#38bdf8] hover:bg-[#38bdf8] hover:text-white rounded transition-colors font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-[0_2px_5px_rgba(0,0,0,0.5)]"
-      >
-        👑 Room Builder
-      </button>
-      </>
-      ) : null}
-
-      {/* Cast Controls */}
-      {!isDev && (auth?.role === 'pilot' || auth?.role === 'creator') && (
-        <>
-          <span className="font-sans text-[9px] uppercase tracking-widest text-white/60 px-2 border-l border-white/20 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">ADB Cast</span>
-          <button
-            onClick={() => {
-              const targetUrl = window.location.origin + window.location.pathname + "?domain=" + activeDomain + (activeRoom ? "&room=" + activeRoom : "");
-              fetch(`/api/cast_tv/192.168.1.68`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: targetUrl })
-              });
+      {(auth?.role === 'pilot' || auth?.role === 'creator') && (
+        <div className="flex items-center gap-3">
+          <SyncStatusMonitor />
+          <a
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              setIsVocalMatrixOpen(!isVocalMatrixOpen);
             }}
-            className="px-3 py-1.5 bg-[#4285F4]/20 text-[#4285F4] border border-[#4285F4]/50 rounded hover:bg-[#4285F4] hover:text-white transition-colors font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-[0_2px_5px_rgba(0,0,0,0.5)]"
+            className={`font-mono text-[10px] font-bold tracking-widest uppercase hover:underline flex items-center gap-1.5 transition-all duration-200 ${
+              isVocalMatrixOpen ? 'text-[#38bdf8]' : 'text-gray-400 hover:text-[#38bdf8]'
+            }`}
           >
-            📺 65" TV
-          </button>
-          <button
-            onClick={() => {
-              const targetUrl = window.location.origin + window.location.pathname + "?domain=" + activeDomain + (activeRoom ? "&room=" + activeRoom : "");
-              fetch(`/api/cast_tv/192.168.1.111`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url: targetUrl })
-              });
-            }}
-            className="px-3 py-1.5 bg-[#4285F4]/20 text-[#4285F4] border border-[#4285F4]/50 rounded hover:bg-[#4285F4] hover:text-white transition-colors font-mono text-[10px] font-bold tracking-widest uppercase flex items-center gap-2 shadow-[0_2px_5px_rgba(0,0,0,0.5)]"
-          >
-            📺 55" TV
-          </button>
-        </>
+            🎙️ Sovereign Oracle
+          </a>
+        </div>
       )}
+
 
           {/* Account Chip */}
           <div className="pl-4 border-l border-white/20 ml-2 relative">
@@ -174,6 +141,7 @@ export default function GlobalSystemBar({
                     >
                       <optgroup label="Modern Systems">
                         <option value="sovereign-home">Sovereign Home (Premium)</option>
+                        <option value="sny-classic">SNY Classic</option>
                         <option value="aether-vet">Aether Vet (Clinical)</option>
                         <option value="gardenstack">GardenStack (Botanical)</option>
                         <option value="espn">ESPN Workspace</option>

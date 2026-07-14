@@ -95,6 +95,11 @@ export default defineConfig({
         target: 'http://127.0.0.1:8989',
         changeOrigin: true,
       },
+      '/radarr': {
+        target: 'http://127.0.0.1:7878',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/radarr/, '')
+      },
       '/MediaCover': {
         target: 'http://127.0.0.1:8989',
         changeOrigin: true,

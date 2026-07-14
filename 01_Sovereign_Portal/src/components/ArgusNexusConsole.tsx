@@ -14,7 +14,7 @@ interface ArgusNexusConsoleProps {
   onBack?: () => void;
 }
 
-const CameraCard = ({ cam, isHomeTheme, onCaptureRom }: { key?: any, cam: ArgusCamera, isHomeTheme: boolean, onCaptureRom: (cam: ArgusCamera) => void }) => {
+const CameraCard = ({ cam, isHomeTheme, onCaptureRom, onFocusCam }: { key?: any, cam: ArgusCamera, isHomeTheme: boolean, onCaptureRom: (cam: ArgusCamera) => void, onFocusCam: (cam: ArgusCamera) => void }) => {
   const [hasError, setHasError] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
 
@@ -44,13 +44,13 @@ const CameraCard = ({ cam, isHomeTheme, onCaptureRom }: { key?: any, cam: ArgusC
               alt={cam.name}
               className="w-full h-full object-contain absolute inset-0 z-0 cursor-pointer hover:scale-105 transition-transform duration-500"
               onError={() => setHasError(true)}
-              onClick={() => window.open(cam.stream_url, '_blank')}
+              onClick={() => onFocusCam(cam)}
             />
             {/* Enlarge Button */}
             <div className="absolute top-3 left-3 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
               <button 
-                onClick={() => window.open(cam.stream_url, '_blank')}
-                title="Enlarge feed in new tab"
+                onClick={() => onFocusCam(cam)}
+                title="Align Feed (Focus Mode)"
                 className={`flex items-center justify-center p-2 rounded shadow-lg backdrop-blur transition-colors ${
                   isHomeTheme 
                     ? 'bg-black/60 text-white border border-white/20 hover:bg-[#38bdf8] hover:border-[#38bdf8]' 
@@ -103,6 +103,7 @@ export default function ArgusNexusConsole({ osTheme = 'mac', onBack }: ArgusNexu
   const [cameras, setCameras] = useState<ArgusCamera[]>([]);
   const [isScanning, setIsScanning] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [focusCam, setFocusCam] = useState<ArgusCamera | null>(null);
 
   const handleCaptureRom = async (cam: ArgusCamera) => {
     try {
@@ -138,7 +139,16 @@ export default function ArgusNexusConsole({ osTheme = 'mac', onBack }: ArgusNexu
         return { ...cam, stream_url: proxyUrl };
       });
 
-      setCameras(proxiedCameras);
+      // Register the couch Tapo camera feed into our security grid (WO-2026-038)
+      const tapoCouchCam: ArgusCamera = {
+        id: "cam_tapo_couch",
+        name: "Tapo C120 Couch Cam",
+        ip: "clio.taila01894.ts.net",
+        port: 8081,
+        stream_url: `/cam-proxy/clio/cam/tapo_couch?t=${Date.now()}`
+      };
+
+      setCameras([tapoCouchCam, ...proxiedCameras]);
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -163,11 +173,11 @@ export default function ArgusNexusConsole({ osTheme = 'mac', onBack }: ArgusNexu
             </button>
           )}
           <div>
-            <h1 className={`text-3xl font-bold flex items-center gap-4 ${isHomeTheme ? 'text-white' : 'text-[#66fcf1] tracking-[0.2em] uppercase drop-'}`}>
-              {isHomeTheme ? <Video className="w-8 h-8 text-[#22c55e]" /> : <Camera className="w-8 h-8" />}
+            <h1 className={`text-3xl font-bold flex items-center gap-4 ${isHomeTheme ? 'text-white' : 'text-[#66fcf1] tracking-[0.2em] uppercase'}`}>
+              {isHomeTheme ? <Video className="w-8 h-8 text-[#00b4d8]" /> : <Camera className="w-8 h-8" />}
               {isHomeTheme ? 'Live Camera Grid' : 'ARGUS Nexus'}
             </h1>
-            <p className={`text-[12px] mt-1 ${isHomeTheme ? 'text-[#22c55e] tracking-widest font-mono' : 'text-[#45a29e] tracking-widest uppercase'}`}>
+            <p className={`text-[12px] mt-1 ${isHomeTheme ? 'text-[#00b4d8] tracking-widest font-mono' : 'text-[#45a29e] tracking-widest uppercase'}`}>
               {isHomeTheme ? 'Active Video Feeds' : 'SOVEREIGN MESH // GLOBAL SURVEILLANCE GRID'}
             </p>
           </div>
@@ -192,8 +202,8 @@ export default function ArgusNexusConsole({ osTheme = 'mac', onBack }: ArgusNexu
 
       {isScanning && cameras.length === 0 ? (
         <div className="flex flex-col items-center justify-center h-[50vh] gap-6">
-          <Scan className={`w-16 h-16 animate-ping ${isHomeTheme ? 'text-[#22c55e]' : 'text-[#66fcf1]'}`} />
-          <p className={`text-xl tracking-[0.3em] uppercase ${isHomeTheme ? 'text-[#22c55e] font-bold' : 'text-[#66fcf1]'}`}>
+          <Scan className={`w-16 h-16 animate-ping ${isHomeTheme ? 'text-[#00b4d8]' : 'text-[#66fcf1]'}`} />
+          <p className={`text-xl tracking-[0.3em] uppercase ${isHomeTheme ? 'text-[#00b4d8] font-bold' : 'text-[#66fcf1]'}`}>
             Finding Cameras...
           </p>
         </div>
@@ -206,11 +216,100 @@ export default function ArgusNexusConsole({ osTheme = 'mac', onBack }: ArgusNexu
             </div>
           ) : (
             cameras.map((cam) => (
-              <CameraCard key={cam.id} cam={cam} isHomeTheme={isHomeTheme} onCaptureRom={handleCaptureRom} />
+              <CameraCard key={cam.id} cam={cam} isHomeTheme={isHomeTheme} onCaptureRom={handleCaptureRom} onFocusCam={setFocusCam} />
             ))
           )}
+        </div>
+      )}
+
+      {/* Focus Mode Alignment Overlay with CRT Scanlines (WO-2026-038) */}
+      {focusCam && (
+        <div className="fixed inset-0 bg-black/95 z-[9999] flex flex-col items-center justify-center p-4 md:p-8 backdrop-blur-md font-mono select-none">
+          {/* CRT scanline simulation */}
+          <div className="absolute inset-0 pointer-events-none bg-[linear-gradient(rgba(18,16,16,0)_50%,_rgba(0,0,0,0.25)_50%),_linear-gradient(90deg,_rgba(255,0,0,0.06),_rgba(0,255,0,0.02),_rgba(0,0,255,0.06))] bg-[size:100%_4px,_6px_100%] z-40 opacity-40"></div>
+          
+          {/* Alignment Grid Overlay */}
+          <div className="absolute inset-0 pointer-events-none border-[30px] border-black/40 z-30 flex items-center justify-center">
+            <div className="w-full h-full relative border border-cyan-500/20">
+              <div className="absolute top-1/2 left-0 right-0 h-[1px] bg-cyan-500/30"></div>
+              <div className="absolute left-1/2 top-0 bottom-0 w-[1px] bg-cyan-500/30"></div>
+              {/* Alignment Target Circle */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 border-2 border-dashed border-cyan-500/40 rounded-full flex items-center justify-center animate-pulse">
+                <div className="w-8 h-8 border border-cyan-500/60 rounded-full"></div>
+              </div>
+              <div className="absolute top-1/4 left-0 right-0 h-[1px] bg-cyan-500/10"></div>
+              <div className="absolute top-3/4 left-0 right-0 h-[1px] bg-cyan-500/10"></div>
+              <div className="absolute left-1/4 top-0 bottom-0 w-[1px] bg-cyan-500/10"></div>
+              <div className="absolute left-3/4 top-0 bottom-0 w-[1px] bg-cyan-500/10"></div>
+            </div>
+          </div>
+          
+          {/* Focus Header */}
+          <div className="w-full max-w-5xl flex justify-between items-center mb-4 z-50 px-4">
+            <div className="flex flex-col">
+              <span className="text-[#00b4d8] text-xs tracking-[0.3em] uppercase font-bold animate-pulse">ALIGNMENT MODE // CRT SCANLINE ACTIVE</span>
+              <span className="text-white text-2xl font-bold uppercase tracking-wider mt-1">{focusCam.name}</span>
+            </div>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => {
+                  const base = focusCam.stream_url.split('?')[0];
+                  setFocusCam({
+                    ...focusCam,
+                    stream_url: `${base}?t=${Date.now()}`
+                  });
+                }}
+                className="px-4 py-2 bg-slate-900 border border-[#00b4d8] text-[#00b4d8] hover:bg-[#00b4d8]/20 transition-all font-bold tracking-widest text-xs uppercase"
+              >
+                Align/Reload Feed
+              </button>
+              <button 
+                onClick={() => setFocusCam(null)}
+                className="px-4 py-2 bg-red-950 border border-red-500 text-red-500 hover:bg-red-500/20 transition-all font-bold tracking-widest text-xs uppercase"
+              >
+                Exit Preview
+              </button>
+            </div>
+          </div>
+
+          {/* Video Container */}
+          <div className="relative w-full max-w-5xl aspect-video bg-black border-2 border-[#00b4d8]/40 overflow-hidden flex items-center justify-center shadow-[0_0_50px_rgba(0,180,216,0.15)] z-20">
+            <img 
+              src={focusCam.stream_url} 
+              alt={focusCam.name}
+              className="w-full h-full object-contain z-10"
+              onError={(e) => {
+                console.error("Focus Cam Load Error");
+              }}
+            />
+            <div className="absolute top-2 left-2 z-20 text-[10px] text-cyan-400/60 font-mono">[ALIGN_CORNER_TL // 0,0]</div>
+            <div className="absolute top-2 right-2 z-20 text-[10px] text-cyan-400/60 font-mono">[ALIGN_CORNER_TR // 1920,0]</div>
+            <div className="absolute bottom-2 left-2 z-20 text-[10px] text-cyan-400/60 font-mono">[ALIGN_CORNER_BL // 0,1080]</div>
+            <div className="absolute bottom-2 right-2 z-20 text-[10px] text-cyan-400/60 font-mono">[ALIGN_CORNER_BR // 1920,1080]</div>
+          </div>
+          
+          {/* Calibration overlay telemetry */}
+          <div className="w-full max-w-5xl mt-4 z-50 grid grid-cols-2 md:grid-cols-4 gap-4 px-4 text-xs font-mono text-white/60">
+            <div className="p-3 bg-slate-900/60 border border-white/5 backdrop-blur">
+              <div className="text-cyan-400">RESOLUTION</div>
+              <div className="text-white font-bold mt-1">1080p (Ingress MJPEG)</div>
+            </div>
+            <div className="p-3 bg-slate-900/60 border border-white/5 backdrop-blur">
+              <div className="text-cyan-400">FPS RATE</div>
+              <div className="text-white font-bold mt-1">30 FPS NOMINAL</div>
+            </div>
+            <div className="p-3 bg-slate-900/60 border border-white/5 backdrop-blur">
+              <div className="text-cyan-400">NODE FQDN</div>
+              <div className="text-white font-bold mt-1 truncate">{focusCam.ip}</div>
+            </div>
+            <div className="p-3 bg-slate-900/60 border border-white/5 backdrop-blur">
+              <div className="text-cyan-400">CALIBRATION STATUS</div>
+              <div className="text-[#00b4d8] font-bold mt-1 animate-pulse">LOCKED // SEATING VERIFIED</div>
+            </div>
+          </div>
         </div>
       )}
     </div>
   );
 }
+

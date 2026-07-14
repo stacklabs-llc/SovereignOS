@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { SovereignConfig } from '../config/SovereignConfig';
 import LogArchiveModal from './LogArchiveModal';
+
 interface FanStackPortalProps {
   onSelectDomain: (domain: 'MLB' | 'NBA' | 'NFL' | 'PGA' | 'SKEW' | 'HOLODEX' | 'ARGUS' | 'EDGE_DVR' | 'STREAM_SNIPER' | 'TELEMETRY' | 'VAULT' | 'STORYBOARD' | 'CMDB' | 'SAVANT' | 'VOCAL' | 'SOVEREIGN_CSS' | 'KANBAN' | 'ROLL_CALL' | 'DREADNOUGHT' | 'HOT_TAKES' | 'ROM_GALLERY' | 'OPTICAL_INGEST' | 'PROMO_INBOX' | 'TOKEN_LEDGER' | 'TMI_NEWS_DESK' | 'ADVOCATE_CENTER' | 'COCKPIT') => void;
 }
@@ -39,6 +40,7 @@ export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) 
             {isHomeTheme ? "FanStack" : "FanStack Portal"}
           </span>
         </div>
+
       </header>
       {isLogArchiveOpen && <LogArchiveModal onClose={() => setIsLogArchiveOpen(false)} />}
 
@@ -98,36 +100,7 @@ export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) 
       {/* Widgets Layout - 3 Column Grid */}
       <div className="max-w-[1400px] mx-auto px-4 lg:px-6 pb-20 mt-8 lg:mt-[3vw] grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-10">
         
-        {/* Column 1 - Live Operations & Interaction */}
-        <div className="flex flex-col h-fit">
-          <div className="mb-6">
-             <span className="font-['Outfit'] text-xs text-[#8A8A93] tracking-[0.15em] uppercase">Live Operations & Interaction</span>
-          </div>
-          <div className="flex flex-col space-y-2">
-            <button onClick={() => onSelectDomain('SKEW')} className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg">
-               <div className="font-['Outfit'] font-bold text-[13px] text-[#a855f7] group-hover:text-white transition-colors tracking-wide">The Skew (Live)</div>
-               <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed">DAYTIME SPORTS TALK & DEBATE</div>
-            </button>
-            <button onClick={() => onSelectDomain('HOT_TAKES' as any)} className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg border border-red-500/20 bg-red-500/5 ">
-               <div className="font-['Outfit'] font-bold text-[13px] text-red-500 group-hover:text-white transition-colors tracking-wide">Hot Takes</div>
-               <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed uppercase">High-Intensity Persona Rants</div>
-            </button>
-            <a href={`${SovereignConfig.fanstack}?domain=GLOBAL&room=live_chat_sniper`} className="w-full block text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg">
-               <div className="font-['Outfit'] font-bold text-[13px] text-red-500 group-hover:text-white transition-colors tracking-wide flex items-center gap-2">🎯 Live Chat Sniper</div>
-               <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed uppercase">Live Chat Sniper Direct Link</div>
-            </a>
-            <button onClick={() => onSelectDomain('PROMO_INBOX' as any)} className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg border border-[#f59e0b]/20 bg-[#f59e0b]/5">
-               <div className="font-['Outfit'] font-bold text-[13px] text-[#f59e0b] group-hover:text-white transition-colors tracking-wide">The Cosmic Sieve</div>
-               <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed uppercase">Promo Inbox</div>
-            </button>
-            <button onClick={() => onSelectDomain('GAME_LOG_EXPORT' as any)} className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg border border-[#22c55e]/20 bg-[#22c55e]/5">
-               <div className="font-['Outfit'] font-bold text-[13px] text-[#22c55e] group-hover:text-white transition-colors tracking-wide flex items-center gap-2">📋 Game Log Export</div>
-               <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed uppercase">MD / JSON · During &amp; Post Game</div>
-            </button>
-          </div>
-        </div>
-        
-        {/* Column 2 - Media Pipeline & Synthesis */}
+        {/* Column 1 - Media Pipeline & Synthesis */}
         <div className="flex flex-col h-fit">
           <div className="mb-6">
              <span className="font-['Outfit'] text-xs text-[#8A8A93] tracking-[0.15em] uppercase">Media Pipeline & Synthesis</span>
@@ -160,7 +133,7 @@ export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) 
           </div>
         </div>
 
-        {/* Column 3 - Intelligence & Core Infrastructure */}
+        {/* Column 2 - Intelligence & Core Infrastructure */}
         <div className="flex flex-col h-fit">
           <div className="mb-6">
              <span className="font-['Outfit'] text-xs text-[#8A8A93] tracking-[0.15em] uppercase">Intelligence & Core Infrastructure</span>
@@ -198,12 +171,39 @@ export default function FanStackPortal({ onSelectDomain }: FanStackPortalProps) 
                <div className="font-['Outfit'] font-bold text-[13px] text-[#7c3aed] group-hover:text-white transition-colors tracking-wide flex items-center gap-2">🧮 Token Ledger</div>
                <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed uppercase">API Burn Analytics &amp; ROI</div>
             </button>
-
           </div>
         </div>
 
+        {/* Column 3 - Live Operations & Interaction */}
+        <div className="flex flex-col h-fit">
+          <div className="mb-6">
+             <span className="font-['Outfit'] text-xs text-[#8A8A93] tracking-[0.15em] uppercase">Live Operations & Interaction</span>
+          </div>
+          <div className="flex flex-col space-y-2">
+            <button onClick={() => onSelectDomain('SKEW')} className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg">
+               <div className="font-['Outfit'] font-bold text-[13px] text-[#a855f7] group-hover:text-white transition-colors tracking-wide">The Skew (Live)</div>
+               <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed">DAYTIME SPORTS TALK & DEBATE</div>
+            </button>
+            <button onClick={() => onSelectDomain('HOT_TAKES' as any)} className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg border border-red-500/20 bg-red-500/5 ">
+               <div className="font-['Outfit'] font-bold text-[13px] text-red-500 group-hover:text-white transition-colors tracking-wide">Hot Takes</div>
+               <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed uppercase">High-Intensity Persona Rants</div>
+            </button>
+            <a href={`${SovereignConfig.fanstack}?domain=GLOBAL&room=live_chat_sniper`} className="w-full block text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg">
+               <div className="font-['Outfit'] font-bold text-[13px] text-red-500 group-hover:text-white transition-colors tracking-wide flex items-center gap-2">🎯 Live Chat Sniper</div>
+               <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed uppercase">Live Chat Sniper Direct Link</div>
+            </a>
+            <button onClick={() => onSelectDomain('PROMO_INBOX' as any)} className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg border border-[#f59e0b]/20 bg-[#f59e0b]/5">
+               <div className="font-['Outfit'] font-bold text-[13px] text-[#f59e0b] group-hover:text-white transition-colors tracking-wide">The Cosmic Sieve</div>
+               <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed uppercase">Promo Inbox</div>
+            </button>
+            <button onClick={() => onSelectDomain('GAME_LOG_EXPORT' as any)} className="w-full text-left px-5 py-4 hover:bg-white/5 transition-colors cursor-pointer group rounded-lg border border-[#22c55e]/20 bg-[#22c55e]/5">
+               <div className="font-['Outfit'] font-bold text-[13px] text-[#22c55e] group-hover:text-white transition-colors tracking-wide flex items-center gap-2">📋 Game Log Export</div>
+               <div className="font-mono text-[#8E9CAA] text-[9px] tracking-widest mt-1.5 leading-relaxed uppercase">MD / JSON · During &amp; Post Game</div>
+            </button>
+          </div>
+        </div>
       </div>
       </div>
-    </div>
+      </div>
   );
 }
